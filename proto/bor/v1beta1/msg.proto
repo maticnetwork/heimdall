@@ -1,0 +1,42 @@
+syntax = "proto3";
+package heimdall.bor.v1beta1;
+
+import "gogoproto/gogo.proto";
+option go_package = "github.com/maticnetwork/heimdall/x/bor/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+service Msg {
+    rpc PostSendProposeSpanTx(MsgProposeSpan) returns (MsgProposeSpanResponse);
+}
+
+message MsgProposeSpan {
+    uint64 id = 1 [
+        (gogoproto.jsontag)    = "proposal_id",
+        (gogoproto.moretags)   = "yaml:\"proposal_id\"",
+        (gogoproto.customname) = "ID"
+    ];
+    string proposer = 2 [
+        (gogoproto.jsontag)  = "proposer",
+        (gogoproto.moretags) = "yaml:\"proposer\""
+    ];
+    uint64 start_block = 3 [
+        (gogoproto.jsontag)  = "start_block",
+        (gogoproto.moretags) = "yaml:\"start_block\""
+    ];
+    uint64 end_block = 4 [
+        (gogoproto.jsontag)  = "end_block",
+        (gogoproto.moretags) = "yaml:\"end_block\""
+    ];
+    string chain_id = 5 [
+        (gogoproto.jsontag)  = "chain_id",
+        (gogoproto.moretags) = "yaml:\"chain_id\""
+    ];
+    string seed = 6
+        [(gogoproto.jsontag) = "seed", (gogoproto.moretags) = "yaml:\"seed\""];
+}
+
+// MsgProposeSpanResponse defines the Msg/MsgProposeSpan response type.
+message MsgProposeSpanResponse {}

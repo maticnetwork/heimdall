@@ -250,3 +250,11 @@ func (valID ValidatorID) String() string {
 // 	}
 // 	return
 // }
+
+func (vSet *ValidatorSet) GetValidatorsSe() []Validator {
+	validators := make([]Validator, len(vSet.Validators))
+	for i, validator := range vSet.Validators {
+		validators[i] = *validator
+	}
+	return validators
+}

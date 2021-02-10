@@ -38,6 +38,14 @@ var (
 	ErrValidatorNotDeactivated  = sdkerrors.Register(ModuleName, 6502, "Validator Not Deactivated")
 	// TODO: Check if this is ok:
 	ErrEmptyAddr = sdkerrors.Register(ModuleName, 7001, "Empty address")
+
+	// Bor Errors --------------------------------
+	ErrSpanNotInCountinuity = sdkerrors.Register(ModuleName, 3501, "Span not continuous")
+	ErrInvalidSpanDuration  = sdkerrors.Register(ModuleName, 3507, "Wrong span duration")
+	ErrSpanNotFound         = sdkerrors.Register(ModuleName, 3503, "Span not found")
+	ErrUnableToFreezeValSet = sdkerrors.Register(ModuleName, 3502, "Unable to freeze validator set for next span")
+	ErrValSetMisMatch       = sdkerrors.Register(ModuleName, 3504, "Validator set mismatch")
+	ErrProducerMisMatch     = sdkerrors.Register(ModuleName, 3505, "Producer set mismatch")
 )
 
 // ErrorSideTx represents side-tx error

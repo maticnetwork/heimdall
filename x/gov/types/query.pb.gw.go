@@ -17,7 +17,7 @@ import (
 	"github.com/golang/protobuf/proto"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/grpc-ecosystem/grpc-gateway/utilities"
-	types_0 "github.com/maticnetwork/heimdall/types"
+	types_1 "github.com/maticnetwork/heimdall/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/grpclog"
@@ -150,13 +150,13 @@ func request_Query_Vote_0(ctx context.Context, marshaler runtime.Marshaler, clie
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "voter")
 	}
 
-	e, err = runtime.Enum(val, types_0.ValidatorID_value)
+	e, err = runtime.Enum(val, types_1.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "voter", err)
 	}
 
-	protoReq.Voter = types_0.ValidatorID(e)
+	protoReq.Voter = types_1.ValidatorID(e)
 
 	msg, err := client.Vote(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -191,13 +191,13 @@ func local_request_Query_Vote_0(ctx context.Context, marshaler runtime.Marshaler
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "voter")
 	}
 
-	e, err = runtime.Enum(val, types_0.ValidatorID_value)
+	e, err = runtime.Enum(val, types_1.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "voter", err)
 	}
 
-	protoReq.Voter = types_0.ValidatorID(e)
+	protoReq.Voter = types_1.ValidatorID(e)
 
 	msg, err := server.Vote(ctx, &protoReq)
 	return msg, metadata, err
@@ -340,13 +340,13 @@ func request_Query_Deposit_0(ctx context.Context, marshaler runtime.Marshaler, c
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "depositor")
 	}
 
-	e, err = runtime.Enum(val, types_0.ValidatorID_value)
+	e, err = runtime.Enum(val, types_1.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "depositor", err)
 	}
 
-	protoReq.Depositor = types_0.ValidatorID(e)
+	protoReq.Depositor = types_1.ValidatorID(e)
 
 	msg, err := client.Deposit(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
 	return msg, metadata, err
@@ -381,13 +381,13 @@ func local_request_Query_Deposit_0(ctx context.Context, marshaler runtime.Marsha
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "missing parameter %s", "depositor")
 	}
 
-	e, err = runtime.Enum(val, types_0.ValidatorID_value)
+	e, err = runtime.Enum(val, types_1.ValidatorID_value)
 
 	if err != nil {
 		return nil, metadata, status.Errorf(codes.InvalidArgument, "type mismatch, parameter: %s, error: %v", "depositor", err)
 	}
 
-	protoReq.Depositor = types_0.ValidatorID(e)
+	protoReq.Depositor = types_1.ValidatorID(e)
 
 	msg, err := server.Deposit(ctx, &protoReq)
 	return msg, metadata, err

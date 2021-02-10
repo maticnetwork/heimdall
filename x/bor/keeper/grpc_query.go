@@ -1,0 +1,162 @@
+package keeper
+
+import (
+	"context"
+	"fmt"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/maticnetwork/heimdall/x/bor/types"
+)
+
+// Querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over keeper
+type Querier struct {
+	Keeper
+}
+
+// NewQueryServerImpl returns an implementation of the bank MsgServer interface
+// for the provided Keeper.
+func NewQueryServerImpl(keeper Keeper) types.QueryServer {
+	return &Querier{Keeper: keeper}
+}
+
+var _ types.QueryServer = Keeper{}
+
+const (
+	ParamSpan          = "span"
+	ParamSprint        = "sprint"
+	ParamProducerCount = "producer-count"
+	ParamLastEthBlock  = "last-eth-block"
+)
+
+func (k Keeper) Param(context context.Context, req *types.QueryParamRequest) (*types.QueryParamResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(context)
+	switch req.GetParamsType() {
+	case ParamSpan:
+		params := k.GetParams(ctx)
+		return &types.QueryParamResponse{
+			Params: &types.QueryParamResponse_SpanDuration{
+				SpanDuration: params.SpanDuration,
+			},
+		}, nil
+	case ParamSprint:
+		params := k.GetParams(ctx)
+		return &types.QueryParamResponse{
+			Params: &types.QueryParamResponse_Sprint{
+				Sprint: params.SprintDuration,
+			},
+		}, nil
+	case ParamProducerCount:
+		params := k.GetParams(ctx)
+		return &types.QueryParamResponse{
+			Params: &types.QueryParamResponse_ProducerCount{
+				ProducerCount: params.ProducerCount,
+			},
+		}, nil
+	case ParamLastEthBlock:
+		latestEthBlock := k.GetLastEthBlock(ctx)
+		return &types.QueryParamResponse{
+			Params: &types.QueryParamResponse_LatestEthBlock{
+				LatestEthBlock: latestEthBlock.Uint64(),
+			},
+		}, nil
+	default:
+		return nil, status.Error(codes.InvalidArgument, "invalid param type ")
+
+	}
+}
+
+func (k Keeper) Span(goCtx context.Context, req *types.QuerySpanRequest) (*types.QuerySpanResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(goCtx)
+	resp, err := k.GetSpan(ctx, req.GetRecordId())
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return nil, status.Error(codes.NotFound, "span not found for id")
+	}
+	return &types.QuerySpanResponse{
+		Span: resp,
+	}, nil
+}
+
+func (k Keeper) SpanList(context context.Context, req *types.QuerySpanListRequest) (*types.QuerySpanListResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(context)
+	resp, err := k.GetSpanList(ctx, req.Pagination.Page, req.Pagination.Limit)
+	if err != nil {
+		return nil, err
+	}
+	if resp == nil {
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("could not fetch span list with page %v and limit %v", req.Pagination.Page, req.Pagination.Limit))
+	}
+	return &types.QuerySpanListResponse{
+		Spans: resp,
+	}, nil
+}
+
+func (k Keeper) LatestSpan(context context.Context, req *types.QueryLatestSpanRequest) (*types.QueryLatestSpanResponse, error) {
+	var defaultSpan *hmTypes.Span
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(context)
+	spans := k.GetAllSpans(ctx)
+	// if this is the first span return empty span
+	if len(spans) == 0 {
+		return &types.QueryLatestSpanResponse{Span: defaultSpan}, nil
+	}
+	// explicitly fetch the last span
+	span, err := k.GetLastSpan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if span == nil {
+		return nil, status.Error(codes.NotFound, "latest span does not exist")
+	}
+	return &types.QueryLatestSpanResponse{Span: span}, nil
+}
+
+func (k Keeper) NextProducers(context context.Context, req *types.QueryNextProducersRequest) (*types.QueryNextProducersResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(context)
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
+	if err != nil {
+		return nil, err
+	}
+	nextProducers, err := k.SelectNextProducers(ctx, nextSpanSeed)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryNextProducersResponse{
+		NextProducers: nextProducers,
+	}, nil
+}
+
+func (k Keeper) NextSpanSeed(context context.Context, req *types.QueryNextSpanSeedRequest) (*types.QueryNextSpanSeedResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(context)
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryNextSpanSeedResponse{
+		NextSpanSeed: nextSpanSeed.String(),
+	}, nil
+}

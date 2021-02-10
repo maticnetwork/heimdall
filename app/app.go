@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/maticnetwork/heimdall/x/bor"
+
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
@@ -75,6 +77,9 @@ import (
 	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
+	borkeeper "github.com/maticnetwork/heimdall/x/bor/keeper"
+	bortypes "github.com/maticnetwork/heimdall/x/bor/types"
+
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/client/docs/statik"
 )
@@ -100,6 +105,7 @@ var (
 		checkpoint.AppModuleBasic{},
 		topup.AppModuleBasic{},
 		clerk.AppModuleBasic{},
+		bor.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -143,6 +149,7 @@ type HeimdallApp struct {
 	GovKeeper         govkeeper.Keeper
 	CheckpointKeeper  checkpointkeeper.Keeper
 	TopupKeeper       topupkeeper.Keeper
+	BorKeeper         borkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -206,6 +213,7 @@ func NewHeimdallApp(
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
 		topuptypes.StoreKey,
+		bortypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramstypes.TStoreKey)
 
@@ -305,6 +313,15 @@ func NewHeimdallApp(
 		app.BankKeeper,
 		app.StakingKeeper,
 	)
+
+	app.BorKeeper = borkeeper.NewKeeper(
+		appCodec, keys[bortypes.StoreKey],
+		app.GetSubspace(bortypes.ModuleName),
+		app.ChainKeeper,
+		app.StakingKeeper,
+		app.caller,
+	)
+
 	// Contract caller
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
@@ -336,6 +353,7 @@ func NewHeimdallApp(
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		params.NewAppModule(app.ParamsKeeper),
 		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
+		bor.NewAppModule(appCodec, app.BorKeeper, &app.caller),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
@@ -371,6 +389,7 @@ func NewHeimdallApp(
 		// clerktypes.ModuleName,
 		genutiltypes.ModuleName,
 		govtypes.ModuleName,
+		bortypes.ModuleName,
 	)
 
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -669,6 +688,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(chainmanagerTypes.ModuleName)
 	paramsKeeper.Subspace(sidechanneltypes.ModuleName)
 	paramsKeeper.Subspace(checkpointtypes.ModuleName)
+	paramsKeeper.Subspace(bortypes.ModuleName)
 
 	return paramsKeeper
 }
