@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/maticnetwork/heimdall/helper"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,15 +18,14 @@ import (
 // Querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over keeper
 type Querier struct {
 	Keeper
+	contractCaller helper.IContractCaller
 }
 
 // NewQueryServerImpl returns an implementation of the bank MsgServer interface
 // for the provided Keeper.
-func NewQueryServerImpl(keeper Keeper) types.QueryServer {
-	return &Querier{Keeper: keeper}
+func NewQueryServerImpl(keeper Keeper, contractCaller helper.IContractCaller) types.QueryServer {
+	return &Querier{Keeper: keeper, contractCaller: contractCaller}
 }
-
-var _ types.QueryServer = Keeper{}
 
 const (
 	ParamSpan          = "span"
@@ -33,7 +34,24 @@ const (
 	ParamLastEthBlock  = "last-eth-block"
 )
 
-func (k Keeper) Param(context context.Context, req *types.QueryParamRequest) (*types.QueryParamResponse, error) {
+// Params returns all bor params info
+func (k Querier) Params(context context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(context)
+	getParams := k.GetParams(ctx)
+	latestEthBlock := k.GetLastEthBlock(ctx)
+	return &types.QueryParamsResponse{
+		SpanDuration:   getParams.GetSpanDuration(),
+		LatestEthBlock: latestEthBlock.Uint64(),
+		ProducerCount:  getParams.GetProducerCount(),
+		Sprint:         getParams.GetSpanDuration(),
+	}, nil
+}
+
+// Param returns bor parameters info
+func (k Querier) Param(context context.Context, req *types.QueryParamRequest) (*types.QueryParamResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -73,12 +91,13 @@ func (k Keeper) Param(context context.Context, req *types.QueryParamRequest) (*t
 	}
 }
 
-func (k Keeper) Span(goCtx context.Context, req *types.QuerySpanRequest) (*types.QuerySpanResponse, error) {
+// Span returns span info with span-id
+func (k Querier) Span(goCtx context.Context, req *types.QuerySpanRequest) (*types.QuerySpanResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(goCtx)
-	resp, err := k.GetSpan(ctx, req.GetRecordId())
+	resp, err := k.GetSpan(ctx, req.GetSpanId())
 	if err != nil {
 		return nil, err
 	}
@@ -90,7 +109,7 @@ func (k Keeper) Span(goCtx context.Context, req *types.QuerySpanRequest) (*types
 	}, nil
 }
 
-func (k Keeper) SpanList(context context.Context, req *types.QuerySpanListRequest) (*types.QuerySpanListResponse, error) {
+func (k Querier) SpanList(context context.Context, req *types.QuerySpanListRequest) (*types.QuerySpanListResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
@@ -107,7 +126,7 @@ func (k Keeper) SpanList(context context.Context, req *types.QuerySpanListReques
 	}, nil
 }
 
-func (k Keeper) LatestSpan(context context.Context, req *types.QueryLatestSpanRequest) (*types.QueryLatestSpanResponse, error) {
+func (k Querier) LatestSpan(context context.Context, req *types.QueryLatestSpanRequest) (*types.QueryLatestSpanResponse, error) {
 	var defaultSpan *hmTypes.Span
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -129,12 +148,12 @@ func (k Keeper) LatestSpan(context context.Context, req *types.QueryLatestSpanRe
 	return &types.QueryLatestSpanResponse{Span: span}, nil
 }
 
-func (k Keeper) NextProducers(context context.Context, req *types.QueryNextProducersRequest) (*types.QueryNextProducersResponse, error) {
+func (k Querier) NextProducers(context context.Context, req *types.QueryNextProducersRequest) (*types.QueryNextProducersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(context)
-	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx, k.contractCaller)
 	if err != nil {
 		return nil, err
 	}
@@ -147,12 +166,12 @@ func (k Keeper) NextProducers(context context.Context, req *types.QueryNextProdu
 	}, nil
 }
 
-func (k Keeper) NextSpanSeed(context context.Context, req *types.QueryNextSpanSeedRequest) (*types.QueryNextSpanSeedResponse, error) {
+func (k Querier) NextSpanSeed(context context.Context, req *types.QueryNextSpanSeedRequest) (*types.QueryNextSpanSeedResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(context)
-	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx, k.contractCaller)
 	if err != nil {
 		return nil, err
 	}

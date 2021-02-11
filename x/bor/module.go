@@ -57,12 +57,8 @@ func (a AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage 
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-// RegisterRoutes registers gov-related REST handlers to a router
-func registerRoutes(clientCtx client.Context, r *mux.Router) {
-}
-
 func (a AppModuleBasic) RegisterRESTRoutes(context client.Context, router *mux.Router) {
-	registerRoutes(context, router)
+
 }
 
 func (a AppModuleBasic) RegisterGRPCGatewayRoutes(cliContext client.Context, serveMux *runtime.ServeMux) {
@@ -142,7 +138,7 @@ func (a AppModule) LegacyQuerierHandler(amino *codec.LegacyAmino) sdk.Querier {
 
 func (a AppModule) RegisterServices(cfg module.Configurator) {
 	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(a.keeper))
-	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(a.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(a.keeper, a.contractCaller))
 }
 
 func (a AppModule) BeginBlock(context sdk.Context, block abci.RequestBeginBlock) {

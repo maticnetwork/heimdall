@@ -308,7 +308,7 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
-func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
+func (k Keeper) GetNextSpanSeed(ctx sdk.Context, contractCaller helper.IContractCaller) (common.Hash, error) {
 	lastEthBlock := k.GetLastEthBlock(ctx)
 
 	// increment last processed header block number
@@ -316,7 +316,7 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
 	k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
 
 	// fetch block header from mainchain
-	blockHeader, err := k.ContractCaller.GetMainChainBlock(newEthBlock)
+	blockHeader, err := contractCaller.GetMainChainBlock(newEthBlock)
 
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)

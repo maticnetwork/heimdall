@@ -5,6 +5,8 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -117,7 +119,6 @@ func PostSendProposeSpanTx() *cobra.Command {
 			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
 		},
 	}
-
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Uint64(FlagSpanId, 0, "--span-id=<span-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
@@ -125,5 +126,6 @@ func PostSendProposeSpanTx() *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagBorChainId)
 	_ = cmd.MarkFlagRequired(FlagStartBlock)
 
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

@@ -26,6 +26,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	}
 
 	cmd.AddCommand(
+		GetQueryParams(),
 		GetQueryParam(),
 		GetQuerySpan(),
 		GetQuerySpanList(),
@@ -49,19 +50,20 @@ $ %s query bor next-span-seed
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			cliCmd := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(cliCmd, cmd.Flags())
 			if err != nil {
 				return err
 			}
-			queryClient := types.NewQueryClient(clientCtx)
-			resp, err := queryClient.NextSpanSeed(context.Background(), &types.QueryNextSpanSeedRequest{})
+			queryClient := types.NewQueryClient(cliCmd)
+			resp, err := queryClient.NextSpanSeed(cmd.Context(), &types.QueryNextSpanSeedRequest{})
 			if err != nil {
 				return err
 			}
 			return clientCtx.PrintOutput(resp)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -78,8 +80,8 @@ $ %s query bor next-producers
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			cliCmd := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(cliCmd, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -91,6 +93,7 @@ $ %s query bor next-producers
 			return clientCtx.PrintOutput(resp)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -107,8 +110,8 @@ $ %s query bor latest-span
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			cliCmd := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(cliCmd, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -120,6 +123,7 @@ $ %s query bor latest-span
 			return clientCtx.PrintOutput(resp)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -173,27 +177,31 @@ $ %s query|q bor span-list --page 1 --limit 10
 
 func GetQuerySpan() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "span [record-id]",
-		Short: "Query the parameters (record-id) of the bor process",
+		Use:   "span [span-id]",
+		Short: "show span info with span-id",
 		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query the span info with record-id.
+			fmt.Sprintf(`Get the span info with span-id.
 Example:
-$ %s query bor span --record-id 1
+$ %s query bor span --span-id 1
 `,
 				version.AppName,
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
-			recordID, _ := cmd.Flags().GetUint64(FlagRecordId)
-
-			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			spanId, err := cmd.Flags().GetUint64(FlagSpanId)
 			if err != nil {
 				return err
 			}
+
+			cliCmd := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(cliCmd, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 			resp, err := queryClient.Span(context.Background(), &types.QuerySpanRequest{
-				RecordId: recordID,
+				SpanId: spanId,
 			})
 			if err != nil {
 				return err
@@ -201,9 +209,8 @@ $ %s query bor span --record-id 1
 			return clientCtx.PrintOutput(resp)
 		},
 	}
-
-	cmd.Flags().Uint64(FlagRecordId, 0, "record-id")
 	flags.AddQueryFlagsToCmd(cmd)
+	cmd.Flags().Uint64(FlagSpanId, 0, "span-id")
 	return cmd
 }
 
@@ -246,5 +253,37 @@ $ %s query bor param --param-type last-eth-block
 	flags.AddQueryFlagsToCmd(cmd)
 	cmd.Flags().String(FlagParamTypes, "", "--param-type=<param type span|sprint|producer-count|last-eth-block >")
 	_ = cmd.MarkFlagRequired(FlagParamTypes)
+	return cmd
+}
+
+func GetQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "show the current bor parameters information",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query values set as bor parameters.
+
+Example:
+$ %s query bor params
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cmdCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(cmdCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.Params(context.Background(), &types.QueryParamsRequest{})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintOutput(resp)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }
