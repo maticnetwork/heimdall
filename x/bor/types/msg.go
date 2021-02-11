@@ -29,22 +29,22 @@ func NewMsgProposeSpan(
 	}
 }
 
-func (m *MsgProposeSpan) Route() string {
+func (m MsgProposeSpan) Route() string {
 	return RouterKey
 }
 
-func (m *MsgProposeSpan) Type() string {
+func (m MsgProposeSpan) Type() string {
 	return "propose-span"
 }
 
-func (m *MsgProposeSpan) ValidateBasic() error {
+func (m MsgProposeSpan) ValidateBasic() error {
 	if len(m.Proposer) == 0 {
 		return common.ErrInvalidMsg
 	}
 	return nil
 }
 
-func (m *MsgProposeSpan) GetSignBytes() []byte {
+func (m MsgProposeSpan) GetSignBytes() []byte {
 	b, err := cdc.MarshalJSON(m)
 	if err != nil {
 		panic(err)
@@ -55,4 +55,9 @@ func (m *MsgProposeSpan) GetSignBytes() []byte {
 func (m *MsgProposeSpan) GetSigners() []sdk.AccAddress {
 	addr, _ := sdk.AccAddressFromHex(m.Proposer)
 	return []sdk.AccAddress{addr}
+}
+
+// GetSideSignBytes returns side sign bytes
+func (m MsgProposeSpan) GetSideSignBytes() []byte {
+	return nil
 }

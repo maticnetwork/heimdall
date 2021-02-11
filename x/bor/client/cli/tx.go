@@ -126,6 +126,6 @@ func PostSendProposeSpanTx() *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagBorChainId)
 	_ = cmd.MarkFlagRequired(FlagStartBlock)
 
-	flags.AddQueryFlagsToCmd(cmd)
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
