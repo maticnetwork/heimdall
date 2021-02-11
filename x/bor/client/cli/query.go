@@ -39,7 +39,6 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 func GetQueryNextSpanSeed() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "next-span-seed",
-		Args:  cobra.ExactArgs(1),
 		Short: "Query the next span seed ",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the next span seed.
@@ -175,7 +174,6 @@ $ %s query|q bor span-list --page 1 --limit 10
 func GetQuerySpan() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "span [record-id]",
-		Args:  cobra.ExactArgs(1),
 		Short: "Query the parameters (record-id) of the bor process",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the span info with record-id.
@@ -212,7 +210,6 @@ $ %s query bor span --record-id 1
 func GetQueryParam() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "param [param-type]",
-		Args:  cobra.ExactArgs(1),
 		Short: "Query the parameters (span|sprint|producer-count|last-eth-block) of the bor process",
 		Long: strings.TrimSpace(
 			fmt.Sprintf(`Query the all the parameters for the bor.

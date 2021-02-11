@@ -1,6 +1,7 @@
 package bor
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -56,12 +57,19 @@ func (a AppModuleBasic) DefaultGenesis(cdc codec.JSONMarshaler) json.RawMessage 
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-func (a AppModuleBasic) RegisterRESTRoutes(context client.Context, router *mux.Router) {
-	panic("implement me")
+// RegisterRoutes registers gov-related REST handlers to a router
+func registerRoutes(clientCtx client.Context, r *mux.Router) {
 }
 
-func (a AppModuleBasic) RegisterGRPCGatewayRoutes(context client.Context, serveMux *runtime.ServeMux) {
-	panic("implement me")
+func (a AppModuleBasic) RegisterRESTRoutes(context client.Context, router *mux.Router) {
+	registerRoutes(context, router)
+}
+
+func (a AppModuleBasic) RegisterGRPCGatewayRoutes(cliContext client.Context, serveMux *runtime.ServeMux) {
+	err := types.RegisterQueryHandlerClient(context.Background(), serveMux, types.NewQueryClient(cliContext))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {

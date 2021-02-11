@@ -5,27 +5,41 @@ import "gogoproto/gogo.proto";
 import "heimdall/types/span.proto";
 import "heimdall/types/query.proto";
 import "heimdall/types/validator.proto";
+import "google/api/annotations.proto";
 
-
-option go_package = "github.com/maticnetwork/heimdall/x/bor/types";
-option (gogoproto.sizer_all)       = true;
+option go_package            = "github.com/maticnetwork/heimdall/x/bor/types";
+option (gogoproto.sizer_all) = true;
 option (gogoproto.marshaler_all)   = true;
 option (gogoproto.unmarshaler_all) = true;
 
 service Query {
-    rpc Param(QueryParamRequest) returns (QueryParamResponse) {};
+    rpc Param(QueryParamRequest) returns (QueryParamResponse) {
+        option (google.api.http).get =
+            "/heimdall/bor/v1beta1/params/{params_type}";
+    };
 
-    rpc Span(QuerySpanRequest) returns (QuerySpanResponse) {};
+    rpc SpanList(QuerySpanListRequest) returns (QuerySpanListResponse) {
+        option (google.api.http).get = "/heimdall/bor/v1beta1/span-list";
+    }
 
-    rpc SpanList(QuerySpanListRequest) returns (QuerySpanListResponse) {}
+    rpc Span(QuerySpanRequest) returns (QuerySpanResponse) {
+        option (google.api.http).get = "/heimdall/bor/v1beta1/span/{record_id}";
+    };
 
-    rpc LatestSpan(QueryLatestSpanRequest) returns (QueryLatestSpanResponse) {}
+    rpc LatestSpan(QueryLatestSpanRequest) returns (QueryLatestSpanResponse) {
+        option (google.api.http).get = "/heimdall/bor/v1beta1/latest-span";
+    }
 
     rpc NextProducers(QueryNextProducersRequest)
-        returns (QueryNextProducersResponse) {}
+        returns (QueryNextProducersResponse) {
+        option (google.api.http).get =
+            "/heimdall/bor/v1beta1/prepare-next-span";
+    }
 
     rpc NextSpanSeed(QueryNextSpanSeedRequest)
-        returns (QueryNextSpanSeedResponse) {}
+        returns (QueryNextSpanSeedResponse) {
+        option (google.api.http).get = "/heimdall/bor/v1beta1/next-span-seed";
+    }
 }
 
 // params
@@ -34,10 +48,10 @@ message QueryParamRequest {
 }
 message QueryParamResponse {
     oneof params {
-        uint64 span_duration = 1;
+        uint64 span_duration    = 1;
         uint64 latest_eth_block = 2;
-        uint64 producer_count = 3;
-        uint64 sprint = 4;
+        uint64 producer_count   = 3;
+        uint64 sprint           = 4;
     }
 }
 
@@ -67,7 +81,8 @@ message QueryLatestSpanResponse {
 // QueryNextProducers
 message QueryNextProducersRequest {}
 message QueryNextProducersResponse {
-    repeated heimdall.types.Validator next_producers = 1  [(gogoproto.nullable) = false];
+    repeated heimdall.types.Validator next_producers = 1
+        [(gogoproto.nullable) = false];
 }
 
 // QueryNextSpanSeed
