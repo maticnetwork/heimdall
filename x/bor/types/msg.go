@@ -12,7 +12,7 @@ var _ sdk.Msg = &MsgProposeSpan{}
 
 // NewMsgProposeSpan creates new propose span message
 func NewMsgProposeSpan(
-	id uint64,
+	spanId uint64,
 	proposer string,
 	startBlock uint64,
 	endBlock uint64,
@@ -20,7 +20,7 @@ func NewMsgProposeSpan(
 	seed string,
 ) MsgProposeSpan {
 	return MsgProposeSpan{
-		ID:         id,
+		SpanId:     spanId,
 		Proposer:   proposer,
 		StartBlock: startBlock,
 		EndBlock:   endBlock,

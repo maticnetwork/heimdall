@@ -2,21 +2,26 @@ syntax = "proto3";
 package heimdall.bor.v1beta1;
 
 import "gogoproto/gogo.proto";
-option go_package = "github.com/maticnetwork/heimdall/x/bor/types";
+import "google/api/annotations.proto";
 
-option (gogoproto.sizer_all)       = true;
+option go_package            = "github.com/maticnetwork/heimdall/x/bor/types";
+option (gogoproto.sizer_all) = true;
 option (gogoproto.marshaler_all)   = true;
 option (gogoproto.unmarshaler_all) = true;
 
 service Msg {
-    rpc PostSendProposeSpanTx(MsgProposeSpan) returns (MsgProposeSpanResponse);
+    rpc PostSendProposeSpanTx(MsgProposeSpan) returns (MsgProposeSpanResponse) {
+        option (google.api.http) = {
+            post: "/heimdall/bor/v1beta1/propose-span"
+            body: "*"
+        };
+    }
 }
 
 message MsgProposeSpan {
-    uint64 id = 1 [
-        (gogoproto.jsontag)    = "proposal_id",
-        (gogoproto.moretags)   = "yaml:\"proposal_id\"",
-        (gogoproto.customname) = "ID"
+    uint64 span_id = 1 [
+        (gogoproto.jsontag)  = "span_id",
+        (gogoproto.moretags) = "yaml:\"span_id\""
     ];
     string proposer = 2 [
         (gogoproto.jsontag)  = "proposer",

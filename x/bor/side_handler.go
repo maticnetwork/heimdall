@@ -114,7 +114,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k keeper.Keeper, msg types.MsgPropo
 	}
 
 	// check for replay
-	if found := k.HasSpan(ctx, msg.ID); found {
+	if found := k.HasSpan(ctx, msg.SpanId); found {
 		k.Logger(ctx).Debug("Skipping new span as it's already processed")
 		return nil, hmCommon.ErrOldTx
 	}
@@ -122,7 +122,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k keeper.Keeper, msg types.MsgPropo
 	k.Logger(ctx).Debug("Persisting span state", "sideTxResult", sideTxResult)
 
 	// freeze for new span
-	err := k.FreezeSet(ctx, msg.ID, msg.StartBlock, msg.EndBlock, msg.ChainId, common.HexToHeimdallHash(msg.Seed).EthHash())
+	err := k.FreezeSet(ctx, msg.SpanId, msg.StartBlock, msg.EndBlock, msg.ChainId, common.HexToHeimdallHash(msg.Seed).EthHash())
 	if err != nil {
 		k.Logger(ctx).Error("Unable to freeze validator set for span", "Error", err)
 		return nil, hmCommon.ErrUnableToFreezeValSet
@@ -140,7 +140,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k keeper.Keeper, msg types.MsgPropo
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),               // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, common.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),            // result
-			sdk.NewAttribute(types.AttributeKeySpanID, strconv.FormatUint(msg.ID, 10)),
+			sdk.NewAttribute(types.AttributeKeySpanID, strconv.FormatUint(msg.SpanId, 10)),
 			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeySpanEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
 		),

@@ -26,7 +26,7 @@ var _ types.MsgServer = msgServer{}
 func (m msgServer) PostSendProposeSpanTx(goCtx context.Context, msg *types.MsgProposeSpan) (*types.MsgProposeSpanResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 	m.Keeper.Logger(ctx).Debug("✅ Validating proposed span msg",
-		"spanId", msg.ID,
+		"spanId", msg.SpanId,
 		"startBlock", msg.StartBlock,
 		"endBlock", msg.EndBlock,
 		"seed", msg.Seed,
@@ -50,10 +50,10 @@ func (m msgServer) PostSendProposeSpanTx(goCtx context.Context, msg *types.MsgPr
 	}
 
 	// Validate span continuity
-	if lastSpan.ID+1 != msg.ID || msg.StartBlock != lastSpan.EndBlock+1 || msg.EndBlock < msg.StartBlock {
+	if lastSpan.ID+1 != msg.SpanId || msg.StartBlock != lastSpan.EndBlock+1 || msg.EndBlock < msg.StartBlock {
 		m.Keeper.Logger(ctx).Error("Blocks not in continuity",
 			"lastSpanId", lastSpan.ID,
-			"spanId", msg.ID,
+			"spanId", msg.SpanId,
 			"lastSpanStartBlock", lastSpan.StartBlock,
 			"lastSpanEndBlock", lastSpan.EndBlock,
 			"spanStartBlock", msg.StartBlock,
@@ -73,12 +73,11 @@ func (m msgServer) PostSendProposeSpanTx(goCtx context.Context, msg *types.MsgPr
 	}
 
 	// add events
-	ctx.EventManager().ABCIEvents()
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeProposeSpan,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeySpanID, strconv.FormatUint(msg.ID, 10)),
+			sdk.NewAttribute(types.AttributeKeySpanID, strconv.FormatUint(msg.SpanId, 10)),
 			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeySpanEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
 		),

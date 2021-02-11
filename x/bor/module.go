@@ -66,6 +66,10 @@ func (a AppModuleBasic) RegisterGRPCGatewayRoutes(cliContext client.Context, ser
 	if err != nil {
 		panic(err)
 	}
+	err = types.RegisterMsgHandlerClient(context.Background(), serveMux, types.NewMsgClient(cliContext))
+	if err != nil {
+		panic(err)
+	}
 }
 
 func (a AppModuleBasic) GetTxCmd() *cobra.Command {
