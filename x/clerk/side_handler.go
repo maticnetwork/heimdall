@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"math/big"
 	"strconv"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
@@ -94,7 +95,8 @@ func SideHandleMsgEventRecord(
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.ContractAddress.Bytes(), []byte(msg.ContractAddress)) {
+	// TODO - check this
+	if !strings.EqualFold(eventLog.ContractAddress.String(), msg.ContractAddress) {
 		k.Logger(ctx).Error(
 			"ContractAddress from event does not match with Msg ContractAddress",
 			"EventContractAddress", eventLog.ContractAddress.String(),
