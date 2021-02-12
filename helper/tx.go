@@ -63,9 +63,9 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
 func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs [][3]*big.Int, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) (er error) {
-	data, err := c.RootChainABI.Pack("submitHeaderBlock", signedData, sigs)
+	data, err := c.RootChainABI.Pack("submitCheckpoint", signedData, sigs)
 	if err != nil {
-		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
+		Logger.Error("Unable to pack tx for submitCheckpoint", "error", err)
 		return err
 	}
 
@@ -86,7 +86,7 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs [][3]*big.Int, r
 		"data", hex.EncodeToString(signedData),
 	)
 
-	tx, err := rootChainInstance.SubmitHeaderBlock(auth, signedData, sigs)
+	tx, err := rootChainInstance.SubmitCheckpoint(auth, signedData, sigs)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
 		return err
