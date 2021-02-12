@@ -38,8 +38,6 @@ type Keeper struct {
 	sk  stakingKeeper.Keeper
 	// The (unexposed) keys used to access the stores from the Context.
 	storeKey sdk.StoreKey
-	// codespace
-	//codespace sdk.CodespaceType
 	// param space
 	paramSpace paramtypes.Subspace
 	// contract caller
@@ -143,6 +141,7 @@ func (k *Keeper) GetSpan(ctx sdk.Context, id uint64) (*hmTypes.Span, error) {
 
 	var span hmTypes.Span
 	if err := k.cdc.UnmarshalBinaryBare(store.Get(spanKey), &span); err != nil {
+		k.Logger(ctx).Error("Error unmarshalling span", "error", err)
 		return nil, err
 	}
 
@@ -185,8 +184,12 @@ func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]*hmT
 	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		var span hmTypes.Span
-		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err == nil {
+		err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span)
+		if err == nil {
 			spans = append(spans, &span)
+		} else {
+			k.Logger(ctx).Error("Error unmarshalling span", "error", err)
+			return nil, err
 		}
 	}
 

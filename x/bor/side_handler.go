@@ -32,7 +32,7 @@ func NewSideTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 			errMsg := fmt.Sprintf("unrecognized %s message type: %T", types.ModuleName, msg)
 			fmt.Println(errMsg)
 			return abci.ResponseDeliverSideTx{
-				Code: uint32(6), // TODO should be changed like `sdk.CodeUnknownRequest `
+				Code: sdkerrors.ErrUnknownRequest.ABCICode(),
 			}
 		}
 	}

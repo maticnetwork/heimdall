@@ -35,7 +35,7 @@ func (gs GenesisState) ValidateGenesis(data GenesisState) error {
 func genFirstSpan(valSet hmTypes.ValidatorSet, chainId string) []*hmTypes.Span {
 	var firstSpan []*hmTypes.Span
 	var selectedProducers []hmTypes.Validator
-	validators := valSet.GetValidatorsSe()
+	validators := valSet.GetValidatorsSet()
 	if len(valSet.Validators) > int(DefaultProducerCount) {
 		selectedProducers = append(selectedProducers, validators[0:DefaultProducerCount]...)
 	} else {
