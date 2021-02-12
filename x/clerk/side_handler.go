@@ -96,7 +96,7 @@ func SideHandleMsgEventRecord(
 	}
 
 	// TODO - check this
-	if strings.ToLower(eventLog.ContractAddress.String()) != strings.ToLower(msg.ContractAddress) {
+	if !strings.EqualFold(eventLog.ContractAddress.String(), msg.ContractAddress) {
 		k.Logger(ctx).Error(
 			"ContractAddress from event does not match with Msg ContractAddress",
 			"EventContractAddress", eventLog.ContractAddress.String(),
