@@ -92,3 +92,51 @@ func (keeper Keeper) GetDepositsIterator(ctx sdk.Context, proposalID uint64) sdk
 	store := ctx.KVStore(keeper.storeKey)
 	return sdk.KVStorePrefixIterator(store, types.DepositsKey(proposalID))
 }
+
+// GetAllDeposits returns all the deposits from the store
+func (keeper Keeper) GetAllDeposits(ctx sdk.Context) (deposits types.Deposits) {
+	keeper.IterateAllDeposits(ctx, func(deposit types.Deposit) bool {
+		deposits = append(deposits, deposit)
+		return false
+	})
+
+	return
+}
+
+// RefundDeposits refunds and deletes all the deposits on a specific proposal
+// func (keeper Keeper) RefundDeposits(ctx sdk.Context, proposalID uint64) {
+// 	store := ctx.KVStore(keeper.storeKey)
+
+// 	keeper.IterateDeposits(ctx, proposalID, func(deposit types.Deposit) bool {
+// 		depositor, err := sdk.AccAddressFromBech32(deposit.Depositor)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+
+// 		err = keeper.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, depositor, deposit.Amount)
+// 		if err != nil {
+// 			panic(err)
+// 		}
+
+// 		store.Delete(types.DepositKey(proposalID, depositor))
+// 		return false
+// 	})
+// }
+
+// IterateAllDeposits iterates over the all the stored deposits and performs a callback function
+func (keeper Keeper) IterateAllDeposits(ctx sdk.Context, cb func(deposit types.Deposit) (stop bool)) {
+	store := ctx.KVStore(keeper.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, types.DepositsKeyPrefix)
+
+	defer iterator.Close()
+
+	for ; iterator.Valid(); iterator.Next() {
+		var deposit types.Deposit
+
+		keeper.cdc.MustUnmarshalBinaryBare(iterator.Value(), &deposit)
+
+		if cb(deposit) {
+			break
+		}
+	}
+}

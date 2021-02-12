@@ -1,6 +1,7 @@
 package types
 
 import (
+	"bytes"
 	"fmt"
 	"math/big"
 	"time"
@@ -46,20 +47,18 @@ func DefaultGenesis() *GenesisState {
 	}
 }
 
-// TODO - check this
 // Equal checks whether 2 GenesisState structs are equivalent.
-// func (data GenesisState) Equal(data2 GenesisState) bool {
-// 	b1 := ModuleCdc.MustMarshalBinaryBare(data)
-// 	b2 := ModuleCdc.MustMarshalBinaryBare(data2)
-// 	return bytes.Equal(b1, b2)
-// }
+func (data GenesisState) Equal(data2 GenesisState) bool {
+	b1 := ModuleCdc.MustMarshalBinaryBare(&data)
+	b2 := ModuleCdc.MustMarshalBinaryBare(&data2)
+	return bytes.Equal(b1, b2)
+}
 
-// TODO - check this
-// // IsEmpty returns if a GenesisState is empty or has data in it
-// func (data GenesisState) IsEmpty() bool {
-// 	emptyGenState := GenesisState{}
-// 	return data.Equal(emptyGenState)
-// }
+// IsEmpty returns if a GenesisState is empty or has data in it
+func (data GenesisState) IsEmpty() bool {
+	emptyGenState := GenesisState{}
+	return data.Equal(emptyGenState)
+}
 
 // Validate checks if parameters are within valid ranges
 func (gs GenesisState) Validate() error {

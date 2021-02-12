@@ -289,12 +289,15 @@ func NewHeimdallApp(
 		moduleCommunicator,
 	)
 
+	govRouter := govtypes.NewRouter()
+	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler)
+
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec,
 		keys[govtypes.StoreKey], // target store
 		app.GetSubspace(govtypes.ModuleName),
 		app.BankKeeper,
-		govtypes.NewRouter(),
+		govRouter,
 		&app.StakingKeeper,
 		app.AccountKeeper,
 	)
@@ -688,6 +691,7 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(chainmanagerTypes.ModuleName)
 	paramsKeeper.Subspace(sidechanneltypes.ModuleName)
 	paramsKeeper.Subspace(checkpointtypes.ModuleName)
+	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(bortypes.ModuleName)
 
 	return paramsKeeper
