@@ -1,37 +1,5 @@
 [
 	{
-		"constant": false,
-		"inputs": [
-			{
-				"name": "data",
-				"type": "bytes"
-			},
-			{
-				"name": "sigs",
-				"type": "uint256[3][]"
-			}
-		],
-		"name": "submitHeaderBlock",
-		"outputs": [],
-		"payable": false,
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"constant": true,
-		"inputs": [],
-		"name": "max_deposits",
-		"outputs": [
-			{
-				"name": "",
-				"type": "uint256"
-			}
-		],
-		"payable": false,
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
 		"constant": true,
 		"inputs": [
 			{
@@ -67,31 +35,39 @@
 		"type": "function"
 	},
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "currentEpoch",
-		"outputs": [
+		"constant": false,
+		"inputs": [
 			{
-				"name": "",
-				"type": "uint256"
+				"name": "data",
+				"type": "bytes"
+			},
+			{
+				"name": "sigs",
+				"type": "uint256[3][]"
 			}
 		],
+		"name": "submitCheckpoint",
+		"outputs": [],
 		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
-		"constant": true,
-		"inputs": [],
-		"name": "_nextHeaderBlock",
-		"outputs": [
+		"constant": false,
+		"inputs": [
 			{
-				"name": "",
-				"type": "uint256"
+				"name": "data",
+				"type": "bytes"
+			},
+			{
+				"name": "sigs",
+				"type": "bytes"
 			}
 		],
+		"name": "submitHeaderBlock",
+		"outputs": [],
 		"payable": false,
-		"stateMutability": "view",
+		"stateMutability": "nonpayable",
 		"type": "function"
 	},
 	{
