@@ -43,10 +43,8 @@ func (suite *HandlerTestSuite) SetupTest() {
 	suite.contractCaller = mocks.IContractCaller{}
 	suite.handler = clerk.NewHandler(suite.app.ClerkKeeper, &suite.contractCaller)
 
-	// TODO - Check this
 	// fetch chain id
-	// suite.chainID = suite.app.ChainKeeper.GetParams(suite.ctx).ChainParams.BorChainID
-	suite.chainID = "testchainid"
+	suite.chainID = suite.app.ChainKeeper.GetParams(suite.ctx).ChainParams.BorChainID
 
 	// random generator
 	s1 := rand.NewSource(time.Now().UnixNano())
@@ -145,31 +143,30 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {
 	require.Equal(t, hCommon.ErrOldTx, err)
 }
 
-// TODO - Check this
-// func (suite *HandlerTestSuite) TestHandleMsgEventRecordChainID() {
-// 	t, app, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
+func (suite *HandlerTestSuite) TestHandleMsgEventRecordChainID() {
+	t, app, ctx, r := suite.T(), suite.app, suite.ctx, suite.r
 
-// 	_, _, addr1 := testdata.KeyTestPubAddr()
+	_, _, addr1 := testdata.KeyTestPubAddr()
 
-// 	id := r.Uint64()
+	id := r.Uint64()
 
-// 	// wrong chain id
-// 	msg := types.NewMsgEventRecord(
-// 		addr1,
-// 		hmCommon.HexToHeimdallHash("123"),
-// 		r.Uint64(),
-// 		r.Uint64(),
-// 		id,
-// 		addr1,
-// 		make([]byte, 0),
-// 		"testchainid",
-// 	)
-// 	result, err := suite.handler(ctx, &msg)
-// 	require.Error(t, err)
-// 	require.Nil(t, result, "error invalid bor chain id %v", result)
+	// wrong chain id
+	msg := types.NewMsgEventRecord(
+		addr1,
+		hmCommon.HexToHeimdallHash("123"),
+		r.Uint64(),
+		r.Uint64(),
+		id,
+		addr1,
+		make([]byte, 0),
+		"testchainid",
+	)
+	result, err := suite.handler(ctx, &msg)
+	require.Error(t, err)
+	require.Nil(t, result, "error invalid bor chain id %v", result)
 
-// 	// there should be no stored event record
-// 	storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
-// 	require.Nil(t, storedEventRecord)
-// 	require.Error(t, err)
-// }
+	// there should be no stored event record
+	storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
+	require.Nil(t, storedEventRecord)
+	require.Error(t, err)
+}
