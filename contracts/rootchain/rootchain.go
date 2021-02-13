@@ -27,7 +27,7 @@ var (
 )
 
 // RootchainABI is the input ABI used to generate the binding from.
-const RootchainABI = "[{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"uint256[3][]\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"max_deposits\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentEpoch\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"_nextHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"headerBlockId\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"reward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"}]"
+const RootchainABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"uint256[3][]\"}],\"name\":\"submitCheckpoint\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"headerBlockId\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"reward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"}]"
 
 // Rootchain is an auto generated Go binding around an Ethereum contract.
 type Rootchain struct {
@@ -171,58 +171,6 @@ func (_Rootchain *RootchainTransactorRaw) Transact(opts *bind.TransactOpts, meth
 	return _Rootchain.Contract.contract.Transact(opts, method, params...)
 }
 
-// NextHeaderBlock is a free data retrieval call binding the contract method 0x8d978d88.
-//
-// Solidity: function _nextHeaderBlock() view returns(uint256)
-func (_Rootchain *RootchainCaller) NextHeaderBlock(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "_nextHeaderBlock")
-	return *ret0, err
-}
-
-// NextHeaderBlock is a free data retrieval call binding the contract method 0x8d978d88.
-//
-// Solidity: function _nextHeaderBlock() view returns(uint256)
-func (_Rootchain *RootchainSession) NextHeaderBlock() (*big.Int, error) {
-	return _Rootchain.Contract.NextHeaderBlock(&_Rootchain.CallOpts)
-}
-
-// NextHeaderBlock is a free data retrieval call binding the contract method 0x8d978d88.
-//
-// Solidity: function _nextHeaderBlock() view returns(uint256)
-func (_Rootchain *RootchainCallerSession) NextHeaderBlock() (*big.Int, error) {
-	return _Rootchain.Contract.NextHeaderBlock(&_Rootchain.CallOpts)
-}
-
-// CurrentEpoch is a free data retrieval call binding the contract method 0x76671808.
-//
-// Solidity: function currentEpoch() view returns(uint256)
-func (_Rootchain *RootchainCaller) CurrentEpoch(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "currentEpoch")
-	return *ret0, err
-}
-
-// CurrentEpoch is a free data retrieval call binding the contract method 0x76671808.
-//
-// Solidity: function currentEpoch() view returns(uint256)
-func (_Rootchain *RootchainSession) CurrentEpoch() (*big.Int, error) {
-	return _Rootchain.Contract.CurrentEpoch(&_Rootchain.CallOpts)
-}
-
-// CurrentEpoch is a free data retrieval call binding the contract method 0x76671808.
-//
-// Solidity: function currentEpoch() view returns(uint256)
-func (_Rootchain *RootchainCallerSession) CurrentEpoch() (*big.Int, error) {
-	return _Rootchain.Contract.CurrentEpoch(&_Rootchain.CallOpts)
-}
-
 // CurrentHeaderBlock is a free data retrieval call binding the contract method 0xec7e4855.
 //
 // Solidity: function currentHeaderBlock() view returns(uint256)
@@ -323,50 +271,45 @@ func (_Rootchain *RootchainCallerSession) HeaderBlocks(arg0 *big.Int) (struct {
 	return _Rootchain.Contract.HeaderBlocks(&_Rootchain.CallOpts, arg0)
 }
 
-// MaxDeposits is a free data retrieval call binding the contract method 0x20096c92.
+// SubmitCheckpoint is a paid mutator transaction binding the contract method 0x4e43e495.
 //
-// Solidity: function max_deposits() view returns(uint256)
-func (_Rootchain *RootchainCaller) MaxDeposits(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "max_deposits")
-	return *ret0, err
+// Solidity: function submitCheckpoint(bytes data, uint256[3][] sigs) returns()
+func (_Rootchain *RootchainTransactor) SubmitCheckpoint(opts *bind.TransactOpts, data []byte, sigs [][3]*big.Int) (*types.Transaction, error) {
+	return _Rootchain.contract.Transact(opts, "submitCheckpoint", data, sigs)
 }
 
-// MaxDeposits is a free data retrieval call binding the contract method 0x20096c92.
+// SubmitCheckpoint is a paid mutator transaction binding the contract method 0x4e43e495.
 //
-// Solidity: function max_deposits() view returns(uint256)
-func (_Rootchain *RootchainSession) MaxDeposits() (*big.Int, error) {
-	return _Rootchain.Contract.MaxDeposits(&_Rootchain.CallOpts)
+// Solidity: function submitCheckpoint(bytes data, uint256[3][] sigs) returns()
+func (_Rootchain *RootchainSession) SubmitCheckpoint(data []byte, sigs [][3]*big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SubmitCheckpoint(&_Rootchain.TransactOpts, data, sigs)
 }
 
-// MaxDeposits is a free data retrieval call binding the contract method 0x20096c92.
+// SubmitCheckpoint is a paid mutator transaction binding the contract method 0x4e43e495.
 //
-// Solidity: function max_deposits() view returns(uint256)
-func (_Rootchain *RootchainCallerSession) MaxDeposits() (*big.Int, error) {
-	return _Rootchain.Contract.MaxDeposits(&_Rootchain.CallOpts)
+// Solidity: function submitCheckpoint(bytes data, uint256[3][] sigs) returns()
+func (_Rootchain *RootchainTransactorSession) SubmitCheckpoint(data []byte, sigs [][3]*big.Int) (*types.Transaction, error) {
+	return _Rootchain.Contract.SubmitCheckpoint(&_Rootchain.TransactOpts, data, sigs)
 }
 
-// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0x0ed05ad2.
+// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0x6a791f11.
 //
-// Solidity: function submitHeaderBlock(bytes data, uint256[3][] sigs) returns()
-func (_Rootchain *RootchainTransactor) SubmitHeaderBlock(opts *bind.TransactOpts, data []byte, sigs [][3]*big.Int) (*types.Transaction, error) {
+// Solidity: function submitHeaderBlock(bytes data, bytes sigs) returns()
+func (_Rootchain *RootchainTransactor) SubmitHeaderBlock(opts *bind.TransactOpts, data []byte, sigs []byte) (*types.Transaction, error) {
 	return _Rootchain.contract.Transact(opts, "submitHeaderBlock", data, sigs)
 }
 
-// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0x0ed05ad2.
+// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0x6a791f11.
 //
-// Solidity: function submitHeaderBlock(bytes data, uint256[3][] sigs) returns()
-func (_Rootchain *RootchainSession) SubmitHeaderBlock(data []byte, sigs [][3]*big.Int) (*types.Transaction, error) {
+// Solidity: function submitHeaderBlock(bytes data, bytes sigs) returns()
+func (_Rootchain *RootchainSession) SubmitHeaderBlock(data []byte, sigs []byte) (*types.Transaction, error) {
 	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, data, sigs)
 }
 
-// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0x0ed05ad2.
+// SubmitHeaderBlock is a paid mutator transaction binding the contract method 0x6a791f11.
 //
-// Solidity: function submitHeaderBlock(bytes data, uint256[3][] sigs) returns()
-func (_Rootchain *RootchainTransactorSession) SubmitHeaderBlock(data []byte, sigs [][3]*big.Int) (*types.Transaction, error) {
+// Solidity: function submitHeaderBlock(bytes data, bytes sigs) returns()
+func (_Rootchain *RootchainTransactorSession) SubmitHeaderBlock(data []byte, sigs []byte) (*types.Transaction, error) {
 	return _Rootchain.Contract.SubmitHeaderBlock(&_Rootchain.TransactOpts, data, sigs)
 }
 
