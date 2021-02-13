@@ -46,7 +46,7 @@ func (k Querier) Params(context context.Context, req *types.QueryParamsRequest) 
 		SpanDuration:   getParams.GetSpanDuration(),
 		LatestEthBlock: latestEthBlock.Uint64(),
 		ProducerCount:  getParams.GetProducerCount(),
-		Sprint:         getParams.GetSpanDuration(),
+		Sprint:         getParams.GetSprintDuration(),
 	}, nil
 }
 
@@ -172,6 +172,7 @@ func (k Querier) NextSpanSeed(context context.Context, req *types.QueryNextSpanS
 	}
 	ctx := sdk.UnwrapSDKContext(context)
 	nextSpanSeed, err := k.GetNextSpanSeed(ctx, k.contractCaller)
+	fmt.Println("nextSpanSeed ", nextSpanSeed)
 	if err != nil {
 		return nil, err
 	}

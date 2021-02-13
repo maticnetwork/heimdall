@@ -284,10 +284,9 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventSpan() {
 			require.Nil(t, result)
 		} else {
 			pSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
-			suite.NotEqual(cSpan, pSpan, "Invalid: handler should update span "+c.msg)
+			suite.NotEqual(cSpan, pSpan)
 			require.NotNil(t, result)
 			require.NoError(t, err)
 		}
 	}
-
 }
