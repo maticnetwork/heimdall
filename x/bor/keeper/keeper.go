@@ -155,15 +155,18 @@ func (k *Keeper) HasSpan(ctx sdk.Context, id uint64) bool {
 }
 
 // GetAllSpans fetches all indexed by id from store
-func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*hmTypes.Span) {
+func (k *Keeper) GetAllSpans(ctx sdk.Context) ([]*hmTypes.Span, error) {
+	var spansList []*hmTypes.Span
 	// iterate through spans and create span update array
-	k.IterateSpansAndApplyFn(ctx, func(span hmTypes.Span) error {
+	err := k.IterateSpansAndApplyFn(ctx, func(span hmTypes.Span) error {
 		// append to list of validatorUpdates
-		spans = append(spans, &span)
+		spansList = append(spansList, &span)
 		return nil
 	})
-
-	return
+	if err != nil {
+		return nil, err
+	}
+	return spansList, err
 }
 
 // GetSpanList returns all spans with params like page and limit
@@ -334,7 +337,7 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context, contractCaller helper.IContract
 //
 
 // IterateSpansAndApplyFn interate spans and apply the given function.
-func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Span) error) {
+func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Span) error) error {
 	store := ctx.KVStore(k.storeKey)
 
 	// get span iterator
@@ -345,12 +348,17 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 	for ; iterator.Valid(); iterator.Next() {
 		// unmarshall span
 		var result hmTypes.Span
-		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result); err != nil {
+		err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &result)
+		if err != nil {
 			k.Logger(ctx).Error("Error UnmarshalBinaryBare", "error", err)
+			return err
 		}
 		// call function and return if required
-		if err := f(result); err != nil {
-			return
+		resultError := f(result)
+		if resultError != nil {
+			k.Logger(ctx).Error("Error UnmarshalBinaryBare", "error", resultError)
+			return resultError
 		}
 	}
+	return nil
 }

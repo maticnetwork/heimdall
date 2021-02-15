@@ -29,7 +29,10 @@ func InitGenesis(ctx sdk.Context, keeper borKeeper.Keeper, data types.GenesisSta
 func ExportGenesis(ctx sdk.Context, keeper borKeeper.Keeper) *types.GenesisState {
 	params := keeper.GetParams(ctx)
 
-	allSpans := keeper.GetAllSpans(ctx)
+	allSpans, err := keeper.GetAllSpans(ctx)
+	if err != nil {
+		keeper.Logger(ctx).Error("Error ExportGenesis", "error", err)
+	}
 	hmTypes.SortSpanByID(allSpans)
 	return types.NewGenesisState(
 		params,

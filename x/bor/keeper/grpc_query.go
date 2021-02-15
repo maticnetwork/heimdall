@@ -116,7 +116,7 @@ func (k Querier) SpanList(context context.Context, req *types.QuerySpanListReque
 	ctx := sdk.UnwrapSDKContext(context)
 	resp, err := k.GetSpanList(ctx, req.Pagination.Page, req.Pagination.Limit)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if resp == nil {
 		return nil, status.Error(codes.NotFound, fmt.Sprintf("could not fetch span list with page %v and limit %v", req.Pagination.Page, req.Pagination.Limit))
@@ -132,7 +132,10 @@ func (k Querier) LatestSpan(context context.Context, req *types.QueryLatestSpanR
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(context)
-	spans := k.GetAllSpans(ctx)
+	spans, err := k.GetAllSpans(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// if this is the first span return empty span
 	if len(spans) == 0 {
 		return &types.QueryLatestSpanResponse{Span: defaultSpan}, nil
