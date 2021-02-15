@@ -1,0 +1,24 @@
+syntax = "proto3";
+package heimdall.gov.v1beta1;
+
+import "gogoproto/gogo.proto";
+option go_package = "github.com/maticnetwork/heimdall/x/bor/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message Params {
+    uint64 sprint_duration = 1 [
+        (gogoproto.jsontag)  = "sprint_duration",
+        (gogoproto.moretags) = "yaml:\"sprint_duration\""
+    ];
+    uint64 span_duration = 2 [
+        (gogoproto.jsontag)  = "span_duration",
+        (gogoproto.moretags) = "yaml:\"span_duration\""
+    ];
+    uint64 producer_count = 3 [
+        (gogoproto.jsontag)  = "producer_count",
+        (gogoproto.moretags) = "yaml:\"producer_count\""
+    ];
+}
