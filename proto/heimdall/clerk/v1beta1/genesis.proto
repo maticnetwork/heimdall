@@ -1,7 +1,7 @@
 syntax = "proto3";
 package heimdall.clerk.v1beta1;
 
-import "clerk/v1beta/clerk.proto";
+import "heimdall/clerk/v1beta1/clerk.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";

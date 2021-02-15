@@ -1,8 +1,8 @@
 syntax = "proto3";
 package heimdall.checkpoint.v1beta1;
 
-import "checkpoint/v1beta/genesis.proto";
-import "checkpoint/v1beta/msg.proto";
+import "heimdall/checkpoint/v1beta1/genesis.proto";
+import "heimdall/checkpoint/v1beta1/msg.proto";
 import "google/api/annotations.proto";
 import "heimdall/types/headers.proto";
 import "heimdall/types/query.proto";
