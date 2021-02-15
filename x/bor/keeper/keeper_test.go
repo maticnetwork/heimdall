@@ -5,6 +5,8 @@ import (
 	"math/big"
 	"testing"
 
+	"github.com/stretchr/testify/require"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/bor/keeper"
 	borTypes "github.com/maticnetwork/heimdall/x/bor/types"
@@ -39,7 +41,7 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (suite *KeeperTestSuite) TestFreeze() {
-	initApp, ctx := suite.app, suite.ctx
+	initApp, t, ctx := suite.app, suite.T(), suite.ctx
 
 	tc := []struct {
 		id, startBlock, endBlock uint64
@@ -64,15 +66,17 @@ func (suite *KeeperTestSuite) TestFreeze() {
 
 	for i, c := range tc {
 		// cSpan is used to check if span data remains constant post handler execution
-		cSpan := initApp.BorKeeper.GetAllSpans(ctx)
+		cSpan, err := initApp.BorKeeper.GetAllSpans(ctx)
+		require.NoError(t, err)
 		cEthBlock := initApp.BorKeeper.GetLastEthBlock(ctx)
 
 		cMsg := fmt.Sprintf("i: %v, msg: %v", i, c.msg)
-		err := initApp.BorKeeper.FreezeSet(ctx, c.id, c.startBlock, c.endBlock, c.borChainID, c.seed)
+		err = initApp.BorKeeper.FreezeSet(ctx, c.id, c.startBlock, c.endBlock, c.borChainID, c.seed)
 		suite.Equal(c.expErr, err, cMsg)
 		if c.checkSpan {
 			// pSpan is used to check if span data remains constant post handler execution
-			pSpan := initApp.BorKeeper.GetAllSpans(ctx)
+			pSpan, err := initApp.BorKeeper.GetAllSpans(ctx)
+			require.NoError(t, err)
 			suite.NotEqual(cSpan, pSpan, "Invalid: handler should update span "+c.msg)
 
 			pEthBlock := initApp.BorKeeper.GetLastEthBlock(ctx)
@@ -201,7 +205,8 @@ func (suite *KeeperTestSuite) TestGetAllSpans() {
 		c.msg = fmt.Sprintf("i: %v, msg: %v", i, c.msg)
 		err := initApp.BorKeeper.AddNewSpan(ctx, *c.span)
 		suite.Nil(err, c.msg)
-		out := initApp.BorKeeper.GetAllSpans(ctx)
+		out, err := initApp.BorKeeper.GetAllSpans(ctx)
+		require.NoError(suite.T(), err)
 		suite.Equal([]*hmTypes.Span{c.span}, out, c.msg)
 	}
 }

@@ -275,15 +275,16 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventSpan() {
 			require.NoError(t, err)
 		}
 		// cSpan is used to check if span data remains constant post handler execution
-		cSpan := suite.app.BorKeeper.GetAllSpans(ctx)
-
+		cSpan, err := suite.app.BorKeeper.GetAllSpans(ctx)
+		require.NoError(t, err)
 		result, err := suite.postHandler(ctx, &c.proposeSpanMsg, c.result)
 		if c.error {
 			require.Equal(t, err.Error(), c.msg)
 			require.Error(t, err)
 			require.Nil(t, result)
 		} else {
-			pSpan := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+			pSpan, err := suite.app.BorKeeper.GetAllSpans(suite.ctx)
+			require.NoError(t, err)
 			suite.NotEqual(cSpan, pSpan)
 			require.NotNil(t, result)
 			require.NoError(t, err)
