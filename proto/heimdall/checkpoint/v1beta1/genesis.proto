@@ -3,7 +3,7 @@ package heimdall.checkpoint.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "google/protobuf/duration.proto";
-import "heimdall/types/headers.proto";
+import "heimdall/base/v1beta1/headers.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/checkpoint/types";
 
