@@ -3,7 +3,7 @@ syntax = "proto3";
 package heimdall.types;
 
 import "gogoproto/gogo.proto";
-import "heimdall/types/validator.proto";
+import "heimdall/base/v1beta1/validator.proto";
 option go_package = "github.com/maticnetwork/heimdall/types";
 
 option (gogoproto.sizer_all)       = true;

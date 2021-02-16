@@ -1,8 +1,6 @@
 syntax = "proto3";
 package testutil.testdata;
 
-import "gogoproto/gogo.proto";
-
 option go_package = "github.com/maticnetwork/heimdall/testutil/testdata";
 
 // Msg tests the Protobuf message service as defined in

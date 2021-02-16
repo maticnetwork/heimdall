@@ -1,9 +1,9 @@
 syntax = "proto3";
-package heimdall.gov.v1beta;
+package heimdall.gov.v1beta1;
 
 import "cosmos/base/v1beta1/coin.proto";
-import "gov/v1beta/gov.proto";
-import "heimdall/types/validator.proto";
+import "heimdall/gov/v1beta1/gov.proto";
+import "heimdall/base/v1beta1/validator.proto";
 import "cosmos_proto/cosmos.proto";
 import "gogoproto/gogo.proto";
 import "google/protobuf/any.proto";

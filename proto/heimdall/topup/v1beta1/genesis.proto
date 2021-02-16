@@ -2,7 +2,7 @@ syntax = "proto3";
 package heimdall.topup.v1beta1;
 
 import "gogoproto/gogo.proto";
-import "heimdall/types/divident.proto";
+import "heimdall/base/v1beta1/divident.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/topup/types";
 

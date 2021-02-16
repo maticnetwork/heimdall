@@ -1,12 +1,12 @@
 syntax = "proto3";
-package heimdall.gov.v1beta;
+package heimdall.gov.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "cosmos_proto/cosmos.proto";
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/any.proto";
 import "google/protobuf/duration.proto";
-import "heimdall/types/validator.proto";
+import "heimdall/base/v1beta1/validator.proto";
 import "cosmos/base/v1beta1/coin.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/gov/types";

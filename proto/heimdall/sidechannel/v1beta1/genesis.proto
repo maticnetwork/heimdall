@@ -1,7 +1,7 @@
 syntax = "proto3";
 package heimdall.sidechannel.v1beta1;
 
-import "sidechannel/v1beta1/params.proto";
+import "heimdall/sidechannel/v1beta1/params.proto";
 import "gogoproto/gogo.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/sidechannel/types";
