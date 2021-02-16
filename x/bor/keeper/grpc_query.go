@@ -46,7 +46,7 @@ func (k Querier) Params(context context.Context, req *types.QueryParamsRequest) 
 		SpanDuration:   getParams.GetSpanDuration(),
 		LatestEthBlock: latestEthBlock.Uint64(),
 		ProducerCount:  getParams.GetProducerCount(),
-		Sprint:         getParams.GetSpanDuration(),
+		Sprint:         getParams.GetSprintDuration(),
 	}, nil
 }
 
