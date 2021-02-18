@@ -293,3 +293,8 @@ func GetPubKey() secp256k1.PubKey {
 func GetAddress() []byte {
 	return GetPubKey().Address().Bytes()
 }
+
+// GetAddressStr returns address string object
+func GetAddressStr() string {
+	return GetPubKey().Address().String()
+}

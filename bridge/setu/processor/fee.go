@@ -3,13 +3,14 @@ package processor
 import (
 	"encoding/json"
 
+	hmCommon "github.com/maticnetwork/heimdall/types/common"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	topupTypes "github.com/maticnetwork/heimdall/x/topup/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -60,7 +61,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 				"event", eventName,
 				"user", event.User,
 				"Fee", event.Fee,
-				"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+				"txHash", hmCommon.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
 				"blockNumber", vLog.BlockNumber,
 			)
@@ -71,16 +72,20 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 			"event", eventName,
 			"user", event.User,
 			"Fee", event.Fee,
-			"txHash", hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
+			"txHash", hmCommon.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 			"blockNumber", vLog.BlockNumber,
 		)
 
+		userAddr, err := sdk.AccAddressFromHex(event.User.Hex())
+		if err != nil {
+			return err
+		}
 		// create msg checkpoint ack message
-		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), hmTypes.BytesToHeimdallAddress(event.User.Bytes()), sdk.NewIntFromBigInt(event.Fee), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
+		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), userAddr, sdk.NewIntFromBigInt(event.Fee), hmCommon.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
-		if err := fp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := fp.txBroadcaster.BroadcastToHeimdall(&msg); err != nil {
 			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "error", err)
 			return err
 		}

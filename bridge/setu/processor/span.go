@@ -8,7 +8,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 
 	"github.com/maticnetwork/bor/core/types"
-	//borTypes "github.com/maticnetwork/heimdall/bor/types"
+	//borTypes "github.com/maticnetwork/heimdall/x/bor/types"
 )
 
 // SpanProcessor - process span related events
@@ -68,7 +68,7 @@ func (sp *SpanProcessor) sendSpanToHeimdall(headerBlockStr string) error {
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "seed", seed)
 
 		// broadcast to heimdall
-		//msg := borTypes.MsgProposeSpan{
+		//msg := borTypes.{
 		//	ID:         nextSpanMsg.ID,
 		//	Proposer:   hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		//	StartBlock: nextSpanMsg.StartBlock,
