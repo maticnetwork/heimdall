@@ -28,6 +28,7 @@ var rootCmd = &cobra.Command{
 
 // InitTendermintViperConfig sets global viper configuration needed to heimdall
 func InitTendermintViperConfig(cmd *cobra.Command) {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
 	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
@@ -40,6 +41,8 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	}
 
 	// set to viper
+
+	viper := viper.New()
 	viper.Set(helper.NodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
@@ -47,7 +50,10 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	viper.Set(borChainIDFlag, borChainIDValue)
 
 	// start heimdall config
-	helper.InitHeimdallConfig("")
+	err := helper.InitHeimdallConfig(viper)
+	if err != nil {
+		logger.Error("Error while init heimdall config", "Error", err)
+	}
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.

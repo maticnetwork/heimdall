@@ -250,3 +250,12 @@ func (valID ValidatorID) String() string {
 // 	}
 // 	return
 // }
+
+// GetValidatorsSet will returns array of validator from validator set
+func (vSet *ValidatorSet) GetValidatorsSet() []Validator {
+	validators := make([]Validator, len(vSet.Validators))
+	for i, validator := range vSet.Validators {
+		validators[i] = *validator
+	}
+	return validators
+}

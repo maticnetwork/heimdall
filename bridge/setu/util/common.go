@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	AccountDetailsURL       = "/auth/accounts/%v"
+	AccountDetailsURL       = "/cosmos/auth/v1beta1/accounts/%v"
 	LastNoAckURL            = "/checkpoints/last-no-ack"
 	CheckpointParamsURL     = "/checkpoints/params"
 	ChainManagerParamsURL   = "/chainmanager/params"

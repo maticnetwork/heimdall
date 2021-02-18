@@ -1,0 +1,44 @@
+syntax = "proto3";
+package heimdall.topup.v1beta1;
+
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/topup/types";
+
+option (gogoproto.sizer_all)       = false;
+option (gogoproto.marshaler_all)   = false;
+option (gogoproto.unmarshaler_all) = false;
+
+// Msg defines the topup Msg service.
+service Msg {
+    // Topup defines a method to topup validator account with additional tokens.
+    rpc Topup(MsgTopup) returns (MsgTopupResponse);
+
+    // WithdrawFee defines a method for validators to withdraw tokens from
+    // heimdall.
+    rpc WithdrawFee(MsgWithdrawFee) returns (MsgWithdrawFeeResponse);
+}
+
+// GenesisState defines the topup module's genesis state.
+message MsgTopup {
+    option (gogoproto.goproto_getters) = false;
+
+    string from_address = 1 [(gogoproto.moretags) = "yaml:\"from_address\""];
+    string user         = 2;
+    uint64 fee          = 3
+        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+    string tx_hash      = 4 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index    = 5 [(gogoproto.moretags) = "yaml:\"log_index\""];
+    uint64 block_number = 6 [(gogoproto.moretags) = "yaml:\"block_number\""];
+}
+
+message MsgTopupResponse {}
+
+message MsgWithdrawFee {
+    option (gogoproto.goproto_getters) = false;
+    string user_address = 1 [(gogoproto.moretags) = "yaml:\"user_address\""];
+    uint64 amount       = 2
+        [(gogoproto.casttype) = "github.com/cosmos/cosmos-sdk/types.Int"];
+}
+
+message MsgWithdrawFeeResponse {}

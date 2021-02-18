@@ -1,0 +1,34 @@
+syntax = "proto3";
+package heimdall.clerk.v1beta1;
+
+import "gogoproto/gogo.proto";
+// import "google/protobuf/any.proto";
+// import "google/protobuf/duration.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";
+
+option (gogoproto.sizer_all)       = false;
+option (gogoproto.marshaler_all)   = false;
+option (gogoproto.unmarshaler_all) = false;
+
+// Msg defines the staking Msg service.
+service Msg {
+    // MsgEventRecord defines a method to join a new event record.
+    rpc MsgEventRecord(MsgEventRecordRequest) returns (MsgEventRecordResponse);
+}
+
+message MsgEventRecordRequest {
+    option (gogoproto.goproto_getters) = false;
+    string from                        = 1;
+    string tx_hash      = 2 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index    = 3 [(gogoproto.moretags) = "yaml:\"log_index\""];
+    uint64 block_number = 4 [(gogoproto.moretags) = "yaml:\"block_number\""];
+    string contract_address = 5
+        [(gogoproto.moretags) = "yaml:\"contract_address\""];
+    bytes  data     = 6;
+    uint64 id       = 7;
+    string chain_id = 8 [(gogoproto.moretags) = "yaml:\"chain_id\""];
+}
+
+// MsgEventRecordResponse defines MsgEventRecord response type.
+message MsgEventRecordResponse {}

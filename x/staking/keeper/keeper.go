@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
@@ -30,7 +31,7 @@ var (
 // ModuleCommunicator manages different module interaction
 type ModuleCommunicator interface {
 	GetACKCount(ctx sdk.Context) uint64
-	CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
+	CreateValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
 type (
@@ -352,9 +353,9 @@ func (k *Keeper) GetSignerFromValidatorID(ctx sdk.Context, valID hmTypes.Validat
 	store := ctx.KVStore(k.storeKey)
 	key := GetValidatorMapKey(valID.Bytes())
 	// check if validator address has been mapped
-	// if !store.Has(key) {
-	// 	return helper.ZeroAddress, false
-	// }
+	if !store.Has(key) {
+		return helper.ZeroAddress, false
+	}
 	// return address from bytes
 	return common.BytesToAddress(store.Get(key)), true
 }
@@ -441,7 +442,7 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 // Slashing api's
 // AddValidatorSigningInfo creates a signing info for validator
 func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
-	k.ModuleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
+	k.ModuleCommunicator.CreateValidatorSigningInfo(ctx, valID, valSigningInfo)
 	return nil
 }
 

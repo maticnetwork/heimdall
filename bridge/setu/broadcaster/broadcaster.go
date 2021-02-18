@@ -44,7 +44,6 @@ func NewTxBroadcaster(cdc codec.Marshaler) *TxBroadcaster {
 	account, err := util.GetAccount(cliCtx, address)
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
-
 	}
 
 	txBroadcaster := TxBroadcaster{

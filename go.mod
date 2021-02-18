@@ -20,17 +20,16 @@ require (
 	github.com/rakyll/statik v0.1.7
 	github.com/regen-network/cosmos-proto v0.3.1
 	github.com/spf13/cast v1.3.1
-	github.com/spf13/cobra v1.1.1
+	github.com/spf13/cobra v1.1.3
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.7.1
 	github.com/streadway/amqp v1.0.0
-	github.com/stretchr/testify v1.6.1
+	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tendermint v0.34.0
-	github.com/tendermint/tm-db v0.6.3
-	golang.org/x/sync v0.0.0-20201020160332-67f06af15bc9
+	github.com/tendermint/tendermint v0.34.3
+	github.com/tendermint/tm-db v0.6.4
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
 	google.golang.org/grpc v1.35.0
 	gopkg.in/yaml.v2 v2.4.0
@@ -38,6 +37,6 @@ require (
 
 replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alpha.regen.4
 
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20201206065638-7f88f460383c
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20210120100900-c8adb2516be0
 
 replace github.com/cosmos/cosmos-sdk => /home/gsk967/Sai/Projects/maticnetwork/cosmos-sdk

@@ -336,7 +336,7 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(params util.Params, latest
 	chainManagerParams := params.ChainmanagerParams
 	checkpointParams := params.CheckpointParams
 
-	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(common.BytesToAddress(chainManagerParams.ChainParams.RootChainAddress))
+	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(common.HexToAddress(chainManagerParams.ChainParams.RootChainAddress))
 	if err != nil {
 		return nil, err
 	}
@@ -514,7 +514,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(params util.Pa
 		// chain manager params
 		chainParams := params.ChainmanagerParams.ChainParams
 		// root chain address
-		rootChainAddress := common.BytesToAddress(chainParams.RootChainAddress)
+		rootChainAddress := common.HexToAddress(chainParams.RootChainAddress)
 		// root chain instance
 		rootChainInstance, err := cp.contractConnector.GetRootChainInstance(rootChainAddress)
 		if err != nil {
@@ -553,7 +553,7 @@ func (cp *CheckpointProcessor) getLatestCheckpointTime(params util.Params) (int6
 	chainParams := params.ChainmanagerParams.ChainParams
 	checkpointParams := params.CheckpointParams
 
-	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(common.BytesToAddress(chainParams.RootChainAddress))
+	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(common.HexToAddress(chainParams.RootChainAddress))
 	if err != nil {
 		return 0, err
 	}
@@ -646,7 +646,7 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 func (cp *CheckpointProcessor) shouldSendCheckpoint(params util.Params, start uint64, end uint64) (bool, error) {
 	chainmanagerParams := params.ChainmanagerParams
 
-	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(common.BytesToAddress(chainmanagerParams.ChainParams.RootChainAddress))
+	rootChainInstance, err := cp.contractConnector.GetRootChainInstance(common.HexToAddress(chainmanagerParams.ChainParams.RootChainAddress))
 	if err != nil {
 		cp.Logger.Error("Error while creating rootchain instance", "error", err)
 		return false, err

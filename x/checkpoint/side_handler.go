@@ -2,7 +2,6 @@ package checkpoint
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"strconv"
 
@@ -47,7 +46,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 	logger := k.Logger(ctx)
 
 	// validate checkpoint
-	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, hmCommonTypes.BytesToHeimdallHash(msg.RootHash), params.MaxCheckpointLength, contractCaller)
+	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, hmCommonTypes.HexToHeimdallHash(msg.RootHash), params.MaxCheckpointLength, contractCaller)
 	if err != nil {
 		logger.Error("Error validating checkpoint",
 			"error", err,
@@ -81,7 +80,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	// Validate data from root chain
 	//
 
-	rootChainInstance, err := contractCaller.GetRootChainInstance(borCommon.BytesToAddress(chainParams.RootChainAddress.Bytes()))
+	rootChainInstance, err := contractCaller.GetRootChainInstance(borCommon.BytesToAddress([]byte(chainParams.RootChainAddress)))
 	if err != nil {
 		logger.Error("Unable to fetch rootchain contract instance", "error", err)
 		// TODO fix this
@@ -195,7 +194,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 	err = k.SetCheckpointBuffer(ctx, &hmTypes.Checkpoint{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
-		RootHash:   msg.RootHash,
+		RootHash:   string(msg.RootHash),
 		Proposer:   msg.Proposer,
 		BorChainID: msg.BorChainID,
 		TimeStamp:  timeStamp,
@@ -225,8 +224,8 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer),
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
-			sdk.NewAttribute(types.AttributeKeyRootHash, hex.EncodeToString(msg.RootHash)),
-			sdk.NewAttribute(types.AttributeKeyAccountHash, hex.EncodeToString(msg.AccountRootHash)),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash),
+			sdk.NewAttribute(types.AttributeKeyAccountHash, msg.AccountRootHash),
 		),
 	})
 
@@ -258,14 +257,14 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	}
 
 	// Return err if start and end matches but contract root hash doesn't match
-	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && !bytes.Equal([]byte(msg.RootHash), checkpointObj.RootHash) {
+	if msg.StartBlock == checkpointObj.StartBlock && msg.EndBlock == checkpointObj.EndBlock && msg.RootHash != checkpointObj.RootHash {
 		logger.Error("Invalid ACK",
 			"startExpected", checkpointObj.StartBlock,
 			"startReceived", msg.StartBlock,
 			"endExpected", checkpointObj.EndBlock,
 			"endReceived", msg.StartBlock,
-			"rootExpected", hex.EncodeToString(checkpointObj.RootHash),
-			"rootRecieved", msg.RootHash,
+			"rootExpected", checkpointObj.RootHash,
+			"rootReceived", msg.RootHash,
 		)
 		return nil, types.ErrBadAck
 	}
@@ -274,7 +273,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	if checkpointObj.EndBlock > msg.EndBlock {
 		logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
 		checkpointObj.EndBlock = msg.EndBlock
-		checkpointObj.RootHash = []byte(msg.RootHash)
+		checkpointObj.RootHash = msg.RootHash
 		checkpointObj.Proposer = msg.Proposer
 	}
 

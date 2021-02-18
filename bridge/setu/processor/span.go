@@ -8,7 +8,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 
 	"github.com/maticnetwork/bor/core/types"
-	//borTypes "github.com/maticnetwork/heimdall/x/bor/types"
+	borTypes "github.com/maticnetwork/heimdall/x/bor/types"
 )
 
 // SpanProcessor - process span related events
@@ -68,20 +68,20 @@ func (sp *SpanProcessor) sendSpanToHeimdall(headerBlockStr string) error {
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "seed", seed)
 
 		// broadcast to heimdall
-		//msg := borTypes.{
-		//	ID:         nextSpanMsg.ID,
-		//	Proposer:   hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		//	StartBlock: nextSpanMsg.StartBlock,
-		//	EndBlock:   nextSpanMsg.EndBlock,
-		//	ChainID:    nextSpanMsg.ChainID,
-		//	Seed:       seed,
-		//}
-		//
-		//// return broadcast to heimdall
-		//if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-		//	sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
-		//	return err
-		//}
+		msg := borTypes.MsgProposeSpan{
+			SpanId:     nextSpanMsg.ID,
+			Proposer:   helper.GetAddressStr(),
+			StartBlock: nextSpanMsg.StartBlock,
+			EndBlock:   nextSpanMsg.EndBlock,
+			ChainId:    nextSpanMsg.ChainId,
+			Seed:       seed.String(),
+		}
+
+		// return broadcast to heimdall
+		if err := sp.txBroadcaster.BroadcastToHeimdall(&msg); err != nil {
+			sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
+			return err
+		}
 	}
 
 	return nil

@@ -10,10 +10,9 @@ import (
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	// "github.com/maticnetwork/heimdall/auth"
-	// authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
+
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/topup/keeper"
@@ -31,7 +30,7 @@ func NewSideTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 			return SideHandleMsgTopup(ctx, k, *msg, contractCaller)
 		default:
 			return abci.ResponseDeliverSideTx{
-				Code: uint32(6), // TODO should be changed like `sdk.CodeUnknownRequest`
+				Code: sdkerrors.ErrUnknownRequest.ABCICode(),
 			}
 		}
 	}
@@ -56,7 +55,7 @@ func NewPostTxHandler(k keeper.Keeper, contractCaller helper.IContractCaller) hm
 func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 
 	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
-		"txHash", hmCommonTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
+		"txHash", hmCommonTypes.BytesToHeimdallHash([]byte(msg.TxHash)),
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
@@ -66,38 +65,40 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	chainParams := params.ChainParams
 
 	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	receipt, err := contractCaller.GetConfirmedTxReceipt(hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(), params.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
-		return hmCommon.ErrorSideTx(common.CodeWaitFrConfirmation)
+		return hmCommon.ErrorSideTx(common.ErrWaitForConfirmation)
 	}
 
 	// get event log for topup
-	var stakingAddress [20]byte
-	copy(stakingAddress[:], chainParams.StakingInfoAddress)
+	//var stakingAddress [20]byte
+	//copy(stakingAddress[:], chainParams.StakingInfoAddress)
 
-	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(stakingAddress, receipt, msg.LogIndex)
+	accountAddr, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
+	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(accountAddr, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrorSideTx(common.CodeErrDecodeEvent)
+		return hmCommon.ErrorSideTx(common.ErrDecodeEvent)
 	}
 
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
-		return hmCommon.ErrorSideTx(common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(common.ErrInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.User.Bytes(), []byte(msg.User)) {
+	accountAddr1, _ := sdk.AccAddressFromHex(msg.User)
+	if !bytes.Equal(eventLog.User.Bytes(), accountAddr1.Bytes()) {
 		k.Logger(ctx).Error(
 			"User Address from event does not match with Msg user",
 			"EventUser", eventLog.User,
 			"MsgUser", msg.User,
 		)
-		return hmCommon.ErrorSideTx(common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(common.ErrInvalidMsg)
 	}
 
 	if eventLog.Fee.Cmp(msg.Fee.BigInt()) != 0 {
 		k.Logger(ctx).Error("Fee in message doesn't match Fee in event logs", "MsgFee", msg.Fee, "FeeFromEvent", eventLog.Fee)
-		return hmCommon.ErrorSideTx(common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(common.ErrInvalidMsg)
 	}
 
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for topup msg")
@@ -132,16 +133,17 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 	topupAmount := sdk.Coins{sdk.Coin{Denom: types.FeeToken, Amount: msg.Fee}}
 
 	// increase coins in account
-	if err := k.Bk.AddCoins(ctx, []byte(user), topupAmount); err != nil {
+	userAddr, _ := sdk.AccAddressFromHex(user)
+	if err := k.Bk.AddCoins(ctx, userAddr, topupAmount); err != nil {
 		k.Logger(ctx).Error("Error while adding coins to user", "user", user, "topupAmount", topupAmount, "error", err)
 		return nil, err
 	}
 
-	//TODO: Check if this call to SendCoins is required?
 	// transfer fees to sender (proposer)
-	// if err := k.Bk.SendCoins(ctx, []byte(user), []byte(msg.FromAddress), auth.DefaultFeeWantedPerTx); err != nil {
-	// 	return nil, err
-	// }
+	fromAddr, _ := sdk.AccAddressFromHex(msg.FromAddress)
+	if err := k.Bk.SendCoins(ctx, userAddr, fromAddr, topupAmount); err != nil {
+		return nil, err
+	}
 
 	k.Logger(ctx).Debug("Persisted topup state for", "user", user, "topupAmount", topupAmount.String())
 
@@ -159,11 +161,13 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                      // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmCommonTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),                   // result
-			sdk.NewAttribute(types.AttributeKeySender, msg.FromAddress),
-			sdk.NewAttribute(types.AttributeKeyRecipient, msg.User),
+			sdk.NewAttribute(types.AttributeKeySender, fromAddr.String()),
+			sdk.NewAttribute(types.AttributeKeyRecipient, userAddr.String()),
 			sdk.NewAttribute(types.AttributeKeyTopupAmount, msg.Fee.String()),
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 }

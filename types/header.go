@@ -1,7 +1,6 @@
 package types
 
 import (
-	"encoding/hex"
 	"fmt"
 	"sort"
 
@@ -16,11 +15,11 @@ func CreateBlock(
 	proposer common.HeimdallAddress,
 	borChainID string,
 	timestamp uint64,
-) Checkpoint {
-	return Checkpoint{
+) *Checkpoint {
+	return &Checkpoint{
 		StartBlock: start,
 		EndBlock:   end,
-		RootHash:   rootHash.Bytes(),
+		RootHash:   rootHash.String(),
 		Proposer:   proposer.String(),
 		BorChainID: borChainID,
 		TimeStamp:  timestamp,
@@ -42,7 +41,7 @@ func (m Checkpoint) String() string {
 		m.Proposer,
 		m.StartBlock,
 		m.EndBlock,
-		hex.EncodeToString(m.RootHash),
+		m.RootHash,
 		m.BorChainID,
 		m.TimeStamp,
 	)

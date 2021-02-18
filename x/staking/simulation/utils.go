@@ -2,14 +2,11 @@ package simulation
 
 import (
 	"math/rand"
-	"testing"
-
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
-	"github.com/maticnetwork/heimdall/x/staking/keeper"
-	"github.com/stretchr/testify/require"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
@@ -21,15 +18,11 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 		signer := sdk.AccAddress(privKey1.PubKey().Address().Bytes())
 
 		if randomise {
-			startBlock := uint64(rand.Intn(10))
-			// todo find a way to genrate non zero random number
-			if startBlock == 0 {
-				startBlock = 1
-			}
-			power := uint64(rand.Intn(100))
-			if power == 0 {
-				power = 1
-			}
+			rand.Seed(time.Now().UnixNano())
+			startBlock = uint64(rand.Intn(9))
+			startBlock += 1
+			power = int64(rand.Intn(99))
+			power += 1
 		}
 
 		newVal := hmTypes.Validator{
@@ -44,22 +37,4 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 		validators = append(validators, newVal)
 	}
 	return
-}
-
-// LoadValidatorSet loads validator set
-func LoadValidatorSet(count int, t *testing.T, keeper keeper.Keeper, ctx sdk.Context, randomise bool, timeAlive int) hmTypes.ValidatorSet {
-	validators := GenRandomVal(count, 0, 10, uint64(timeAlive), randomise, 1)
-	var valSet hmTypes.ValidatorSet
-
-	for _, validator := range validators {
-		err := keeper.AddValidator(ctx, validator)
-		require.NoError(t, err, "Unable to set validator, Error: %v", err)
-		_ = valSet.UpdateWithChangeSet([]*hmTypes.Validator{&validator})
-	}
-
-	err := keeper.UpdateValidatorSetInStore(ctx, &valSet)
-	require.NoError(t, err, "Unable to update validator set")
-	vals := keeper.GetAllValidators(ctx)
-	require.NotNil(t, vals)
-	return valSet
 }

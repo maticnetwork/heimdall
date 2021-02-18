@@ -130,8 +130,8 @@ func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.Div
 		return err
 	}
 
-	store.Set(GetDividendAccountMapKey(dividendAccount.User.Bytes()), bz)
-	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey(dividendAccount.User.Bytes())), "dividendAccount", dividendAccount.String())
+	store.Set(GetDividendAccountMapKey([]byte(dividendAccount.User)), bz)
+	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey([]byte(dividendAccount.User))), "dividendAccount", dividendAccount.String())
 	return nil
 }
 
@@ -145,7 +145,7 @@ func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address sdk.AccAdd
 
 	// Get DividendAccount key
 	store := ctx.KVStore(k.key)
-	key := GetDividendAccountMapKey(address.Bytes())
+	key := GetDividendAccountMapKey([]byte(address.String()))
 
 	// unmarshall dividend account and return
 	dividendAccount, err = hmTypes.UnMarshallDividendAccount(k.cdc, store.Get(key))
@@ -159,7 +159,7 @@ func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address sdk.AccAdd
 // CheckIfDividendAccountExists will return true if dividend account exists
 func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr sdk.AccAddress) (ok bool) {
 	store := ctx.KVStore(k.key)
-	key := GetDividendAccountMapKey(userAddr.Bytes())
+	key := GetDividendAccountMapKey([]byte(userAddr.String()))
 	return store.Has(key)
 }
 
@@ -184,7 +184,7 @@ func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress sdk.AccAdd
 		dividendAccount, _ = k.GetDividendAccountByAddress(ctx, userAddress)
 	} else {
 		dividendAccount = hmTypes.DividendAccount{
-			User:      userAddress,
+			User:      userAddress.String(),
 			FeeAmount: big.NewInt(0).String(),
 		}
 	}

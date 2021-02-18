@@ -25,6 +25,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
+	ethcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
@@ -44,6 +45,13 @@ var ZeroAddress = common.Address{}
 
 // ZeroPubKey represents empty pub key
 var ZeroPubKey = hmCommonTypes.PubKey{}
+
+const (
+	COMPRESSED_PUBKEY_SIZE               = 32
+	COMPRESSED_PUBKEY_SIZE_WITH_PREFIX   = 33
+	UNCOMPRESSED_PUBKEY_SIZE             = 64
+	UNCOMPRESSED_PUBKEY_SIZE_WITH_PREFIX = 65
+)
 
 // GetPowerFromAmount returns power from amount -- note that this will pollute amount object
 func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
@@ -132,6 +140,37 @@ func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 	return nil
 }
 
+// AppendPubkeyPrefix returns publickey in uncompressed format
+func AppendPubkeyPrefix(signerPubKey []byte) []byte {
+	// append prefix - "0x04" as heimdall uses publickey in uncompressed format. Refer below link
+	// https://superuser.com/questions/1465455/what-is-the-size-of-public-key-for-ecdsa-spec256r1
+	prefix := make([]byte, 1)
+	prefix[0] = byte(0x04)
+	signerPubKey = append(prefix[:], signerPubKey[:]...)
+	return signerPubKey
+}
+
+// DecompressPubKey decompress pub key
+func DecompressPubKey(compressed []byte) ([]byte, error) {
+	ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressed)
+	if err != nil {
+		return nil, err
+	}
+	return ethcrypto.FromECDSAPub(ecdsaPubkey), nil
+}
+
+// CompressPubKey decompress pub key
+func CompressPubKey(uncompressedBytes []byte) ([]byte, error) {
+	if len(uncompressedBytes) == UNCOMPRESSED_PUBKEY_SIZE {
+		uncompressedBytes = AppendPubkeyPrefix(uncompressedBytes)
+	}
+	uncompressed, err := ethcrypto.UnmarshalPubkey(uncompressedBytes)
+	if err != nil {
+		return nil, err
+	}
+	return ethcrypto.CompressPubkey(uncompressed), nil
+}
+
 // GetUpdatedValidators updates validators in validator set
 func GetUpdatedValidators(
 	currentSet *hmTypes.ValidatorSet,
@@ -143,7 +182,7 @@ func GetUpdatedValidators(
 		// create copy of validator
 		validator := v.Copy()
 
-		address := []byte(validator.Signer)
+		address := validator.GetSigner()
 		_, val := currentSet.GetByAddress(address)
 		if val != nil && !validator.IsCurrentValidator(ackCount) {
 			// remove validator
@@ -158,6 +197,15 @@ func GetUpdatedValidators(
 	}
 
 	return updates
+}
+
+// ToBytes32 is a convenience method for converting a byte slice to a fix
+// sized 32 byte array. This method will truncate the input if it is larger
+// than 32 bytes.
+func ToBytes32(x []byte) [32]byte {
+	var y [32]byte
+	copy(y[:], x)
+	return y
 }
 
 // GetTxEncoder returns tx encoder
@@ -304,16 +352,16 @@ func recoverPubkey(msg []byte, sig []byte) ([]byte, error) {
 // GetSideTxSigs returns sigs bytes from vote by tx hash
 func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.CommitSig) (sigs []byte) {
 	// side tx result with data
-	sideTxResultWithData := tmTypes.SideTxResultWithData{
-		SideTxResult: tmTypes.SideTxResult{
+	sideTxResultWithData := tmproto.SideTxResultWithData{
+		Result: &tmproto.SideTxResult{
 			TxHash: txHash,
-			Result: int32(tmproto.SideTxResultType_YES),
+			Result: tmproto.SideTxResultType_YES,
 		},
 		Data: sideTxData,
 	}
 
 	// draft signed data
-	signedData := sideTxResultWithData.GetBytes()
+	signedData := sideTxResultWithData.GetData()
 
 	sideTxSigs := make([]*sideTxSig, 0)
 	for _, vote := range unFilteredVotes {
@@ -322,7 +370,7 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 			// find side-tx result by tx-hash
 			if bytes.Equal(sideTxResult.TxHash, txHash) &&
 				len(sideTxResult.Sig) == 65 &&
-				sideTxResult.Result == int32(tmproto.SideTxResultType_YES) {
+				sideTxResult.Result == tmproto.SideTxResultType_YES {
 				// validate sig
 				var pk secp256k1.PubKey
 				if p, err := recoverPubkey(signedData, sideTxResult.Sig); err == nil {

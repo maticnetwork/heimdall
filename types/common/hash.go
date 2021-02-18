@@ -12,6 +12,7 @@ import (
 
 // Ensure that different address types implement the interface
 var _ yaml.Marshaler = HeimdallHash{}
+var _ yaml.Unmarshaler = &HeimdallHash{}
 
 // HeimdallHash represents heimdall address
 type HeimdallHash common.Hash
@@ -74,11 +75,15 @@ func (aa *HeimdallHash) UnmarshalJSON(data []byte) error {
 }
 
 // UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
-func (aa *HeimdallHash) UnmarshalYAML(data []byte) error {
+func (aa *HeimdallHash) UnmarshalYAML(unmarshal func(interface{}) error) error {
 	var s string
-	err := yaml.Unmarshal(data, &s)
+	err := unmarshal(&s)
 	if err != nil {
 		return err
+	}
+
+	if s == "" {
+		return nil
 	}
 
 	*aa = HexToHeimdallHash(s)

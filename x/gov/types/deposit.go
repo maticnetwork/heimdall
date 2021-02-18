@@ -5,11 +5,12 @@ import (
 
 	yaml "gopkg.in/yaml.v2"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // NewDeposit creates a new Deposit instance
-func NewDeposit(proposalID uint64, amount Coins, validator hmTypes.ValidatorID) Deposit {
+func NewDeposit(proposalID uint64, amount sdk.Coins, validator hmTypes.ValidatorID) Deposit {
 	return Deposit{proposalID, validator, amount}
 }
 
@@ -51,3 +52,6 @@ func (d Deposits) String() string {
 func (d Deposit) Empty() bool {
 	return d.String() == Deposit{}.String()
 }
+
+func (Deposits) Reset()          { _ = []Deposit{} }
+func (v Deposits) ProtoMessage() {}

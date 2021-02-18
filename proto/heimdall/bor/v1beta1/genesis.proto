@@ -1,0 +1,24 @@
+syntax = "proto3";
+package heimdall.gov.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "heimdall/bor/v1beta1/bor.proto";
+import "heimdall/base/v1beta1/span.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/bor/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message GenesisState {
+    option (gogoproto.goproto_getters) = false;
+    Params params                      = 1 [
+        (gogoproto.jsontag)  = "params",
+        (gogoproto.moretags) = "yaml:\"params\""
+    ];
+    repeated heimdall.types.Span spans = 2 [
+        (gogoproto.jsontag)  = "spans,omitempty",
+        (gogoproto.moretags) = "yaml:\"spans\""
+    ];
+}

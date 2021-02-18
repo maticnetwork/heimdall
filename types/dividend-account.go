@@ -20,7 +20,7 @@ import (
 
 func NewDividendAccount(user sdk.AccAddress, fee string) DividendAccount {
 	return DividendAccount{
-		User:      user,
+		User:      user.String(),
 		FeeAmount: fee,
 	}
 }
@@ -57,9 +57,9 @@ func UnMarshallDividendAccount(cdc codec.BinaryMarshaler, value []byte) (Dividen
 }
 
 // SortDividendAccountByAddress - Sorts DividendAccounts  By  Address
-func SortDividendAccountByAddress(dividendAccounts []DividendAccount) []DividendAccount {
+func SortDividendAccountByAddress(dividendAccounts []*DividendAccount) []*DividendAccount {
 	sort.Slice(dividendAccounts, func(i, j int) bool {
-		return bytes.Compare(dividendAccounts[i].User.Bytes(), dividendAccounts[j].User.Bytes()) < 0
+		return bytes.Compare([]byte(dividendAccounts[i].User), []byte(dividendAccounts[j].User)) < 0
 	})
 	return dividendAccounts
 }
@@ -68,7 +68,7 @@ func SortDividendAccountByAddress(dividendAccounts []DividendAccount) []Dividend
 func (da DividendAccount) CalculateHash() ([]byte, error) {
 	fee, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
 	divAccountHash := crypto.Keccak256(appendBytes32(
-		da.User.Bytes(),
+		[]byte(da.User),
 		fee.Bytes(),
 	))
 
@@ -97,5 +97,5 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 
 //Equals tests for equality of two Contents
 func (da DividendAccount) Equals(other merkletree.Content) (bool, error) {
-	return da.User.Equals(other.(DividendAccount).User), nil
+	return da.User == other.(*DividendAccount).User, nil
 }

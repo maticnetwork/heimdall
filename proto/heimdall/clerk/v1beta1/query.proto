@@ -1,0 +1,31 @@
+syntax = "proto3";
+package heimdall.clerk.v1beta1;
+
+import "google/api/annotations.proto";
+import "heimdall/clerk/v1beta1/clerk.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = false;
+option (gogoproto.unmarshaler_all) = false;
+
+// Query defines the gRPC querier service.
+service Query {
+    // Record queries the record that match by record id.
+    rpc Record(QueryRecordParams) returns (QueryRecordResponse) {
+        option (google.api.http).get =
+            "/heimdall/clerk/v1beta1/records/{record_id}";
+    }
+}
+
+// QueryRecordParams is request type for the Query/Record RPC method
+message QueryRecordParams {
+    uint64 record_id = 1;
+}
+
+// QueryRecordResponse is response type for the Query/Record RPC method
+message QueryRecordResponse {
+    EventRecord event_record = 1;
+}

@@ -9,28 +9,23 @@ import (
 //ModuleName Definition
 var ModuleName = "common_errors"
 
-var (
-	// CodeInvalidMsg error code
-	CodeInvalidMsg         uint32 = 1400
-	CodeErrDecodeEvent     uint32 = 2512
-	CodeWaitFrConfirmation uint32 = 2510
-)
-
 //custom error definitions
 var (
-	ErrEmptyValidatorAddr      = sdkerrors.Register(ModuleName, 2, "empty validator address")
 	ErrInvalidMsg              = sdkerrors.Register(ModuleName, 1400, "Invalid Message")
 	ErrOldTx                   = sdkerrors.Register(ModuleName, 1401, "Old txhash not allowed")
+	ErrEmptyValidatorAddr      = sdkerrors.Register(ModuleName, 1402, "Invalid validator address")
+	ErrDecodeEvent             = sdkerrors.Register(ModuleName, 1403, "Event decoding error")
 	ErrBadProposerDetails      = sdkerrors.Register(ModuleName, 1500, "Proposer is not valid")
 	ErrWaitForConfirmation     = sdkerrors.Register(ModuleName, 2510, "Please wait for confirmation time before sending transaction")
 	ErrValSignerPubKeyMismatch = sdkerrors.Register(ModuleName, 2511, "Signer Pubkey mismatch between event and msg")
-	ErrValSignerMismatch       = sdkerrors.Register(ModuleName, 2502, "Signer Address doesnt match pubkey address")
-	ErrValidatorAlreadyJoined  = sdkerrors.Register(ModuleName, 2507, "Validator already joined")
-	ErrValidatorSave           = sdkerrors.Register(ModuleName, 2506, "Cannot save validator")
-	ErrNoValidator             = sdkerrors.Register(ModuleName, 2501, "Validator information not found")
-	ErrNonce                   = sdkerrors.Register(ModuleName, 2514, "Incorrect validator nonce")
-	ErrNoSignerChange          = sdkerrors.Register(ModuleName, 2513, "New signer same as old signer")
-	ErrValUnbonded             = sdkerrors.Register(ModuleName, 2504, "Validator already unbonded , cannot exit")
+	ErrValSignerMismatch       = sdkerrors.Register(ModuleName, 2512, "Signer Address doesnt match pubkey address")
+	ErrValidatorAlreadyJoined  = sdkerrors.Register(ModuleName, 2513, "Validator already joined")
+	ErrValidatorSave           = sdkerrors.Register(ModuleName, 2514, "Cannot save validator")
+	ErrNoValidator             = sdkerrors.Register(ModuleName, 2515, "Validator information not found")
+	ErrNonce                   = sdkerrors.Register(ModuleName, 2516, "Incorrect validator nonce")
+	ErrNoSignerChange          = sdkerrors.Register(ModuleName, 2517, "New signer same as old signer")
+	ErrValUnbonded             = sdkerrors.Register(ModuleName, 2518, "Validator already unbonded, cannot exit")
+	ErrInvalidPower            = sdkerrors.Register(ModuleName, 2519, "Invalid amount for stake power")
 
 	ErrInvalidBorChainID = sdkerrors.Register(ModuleName, 3506, "Invalid Bor chain id")
 
@@ -43,12 +38,20 @@ var (
 	ErrValidatorNotDeactivated  = sdkerrors.Register(ModuleName, 6502, "Validator Not Deactivated")
 	// TODO: Check if this is ok:
 	ErrEmptyAddr = sdkerrors.Register(ModuleName, 7001, "Empty address")
+
+	// Bor Errors --------------------------------
+	ErrSpanNotInCountinuity = sdkerrors.Register(ModuleName, 3501, "Span not continuous")
+	ErrInvalidSpanDuration  = sdkerrors.Register(ModuleName, 3507, "Wrong span duration")
+	ErrSpanNotFound         = sdkerrors.Register(ModuleName, 3503, "Span not found")
+	ErrUnableToFreezeValSet = sdkerrors.Register(ModuleName, 3502, "Unable to freeze validator set for next span")
+	ErrValSetMisMatch       = sdkerrors.Register(ModuleName, 3504, "Validator set mismatch")
+	ErrProducerMisMatch     = sdkerrors.Register(ModuleName, 3505, "Producer set mismatch")
 )
 
 // ErrorSideTx represents side-tx error
-func ErrorSideTx(code uint32) (res abci.ResponseDeliverSideTx) {
-	res.Code = uint32(code)
-	res.Codespace = string(ModuleName)
+func ErrorSideTx(err *sdkerrors.Error) (res abci.ResponseDeliverSideTx) {
+	res.Code = err.ABCICode()
+	res.Codespace = err.Codespace()
 	res.Result = tmprototypes.SideTxResultType_SKIP // skip side-tx vote in-case of error
 	return
 }
