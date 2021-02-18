@@ -12,14 +12,13 @@ import (
 	"github.com/tendermint/tendermint/proxy"
 	"github.com/tendermint/tendermint/rpc/client/local"
 	"github.com/tendermint/tendermint/types"
-	tmtime "github.com/tendermint/tendermint/types/time"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	hmcommon "github.com/maticnetwork/heimdall/types/common"
 )
 
 func startInProcess(cfg Config, val *Validator) error {
@@ -101,41 +100,6 @@ func startInProcess(cfg Config, val *Validator) error {
 	return nil
 }
 
-func collectGenFiles(cfg Config, vals []*Validator, outputDir string) error {
-	genTime := tmtime.Now()
-
-	for i := 0; i < cfg.NumValidators; i++ {
-		tmCfg := vals[i].Ctx.Config
-
-		nodeDir := filepath.Join(outputDir, vals[i].Moniker, "heimdalld")
-		gentxsDir := filepath.Join(outputDir, "gentxs")
-
-		tmCfg.Moniker = vals[i].Moniker
-		tmCfg.SetRoot(nodeDir)
-
-		initCfg := genutiltypes.NewInitConfig(cfg.ChainID, gentxsDir, vals[i].NodeID, vals[i].PubKey)
-
-		genFile := tmCfg.GenesisFile()
-		genDoc, err := types.GenesisDocFromFile(genFile)
-		if err != nil {
-			return err
-		}
-
-		appState, err := genutil.GenAppStateFromConfig(cfg.Codec, cfg.TxConfig,
-			tmCfg, initCfg, *genDoc, banktypes.GenesisBalancesIterator{})
-		if err != nil {
-			return err
-		}
-
-		// overwrite each validator's genesis file to have a canonical genesis time
-		if err := genutil.ExportGenesisFileWithTime(genFile, cfg.ChainID, nil, appState, genTime); err != nil {
-			return err
-		}
-	}
-
-	return nil
-}
-
 func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
 
 	// set the accounts in the genesis state
@@ -193,4 +157,15 @@ func writeFile(name string, dir string, contents []byte) error {
 	}
 
 	return nil
+}
+
+func getGenesisAccount(address []byte, pk []byte) authtypes.GenesisAccount {
+	acc := authtypes.NewBaseAccountWithAddress(address)
+	pkObject := hmcommon.CosmosCryptoPubKey(pk)
+	obj, err := codectypes.NewAnyWithValue(pkObject)
+	if err != nil {
+		panic(err)
+	}
+	acc.PubKey = obj
+	return acc
 }

@@ -24,7 +24,6 @@ import (
 	"google.golang.org/grpc"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/crypto/hd"
@@ -36,11 +35,15 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/app/params"
+	hmtypes "github.com/maticnetwork/heimdall/types"
+	hmcommon "github.com/maticnetwork/heimdall/types/common"
+	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 )
 
 // package-wide network lock to only allow one test network at a time
@@ -233,7 +236,6 @@ func New(t *testing.T, cfg Config) *Network {
 		nodeDirName := fmt.Sprintf("node%d", i)
 		nodeDir := filepath.Join(network.BaseDir, nodeDirName, "heimdalld")
 		clientDir := filepath.Join(network.BaseDir, nodeDirName, "heimdalld")
-		gentxsDir := filepath.Join(network.BaseDir, "gentxs")
 
 		require.NoError(t, os.MkdirAll(filepath.Join(nodeDir, "config"), 0755))
 		require.NoError(t, os.MkdirAll(clientDir, 0755))
@@ -283,55 +285,64 @@ func New(t *testing.T, cfg Config) *Network {
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		//createValMsg := stakingtypes.NewMsgValidatorJoin(
-		//	addr,
-		//	uint64(i),
-		//	0,
-		//	sdk.NewIntFromUint64(uint64(1000)),//sdk.Int(uint64(0)),
-		//	common.NewPubKeyFromHex(valPubKeys[i].String()),
-		//	common.HexToHeimdallHash("test"),
-		//	0,
-		//	0,
-		//	0,
-		//)
+		newPubkey := hmcommon.NewPubKey(pubKey.Bytes())
+		// create validator account
+		validator := hmtypes.NewValidator(
+			hmtypes.NewValidatorID(uint64(1)),
+			0,
+			0,
+			1,
+			1,
+			newPubkey,
+			newPubkey.Address().Bytes(),
+		)
 
-		//commission, err := sdk.NewDecFromStr("0.5")
-		//require.NoError(t, err)
+		// create dividend account for validator
+		// dividendAccount := hmtypes.NewDividendAccount(validator.Signer, ZeroIntString)
+
+		vals := []*hmtypes.Validator{validator}
+		validatorSet := hmtypes.NewValidatorSet(vals)
+
+		// dividendAccounts := []hmtypes.DividendAccount{dividendAccount}
+
+		// create validator signing info
+		valSigningInfo := hmtypes.NewValidatorSigningInfo(validator.ID, 0, 0, 0)
+		valSigningInfoMap := make(map[string]hmtypes.ValidatorSigningInfo)
+		valSigningInfoMap[valSigningInfo.ValID.String()] = valSigningInfo
+
+		// create genesis state
+		// appStateBytes := app.NewDefaultGenesisState()
+		appState := cfg.GenesisState
+		// authState.Accounts = accounts
+		// appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&authState)
+
+		signer, _ := sdk.AccAddressFromHex(validator.Signer)
+		genesisAccount := getGenesisAccount(signer.Bytes(), newPubkey)
+
 		//
-		//createValMsg, err := stakingtypes.NewMsgCreateValidator(
-		//	sdk.ValAddress(addr),
-		//	valPubKeys[i],
-		//	sdk.NewCoin(sdk.DefaultBondDenom, cfg.BondedTokens),
-		//	stakingtypes.NewDescription(nodeDirName, "", "", "", ""),
-		//	stakingtypes.NewCommissionRates(commission, sdk.OneDec(), sdk.OneDec()),
-		//	sdk.OneInt(),
-		//)
-		//require.NoError(t, err)
+		// auth state change
+		//
+		authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appState)
+		accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		accs = append(accs, genesisAccount)
+		genAccs, err := authtypes.PackAccounts(accs)
+		if err != nil {
+			require.NoError(t, err)
+		}
+		authGenState.Accounts = genAccs
+		// TODO - check this
+		appState[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
 
-		p2pURL, err := url.Parse(p2pAddr)
-		require.NoError(t, err)
-
-		memo := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
-		fee := sdk.NewCoins(sdk.NewCoin(fmt.Sprintf("%stoken", nodeDirName), sdk.NewInt(0)))
-		txBuilder := cfg.TxConfig.NewTxBuilder()
-		//require.NoError(t, txBuilder.SetMsgs(createValMsg))
-		txBuilder.SetFeeAmount(fee)    // Arbitrary fee
-		txBuilder.SetGasLimit(1000000) // Need at least 100386
-		txBuilder.SetMemo(memo)
-
-		txFactory := tx.Factory{}
-		txFactory = txFactory.
-			WithChainID(cfg.ChainID).
-			WithMemo(memo).
-			WithKeybase(kb).
-			WithTxConfig(cfg.TxConfig)
-
-		err = tx.Sign(txFactory, nodeDirName, txBuilder)
-		require.NoError(t, err)
-
-		txBz, err := cfg.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
-		require.NoError(t, err)
-		require.NoError(t, writeFile(fmt.Sprintf("%v.json", nodeDirName), gentxsDir, txBz))
+		//
+		// staking state change
+		//
+		_, err = stakingtypes.SetGenesisStateToAppState(appState, vals, validatorSet)
+		if err != nil {
+			require.NoError(t, err)
+		}
 
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appCfg)
 
@@ -364,7 +375,6 @@ func New(t *testing.T, cfg Config) *Network {
 	}
 
 	require.NoError(t, initGenFiles(cfg, genAccounts, genBalances, genFiles))
-	require.NoError(t, collectGenFiles(cfg, network.Validators, network.BaseDir))
 
 	t.Log("starting test network...")
 	for _, v := range network.Validators {
