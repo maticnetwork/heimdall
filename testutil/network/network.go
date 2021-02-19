@@ -35,7 +35,6 @@ import (
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
@@ -322,7 +321,7 @@ func New(t *testing.T, cfg Config) *Network {
 		//
 		// auth state change
 		//
-		authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appState)
+		authGenState := authtypes.GetGenesisStateFromAppState(cfg.Codec, appState)
 		accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
 		if err != nil {
 			require.NoError(t, err)
@@ -334,7 +333,7 @@ func New(t *testing.T, cfg Config) *Network {
 		}
 		authGenState.Accounts = genAccs
 		// TODO - check this
-		appState[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
+		appState[authtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&authGenState)
 
 		//
 		// staking state change
