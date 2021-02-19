@@ -1,0 +1,24 @@
+syntax = "proto3";
+package heimdall.staking.v1beta1;
+
+import "heimdall/base/v1beta1/validator.proto";
+import "heimdall/staking/v1beta1/params.proto";
+import "gogoproto/gogo.proto";
+
+option go_package = "github.com/maticnetwork/heimdall/x/staking/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+// GenesisState defines the staking module's genesis state.
+message GenesisState {
+    // params defines all the parameters of related to staking
+    heimdall.staking.v1beta1.Params params = 1 [(gogoproto.nullable) = false];
+
+    repeated heimdall.types.Validator validators      = 2;
+    heimdall.types.ValidatorSet       current_val_set = 3
+        [(gogoproto.moretags) = "yaml:\"current_val_set\""];
+    repeated string staking_sequences = 4
+        [(gogoproto.moretags) = "yaml:\"staking_sequences\""];
+}

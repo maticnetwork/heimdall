@@ -1,0 +1,41 @@
+syntax = "proto3";
+
+package heimdall.types;
+
+import "gogoproto/gogo.proto";
+import "heimdall/base/v1beta1/validator.proto";
+option go_package = "github.com/maticnetwork/heimdall/types";
+
+option (gogoproto.sizer_all)       = true;
+option (gogoproto.marshaler_all)   = true;
+option (gogoproto.unmarshaler_all) = true;
+
+message Span {
+    uint64 id = 1 [
+        (gogoproto.jsontag)    = "id",
+        (gogoproto.moretags)   = "yaml:\"id\"",
+        (gogoproto.customname) = "ID"
+    ];
+    uint64 start_block = 2 [
+        (gogoproto.jsontag)  = "start_block",
+        (gogoproto.moretags) = "yaml:\"start_block\""
+    ];
+    uint64 end_block = 3 [
+        (gogoproto.jsontag)  = "end_block",
+        (gogoproto.moretags) = "yaml:\"end_block\""
+    ];
+    heimdall.types.ValidatorSet validator_set = 4 [
+        (gogoproto.jsontag)  = "validator_set",
+        (gogoproto.moretags) = "yaml:\"validator_set\"",
+        (gogoproto.nullable) = false
+    ];
+    repeated heimdall.types.Validator selected_producers = 5 [
+        (gogoproto.jsontag)  = "selected_producers",
+        (gogoproto.moretags) = "yaml:\"selected_producers\"",
+        (gogoproto.nullable) = false
+    ];
+    string chain_id = 6 [
+        (gogoproto.jsontag)  = "chain_id",
+        (gogoproto.moretags) = "yaml:\"chain_id\""
+    ];
+}
