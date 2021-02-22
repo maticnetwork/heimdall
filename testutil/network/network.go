@@ -6,6 +6,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	dbm "github.com/tendermint/tm-db"
 	"io/ioutil"
 	"net/url"
 	"os"
@@ -55,7 +57,18 @@ type AppConstructor = func(val Validator) servertypes.Application
 // NewAppConstructor returns a new heimdall app AppConstructor
 func NewAppConstructor(encodingCfg params.EncodingConfig) AppConstructor {
 	return func(val Validator) servertypes.Application {
-		return app.Setup(true)
+		return app.NewHeimdallApp(
+			log.NewNopLogger(),
+			dbm.NewMemDB(),
+			nil,
+			true,
+			map[int64]bool{},
+			val.Ctx.Config.RootDir,
+			0,
+			encodingCfg,
+			baseapp.SetPruning(storetypes.NewPruningOptionsFromString(val.AppConfig.Pruning)),
+			baseapp.SetMinGasPrices(val.AppConfig.MinGasPrices),
+		)
 	}
 }
 
@@ -100,9 +113,9 @@ func DefaultConfig() Config {
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit:     2 * time.Second,
 		ChainID:           "chain-" + tmrand.NewRand().Str(6),
-		NumValidators:     4,
-		BondDenom:         sdk.DefaultBondDenom,
-		MinGasPrices:      fmt.Sprintf("0.000006%s", sdk.DefaultBondDenom),
+		NumValidators:     1,
+		BondDenom:         stakingtypes.FeeToken,
+		MinGasPrices:      fmt.Sprintf("0.000006%s", stakingtypes.FeeToken),
 		AccountTokens:     sdk.TokensFromConsensusPower(1000),
 		StakingTokens:     sdk.TokensFromConsensusPower(500),
 		BondedTokens:      sdk.TokensFromConsensusPower(100),
@@ -183,6 +196,7 @@ func New(t *testing.T, cfg Config) *Network {
 		genAccounts []authtypes.GenesisAccount
 		genBalances []banktypes.Balance
 		genFiles    []string
+		vals  []*hmtypes.Validator
 	)
 
 	buf := bufio.NewReader(os.Stdin)
@@ -284,64 +298,22 @@ func New(t *testing.T, cfg Config) *Network {
 		genBalances = append(genBalances, banktypes.Balance{Address: addr.String(), Coins: balances.Sort()})
 		genAccounts = append(genAccounts, authtypes.NewBaseAccount(addr, nil, 0, 0))
 
-		newPubkey := hmcommon.NewPubKey(pubKey.Bytes())
+		hmPubKey := hmcommon.NewPubKey(pubKey.Bytes())
+
+		hmAddr,_ := sdk.AccAddressFromHex(hmPubKey.Address().String())
+
 		// create validator account
 		validator := hmtypes.NewValidator(
-			hmtypes.NewValidatorID(uint64(1)),
+			hmtypes.NewValidatorID(uint64(i+1)),
 			0,
 			0,
 			1,
 			1,
-			newPubkey,
-			newPubkey.Address().Bytes(),
+			hmPubKey,
+			hmAddr,
 		)
 
-		// create dividend account for validator
-		// dividendAccount := hmtypes.NewDividendAccount(validator.Signer, ZeroIntString)
-
-		vals := []*hmtypes.Validator{validator}
-		validatorSet := hmtypes.NewValidatorSet(vals)
-
-		// dividendAccounts := []hmtypes.DividendAccount{dividendAccount}
-
-		// create validator signing info
-		valSigningInfo := hmtypes.NewValidatorSigningInfo(validator.ID, 0, 0, 0)
-		valSigningInfoMap := make(map[string]hmtypes.ValidatorSigningInfo)
-		valSigningInfoMap[valSigningInfo.ValID.String()] = valSigningInfo
-
-		// create genesis state
-		// appStateBytes := app.NewDefaultGenesisState()
-		appState := cfg.GenesisState
-		// authState.Accounts = accounts
-		// appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&authState)
-
-		signer, _ := sdk.AccAddressFromHex(validator.Signer)
-		genesisAccount := getGenesisAccount(signer.Bytes(), newPubkey)
-
-		//
-		// auth state change
-		//
-		authGenState := authtypes.GetGenesisStateFromAppState(cfg.Codec, appState)
-		accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
-		if err != nil {
-			require.NoError(t, err)
-		}
-		accs = append(accs, genesisAccount)
-		genAccs, err := authtypes.PackAccounts(accs)
-		if err != nil {
-			require.NoError(t, err)
-		}
-		authGenState.Accounts = genAccs
-		// TODO - check this
-		appState[authtypes.ModuleName] = cfg.Codec.MustMarshalJSON(&authGenState)
-
-		//
-		// staking state change
-		//
-		_, err = stakingtypes.SetGenesisStateToAppState(appState, vals, validatorSet)
-		if err != nil {
-			require.NoError(t, err)
-		}
+		vals = append(vals, validator)
 
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appCfg)
 
@@ -354,8 +326,6 @@ func New(t *testing.T, cfg Config) *Network {
 			WithLegacyAmino(cfg.LegacyAmino).
 			WithTxConfig(cfg.TxConfig).
 			WithAccountRetriever(cfg.AccountRetriever)
-
-		fmt.Printf("validator %d: %v\n", i, sdk.ValAddress(addr))
 
 		network.Validators[i] = &Validator{
 			AppConfig:  appCfg,
@@ -373,6 +343,11 @@ func New(t *testing.T, cfg Config) *Network {
 		}
 	}
 
+	validatorSet := hmtypes.NewValidatorSet(vals)
+	cfg.GenesisState, err = stakingtypes.SetGenesisStateToAppState(cfg.GenesisState, vals, validatorSet)
+	if err != nil {
+		require.NoError(t, err)
+	}
 	require.NoError(t, initGenFiles(cfg, genAccounts, genBalances, genFiles))
 
 	t.Log("starting test network...")
