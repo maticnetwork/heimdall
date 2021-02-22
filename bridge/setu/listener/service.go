@@ -1,6 +1,7 @@
 package listener
 
 import (
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -27,7 +28,7 @@ type ListenerService struct {
 }
 
 // NewListenerService returns new service object for listneing to events
-func NewListenerService(cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
+func NewListenerService(cliCtx client.Context, cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
 
 	var logger = util.Logger().With("service", ListenerServiceStr)
 
@@ -37,15 +38,15 @@ func NewListenerService(cdc codec.Marshaler, queueConnector *queue.QueueConnecto
 	listenerService.BaseService = *service.NewBaseService(logger, ListenerServiceStr, listenerService)
 
 	rootchainListener := NewRootChainListener()
-	rootchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, httpClient, helper.GetMainClient(), RootChainListenerStr, rootchainListener)
+	rootchainListener.BaseListener = *NewBaseListener(cliCtx, queueConnector, httpClient, helper.GetMainClient(), RootChainListenerStr, rootchainListener)
 	listenerService.listeners = append(listenerService.listeners, rootchainListener)
 
 	maticchainListener := &MaticChainListener{}
-	maticchainListener.BaseListener = *NewBaseListener(cdc, queueConnector, httpClient, helper.GetMaticClient(), MaticChainListenerStr, maticchainListener)
+	maticchainListener.BaseListener = *NewBaseListener(cliCtx, queueConnector, httpClient, helper.GetMaticClient(), MaticChainListenerStr, maticchainListener)
 	listenerService.listeners = append(listenerService.listeners, maticchainListener)
 
 	heimdallListener := &HeimdallListener{}
-	heimdallListener.BaseListener = *NewBaseListener(cdc, queueConnector, httpClient, nil, HeimdallListenerStr, heimdallListener)
+	heimdallListener.BaseListener = *NewBaseListener(cliCtx, queueConnector, httpClient, nil, HeimdallListenerStr, heimdallListener)
 	listenerService.listeners = append(listenerService.listeners, heimdallListener)
 
 	return listenerService

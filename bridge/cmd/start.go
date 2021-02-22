@@ -8,13 +8,15 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/maticnetwork/heimdall/bridge/setu/processor"
+
+	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
+
 	"github.com/cosmos/cosmos-sdk/client"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/listener"
-	"github.com/maticnetwork/heimdall/bridge/setu/processor"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
@@ -48,11 +50,8 @@ func GetStartCmd() *cobra.Command {
 
 			// cli context
 			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-			//
-			//cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl)
-			//
-			//client, _ := rpchttp.New(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
+			cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl)
 			cliCtx = cliCtx.WithClient(_httpClient)
 
 			cliCtx.BroadcastMode = flags.BroadcastAsync
@@ -63,8 +62,8 @@ func GetStartCmd() *cobra.Command {
 			// selected services to start
 			var services []service.Service
 			services = append(services,
-				listener.NewListenerService(cdc, _queueConnector, _httpClient),
-				processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster, _paramsContext),
+				listener.NewListenerService(cliCtx, cdc, _queueConnector, _httpClient),
+				processor.NewProcessorService(cliCtx, cdc, _queueConnector, _httpClient, _txBroadcaster, _paramsContext),
 			)
 
 			// sync group

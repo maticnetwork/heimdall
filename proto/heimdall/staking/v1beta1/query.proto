@@ -22,7 +22,7 @@ service Query {
     // ValidatorSet queries the Current Validator Set
     rpc ValidatorSet(QueryValidatorSetRequest)
         returns (QueryValidatorSetResponse) {
-        option (google.api.http).get = "/heimdall/base/v1beta1/validatorSet";
+        option (google.api.http).get = "/heimdall/base/v1beta1/validator-set";
     }
 }
 

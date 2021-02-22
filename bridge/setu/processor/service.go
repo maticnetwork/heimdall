@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/service"
@@ -29,6 +30,7 @@ type ProcessorService struct {
 
 // NewProcessorService returns new service object for processing queue msg
 func NewProcessorService(
+	cliCtx client.Context,
 	cdc codec.Marshaler,
 	queueConnector *queue.QueueConnector,
 	httpClient *httpClient.HTTP,
@@ -54,27 +56,27 @@ func NewProcessorService(
 
 	// initialize checkpoint processor
 	checkpointProcessor := NewCheckpointProcessor(&contractCaller.RootChainABI)
-	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "checkpoint", checkpointProcessor)
+	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "checkpoint", checkpointProcessor)
 
 	// initialize fee processor
-	feeProcessor := NewFeeProcessor(&contractCaller.StakingInfoABI)
-	feeProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "fee", feeProcessor)
+	//feeProcessor := NewFeeProcessor(&contractCaller.StakingInfoABI)
+	//feeProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "fee", feeProcessor)
 
 	// initialize staking processor
 	stakingProcessor := NewStakingProcessor(&contractCaller.StakingInfoABI)
-	stakingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "staking", stakingProcessor)
+	stakingProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "staking", stakingProcessor)
 
 	// initialize clerk processor
-	clerkProcessor := NewClerkProcessor(&contractCaller.StateSenderABI)
-	clerkProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "clerk", clerkProcessor)
+	//clerkProcessor := NewClerkProcessor(&contractCaller.StateSenderABI)
+	//clerkProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "clerk", clerkProcessor)
 
 	// initialize span processor
-	spanProcessor := &SpanProcessor{}
-	spanProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "span", spanProcessor)
+	//spanProcessor := &SpanProcessor{}
+	//spanProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "span", spanProcessor)
 
 	// initialize slashing processor
 	//slashingProcessor := NewSlashingProcessor(&contractCaller.StakingInfoABI)
-	//slashingProcessor.BaseProcessor = *NewBaseProcessor(cdc, queueConnector, httpClient, txBroadcaster, paramsContext, "slashing", slashingProcessor)
+	//slashingProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "slashing", slashingProcessor)
 
 	//
 	// Select processors
@@ -86,28 +88,28 @@ func NewProcessorService(
 
 	if startAll {
 		processorService.processors = append(processorService.processors,
-			nil,
+			checkpointProcessor,
 			stakingProcessor,
-			clerkProcessor,
-			feeProcessor,
-			spanProcessor,
+			//clerkProcessor,
+			//feeProcessor,
+			//spanProcessor,
 			nil,
 		)
 	} else {
 		for _, service := range onlyServices {
 			switch service {
 			case "checkpoint":
-				processorService.processors = append(processorService.processors, nil)
+				processorService.processors = append(processorService.processors, checkpointProcessor)
 			case "staking":
 				processorService.processors = append(processorService.processors, stakingProcessor)
-			case "clerk":
-				processorService.processors = append(processorService.processors, clerkProcessor)
-			case "fee":
-				processorService.processors = append(processorService.processors, feeProcessor)
-			case "span":
-				processorService.processors = append(processorService.processors, spanProcessor)
-			case "slashing":
-				processorService.processors = append(processorService.processors, nil)
+				////case "clerk":
+				////	processorService.processors = append(processorService.processors, clerkProcessor)
+				////case "fee":
+				////	processorService.processors = append(processorService.processors, feeProcessor)
+				////case "span":
+				////	processorService.processors = append(processorService.processors, spanProcessor)
+				//case "slashing":
+				//	processorService.processors = append(processorService.processors, nil)
 			}
 		}
 	}

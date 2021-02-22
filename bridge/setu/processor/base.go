@@ -2,11 +2,9 @@ package processor
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -57,11 +55,8 @@ type BaseProcessor struct {
 }
 
 // NewBaseProcessor creates a new BaseProcessor.
-func NewBaseProcessor(cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, paramsContext *util.ParamsContext, name string, impl Processor) *BaseProcessor {
+func NewBaseProcessor(cliCtx client.Context, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, txBroadcaster *broadcaster.TxBroadcaster, paramsContext *util.ParamsContext, name string, impl Processor) *BaseProcessor {
 	logger := util.Logger().With("service", "processor", "module", name)
-
-	cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-	cliCtx.BroadcastMode = flags.BroadcastAsync
 
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {

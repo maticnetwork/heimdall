@@ -32,19 +32,19 @@ import (
 
 const (
 	AccountDetailsURL       = "/auth/accounts/%v"
-	LastNoAckURL            = "/checkpoints/last-no-ack"
-	CheckpointParamsURL     = "/checkpoints/params"
-	ChainManagerParamsURL   = "/chainmanager/params"
+	LastNoAckURL            = "/heimdall/checkpoints/v1beta1/last-no-ack"
+	CheckpointParamsURL     = "/heimdall/checkpoints/v1beta1/params"
+	ChainManagerParamsURL   = "/heimdall/chainmanager/v1beta1/params"
 	ProposersURL            = "/staking/proposer/%v"
-	BufferedCheckpointURL   = "/checkpoints/buffer"
-	LatestCheckpointURL     = "/checkpoints/latest"
+	BufferedCheckpointURL   = "/heimdall/checkpoints/v1beta1/buffer"
+	LatestCheckpointURL     = "/heimdall/checkpoints/v1beta1/latest"
 	CurrentProposerURL      = "/staking/current-proposer"
-	LatestSpanURL           = "/bor/latest-span"
-	NextSpanInfoURL         = "/bor/prepare-next-span"
-	NextSpanSeedURL         = "/bor/next-span-seed"
+	LatestSpanURL           = "/heimdall/bor/v1beta1/latest-span"
+	NextSpanInfoURL         = "/heimdall/bor/v1beta1/prepare-next-span"
+	NextSpanSeedURL         = "/heimdall/bor/v1beta1/next-span-seed"
 	DividendAccountRootURL  = "/topup/dividend-account-root"
-	ValidatorURL            = "/staking/validator/%v"
-	CurrentValidatorSetURL  = "staking/validator-set"
+	ValidatorURL            = "/heimdall/base/v1beta1/validator/%v"
+	CurrentValidatorSetURL  = "/heimdall/base/v1beta1/validator-set"
 	StakingTxStatusURL      = "/staking/isoldtx"
 	TopupTxStatusURL        = "/topup/isoldtx"
 	ClerkTxStatusURL        = "/clerk/isoldtx"
@@ -297,7 +297,6 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 // returns true when synced
 func IsCatchingUp(cliCtx client.Context) bool {
 	resp, err := helper.GetNodeStatus(cliCtx)
-	fmt.Printf("node catch up %+v\n", resp)
 	if err != nil {
 		return true
 	}
@@ -333,6 +332,7 @@ func GetChainmanagerParams(cliCtx client.Context) (*chainManagerTypes.Params, er
 	}
 
 	var params chainManagerTypes.Params
+	fmt.Println("result of chainManagerTypes ", response.Result)
 	if err := json.Unmarshal(response.Result, &params); err != nil {
 		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err

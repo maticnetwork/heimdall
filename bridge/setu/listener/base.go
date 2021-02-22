@@ -2,11 +2,9 @@ package listener
 
 import (
 	"context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
@@ -74,7 +72,7 @@ type BaseListener struct {
 }
 
 // NewBaseListener creates a new BaseListener.
-func NewBaseListener(cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
+func NewBaseListener(cliCtx client.Context, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 
 	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
@@ -82,9 +80,6 @@ func NewBaseListener(cdc codec.Marshaler, queueConnector *queue.QueueConnector, 
 		logger.Error("Error while getting root chain instance", "error", err)
 		panic(err)
 	}
-
-	cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-	cliCtx.BroadcastMode = flags.BroadcastAsync
 
 	// creating syncer object
 	return &BaseListener{

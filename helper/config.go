@@ -141,8 +141,8 @@ var GenesisDoc tmTypes.GenesisDoc
 // var DepositManager types.Contract
 
 // InitHeimdallConfig initializes passed heimdall/tendermint config files
-func InitHeimdallConfig(rootViper *viper.Viper) error {
-	rootDir := rootViper.GetString(flags.FlagHome)
+func InitHeimdallConfig() error {
+	rootDir := viper.GetString(flags.FlagHome)
 	configDir := filepath.Join(rootDir, "config")
 
 	heimdallConfigFilePath := filepath.Join(configDir, "heimdall-config.toml")
@@ -169,14 +169,11 @@ func InitHeimdallConfig(rootViper *viper.Viper) error {
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
 		return fmt.Errorf("unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
 	}
-	fmt.Println("mainRPCClient uri : ", conf.EthRPCUrl)
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
 	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		return err
 	}
-
-	fmt.Println("maticRPCClient uri : ", conf.BorRPCUrl)
 
 	maticClient = ethclient.NewClient(maticRPCClient)
 

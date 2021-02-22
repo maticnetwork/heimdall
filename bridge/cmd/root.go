@@ -41,8 +41,6 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	}
 
 	// set to viper
-
-	viper := viper.New()
 	viper.Set(helper.NodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
@@ -50,7 +48,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	viper.Set(borChainIDFlag, borChainIDValue)
 
 	// start heimdall config
-	err := helper.InitHeimdallConfig(viper)
+	err := helper.InitHeimdallConfig()
 	if err != nil {
 		logger.Error("Error while init heimdall config", "Error", err)
 	}
