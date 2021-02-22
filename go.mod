@@ -5,6 +5,7 @@ go 1.15
 require (
 	github.com/RichardKnop/machinery v1.10.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
+	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cosmos/cosmos-sdk v0.41.0
 	github.com/cosmos/iavl v0.15.3
@@ -39,4 +40,4 @@ replace github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.2-alp
 
 replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20210120100900-c8adb2516be0
 
-replace github.com/cosmos/cosmos-sdk => /home/gsk967/Sai/Projects/maticnetwork/cosmos-sdk
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20210120102128-8ce53e585ef6

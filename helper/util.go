@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -109,11 +110,11 @@ func FetchFromAPI(cliCtx client.Context, URL string) (result rest.ResponseWithHe
 			return result, err
 		}
 		// unmarshall data from buffer
-		var response rest.ResponseWithHeight
-		if err := cliCtx.JSONMarshaler.UnmarshalJSON(body, response); err != nil {
+		if err := json.Unmarshal(body, &result); err != nil {
+			Logger.Debug("Error while json unmarshal the data", "err", err)
 			return result, err
 		}
-		return response, nil
+		return result, err
 	}
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)

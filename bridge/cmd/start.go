@@ -2,7 +2,14 @@ package cmd
 
 import (
 	"fmt"
+	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
+
 	"github.com/cosmos/cosmos-sdk/client"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
@@ -15,11 +22,6 @@ import (
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/service"
 	httpClient "github.com/tendermint/tendermint/rpc/client/http"
-	"os"
-	"os/signal"
-	"sync"
-	"syscall"
-	"time"
 )
 
 const (
@@ -46,6 +48,13 @@ func GetStartCmd() *cobra.Command {
 
 			// cli context
 			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
+			//
+			//cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl)
+			//
+			//client, _ := rpchttp.New(helper.GetConfig().TendermintRPCUrl, "/websocket")
+
+			cliCtx = cliCtx.WithClient(_httpClient)
+
 			cliCtx.BroadcastMode = flags.BroadcastAsync
 
 			// params context

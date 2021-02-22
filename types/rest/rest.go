@@ -37,24 +37,25 @@ var (
 // ResponseWithHeight defines a response object type that wraps an original
 // response with a height.
 type ResponseWithHeight struct {
-	Height int64           `json:"height"`
+	Height string          `json:"height"`
 	Result json.RawMessage `json:"result"`
 }
 
-func (r ResponseWithHeight) Reset() {
-	panic("implement me")
-}
-
-func (r ResponseWithHeight) String() string {
-	panic("implement me")
-}
-
-func (r ResponseWithHeight) ProtoMessage() {
-	panic("implement me")
-}
+//
+//func (r ResponseWithHeight) Reset() {
+//	panic("implement me")
+//}
+//
+//func (r ResponseWithHeight) String() string {
+//	panic("implement me")
+//}
+//
+//func (r ResponseWithHeight) ProtoMessage() {
+//	panic("implement me")
+//}
 
 // NewResponseWithHeight creates a new ResponseWithHeight instance
-func NewResponseWithHeight(height int64, result json.RawMessage) ResponseWithHeight {
+func NewResponseWithHeight(height string, result json.RawMessage) ResponseWithHeight {
 	return ResponseWithHeight{
 		Height: height,
 		Result: result,
@@ -226,7 +227,7 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx client.Context, resp inte
 		}
 	}
 
-	wrappedResp := NewResponseWithHeight(cliCtx.Height, result)
+	wrappedResp := NewResponseWithHeight(strconv.FormatInt(cliCtx.Height, 10), result)
 
 	var (
 		output []byte

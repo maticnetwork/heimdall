@@ -32,6 +32,7 @@ func QueryTxWithProof(cliCtx client.Context, hash []byte) (*ctypes.ResultTx, err
 // GetNodeStatus returns node status
 func GetNodeStatus(cliCtx client.Context) (*ctypes.ResultStatus, error) {
 	node, err := cliCtx.GetNode()
+	fmt.Println("node status ", node)
 	if err != nil {
 		return nil, err
 	}

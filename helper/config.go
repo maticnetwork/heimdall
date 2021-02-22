@@ -8,6 +8,9 @@ import (
 	"path/filepath"
 	"time"
 
+	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/tendermint/tendermint/privval"
+
 	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -77,8 +80,11 @@ var (
 var cdc = amino.NewCodec()
 
 func init() {
-	cdc.RegisterConcrete(secp256k1.PubKey{}, secp256k1.PubKeyName, nil)
-	cdc.RegisterConcrete(secp256k1.PrivKey{}, secp256k1.PrivKeyName, nil)
+	//interfaceRegistery := codectypes.NewInterfaceRegistry()
+
+	//interfaceRegistery.RegisterInterface("pubKey", (*secp256k1.PubKey{})(nil))
+	//cdc.RegisterConcrete(secp256k1.PubKey{}, secp256k1.PubKeyName, nil)
+	//cdc.RegisterConcrete(secp256k1.PrivKey{}, secp256k1.PrivKeyName, nil)
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
@@ -116,7 +122,10 @@ var maticRPCClient *rpc.Client
 
 var maticEthClient *eth.EthAPIBackend
 
+var heimdallClient *rpcclient.Client
+
 // private key object
+var FilePV *privval.FilePV
 var privObject secp256k1.PrivKey
 
 var pubObject secp256k1.PubKey
@@ -154,19 +163,29 @@ func InitHeimdallConfig(rootViper *viper.Viper) error {
 	}
 
 	if err = configViper.UnmarshalExact(&conf); err != nil {
-		return fmt.Errorf("Unable to unmarshall config %v", err)
+		return fmt.Errorf("unable to unmarshall config %v", err)
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
-		return fmt.Errorf("Unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
+		return fmt.Errorf("unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
 	}
+	fmt.Println("mainRPCClient uri : ", conf.EthRPCUrl)
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
 	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		return err
 	}
 
+	fmt.Println("maticRPCClient uri : ", conf.BorRPCUrl)
+
 	maticClient = ethclient.NewClient(maticRPCClient)
+
+	//if heimdallClient, err = rpc.Dial(conf.TendermintRPCUrl); err != nil {
+	//	return err
+	//}
+	//if err != nil {
+	//	return fmt.Errorf("unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
+	//}
 
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
@@ -175,10 +194,14 @@ func InitHeimdallConfig(rootViper *viper.Viper) error {
 	}
 	GenesisDoc = *genDoc
 
+	var dataDir = filepath.Join(rootDir, "data")
+
+	FilePV = privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(dataDir, "priv_validator_state.json"))
+
 	return nil
 }
 
-// GetDefaultHeimdallConfig returns configration with default params
+// GetDefaultHeimdallConfig returns configuration with default params
 func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
@@ -246,7 +269,7 @@ func GetMaticEthClient() *eth.EthAPIBackend {
 
 // GetPrivKey returns priv key object
 func GetPrivKey() secp256k1.PrivKey {
-	return privObject
+	return FilePV.Key.PrivKey.Bytes()
 }
 
 // GetECDSAPrivKey return ecdsa private key
@@ -261,7 +284,7 @@ func GetECDSAPrivKey() *ecdsa.PrivateKey {
 
 // GetPubKey returns pub key object
 func GetPubKey() crypto.PubKey {
-	return secp256k1.GenPrivKey().PubKey()
+	return FilePV.Key.PubKey
 }
 
 // GetAddress returns address object

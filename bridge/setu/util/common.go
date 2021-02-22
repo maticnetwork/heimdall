@@ -31,7 +31,7 @@ import (
 )
 
 const (
-	AccountDetailsURL       = "/cosmos/auth/v1beta1/accounts/%v"
+	AccountDetailsURL       = "/auth/accounts/%v"
 	LastNoAckURL            = "/checkpoints/last-no-ack"
 	CheckpointParamsURL     = "/checkpoints/params"
 	ChainManagerParamsURL   = "/chainmanager/params"
@@ -297,6 +297,7 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 // returns true when synced
 func IsCatchingUp(cliCtx client.Context) bool {
 	resp, err := helper.GetNodeStatus(cliCtx)
+	fmt.Printf("node catch up %+v\n", resp)
 	if err != nil {
 		return true
 	}
@@ -304,7 +305,7 @@ func IsCatchingUp(cliCtx client.Context) bool {
 }
 
 // GetAccount returns heimdall auth account
-func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (account authTypes.AccountI, err error) {
+func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (account authTypes.BaseAccount, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
 	response, err := helper.FetchFromAPI(cliCtx, url)
@@ -312,8 +313,8 @@ func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (a
 		return
 	}
 
-	if err = cliCtx.LegacyAmino.UnmarshalJSON(response.Result, &account); err != nil {
-		logger.Error("Error unmarshalling account details", "url", url)
+	if err = json.Unmarshal(response.Result, &account); err != nil {
+		logger.Error("Error unmarshalling account details", "url", url, "Asasd", err)
 		return
 	}
 	return
