@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/processor"
 
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
@@ -45,16 +47,18 @@ func GetStartCmd() *cobra.Command {
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()
 
-			_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 			_httpClient, _ := httpClient.New(helper.GetConfig().TendermintRPCUrl, "/websocket")
 
 			// cli context
 			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
 
-			cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl)
-			cliCtx = cliCtx.WithClient(_httpClient)
+			cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl).
+				WithClient(_httpClient).
+				WithAccountRetriever(authtypes.AccountRetriever{})
 
 			cliCtx.BroadcastMode = flags.BroadcastAsync
+
+			_txBroadcaster := broadcaster.NewTxBroadcaster(cliCtx, cdc, cmd.Flags())
 
 			// params context
 			_paramsContext := util.NewParamsContext(cliCtx)

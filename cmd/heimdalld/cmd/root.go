@@ -80,7 +80,7 @@ func NewRootCmd() (*cobra.Command, params.EncodingConfig) {
 			bindFlags(cmd, ctx.Viper)
 
 			// load heimdall config
-			if err := helper.InitHeimdallConfig(ctx.Viper); err != nil {
+			if err := helper.InitHeimdallConfig(); err != nil {
 				return err
 			}
 

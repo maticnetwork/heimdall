@@ -96,7 +96,7 @@ func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed common.Hash, err erro
 		return nextSpanSeed, err
 	}
 	sp.Logger.Debug("Next span seed fetched")
-	if err := json.Unmarshal(response.Result, &nextSpanSeed); err != nil {
+	if err := json.Unmarshal(response, &nextSpanSeed); err != nil {
 		sp.Logger.Error("Error unmarshalling nextSpanSeed received from Heimdall Server", "error", err)
 		return nextSpanSeed, err
 	}

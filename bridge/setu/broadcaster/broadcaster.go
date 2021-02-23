@@ -5,14 +5,16 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/spf13/pflag"
+
+	"github.com/cosmos/cosmos-sdk/client/tx"
+
 	bor "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
@@ -32,13 +34,11 @@ type TxBroadcaster struct {
 
 	lastSeqNo uint64
 	accNum    uint64
+	flagSet   *pflag.FlagSet
 }
 
 // NewTxBroadcaster creates new broadcaster
-func NewTxBroadcaster(cdc codec.Marshaler) *TxBroadcaster {
-	cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-	cliCtx.BroadcastMode = flags.BroadcastAsync
-
+func NewTxBroadcaster(cliCtx client.Context, cdc codec.Marshaler, flagSet *pflag.FlagSet) *TxBroadcaster {
 	// current address
 	address := hmCommonTypes.BytesToHeimdallAddress(helper.GetAddress())
 	account, err := util.GetAccount(cliCtx, address)
@@ -51,6 +51,7 @@ func NewTxBroadcaster(cdc codec.Marshaler) *TxBroadcaster {
 		cliCtx:    cliCtx,
 		lastSeqNo: account.GetSequence(),
 		accNum:    account.GetAccountNumber(),
+		flagSet:   flagSet,
 	}
 
 	return &txBroadcaster
@@ -62,18 +63,17 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
 
-	// tx encoder
-	//txEncoder := helper.GetTxEncoder(tb.cliCtx.JSONMarshaler)
-	// chain id
+	//chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
-	// get account number and sequence
-	txBldr := tx.NewFactoryCLI(tb.cliCtx, nil).
+	// tx factory
+	txf := tx.NewFactoryCLI(tb.cliCtx, tb.flagSet).
 		WithAccountNumber(tb.accNum).
 		WithSequence(tb.lastSeqNo).
-		WithChainID(chainID)
+		WithChainID(chainID).
+		WithTxConfig(tb.cliCtx.TxConfig)
 
-	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
+	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txf, []sdk.Msg{msg})
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 		// current address

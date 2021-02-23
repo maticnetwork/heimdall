@@ -13,6 +13,8 @@ import (
 	"sync"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	mLog "github.com/RichardKnop/machinery/v1/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/pkg/errors"
@@ -26,7 +28,6 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
-	chainManagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
 
@@ -44,7 +45,7 @@ const (
 	NextSpanSeedURL         = "/heimdall/bor/v1beta1/next-span-seed"
 	DividendAccountRootURL  = "/topup/dividend-account-root"
 	ValidatorURL            = "/heimdall/base/v1beta1/validator/%v"
-	CurrentValidatorSetURL  = "/heimdall/base/v1beta1/validator-set"
+	CurrentValidatorSetURL  = "/heimdall/base/v1beta1/validatorSet"
 	StakingTxStatusURL      = "/staking/isoldtx"
 	TopupTxStatusURL        = "/topup/isoldtx"
 	ClerkTxStatusURL        = "/clerk/isoldtx"
@@ -83,24 +84,25 @@ func Logger() log.Logger {
 
 // IsProposer  checks if we are proposer
 func IsProposer(cliCtx client.Context) (bool, error) {
-	var proposers []hmTypes.Validator
+	var validatorSet ValidatorSet
 	count := uint64(1)
 	result, err := helper.FetchFromAPI(cliCtx,
-		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(CurrentValidatorSetURL, strconv.FormatUint(count, 10))),
 	)
 
 	if err != nil {
-		logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
+		logger.Error("Error fetching proposers", "url", CurrentValidatorSetURL, "error", err)
 		return false, err
 	}
 
-	err = json.Unmarshal(result.Result, &proposers)
+	err = json.Unmarshal(result, &validatorSet)
 	if err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false, err
 	}
 
-	if bytes.Equal(proposers[0].GetSigner(), helper.GetAddress()) {
+	signer, _ := sdk.AccAddressFromHex(validatorSet.Proposer.Signer)
+	if bytes.Equal(signer, helper.GetAddress()) {
 		return true, nil
 	}
 
@@ -122,7 +124,7 @@ func IsInProposerList(cliCtx client.Context, count uint64) (bool, error) {
 	// unmarshall data from buffer
 	var proposers []hmTypes.Validator
 
-	if err := json.Unmarshal(response.Result, &proposers); err != nil {
+	if err := json.Unmarshal(response, &proposers); err != nil {
 		logger.Error("Error unmarshalling validator data ", "error", err)
 		return false, err
 	}
@@ -148,16 +150,17 @@ func CalculateTaskDelay(cliCtx client.Context) (bool, time.Duration) {
 		return isCurrentValidator, 0
 	}
 	// unmarshall data from buffer
-	var validatorSet hmTypes.ValidatorSet
-	err = json.Unmarshal(response.Result, &validatorSet)
+	var validatorSet ValidatorSetResponse
+	err = json.Unmarshal(response, &validatorSet)
 	if err != nil {
 		logger.Error("Error unmarshalling current validatorset data ", "error", err)
-		return isCurrentValidator, 0
+		return false, 0
 	}
 
-	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.Validators))
-	for i, validator := range validatorSet.Validators {
-		if bytes.Equal(validator.GetSigner(), helper.GetAddress()) {
+	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.ValidatorSet.Validators))
+	for i, validator := range validatorSet.ValidatorSet.Validators {
+		signer, _ := sdk.AccAddressFromHex(validator.Signer)
+		if bytes.Equal(signer, helper.GetAddress()) {
 			valPosition = i + 1
 			isCurrentValidator = true
 			break
@@ -204,7 +207,7 @@ func IsCurrentProposer(cliCtx client.Context) (bool, error) {
 		return false, err
 	}
 
-	err = json.Unmarshal(result.Result, &proposer)
+	err = json.Unmarshal(result, &proposer)
 	if err != nil {
 		logger.Error("error unmarshalling validator", "error", err)
 		return false, err
@@ -230,7 +233,7 @@ func IsEventSender(cliCtx client.Context, validatorID uint64) bool {
 		return false
 	}
 
-	err = json.Unmarshal(result.Result, &validator)
+	err = json.Unmarshal(result, &validator)
 	if err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
@@ -312,7 +315,7 @@ func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (a
 		return
 	}
 
-	if err = json.Unmarshal(response.Result, &account); err != nil {
+	if err = json.Unmarshal(response, &account); err != nil {
 		logger.Error("Error unmarshalling account details", "url", url, "Asasd", err)
 		return
 	}
@@ -320,7 +323,7 @@ func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (a
 }
 
 // GetChainmanagerParams return chain manager params
-func GetChainmanagerParams(cliCtx client.Context) (*chainManagerTypes.Params, error) {
+func GetChainmanagerParams(cliCtx client.Context) (*ChainmanageParams, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
@@ -331,14 +334,12 @@ func GetChainmanagerParams(cliCtx client.Context) (*chainManagerTypes.Params, er
 		return nil, err
 	}
 
-	var params chainManagerTypes.Params
-	fmt.Println("result of chainManagerTypes ", response.Result)
-	if err := json.Unmarshal(response.Result, &params); err != nil {
+	var chainmanagerParamsResponse ChainmanagerParamsResponse
+	if err := json.Unmarshal(response, &chainmanagerParamsResponse); err != nil {
 		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err
 	}
-
-	return &params, nil
+	return &chainmanagerParamsResponse.Params, nil
 }
 
 // GetCheckpointParams return params
@@ -354,7 +355,7 @@ func GetCheckpointParams(cliCtx client.Context) (*checkpointTypes.Params, error)
 	}
 
 	var params checkpointTypes.Params
-	if err := json.Unmarshal(response.Result, &params); err != nil {
+	if err := json.Unmarshal(response, &params); err != nil {
 		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
 		return nil, err
 	}
@@ -375,7 +376,7 @@ func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 	}
 
 	var checkpoint hmTypes.Checkpoint
-	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
+	if err := json.Unmarshal(response, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
 		return nil, err
 	}
@@ -396,7 +397,7 @@ func GetlastestCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 	}
 
 	var checkpoint hmTypes.Checkpoint
-	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
+	if err := json.Unmarshal(response, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
 		return nil, err
 	}
@@ -442,7 +443,7 @@ func FetchNextSpanDetails(cliCtx client.Context, id uint64, start uint64) (*type
 	}
 
 	var msg types.Span
-	if err = json.Unmarshal(result.Result, &msg); err != nil {
+	if err = json.Unmarshal(result, &msg); err != nil {
 		logger.Error("Error unmarshalling propose tx msg ", "error", err)
 		return nil, err
 	}
@@ -460,7 +461,7 @@ func GetLastSpan(cliCtx client.Context) (*types.Span, error) {
 		return nil, err
 	}
 	var lastSpan types.Span
-	err = json.Unmarshal(result.Result, &lastSpan)
+	err = json.Unmarshal(result, &lastSpan)
 	if err != nil {
 		logger.Error("Error unmarshalling span", "error", err)
 		return nil, err

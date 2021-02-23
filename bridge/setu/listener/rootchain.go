@@ -16,12 +16,11 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 )
 
 // RootChainListenerContext root chain listener context
 type RootChainListenerContext struct {
-	ChainmanagerParams *chainmanagerTypes.Params
+	ChainmanagerParams *util.ChainmanageParams
 }
 
 // RootChainListener - Listens to and process events from rootchain
@@ -74,8 +73,9 @@ func (rl *RootChainListener) Start() error {
 	subscription, err := rl.contractConnector.MainChainClient.SubscribeNewHead(ctx, rl.HeaderChannel)
 	if err != nil {
 		// start go routine to poll for new header using client object
-		rl.Logger.Info("Start polling for rootchain header blocks", "pollInterval", helper.GetConfig().SyncerPollInterval)
-		go rl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
+		pollInterval := helper.GetConfig().SyncerPollInterval
+		rl.Logger.Info("Start polling for rootchain header blocks", "pollInterval", pollInterval)
+		go rl.StartPolling(ctx, pollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go rl.StartSubscription(ctx, subscription)

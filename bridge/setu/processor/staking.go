@@ -326,7 +326,7 @@ func (sp *StakingProcessor) isOldTx(cliCtx client.Context, txHash string, logInd
 	}
 
 	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
+	if err := json.Unmarshal(res, &status); err != nil {
 		sp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
 		return false, err
 	}

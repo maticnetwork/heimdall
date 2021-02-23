@@ -114,7 +114,7 @@ func (fp *FeeProcessor) isOldTx(cliCtx client.Context, txHash string, logIndex u
 	}
 
 	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
+	if err := json.Unmarshal(res, &status); err != nil {
 		fp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
 		return false, err
 	}

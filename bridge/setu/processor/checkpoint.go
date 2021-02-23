@@ -540,7 +540,7 @@ func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmCom
 		return accountroothash, err
 	}
 	cp.Logger.Info("Divident account root fetched")
-	if err := json.Unmarshal(response.Result, &accountroothash); err != nil {
+	if err := json.Unmarshal(response, &accountroothash); err != nil {
 		cp.Logger.Error("Error unmarshalling accountroothash received from Heimdall Server", "error", err)
 		return accountroothash, err
 	}
@@ -582,7 +582,7 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 	}
 
 	var noackObject Result
-	if err := json.Unmarshal(response.Result, &noackObject); err != nil {
+	if err := json.Unmarshal(response, &noackObject); err != nil {
 		cp.Logger.Error("Error unmarshalling no-ack data ", "error", err)
 		return 0
 	}

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -35,7 +34,6 @@ import (
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
-	"github.com/maticnetwork/heimdall/types/rest"
 )
 
 // ZeroHash represents empty hash
@@ -96,10 +94,10 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 }
 
 // FetchFromAPI fetches data from any URL
-func FetchFromAPI(cliCtx client.Context, URL string) (result rest.ResponseWithHeight, err error) {
+func FetchFromAPI(cliCtx client.Context, URL string) ([]byte, error) {
 	resp, err := http.Get(URL)
 	if err != nil {
-		return result, err
+		return nil, err
 	}
 	defer resp.Body.Close()
 
@@ -107,18 +105,19 @@ func FetchFromAPI(cliCtx client.Context, URL string) (result rest.ResponseWithHe
 	if resp.StatusCode == 200 {
 		body, err := ioutil.ReadAll(resp.Body)
 		if err != nil {
-			return result, err
+			return nil, err
 		}
-		// unmarshall data from buffer
-		if err := json.Unmarshal(body, &result); err != nil {
-			Logger.Debug("Error while json unmarshal the data", "err", err)
-			return result, err
-		}
-		return result, err
+		//// unmarshall data from buffer
+		//if err := json.Unmarshal(body, &result); err != nil {
+		//	Logger.Debug("Error while json unmarshal the data", "err", err)
+		//	return result, err
+		//}
+		//return result, err
+		return body, err
 	}
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
-	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
+	return nil, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
 
 // GetFromAddress get from address
@@ -287,9 +286,22 @@ func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]
 	}
 
 	err = tx.Sign(txf, fromName, txBuilder)
-	if err != nil {
-		return nil, err
-	}
+	// todo: remove sign method for tx and sign with priv key
+	//cryptoPrivKey := GetCryptoPrivKey().
+	//signData := authsign.SignerData{
+	//	ChainID:       txf.ChainID(),
+	//	AccountNumber: txf.AccountNumber(),
+	//	Sequence:      txf.Sequence(),
+	//}
+	//sig, err := tx.SignWithPrivKey(txf.SignMode(), signData, txBuilder, cryptoPrivKey, cliCtx.TxConfig, txf.Sequence())
+	//if err != nil {
+	//	return nil, err
+	//}
+	//
+	//err = txBuilder.SetSignatures(sig)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
 	if err != nil {
@@ -311,18 +323,17 @@ func BroadcastTxBytes(cliCtx client.Context, txBytes []byte, mode string) (res *
 // PrepareTxBuilder populates a TxBuilder in preparation for the build of a Tx.
 func PrepareTxBuilderFactory(cliCtx client.Context, txf tx.Factory) (tx.Factory, error) {
 	from := cliCtx.GetFromAddress()
-	//if len(from[:]) == 0 {
-	//	from = GetAddress()
-	//}
+	if len(from[:]) == 0 {
+		from = GetAddress()
+	}
 
-	accGetter := txf.AccountRetriever()
-	if err := accGetter.EnsureExists(cliCtx, from); err != nil {
+	if err := cliCtx.AccountRetriever.EnsureExists(cliCtx, from); err != nil {
 		return txf, err
 	}
 
 	initNum, initSeq := txf.AccountNumber(), txf.Sequence()
 	if initNum == 0 || initSeq == 0 {
-		num, seq, err := accGetter.GetAccountNumberSequence(cliCtx, from)
+		num, seq, err := cliCtx.AccountRetriever.GetAccountNumberSequence(cliCtx, from)
 		if err != nil {
 			return txf, err
 		}

@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"os"
@@ -9,18 +8,15 @@ import (
 	"time"
 
 	"github.com/btcsuite/btcd/rpcclient"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
 
-	"github.com/tendermint/tendermint/crypto"
-
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -112,7 +108,7 @@ type Configuration struct {
 
 var conf Configuration
 
-// MainChainClient stores eth clie nt for Main chain Network
+// MainChainClient stores eth client for Main chain Network
 var mainChainClient *ethclient.Client
 var mainRPCClient *rpc.Client
 
@@ -126,9 +122,6 @@ var heimdallClient *rpcclient.Client
 
 // private key object
 var FilePV *privval.FilePV
-var privObject secp256k1.PrivKey
-
-var pubObject secp256k1.PubKey
 
 // Logger stores global logger object
 var Logger logger.Logger
@@ -176,13 +169,6 @@ func InitHeimdallConfig() error {
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
-
-	//if heimdallClient, err = rpc.Dial(conf.TendermintRPCUrl); err != nil {
-	//	return err
-	//}
-	//if err != nil {
-	//	return fmt.Errorf("unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
-	//}
 
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
@@ -270,19 +256,23 @@ func GetPrivKey() secp256k1.PrivKey {
 }
 
 // GetECDSAPrivKey return ecdsa private key
-func GetECDSAPrivKey() *ecdsa.PrivateKey {
-	// get priv key
-	pkObject := GetPrivKey()
-
-	// create ecdsa private key
-	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
-	return ecdsaPrivateKey
-}
+//func GetECDSAPrivKey() *ecdsa.PrivateKey {
+//	// get priv key
+//	pkObject := GetPrivKey()
+//
+//	// create ecdsa private key
+//	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
+//	return ecdsaPrivateKey
+//}
 
 // GetPubKey returns pub key object
-func GetPubKey() crypto.PubKey {
-	return FilePV.Key.PubKey
+func GetPubKey() secp256k1.PubKey {
+	return FilePV.Key.PubKey.Bytes()
 }
+
+//func GetCryptoPrivKey() cryptotypes.PrivKey {
+//	return FilePV.Key.PrivKey.
+//}
 
 // GetAddress returns address object
 func GetAddress() []byte {

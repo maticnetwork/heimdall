@@ -6,7 +6,6 @@ import (
 	"github.com/patrickmn/go-cache"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
 
@@ -17,7 +16,7 @@ type ParamsContext struct {
 }
 
 type Params struct {
-	ChainmanagerParams *chainmanagerTypes.Params
+	ChainmanagerParams *ChainmanageParams
 	CheckpointParams   *checkpointTypes.Params
 }
 
