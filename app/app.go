@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"net/http"
 	"os"
@@ -53,6 +54,7 @@ import (
 	hmparams "github.com/maticnetwork/heimdall/app/params"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
+	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/maticnetwork/heimdall/x/chainmanager"
@@ -163,6 +165,8 @@ type HeimdallApp struct {
 	// simulation manager
 	sm *module.SimulationManager
 }
+
+var logger = helper.Logger.With("module", "app")
 
 func init() {
 	userHomeDir, err := os.UserHomeDir()
@@ -488,12 +492,81 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+	proposerAddress, _ :=sdk.AccAddressFromHex(string(req.Header.GetProposerAddress()))
+	app.AccountKeeper.SetBlockProposer(
+		ctx,
+		proposerAddress,
+	)
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	return app.mm.EndBlock(ctx, req)
+
+	if proposer, ok := app.AccountKeeper.GetBlockProposer(ctx); ok {
+		moduleAccount := app.AccountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName)
+		amount :=app.BankKeeper.GetBalance(ctx,moduleAccount.GetAddress(),stakingtypes.FeeToken)
+		if !amount.IsZero() {
+			coins := sdk.Coins{sdk.Coin{Denom: stakingtypes.FeeToken, Amount:sdk.NewInt(1000) }} //check amount
+			if err := app.BankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, proposer, coins); err != nil {
+				logger.Error("EndBlocker | SendCoinsFromModuleToAccount", "Error", err)
+			}
+		}
+
+		// remove block proposer
+		app.AccountKeeper.RemoveBlockProposer(ctx)
+	}
+	var tmValUpdates []abci.ValidatorUpdate
+
+	// --- Start update to new validators
+	currentValidatorSet := app.StakingKeeper.GetValidatorSet(ctx)
+	allValidators := app.StakingKeeper.GetAllValidators(ctx)
+	ackCount := app.CheckpointKeeper.GetACKCount(ctx)
+
+	// get validator updates
+	setUpdates := helper.GetUpdatedValidators(
+		currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
+		allValidators,        // All validators
+		ackCount,             // ack count
+	)
+
+	if len(setUpdates) > 0 {
+		// create new validator set
+		if err := currentValidatorSet.UpdateWithChangeSet(setUpdates); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set", "Error", err)
+			return abci.ResponseEndBlock{}
+		}
+
+		// increment proposer priority
+		currentValidatorSet.IncrementProposerPriority(1)
+
+		// validator set change
+		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
+
+		// save set in store
+		if err := app.StakingKeeper.UpdateValidatorSetInStore(ctx, currentValidatorSet); err != nil {
+			// return with nothing
+			logger.Error("Unable to update current validator set in state", "Error", err)
+			return abci.ResponseEndBlock{}
+		}
+
+		// convert updates from map to array
+		for _, v := range setUpdates {
+			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
+				Power:  int64(v.VotingPower),
+				PubKey: hmCommonTypes.NewPubKeyFromHex(v.PubKey).TMProtoCryptoPubKey(),
+			})
+		}
+	}
+
+	// end block
+	app.mm.EndBlock(ctx, req)
+
+	// send validator updates to peppermint
+	return abci.ResponseEndBlock{
+		ValidatorUpdates: tmValUpdates,
+	}
 }
 
 // InitChainer application update at chain initialization
@@ -502,12 +575,23 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	if err := tmjson.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
+	// get validator updates
+	//if err := ModuleBasics.ValidateGenesis(app.appCodec,ctx, genesisState); err != nil {
+	//	panic(err)
+	//}
+
+	// check fee collector module account
+	if moduleAcc := app.AccountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName); moduleAcc == nil {
+		panic(fmt.Sprintf("%s module account has not been set", authtypes.FeeCollectorName))
+	}
 
 	// Init genesis
-	app.mm.InitGenesis(ctx, app.appCodec, genesisState)
+	app.mm.InitGenesis(ctx, app.AppCodec(), genesisState)
 
 	// get staking state
-	stakingState := stakingtypes.GetGenesisStateFromAppState(genesisState)
+	stakingState := stakingtypes.GetGenesisStateFromAppState(app.AppCodec(),genesisState)
+	checkpointState := checkpointtypes.GetGenesisStateFromAppState(app.AppCodec(),genesisState)
+
 
 	// check if validator is current validator
 	// add to val updates else skip
@@ -515,16 +599,15 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	for _, validator := range stakingState.Validators {
 		// TODO use checkpoint state to get current validator set once checkpoint module is ready
 
-		// if validator.IsCurrentValidator(checkpointState.AckCount) {
+		if validator.IsCurrentValidator(checkpointState.AckCount) {
 		// convert to Validator Update
-
-		updateVal := abci.ValidatorUpdate{
-			Power:  int64(validator.VotingPower),
-			PubKey: common.NewPubKeyFromHex(validator.PubKey).TMProtoCryptoPubKey(),
+			updateVal := abci.ValidatorUpdate{
+				Power:  int64(validator.VotingPower),
+				PubKey: common.NewPubKeyFromHex(validator.PubKey).TMProtoCryptoPubKey(),
+			}
+			// Add validator to validator updated to be processed below
+			valUpdates = append(valUpdates, updateVal)
 		}
-		// Add validator to validator updated to be processed below
-		valUpdates = append(valUpdates, updateVal)
-		// }
 	}
 
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed

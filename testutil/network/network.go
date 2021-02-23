@@ -344,7 +344,7 @@ func New(t *testing.T, cfg Config) *Network {
 	}
 
 	validatorSet := hmtypes.NewValidatorSet(vals)
-	cfg.GenesisState, err = stakingtypes.SetGenesisStateToAppState(cfg.GenesisState, vals, validatorSet)
+	cfg.GenesisState, err = stakingtypes.SetGenesisStateToAppState(cfg.Codec, cfg.GenesisState, vals, validatorSet)
 	if err != nil {
 		require.NoError(t, err)
 	}
