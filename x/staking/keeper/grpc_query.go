@@ -45,7 +45,7 @@ func (k Querier) Validator(c context.Context, req *types.QueryValidatorRequest) 
 	ctx := sdk.UnwrapSDKContext(c)
 	validator, found := k.GetValidatorFromValID(ctx, hmTypes.ValidatorID(validatorID))
 	if !found {
-		return nil, status.Errorf(codes.NotFound, "validator %s not found", req.ValidatorId)
+		return nil, status.Errorf(codes.NotFound, "validator %d not found", req.ValidatorId)
 	}
 
 	return &types.QueryValidatorResponse{Validator: &validator}, nil

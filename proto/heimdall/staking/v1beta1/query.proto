@@ -22,11 +22,13 @@ service Query {
     // ValidatorSet queries the Current Validator Set
     rpc ValidatorSet(QueryValidatorSetRequest)
         returns (QueryValidatorSetResponse) {
-        option (google.api.http).get = "/heimdall/staking/v1beta1/validator-set";
+        option (google.api.http).get =
+            "/heimdall/staking/v1beta1/validator-set";
     }
 
     //
-    rpc StakingOldTx(QueryStakingOldTxRequest) returns (QueryStakingOldTxResponse){
+    rpc StakingOldTx(QueryStakingOldTxRequest)
+        returns (QueryStakingOldTxResponse) {
         option (google.api.http).get = "/heimdall/staking/v1beta1/isoldtx";
     }
 }
@@ -54,15 +56,11 @@ message QueryValidatorSetResponse {
     heimdall.types.ValidatorSet validator_set = 1;
 }
 
-
-// QueryStakingSequenceParams defines the params for querying an account Sequence.
-message QueryStakingOldTxRequest  {
-    string tx_hash = 1 [
-        (gogoproto.moretags) = "yaml:\"tx_hash\""
-    ];
-    uint64 log_index = 2 [
-        (gogoproto.moretags) = "yaml:\"log_index\""
-    ];
+// QueryStakingSequenceParams defines the params for querying an account
+// Sequence.
+message QueryStakingOldTxRequest {
+    string tx_hash   = 1 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index = 2 [(gogoproto.moretags) = "yaml:\"log_index\""];
 }
 
 message QueryStakingOldTxResponse {
