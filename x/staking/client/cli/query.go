@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/staking/types"
 )
 
@@ -45,7 +44,7 @@ func GetValidatorInfoCmd() *cobra.Command {
 				return err
 			}
 
-			validatorID := hmTypes.ValidatorID(viper.GetInt64(FlagValidatorID))
+			validatorID := viper.GetInt32(FlagValidatorID)
 			validatorAddressStr := viper.GetString(FlagValidatorAddress)
 			if validatorID == 0 && validatorAddressStr == "" {
 				return fmt.Errorf("validator ID or validator address required")
