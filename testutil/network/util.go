@@ -19,12 +19,10 @@ import (
 	"github.com/tendermint/tendermint/rpc/client/local"
 	"github.com/tendermint/tendermint/types"
 
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server/api"
 	servergrpc "github.com/cosmos/cosmos-sdk/server/grpc"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	hmcommon "github.com/maticnetwork/heimdall/types/common"
 )
 
 func startInProcess(cfg Config, val *Validator) error {
@@ -207,15 +205,4 @@ func writeFile(name string, dir string, contents []byte) error {
 	}
 
 	return nil
-}
-
-func getGenesisAccount(address []byte, pk []byte) authtypes.GenesisAccount {
-	acc := authtypes.NewBaseAccountWithAddress(address)
-	pkObject := hmcommon.CosmosCryptoPubKey(pk)
-	obj, err := codectypes.NewAnyWithValue(pkObject)
-	if err != nil {
-		panic(err)
-	}
-	acc.PubKey = obj
-	return acc
 }
