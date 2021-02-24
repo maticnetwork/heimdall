@@ -13,6 +13,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/gogo/protobuf/jsonpb"
+
+	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	mLog "github.com/RichardKnop/machinery/v1/log"
@@ -28,17 +32,16 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
-	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
 
 const (
 	AccountDetailsURL       = "/auth/accounts/%v"
-	LastNoAckURL            = "/heimdall/checkpoints/v1beta1/last-no-ack"
-	CheckpointParamsURL     = "/heimdall/checkpoints/v1beta1/params"
+	LastNoAckURL            = "/heimdall/checkpoint/v1beta1/genesisstate/lastnoack"
+	CheckpointParamsURL     = "/heimdall/checkpoint/v1beta1/params"
 	ChainManagerParamsURL   = "/heimdall/chainmanager/v1beta1/params"
 	ProposersURL            = "/staking/proposer/%v"
-	BufferedCheckpointURL   = "/heimdall/checkpoints/v1beta1/buffer"
-	LatestCheckpointURL     = "/heimdall/checkpoints/v1beta1/latest"
+	BufferedCheckpointURL   = "/heimdall/checkpoint/v1beta1/genesisstate/bufferedcheckpoint"
+	LatestCheckpointURL     = "/heimdall/checkpoint/v1beta1/latest"
 	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/heimdall/bor/v1beta1/latest-span"
 	NextSpanInfoURL         = "/heimdall/bor/v1beta1/prepare-next-span"
@@ -84,10 +87,9 @@ func Logger() log.Logger {
 
 // IsProposer  checks if we are proposer
 func IsProposer(cliCtx client.Context) (bool, error) {
-	var validatorSet ValidatorSet
-	count := uint64(1)
+	var validatorSet ValidatorSetResponse
 	result, err := helper.FetchFromAPI(cliCtx,
-		helper.GetHeimdallServerEndpoint(fmt.Sprintf(CurrentValidatorSetURL, strconv.FormatUint(count, 10))),
+		helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL),
 	)
 
 	if err != nil {
@@ -101,7 +103,7 @@ func IsProposer(cliCtx client.Context) (bool, error) {
 		return false, err
 	}
 
-	signer, _ := sdk.AccAddressFromHex(validatorSet.Proposer.Signer)
+	signer, _ := sdk.AccAddressFromHex(validatorSet.ValidatorSet.Proposer.Signer)
 	if bytes.Equal(signer, helper.GetAddress()) {
 		return true, nil
 	}
@@ -147,7 +149,7 @@ func CalculateTaskDelay(cliCtx client.Context) (bool, time.Duration) {
 	response, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
 	if err != nil {
 		logger.Error("Unable to send request for current validatorset", "url", CurrentValidatorSetURL, "error", err)
-		return isCurrentValidator, 0
+		return false, 0
 	}
 	// unmarshall data from buffer
 	var validatorSet ValidatorSetResponse
@@ -180,7 +182,7 @@ func CalculateSpanTaskDelay(cliContext client.Context, id uint64, start uint64) 
 
 	if err != nil {
 		logger.Error("Error while sending request for next span details", "error", err)
-		return isNextSpanProducer, 0
+		return false, 0
 	}
 
 	// check if current user is among next span producers
@@ -354,16 +356,16 @@ func GetCheckpointParams(cliCtx client.Context) (*checkpointTypes.Params, error)
 		return nil, err
 	}
 
-	var params checkpointTypes.Params
-	if err := json.Unmarshal(response, &params); err != nil {
-		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
+	var params checkpointTypes.QueryParamsResponse
+	if err := jsonpb.UnmarshalString(string(response), &params); err != nil {
+		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL, "Error", err)
 		return nil, err
 	}
 
-	return &params, nil
+	return &params.Params, nil
 }
 
-// GetBufferedCheckpoint return checkpoint from bueffer
+// GetBufferedCheckpoint return checkpoint from buffer
 func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,

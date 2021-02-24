@@ -3,10 +3,11 @@ package util
 import (
 	"time"
 
+	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
+
 	"github.com/patrickmn/go-cache"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
 
 type ParamsContext struct {
@@ -17,7 +18,7 @@ type ParamsContext struct {
 
 type Params struct {
 	ChainmanagerParams *ChainmanageParams
-	CheckpointParams   *checkpointTypes.Params
+	CheckpointParams   *checkpointtypes.Params
 }
 
 // NewParamsContext creates new params context

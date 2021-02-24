@@ -581,13 +581,13 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 		return 0
 	}
 
-	var noackObject Result
+	var noackObject util.LastNoAckResponse
 	if err := json.Unmarshal(response, &noackObject); err != nil {
 		cp.Logger.Error("Error unmarshalling no-ack data ", "error", err)
 		return 0
 	}
 
-	return noackObject.Result
+	return noackObject.LastNoAck
 }
 
 // checkIfNoAckIsRequired - check if NoAck has to be sent or not

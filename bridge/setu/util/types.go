@@ -45,3 +45,23 @@ type ValidatorSet struct {
 type ValidatorSetResponse struct {
 	ValidatorSet ValidatorSet `json:"validator_set"`
 }
+
+//// checkpoint params response
+//type CheckPointParams struct {
+//	CheckpointBufferTime time.Duration `protobuf:"bytes,1,opt,name=checkpoint_buffer_time,json=checkpointBufferTime,proto3,stdduration" json:"checkpoint_buffer_time,string" yaml:"checkpoint_buffer_time"`
+//	AvgCheckpointLength  uint64        `protobuf:"varint,2,opt,name=avg_checkpoint_length,json=avgCheckpointLength,proto3" json:"avg_checkpoint_length,string,omitempty" yaml:"avg_checkpoint_length"`
+//	MaxCheckpointLength  uint64        `protobuf:"varint,3,opt,name=max_checkpoint_length,json=maxCheckpointLength,proto3" json:"max_checkpoint_length,string,omitempty" yaml:"max_checkpoint_length"`
+//	ChildBlockInterval   uint64        `protobuf:"varint,4,opt,name=child_block_interval,json=childBlockInterval,proto3" json:"child_block_interval,string,omitempty" yaml:"child_block_interval"`
+//}
+//
+//type CheckPointParamsResponse struct {
+//	Params CheckPointParams `json:"params"`
+//}
+
+type LastNoAckResponse struct {
+	LastNoAck uint64 `json:"last_no_ack,string"`
+}
+
+type NextSpanSeedResponse struct {
+	NextSpanSeed string `json:"next_span_seed"`
+}
