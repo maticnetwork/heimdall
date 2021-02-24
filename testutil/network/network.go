@@ -113,7 +113,7 @@ func DefaultConfig() Config {
 		GenesisState:      app.ModuleBasics.DefaultGenesis(encCfg.Marshaler),
 		TimeoutCommit:     2 * time.Second,
 		ChainID:           "chain-" + tmrand.NewRand().Str(6),
-		NumValidators:     1,
+		NumValidators:     4,
 		BondDenom:         stakingtypes.FeeToken,
 		MinGasPrices:      fmt.Sprintf("0.000006%s", stakingtypes.FeeToken),
 		AccountTokens:     sdk.TokensFromConsensusPower(1000),
@@ -197,6 +197,7 @@ func New(t *testing.T, cfg Config) *Network {
 		genBalances []banktypes.Balance
 		genFiles    []string
 		vals  []*hmtypes.Validator
+		addressesIPs []string
 	)
 
 	buf := bufio.NewReader(os.Stdin)
@@ -313,7 +314,12 @@ func New(t *testing.T, cfg Config) *Network {
 			hmAddr,
 		)
 
+		p2pURL, err := url.Parse(p2pAddr)
+		require.NoError(t, err)
+
 		vals = append(vals, validator)
+		nodeAddrIP := fmt.Sprintf("%s@%s:%s", nodeIDs[i], p2pURL.Hostname(), p2pURL.Port())
+		addressesIPs = append(addressesIPs, nodeAddrIP)
 
 		srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), appCfg)
 
@@ -349,6 +355,8 @@ func New(t *testing.T, cfg Config) *Network {
 		require.NoError(t, err)
 	}
 	require.NoError(t, initGenFiles(cfg, genAccounts, genBalances, genFiles))
+
+	require.NoError(t, collectGenFiles(cfg, network.Validators, network.BaseDir, addressesIPs))
 
 	t.Log("starting test network...")
 	for _, v := range network.Validators {

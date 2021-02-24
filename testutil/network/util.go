@@ -2,7 +2,14 @@ package network
 
 import (
 	"encoding/json"
+	"fmt"
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	tmconfig "github.com/tendermint/tendermint/config"
+	tmtime "github.com/tendermint/tendermint/types/time"
 	"path/filepath"
+	"sort"
+	"strings"
 	"time"
 
 	tmos "github.com/tendermint/tendermint/libs/os"
@@ -100,8 +107,52 @@ func startInProcess(cfg Config, val *Validator) error {
 	return nil
 }
 
-func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
 
+func collectGenFiles(cfg Config, vals []*Validator, outputDir string, addressesIPs []string) error {
+	genTime := tmtime.Now()
+
+	for i := 0; i < cfg.NumValidators; i++ {
+		tmCfg := vals[i].Ctx.Config
+
+		nodeDir := filepath.Join(outputDir, vals[i].Moniker, "heimdalld")
+		fmt.Println("nodeDir", nodeDir)
+		tmCfg.Moniker = vals[i].Moniker
+		tmCfg.SetRoot(nodeDir)
+
+
+		genFile := tmCfg.GenesisFile()
+		genDoc, err := types.GenesisDocFromFile(genFile)
+		if err != nil {
+			return err
+		}
+
+		sort.Strings(addressesIPs)
+		tmCfg.P2P.PersistentPeers = strings.Join(addressesIPs, ",")
+		tmconfig.WriteConfigFile(filepath.Join(tmCfg.RootDir, "config", "config.toml"), tmCfg)
+
+		// create the app state
+		appGenesisState, err := genutiltypes.GenesisStateFromGenDoc(*genDoc)
+		if err != nil {
+			return err
+		}
+
+		appState, err := json.MarshalIndent(appGenesisState, "", "  ")
+		if err != nil {
+			return  err
+		}
+
+		// overwrite each validator's genesis file to have a canonical genesis time
+		if err := genutil.ExportGenesisFileWithTime(genFile, cfg.ChainID, nil, appState, genTime); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+
+func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
+	genTime := tmtime.Now()
 	// set the accounts in the genesis state
 	var authGenState authtypes.GenesisState
 	cfg.Codec.MustUnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &authGenState)
@@ -127,6 +178,7 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 	}
 
 	genDoc := types.GenesisDoc{
+		GenesisTime: genTime,
 		ChainID:    cfg.ChainID,
 		AppState:   appGenStateJSON,
 		Validators: nil,
