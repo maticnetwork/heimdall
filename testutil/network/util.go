@@ -2,7 +2,6 @@ package network
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	tmconfig "github.com/tendermint/tendermint/config"
@@ -115,7 +114,6 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string, addressesI
 		tmCfg := vals[i].Ctx.Config
 
 		nodeDir := filepath.Join(outputDir, vals[i].Moniker, "heimdalld")
-		fmt.Println("nodeDir", nodeDir)
 		tmCfg.Moniker = vals[i].Moniker
 		tmCfg.SetRoot(nodeDir)
 
