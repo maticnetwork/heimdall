@@ -492,30 +492,30 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	//proposerAddress, _ :=sdk.AccAddressFromHex(string(req.Header.GetProposerAddress()))
-	//app.AccountKeeper.SetBlockProposer(
-	//	ctx,
-	//	proposerAddress,
-	//)
+	proposerAddress, _ :=sdk.AccAddressFromHex(string(req.Header.GetProposerAddress()))
+	app.ChainKeeper.SetBlockProposer(
+		ctx,
+		proposerAddress,
+	)
 	return app.mm.BeginBlock(ctx, req)
 }
 
 // EndBlocker application updates every end block
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
-	//
-	//if proposer, ok := app.AccountKeeper.GetBlockProposer(ctx); ok {
-	//	moduleAccount := app.AccountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName)
-	//	amount :=app.BankKeeper.GetBalance(ctx,moduleAccount.GetAddress(),stakingtypes.FeeToken)
-	//	if !amount.IsZero() {
-	//		coins := sdk.Coins{sdk.Coin{Denom: stakingtypes.FeeToken, Amount:sdk.NewInt(1000) }} //check amount
-	//		if err := app.BankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, proposer, coins); err != nil {
-	//			logger.Error("EndBlocker | SendCoinsFromModuleToAccount", "Error", err)
-	//		}
-	//	}
-	//
-	//	// remove block proposer
-	//	app.AccountKeeper.RemoveBlockProposer(ctx)
-	//}
+
+	if proposer, ok := app.ChainKeeper.GetBlockProposer(ctx); ok {
+		moduleAccount := app.AccountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName)
+		amount :=app.BankKeeper.GetBalance(ctx,moduleAccount.GetAddress(),stakingtypes.FeeToken)
+		if !amount.IsZero() {
+			coins := sdk.Coins{sdk.Coin{Denom: stakingtypes.FeeToken, Amount:sdk.NewInt(1000) }} //check amount
+			if err := app.BankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, proposer, coins); err != nil {
+				logger.Error("EndBlocker | SendCoinsFromModuleToAccount", "Error", err)
+			}
+		}
+
+		// remove block proposer
+		app.ChainKeeper.RemoveBlockProposer(ctx)
+	}
 	var tmValUpdates []abci.ValidatorUpdate
 
 	// --- Start update to new validators
