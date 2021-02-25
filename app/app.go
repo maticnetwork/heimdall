@@ -357,6 +357,7 @@ func NewHeimdallApp(
 		params.NewAppModule(app.ParamsKeeper),
 		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 		bor.NewAppModule(appCodec, app.BorKeeper, &app.caller),
+		topup.NewAppModule(appCodec, app.TopupKeeper, &app.caller),
 	)
 
 	// During begin block slashing happens after distr.BeginBlocker so that
