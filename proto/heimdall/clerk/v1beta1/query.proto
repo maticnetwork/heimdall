@@ -4,6 +4,7 @@ package heimdall.clerk.v1beta1;
 import "google/api/annotations.proto";
 import "heimdall/clerk/v1beta1/clerk.proto";
 import "gogoproto/gogo.proto";
+import "heimdall/base/v1beta1/query.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";
 
@@ -13,10 +14,19 @@ option (gogoproto.unmarshaler_all) = false;
 
 // Query defines the gRPC querier service.
 service Query {
+    // Records
+    rpc Records(QueryRecordListRequest) returns (QueryRecordListResponse) {
+        option (google.api.http).get = "/heimdall/clerk/v1beta1/records";
+    }
+
     // Record queries the record that match by record id.
     rpc Record(QueryRecordParams) returns (QueryRecordResponse) {
         option (google.api.http).get =
-            "/heimdall/clerk/v1beta1/records/{record_id}";
+            "/heimdall/clerk/v1beta1/record/{record_id}";
+    }
+
+    rpc QueryIsOldTxClerk(QueryIsOldTxRequest) returns (QueryIsOldTxResponse) {
+        option (google.api.http).get = "/heimdall/clerk/v1beta1/isoldtx";
     }
 }
 
@@ -28,4 +38,23 @@ message QueryRecordParams {
 // QueryRecordResponse is response type for the Query/Record RPC method
 message QueryRecordResponse {
     EventRecord event_record = 1;
+}
+
+// IsOldTx request and response messages
+message QueryIsOldTxRequest {
+    string tx_hash   = 1;
+    uint64 log_index = 2;
+}
+
+message QueryIsOldTxResponse {
+    bool status = 1;
+}
+
+// QueryRecordListRequest
+message QueryRecordListRequest {
+    heimdall.types.QueryPaginationParams pagination = 1;
+}
+
+message QueryRecordListResponse {
+    repeated EventRecord event_records = 1 [(gogoproto.nullable) = false];
 }
