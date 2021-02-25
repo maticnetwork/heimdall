@@ -18,7 +18,7 @@ type Querier struct {
 	contractCaller helper.IContractCaller
 }
 
-// NewQueryServerImpl returns an implementation of the bank MsgServer interface
+// NewQueryServerImpl returns an implementation of the bank QueryServer interface
 // for the provided Keeper.
 func NewQueryServerImpl(keeper Keeper, contractCaller helper.IContractCaller) types.QueryServer {
 	return &Querier{Keeper: keeper, contractCaller: contractCaller}
@@ -162,8 +162,9 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 	// 	return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error()))
 	// }
 
+	accAddr, _ := sdk.AccAddressFromHex(proposer.Signer)
 	checkpointMsg := types.NewMsgCheckpointBlock(
-		sdk.AccAddress([]byte(proposer.Signer)),
+		accAddr,
 		start,
 		start+params.AvgCheckpointLength,
 		hmCommonTypes.BytesToHeimdallHash(rootHash),
@@ -172,4 +173,30 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 	)
 
 	return &types.QueryNextCheckpointResponse{NextCheckpoint: &checkpointMsg}, nil
+}
+
+// LatestCheckpoint will returns the latest checkpoint
+func (k Querier) LatestCheckpoint(c context.Context, req *types.QueryLatestCheckpointRequest) (*types.QueryLatestCheckpointResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	ackCount := k.GetACKCount(ctx)
+	if ackCount == 0 {
+		return nil, status.Error(codes.NotFound, "No ack count found")
+	}
+
+	// Last checkpoint key
+	k.Logger(ctx).Debug("ACK Count fetched", "ackCount", ackCount)
+	lastCheckpointKey := ackCount
+	k.Logger(ctx).Debug("Last checkpoint key generated", "lastCheckpointKey", lastCheckpointKey)
+
+	res, err := k.GetCheckpointByNumber(ctx, lastCheckpointKey)
+	if err != nil {
+		return nil, types.ErrNoCheckpointFound
+	}
+
+	return &types.QueryLatestCheckpointResponse{
+		LatestCheckpoint: &res,
+	}, nil
 }

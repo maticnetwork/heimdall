@@ -2,6 +2,7 @@ package gov
 
 import (
 	// "context"
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -40,10 +41,6 @@ type AppModuleBasic struct {
 	proposalHandlers []govclient.ProposalHandler // proposal handlers which live in governance cli and rest
 }
 
-// func NewAppModuleBasic(cdc codec.Marshaler) AppModuleBasic {
-// 	return AppModuleBasic{cdc: cdc}
-// }
-
 // NewAppModuleBasic creates a new AppModuleBasic object
 func NewAppModuleBasic(proposalHandlers ...govclient.ProposalHandler) AppModuleBasic {
 	return AppModuleBasic{
@@ -54,10 +51,6 @@ func NewAppModuleBasic(proposalHandlers ...govclient.ProposalHandler) AppModuleB
 // Name returns the capability module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
-}
-
-func (AppModuleBasic) RegisterCodec(cdc *codec.LegacyAmino) {
-	types.RegisterCodec(cdc)
 }
 
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
@@ -72,7 +65,8 @@ func (a AppModuleBasic) RegisterInterfaces(reg cdctypes.InterfaceRegistry) {
 // RegisterQueryService registers a GRPC query service to respond to the
 // module-specific GRPC queries.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
-	//types.RegisterQueryServer(cfg.QueryServer(), am.keeper)
+	types.RegisterMsgServer(cfg.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfg.QueryServer(), keeper.NewQueryServerImpl(am.keeper))
 }
 
 // DefaultGenesis returns the capability module's default genesis state.
@@ -96,7 +90,10 @@ func (AppModuleBasic) RegisterRESTRoutes(clientCtx client.Context, rtr *mux.Rout
 
 // RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the auth module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
-	// types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx))
+	if err != nil {
+		panic(err)
+	}
 }
 
 // GetTxCmd returns the capability module's root tx command.

@@ -207,7 +207,8 @@ func (m *QueryValidatorSetResponse) GetValidatorSet() *types.ValidatorSet {
 	return nil
 }
 
-// QueryStakingSequenceParams defines the params for querying an account Sequence.
+// QueryStakingSequenceParams defines the params for querying an account
+// Sequence.
 type QueryStakingOldTxRequest struct {
 	TxHash   string `protobuf:"bytes,1,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty" yaml:"tx_hash"`
 	LogIndex uint64 `protobuf:"varint,2,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty" yaml:"log_index"`
