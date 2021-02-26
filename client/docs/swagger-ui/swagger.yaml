@@ -3863,7 +3863,7 @@ paths:
                       format: byte
       tags:
         - Query
-  /heimdall/checkpoint/v1beta1/genesisstate/ackcount:
+  /heimdall/checkpoint/v1beta1/ack-count:
     get:
       summary: AckCount queries the AckCount.
       operationId: AckCount
@@ -3900,9 +3900,9 @@ paths:
                       format: byte
       tags:
         - Query
-  /heimdall/checkpoint/v1beta1/genesisstate/bufferedcheckpoint:
+  /heimdall/checkpoint/v1beta1/buffer:
     get:
-      summary: CheckpointBuffe queries the Checkpoint Buffer.
+      summary: CheckpointBuffer queries the Checkpoint Buffer.
       operationId: CheckpointBuffer
       responses:
         '200':
@@ -3952,7 +3952,223 @@ paths:
                       format: byte
       tags:
         - Query
-  /heimdall/checkpoint/v1beta1/genesisstate/checkpoints:
+  '/heimdall/checkpoint/v1beta1/checkpoint/{number}':
+    get:
+      summary: Checkpoint queries the checkpoint.
+      operationId: Checkpoint
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              ack_count:
+                type: string
+                format: uint64
+              checkpoint:
+                type: object
+                properties:
+                  proposer:
+                    type: string
+                  start_block:
+                    type: string
+                    format: uint64
+                  end_block:
+                    type: string
+                    format: uint64
+                  root_hash:
+                    type: string
+                  BorChainID:
+                    type: string
+                  time_stamp:
+                    type: string
+                    format: uint64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: number
+          in: path
+          required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /heimdall/checkpoint/v1beta1/checkpoints:
+    get:
+      summary: CheckpointList queries checkpoint list .
+      operationId: CheckpointList
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              checkpoint_list:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    proposer:
+                      type: string
+                    start_block:
+                      type: string
+                      format: uint64
+                    end_block:
+                      type: string
+                      format: uint64
+                    root_hash:
+                      type: string
+                    BorChainID:
+                      type: string
+                    time_stamp:
+                      type: string
+                      format: uint64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pagination.page
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          in: query
+          required: false
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /heimdall/checkpoint/v1beta1/last-no-ack:
+    get:
+      summary: LastNoAck queries the last no-ack.
+      operationId: LastNoAck
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              last_no_ack:
+                type: string
+                format: uint64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /heimdall/checkpoint/v1beta1/latest:
+    get:
+      summary: NextCheckpoint queries the next checkpoint.
+      operationId: LatestCheckpoint
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              latest_checkpoint:
+                type: object
+                properties:
+                  proposer:
+                    type: string
+                  start_block:
+                    type: string
+                    format: uint64
+                  end_block:
+                    type: string
+                    format: uint64
+                  root_hash:
+                    type: string
+                  BorChainID:
+                    type: string
+                  time_stamp:
+                    type: string
+                    format: uint64
+            title: Latest Checkpoint response
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /heimdall/checkpoint/v1beta1/next-checkpoint:
     get:
       summary: NextCheckpoint queries the next checkpoint.
       operationId: NextCheckpoint
@@ -4007,43 +4223,6 @@ paths:
           in: query
           required: false
           type: string
-      tags:
-        - Query
-  /heimdall/checkpoint/v1beta1/genesisstate/lastnoack:
-    get:
-      summary: LastNoAck queries the last no-ack.
-      operationId: LastNoAck
-      responses:
-        '200':
-          description: A successful response.
-          schema:
-            type: object
-            properties:
-              last_no_ack:
-                type: string
-                format: uint64
-        default:
-          description: An unexpected error response.
-          schema:
-            type: object
-            properties:
-              error:
-                type: string
-              code:
-                type: integer
-                format: int32
-              message:
-                type: string
-              details:
-                type: array
-                items:
-                  type: object
-                  properties:
-                    type_url:
-                      type: string
-                    value:
-                      type: string
-                      format: byte
       tags:
         - Query
   /heimdall/checkpoint/v1beta1/params:
@@ -6632,51 +6811,17 @@ paths:
             - DEFAULT
       tags:
         - Query
-  '/heimdall/base/v1beta1/validator/{validator_id}':
+  /heimdall/staking/v1beta1/isoldtx:
     get:
-      summary: Validator queries the validator that match by validator id.
-      operationId: Validator
+      operationId: StakingOldTx
       responses:
         '200':
           description: A successful response.
           schema:
             type: object
             properties:
-              validator:
-                description: validator defines the the validator info.
-                type: object
-                properties:
-                  ID:
-                    type: string
-                    enum:
-                      - DEFAULT
-                    default: DEFAULT
-                  start_epoch:
-                    type: string
-                    format: uint64
-                  end_epoch:
-                    type: string
-                    format: uint64
-                  nonce:
-                    type: string
-                    format: uint64
-                  voting_power:
-                    type: string
-                    format: int64
-                  pub_key:
-                    type: string
-                  signer:
-                    type: string
-                  last_updated:
-                    type: string
-                  jailed:
-                    type: boolean
-                  proposer_priority:
-                    type: string
-                    format: int64
-            title: >-
-              QueryValidatorResponse is response type for the Query/Validator
-              RPC method
+              status:
+                type: boolean
         default:
           description: An unexpected error response.
           schema:
@@ -6700,16 +6845,18 @@ paths:
                       type: string
                       format: byte
       parameters:
-        - name: validator_id
-          description: validator_id defines the validator id to query for.
-          in: path
-          required: true
+        - name: tx_hash
+          in: query
+          required: false
           type: string
-          enum:
-            - DEFAULT
+        - name: log_index
+          in: query
+          required: false
+          type: string
+          format: uint64
       tags:
         - Query
-  /heimdall/base/v1beta1/validatorSet:
+  /heimdall/staking/v1beta1/validator-set:
     get:
       summary: ValidatorSet queries the Current Validator Set
       operationId: ValidatorSet
@@ -6819,9 +6966,254 @@ paths:
                       format: byte
       tags:
         - Query
-  '/x/topup/types/msg_topup/{tx_hash}':
+  '/heimdall/staking/v1beta1/validator/{validator_id}':
     get:
-      summary: 'this line is used by starport scaffolding # 2'
+      summary: Validator queries the validator that match by validator id.
+      operationId: Validator
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              validator:
+                type: object
+                properties:
+                  ID:
+                    type: string
+                    enum:
+                      - DEFAULT
+                    default: DEFAULT
+                  start_epoch:
+                    type: string
+                    format: uint64
+                  end_epoch:
+                    type: string
+                    format: uint64
+                  nonce:
+                    type: string
+                    format: uint64
+                  voting_power:
+                    type: string
+                    format: int64
+                  pub_key:
+                    type: string
+                  signer:
+                    type: string
+                  last_updated:
+                    type: string
+                  jailed:
+                    type: boolean
+                  proposer_priority:
+                    type: string
+                    format: int64
+                description: validator defines the the validator info.
+            title: >-
+              QueryValidatorResponse is response type for the Query/Validator
+              RPC method
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: validator_id
+          description: validator_id defines the validator id to query for.
+          in: path
+          required: true
+          type: integer
+          format: int32
+      tags:
+        - Query
+  /heimdall/topup/v1beta1/dividend-account-root:
+    get:
+      summary: QueryDividendAccountRoot will get the dividend account root hash
+      operationId: QueryDividendAccountRoot
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              account_root_hash:
+                type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  '/heimdall/topup/v1beta1/dividend-account/{address}':
+    get:
+      operationId: QueryDividendAccount
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              dividend_account:
+                type: object
+                properties:
+                  user:
+                    type: string
+                  fee_amount:
+                    type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: address
+          in: path
+          required: true
+          type: string
+      tags:
+        - Query
+  /heimdall/topup/v1beta1/dividend-accounts:
+    get:
+      operationId: QueryDividendAccounts
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              dividend_accounts:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    user:
+                      type: string
+                    fee_amount:
+                      type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      tags:
+        - Query
+  /heimdall/topup/v1beta1/isoldtx:
+    get:
+      summary: IsOldTx checking tx is old or not
+      operationId: IsOldTx
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              status:
+                type: boolean
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: tx_hash
+          in: query
+          required: false
+          type: string
+        - name: log_index
+          in: query
+          required: false
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /heimdall/topup/v1beta1/sequence:
+    get:
+      summary: Sequence query sequence no
       operationId: Sequence
       responses:
         '200':
@@ -6856,8 +7248,8 @@ paths:
                       format: byte
       parameters:
         - name: tx_hash
-          in: path
-          required: true
+          in: query
+          required: false
           type: string
         - name: log_index
           in: query
@@ -13259,6 +13651,28 @@ definitions:
       last_no_ack:
         type: string
         format: uint64
+  heimdall.checkpoint.v1beta1.QueryLatestCheckpointResponse:
+    type: object
+    properties:
+      latest_checkpoint:
+        type: object
+        properties:
+          proposer:
+            type: string
+          start_block:
+            type: string
+            format: uint64
+          end_block:
+            type: string
+            format: uint64
+          root_hash:
+            type: string
+          BorChainID:
+            type: string
+          time_stamp:
+            type: string
+            format: uint64
+    title: Latest Checkpoint response
   heimdall.checkpoint.v1beta1.QueryNextCheckpointResponse:
     type: object
     properties:
@@ -14500,11 +14914,15 @@ definitions:
     enum:
       - DEFAULT
     default: DEFAULT
+  heimdall.staking.v1beta1.QueryStakingOldTxResponse:
+    type: object
+    properties:
+      status:
+        type: boolean
   heimdall.staking.v1beta1.QueryValidatorResponse:
     type: object
     properties:
       validator:
-        description: validator defines the the validator info.
         type: object
         properties:
           ID:
@@ -14535,6 +14953,7 @@ definitions:
           proposer_priority:
             type: string
             format: int64
+        description: validator defines the the validator info.
     title: QueryValidatorResponse is response type for the Query/Validator RPC method
   heimdall.staking.v1beta1.QueryValidatorSetResponse:
     type: object
@@ -14714,12 +15133,51 @@ definitions:
       total_voting_power:
         type: string
         format: int64
+  heimdall.topup.v1beta1.QueryDividendAccountResponse:
+    type: object
+    properties:
+      dividend_account:
+        type: object
+        properties:
+          user:
+            type: string
+          fee_amount:
+            type: string
+  heimdall.topup.v1beta1.QueryDividendAccountRootResponse:
+    type: object
+    properties:
+      account_root_hash:
+        type: string
+  heimdall.topup.v1beta1.QueryDividendAccountsResponse:
+    type: object
+    properties:
+      dividend_accounts:
+        type: array
+        items:
+          type: object
+          properties:
+            user:
+              type: string
+            fee_amount:
+              type: string
+  heimdall.topup.v1beta1.QueryIsOldTxSequenceResponse:
+    type: object
+    properties:
+      status:
+        type: boolean
   heimdall.topup.v1beta1.QuerySequenceResponse:
     type: object
     properties:
       sequence:
         type: string
         format: uint64
+  heimdall.types.DividendAccount:
+    type: object
+    properties:
+      user:
+        type: string
+      fee_amount:
+        type: string
   cosmos.params.v1beta1.ParamChange:
     type: object
     properties:

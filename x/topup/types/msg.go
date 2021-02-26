@@ -10,7 +10,7 @@ import (
 // Fee token
 //
 
-// var _ sdk.Msg = MsgTopup{}
+var _ sdk.Msg = &MsgTopup{}
 
 // NewMsgTopup - construct arbitrary multi-in, multi-out send msg.
 func NewMsgTopup(

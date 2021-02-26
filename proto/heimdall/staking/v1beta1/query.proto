@@ -16,20 +16,33 @@ service Query {
     // Validator queries the validator that match by validator id.
     rpc Validator(QueryValidatorRequest) returns (QueryValidatorResponse) {
         option (google.api.http).get =
-            "/heimdall/base/v1beta1/validator/{validator_id}";
+            "/heimdall/staking/v1beta1/validator/{validator_id}";
     }
 
     // ValidatorSet queries the Current Validator Set
     rpc ValidatorSet(QueryValidatorSetRequest)
         returns (QueryValidatorSetResponse) {
-        option (google.api.http).get = "/heimdall/base/v1beta1/validatorSet";
+        option (google.api.http).get =
+            "/heimdall/staking/v1beta1/validator-set";
+    }
+
+    //
+    rpc StakingOldTx(QueryStakingOldTxRequest)
+        returns (QueryStakingOldTxResponse) {
+        option (google.api.http).get = "/heimdall/staking/v1beta1/isoldtx";
+    }
+
+    // Proposer
+    rpc QueryProposer(QueryProposerRequest) returns (QueryProposerResponse) {
+        option (google.api.http).get =
+            "/heimdall/staking/v1beta1/proposer/{times}";
     }
 }
 
 // QueryValidatorRequest is request type for the Query/Validator RPC method
 message QueryValidatorRequest {
     // validator_id defines the validator id to query for.
-    heimdall.types.ValidatorID validator_id = 1;
+    int32 validator_id = 1;
 }
 
 // QueryValidatorResponse is response type for the Query/Validator RPC method
@@ -48,3 +61,24 @@ message QueryValidatorSetResponse {
     // validatorSet defines the the current validator set.
     heimdall.types.ValidatorSet validator_set = 1;
 }
+
+// QueryStakingSequenceParams defines the params for querying an account
+// Sequence.
+message QueryStakingOldTxRequest {
+    string tx_hash   = 1 [(gogoproto.moretags) = "yaml:\"tx_hash\""];
+    uint64 log_index = 2 [(gogoproto.moretags) = "yaml:\"log_index\""];
+}
+
+message QueryStakingOldTxResponse {
+    bool status = 1;
+}
+
+//
+message QueryProposerRequest {
+    uint32 times = 1;
+}
+
+message QueryProposerResponse {
+    repeated heimdall.types.Validator proposers = 1;
+}
+

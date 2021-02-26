@@ -140,7 +140,7 @@ func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address sdk.AccAdd
 
 	// check if dividend account exists
 	if !k.CheckIfDividendAccountExists(ctx, address) {
-		return dividendAccount, errors.New("Dividend Account not found")
+		return dividendAccount, errors.New("dividend account not found")
 	}
 
 	// Get DividendAccount key
@@ -163,7 +163,7 @@ func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr sdk.AccA
 	return store.Has(key)
 }
 
-// GetAllDividendAccounts returns all DividendAccountss
+// GetAllDividendAccounts returns all DividendAccounts
 func (k *Keeper) GetAllDividendAccounts(ctx sdk.Context) (dividendAccounts []*hmTypes.DividendAccount) {
 	// iterate through dividendAccounts and create dividendAccounts update array
 	k.IterateDividendAccountsByPrefixAndApplyFn(ctx, DividendAccountMapKey, func(dividendAccount hmTypes.DividendAccount) error {

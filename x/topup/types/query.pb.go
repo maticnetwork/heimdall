@@ -9,6 +9,7 @@ import (
 	_ "github.com/gogo/protobuf/gogoproto"
 	grpc1 "github.com/gogo/protobuf/grpc"
 	proto "github.com/gogo/protobuf/proto"
+	types "github.com/maticnetwork/heimdall/types"
 	_ "google.golang.org/genproto/googleapis/api/annotations"
 	grpc "google.golang.org/grpc"
 	codes "google.golang.org/grpc/codes"
@@ -29,6 +30,7 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
+// Sequence request and response messages
 type QuerySequenceRequest struct {
 	TxHash   string `protobuf:"bytes,1,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`
 	LogIndex uint64 `protobuf:"varint,2,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
@@ -67,6 +69,20 @@ func (m *QuerySequenceRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QuerySequenceRequest proto.InternalMessageInfo
 
+func (m *QuerySequenceRequest) GetTxHash() string {
+	if m != nil {
+		return m.TxHash
+	}
+	return ""
+}
+
+func (m *QuerySequenceRequest) GetLogIndex() uint64 {
+	if m != nil {
+		return m.LogIndex
+	}
+	return 0
+}
+
 type QuerySequenceResponse struct {
 	Sequence uint64 `protobuf:"varint,1,opt,name=sequence,proto3" json:"sequence,omitempty"`
 }
@@ -104,9 +120,372 @@ func (m *QuerySequenceResponse) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_QuerySequenceResponse proto.InternalMessageInfo
 
+func (m *QuerySequenceResponse) GetSequence() uint64 {
+	if m != nil {
+		return m.Sequence
+	}
+	return 0
+}
+
+// IsOldTx Request and response
+type QueryIsOldTxSequenceRequest struct {
+	TxHash   string `protobuf:"bytes,1,opt,name=tx_hash,json=txHash,proto3" json:"tx_hash,omitempty"`
+	LogIndex uint64 `protobuf:"varint,2,opt,name=log_index,json=logIndex,proto3" json:"log_index,omitempty"`
+}
+
+func (m *QueryIsOldTxSequenceRequest) Reset()         { *m = QueryIsOldTxSequenceRequest{} }
+func (m *QueryIsOldTxSequenceRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryIsOldTxSequenceRequest) ProtoMessage()    {}
+func (*QueryIsOldTxSequenceRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{2}
+}
+func (m *QueryIsOldTxSequenceRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryIsOldTxSequenceRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryIsOldTxSequenceRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryIsOldTxSequenceRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryIsOldTxSequenceRequest.Merge(m, src)
+}
+func (m *QueryIsOldTxSequenceRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryIsOldTxSequenceRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryIsOldTxSequenceRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryIsOldTxSequenceRequest proto.InternalMessageInfo
+
+func (m *QueryIsOldTxSequenceRequest) GetTxHash() string {
+	if m != nil {
+		return m.TxHash
+	}
+	return ""
+}
+
+func (m *QueryIsOldTxSequenceRequest) GetLogIndex() uint64 {
+	if m != nil {
+		return m.LogIndex
+	}
+	return 0
+}
+
+type QueryIsOldTxSequenceResponse struct {
+	Status bool `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
+}
+
+func (m *QueryIsOldTxSequenceResponse) Reset()         { *m = QueryIsOldTxSequenceResponse{} }
+func (m *QueryIsOldTxSequenceResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryIsOldTxSequenceResponse) ProtoMessage()    {}
+func (*QueryIsOldTxSequenceResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{3}
+}
+func (m *QueryIsOldTxSequenceResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryIsOldTxSequenceResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryIsOldTxSequenceResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryIsOldTxSequenceResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryIsOldTxSequenceResponse.Merge(m, src)
+}
+func (m *QueryIsOldTxSequenceResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryIsOldTxSequenceResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryIsOldTxSequenceResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryIsOldTxSequenceResponse proto.InternalMessageInfo
+
+func (m *QueryIsOldTxSequenceResponse) GetStatus() bool {
+	if m != nil {
+		return m.Status
+	}
+	return false
+}
+
+// dividend account root
+type QueryDividendAccountRootRequest struct {
+}
+
+func (m *QueryDividendAccountRootRequest) Reset()         { *m = QueryDividendAccountRootRequest{} }
+func (m *QueryDividendAccountRootRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDividendAccountRootRequest) ProtoMessage()    {}
+func (*QueryDividendAccountRootRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{4}
+}
+func (m *QueryDividendAccountRootRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDividendAccountRootRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDividendAccountRootRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDividendAccountRootRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDividendAccountRootRequest.Merge(m, src)
+}
+func (m *QueryDividendAccountRootRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDividendAccountRootRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDividendAccountRootRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDividendAccountRootRequest proto.InternalMessageInfo
+
+type QueryDividendAccountRootResponse struct {
+	AccountRootHash string `protobuf:"bytes,1,opt,name=account_root_hash,json=accountRootHash,proto3" json:"account_root_hash,omitempty"`
+}
+
+func (m *QueryDividendAccountRootResponse) Reset()         { *m = QueryDividendAccountRootResponse{} }
+func (m *QueryDividendAccountRootResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDividendAccountRootResponse) ProtoMessage()    {}
+func (*QueryDividendAccountRootResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{5}
+}
+func (m *QueryDividendAccountRootResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDividendAccountRootResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDividendAccountRootResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDividendAccountRootResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDividendAccountRootResponse.Merge(m, src)
+}
+func (m *QueryDividendAccountRootResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDividendAccountRootResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDividendAccountRootResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDividendAccountRootResponse proto.InternalMessageInfo
+
+func (m *QueryDividendAccountRootResponse) GetAccountRootHash() string {
+	if m != nil {
+		return m.AccountRootHash
+	}
+	return ""
+}
+
+// dividend accounts
+type QueryDividendAccountsRequest struct {
+}
+
+func (m *QueryDividendAccountsRequest) Reset()         { *m = QueryDividendAccountsRequest{} }
+func (m *QueryDividendAccountsRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDividendAccountsRequest) ProtoMessage()    {}
+func (*QueryDividendAccountsRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{6}
+}
+func (m *QueryDividendAccountsRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDividendAccountsRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDividendAccountsRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDividendAccountsRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDividendAccountsRequest.Merge(m, src)
+}
+func (m *QueryDividendAccountsRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDividendAccountsRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDividendAccountsRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDividendAccountsRequest proto.InternalMessageInfo
+
+type QueryDividendAccountsResponse struct {
+	DividendAccounts []*types.DividendAccount `protobuf:"bytes,1,rep,name=dividend_accounts,json=dividendAccounts,proto3" json:"dividend_accounts,omitempty"`
+}
+
+func (m *QueryDividendAccountsResponse) Reset()         { *m = QueryDividendAccountsResponse{} }
+func (m *QueryDividendAccountsResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDividendAccountsResponse) ProtoMessage()    {}
+func (*QueryDividendAccountsResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{7}
+}
+func (m *QueryDividendAccountsResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDividendAccountsResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDividendAccountsResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDividendAccountsResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDividendAccountsResponse.Merge(m, src)
+}
+func (m *QueryDividendAccountsResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDividendAccountsResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDividendAccountsResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDividendAccountsResponse proto.InternalMessageInfo
+
+func (m *QueryDividendAccountsResponse) GetDividendAccounts() []*types.DividendAccount {
+	if m != nil {
+		return m.DividendAccounts
+	}
+	return nil
+}
+
+// QueryDividendAccountRequest request for query dividend account
+type QueryDividendAccountRequest struct {
+	Address string `protobuf:"bytes,1,opt,name=address,proto3" json:"address,omitempty"`
+}
+
+func (m *QueryDividendAccountRequest) Reset()         { *m = QueryDividendAccountRequest{} }
+func (m *QueryDividendAccountRequest) String() string { return proto.CompactTextString(m) }
+func (*QueryDividendAccountRequest) ProtoMessage()    {}
+func (*QueryDividendAccountRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{8}
+}
+func (m *QueryDividendAccountRequest) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDividendAccountRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDividendAccountRequest.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDividendAccountRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDividendAccountRequest.Merge(m, src)
+}
+func (m *QueryDividendAccountRequest) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDividendAccountRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDividendAccountRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDividendAccountRequest proto.InternalMessageInfo
+
+func (m *QueryDividendAccountRequest) GetAddress() string {
+	if m != nil {
+		return m.Address
+	}
+	return ""
+}
+
+type QueryDividendAccountResponse struct {
+	DividendAccount *types.DividendAccount `protobuf:"bytes,1,opt,name=dividend_account,json=dividendAccount,proto3" json:"dividend_account,omitempty"`
+}
+
+func (m *QueryDividendAccountResponse) Reset()         { *m = QueryDividendAccountResponse{} }
+func (m *QueryDividendAccountResponse) String() string { return proto.CompactTextString(m) }
+func (*QueryDividendAccountResponse) ProtoMessage()    {}
+func (*QueryDividendAccountResponse) Descriptor() ([]byte, []int) {
+	return fileDescriptor_4fc062043e57c0b9, []int{9}
+}
+func (m *QueryDividendAccountResponse) XXX_Unmarshal(b []byte) error {
+	return m.Unmarshal(b)
+}
+func (m *QueryDividendAccountResponse) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	if deterministic {
+		return xxx_messageInfo_QueryDividendAccountResponse.Marshal(b, m, deterministic)
+	} else {
+		b = b[:cap(b)]
+		n, err := m.MarshalToSizedBuffer(b)
+		if err != nil {
+			return nil, err
+		}
+		return b[:n], nil
+	}
+}
+func (m *QueryDividendAccountResponse) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_QueryDividendAccountResponse.Merge(m, src)
+}
+func (m *QueryDividendAccountResponse) XXX_Size() int {
+	return m.Size()
+}
+func (m *QueryDividendAccountResponse) XXX_DiscardUnknown() {
+	xxx_messageInfo_QueryDividendAccountResponse.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_QueryDividendAccountResponse proto.InternalMessageInfo
+
+func (m *QueryDividendAccountResponse) GetDividendAccount() *types.DividendAccount {
+	if m != nil {
+		return m.DividendAccount
+	}
+	return nil
+}
+
 func init() {
 	proto.RegisterType((*QuerySequenceRequest)(nil), "heimdall.topup.v1beta1.QuerySequenceRequest")
 	proto.RegisterType((*QuerySequenceResponse)(nil), "heimdall.topup.v1beta1.QuerySequenceResponse")
+	proto.RegisterType((*QueryIsOldTxSequenceRequest)(nil), "heimdall.topup.v1beta1.QueryIsOldTxSequenceRequest")
+	proto.RegisterType((*QueryIsOldTxSequenceResponse)(nil), "heimdall.topup.v1beta1.QueryIsOldTxSequenceResponse")
+	proto.RegisterType((*QueryDividendAccountRootRequest)(nil), "heimdall.topup.v1beta1.QueryDividendAccountRootRequest")
+	proto.RegisterType((*QueryDividendAccountRootResponse)(nil), "heimdall.topup.v1beta1.QueryDividendAccountRootResponse")
+	proto.RegisterType((*QueryDividendAccountsRequest)(nil), "heimdall.topup.v1beta1.QueryDividendAccountsRequest")
+	proto.RegisterType((*QueryDividendAccountsResponse)(nil), "heimdall.topup.v1beta1.QueryDividendAccountsResponse")
+	proto.RegisterType((*QueryDividendAccountRequest)(nil), "heimdall.topup.v1beta1.QueryDividendAccountRequest")
+	proto.RegisterType((*QueryDividendAccountResponse)(nil), "heimdall.topup.v1beta1.QueryDividendAccountResponse")
 }
 
 func init() {
@@ -114,29 +493,47 @@ func init() {
 }
 
 var fileDescriptor_4fc062043e57c0b9 = []byte{
-	// 337 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0x8c, 0x91, 0x3f, 0x4b, 0x2b, 0x41,
-	0x14, 0xc5, 0x77, 0x42, 0x5e, 0x5e, 0x32, 0xe5, 0x90, 0xf7, 0x0c, 0xab, 0xac, 0x61, 0xb1, 0x08,
-	0xa2, 0x33, 0x44, 0x2b, 0x2d, 0xad, 0x62, 0xe9, 0xda, 0xd9, 0x84, 0x49, 0x32, 0xcc, 0x2e, 0xee,
-	0xce, 0xdd, 0x64, 0x66, 0x75, 0x83, 0xd8, 0x58, 0x59, 0x0a, 0xa9, 0x05, 0x3f, 0x8e, 0x65, 0xc0,
-	0xc6, 0x52, 0x12, 0x3f, 0x88, 0xec, 0x9f, 0x04, 0x94, 0x14, 0x56, 0x7b, 0xcf, 0xe5, 0x9c, 0x1f,
-	0x77, 0xcf, 0x60, 0xd7, 0x17, 0x41, 0x34, 0xe2, 0x61, 0xc8, 0x0c, 0xc4, 0x49, 0xcc, 0x6e, 0xba,
-	0x03, 0x61, 0x78, 0x97, 0x8d, 0x13, 0x31, 0x99, 0xd2, 0x78, 0x02, 0x06, 0xc8, 0xff, 0x95, 0x87,
-	0xe6, 0x1e, 0x5a, 0x7a, 0xec, 0x1d, 0x09, 0x20, 0x43, 0xc1, 0x78, 0x1c, 0x30, 0xae, 0x14, 0x18,
-	0x6e, 0x02, 0x50, 0xba, 0x48, 0xd9, 0x4d, 0x09, 0x12, 0xf2, 0x91, 0x65, 0x53, 0xb1, 0x75, 0x3d,
-	0xdc, 0xbc, 0xc8, 0xd0, 0x97, 0x62, 0x9c, 0x08, 0x35, 0x14, 0x5e, 0xf6, 0xd5, 0x86, 0x6c, 0xe1,
-	0xbf, 0x26, 0xed, 0xfb, 0x5c, 0xfb, 0x2d, 0xd4, 0x46, 0x9d, 0x86, 0x57, 0x33, 0x69, 0x8f, 0x6b,
-	0x9f, 0x6c, 0xe3, 0x46, 0x08, 0xb2, 0x1f, 0xa8, 0x91, 0x48, 0x5b, 0x95, 0x36, 0xea, 0x54, 0xbd,
-	0x7a, 0x08, 0xf2, 0x3c, 0xd3, 0xa7, 0xd5, 0xc7, 0x97, 0x5d, 0xcb, 0x3d, 0xc1, 0xff, 0x7e, 0x30,
-	0x75, 0x0c, 0x4a, 0x0b, 0x62, 0xe3, 0xba, 0x2e, 0x77, 0x39, 0xb5, 0xea, 0xad, 0x75, 0x11, 0x3d,
-	0x7a, 0x46, 0xf8, 0x4f, 0x9e, 0x25, 0x33, 0x84, 0xeb, 0x2b, 0x00, 0x39, 0xa0, 0x9b, 0x7f, 0x99,
-	0x6e, 0xba, 0xdd, 0x3e, 0xfc, 0xa5, 0xbb, 0xb8, 0xca, 0xdd, 0x7f, 0x78, 0xfb, 0x9c, 0x55, 0xf6,
-	0x88, 0xcb, 0xd2, 0xb2, 0x74, 0x33, 0x8d, 0x85, 0x66, 0x91, 0x96, 0xfd, 0x42, 0xdf, 0x95, 0x55,
-	0xdc, 0x9f, 0xf5, 0x5e, 0x17, 0x0e, 0x9a, 0x2f, 0x1c, 0xf4, 0xb1, 0x70, 0xd0, 0xd3, 0xd2, 0xb1,
-	0xe6, 0x4b, 0xc7, 0x7a, 0x5f, 0x3a, 0xd6, 0x15, 0x95, 0x81, 0xf1, 0x93, 0x01, 0x1d, 0x42, 0xc4,
-	0x22, 0x6e, 0x82, 0xa1, 0x12, 0xe6, 0x16, 0x26, 0xd7, 0x6c, 0xfd, 0xa0, 0xdf, 0xe8, 0x83, 0x5a,
-	0xde, 0xff, 0xf1, 0x57, 0x00, 0x00, 0x00, 0xff, 0xff, 0x87, 0xee, 0xb3, 0x88, 0xf1, 0x01, 0x00,
-	0x00,
+	// 633 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xac, 0x95, 0x3f, 0x6f, 0xd3, 0x4e,
+	0x18, 0xc7, 0xeb, 0xfe, 0xfa, 0x4b, 0xd2, 0x63, 0x68, 0x7b, 0x2a, 0x25, 0x72, 0x8b, 0x93, 0x5a,
+	0x48, 0x84, 0x3f, 0xb1, 0x95, 0x3f, 0xa5, 0x88, 0x0d, 0xc4, 0xd0, 0xa2, 0x0a, 0x84, 0xcb, 0xc4,
+	0x12, 0x5d, 0xe2, 0x93, 0x63, 0x70, 0x7c, 0x6e, 0xee, 0x5c, 0x5c, 0x21, 0x16, 0x5e, 0x01, 0x88,
+	0x99, 0xd7, 0xc1, 0xc4, 0xc6, 0xc0, 0x58, 0x89, 0x85, 0x11, 0x25, 0xbc, 0x0c, 0x06, 0xe4, 0xcb,
+	0xe3, 0x04, 0x59, 0x76, 0x49, 0x24, 0xa6, 0xf8, 0x2e, 0xcf, 0xf3, 0xfd, 0x7e, 0x2e, 0xf7, 0x7c,
+	0x1d, 0xa4, 0xf7, 0xa9, 0x3b, 0xb0, 0x89, 0xe7, 0x99, 0x82, 0x05, 0x61, 0x60, 0x9e, 0x36, 0xba,
+	0x54, 0x90, 0x86, 0x79, 0x12, 0xd2, 0xe1, 0x99, 0x11, 0x0c, 0x99, 0x60, 0x78, 0x2b, 0xa9, 0x31,
+	0x64, 0x8d, 0x01, 0x35, 0xea, 0x8e, 0xc3, 0x98, 0xe3, 0x51, 0x93, 0x04, 0xae, 0x49, 0x7c, 0x9f,
+	0x09, 0x22, 0x5c, 0xe6, 0xf3, 0x49, 0x97, 0xba, 0xe9, 0x30, 0x87, 0xc9, 0x47, 0x33, 0x7e, 0x82,
+	0xdd, 0x6b, 0x53, 0xbf, 0x2e, 0xe1, 0x74, 0x6a, 0x67, 0xbb, 0xa7, 0xae, 0x4d, 0x7d, 0x31, 0xa9,
+	0xd2, 0x8f, 0xd0, 0xe6, 0xd3, 0x18, 0xe0, 0x98, 0x9e, 0x84, 0xd4, 0xef, 0x51, 0x2b, 0xfe, 0xe4,
+	0x02, 0x5f, 0x41, 0x45, 0x11, 0x75, 0xfa, 0x84, 0xf7, 0xcb, 0x4a, 0x55, 0xa9, 0xad, 0x5a, 0x05,
+	0x11, 0x1d, 0x10, 0xde, 0xc7, 0xdb, 0x68, 0xd5, 0x63, 0x4e, 0xc7, 0xf5, 0x6d, 0x1a, 0x95, 0x97,
+	0xab, 0x4a, 0x6d, 0xc5, 0x2a, 0x79, 0xcc, 0x39, 0x8c, 0xd7, 0x7a, 0x0b, 0x5d, 0x4e, 0xa9, 0xf1,
+	0x80, 0xf9, 0x9c, 0x62, 0x15, 0x95, 0x38, 0xec, 0x49, 0xbd, 0x15, 0x6b, 0xba, 0xd6, 0x8f, 0xd1,
+	0xb6, 0x6c, 0x3a, 0xe4, 0x4f, 0x3c, 0xfb, 0x59, 0xf4, 0x6f, 0x48, 0xee, 0xa0, 0x9d, 0x6c, 0x51,
+	0x00, 0xda, 0x42, 0x05, 0x2e, 0x88, 0x08, 0xb9, 0x14, 0x2d, 0x59, 0xb0, 0xd2, 0x77, 0x51, 0x45,
+	0xf6, 0x3d, 0x9c, 0xfc, 0x4c, 0xf6, 0xfd, 0x5e, 0x8f, 0x85, 0xbe, 0xb0, 0x18, 0x13, 0x00, 0xa4,
+	0x3f, 0x46, 0xd5, 0xfc, 0x12, 0x90, 0xbf, 0x89, 0x36, 0xc8, 0x64, 0xbb, 0x33, 0x64, 0x4c, 0xfc,
+	0x89, 0xbf, 0x46, 0x66, 0xf5, 0xf1, 0x39, 0x74, 0x0d, 0x50, 0x53, 0x7a, 0x3c, 0xf1, 0x1b, 0xa0,
+	0xab, 0x39, 0xdf, 0x83, 0xd9, 0x11, 0xda, 0x80, 0x5b, 0xb5, 0x3b, 0x20, 0x1e, 0x1f, 0xeb, 0xbf,
+	0xda, 0xa5, 0x66, 0xc5, 0x98, 0x4d, 0xd4, 0x59, 0x40, 0xb9, 0x91, 0x86, 0x5e, 0xb7, 0x53, 0xaa,
+	0xfa, 0x3e, 0x5c, 0x47, 0xba, 0x12, 0xae, 0xa3, 0x8c, 0x8a, 0xc4, 0xb6, 0x87, 0x94, 0x73, 0x38,
+	0x4f, 0xb2, 0xd4, 0x5f, 0x64, 0x9f, 0x63, 0x8a, 0xf9, 0x08, 0xad, 0xa7, 0x31, 0xa5, 0xc4, 0x1c,
+	0x94, 0x6b, 0x29, 0xca, 0xe6, 0xaf, 0x02, 0xfa, 0x5f, 0x9a, 0xe1, 0xf7, 0x0a, 0x2a, 0x25, 0xb7,
+	0x8b, 0x6f, 0x1b, 0xd9, 0x01, 0x32, 0xb2, 0x66, 0x5c, 0xad, 0xcf, 0x59, 0x3d, 0xe1, 0xd7, 0x6b,
+	0x6f, 0xbf, 0xfd, 0xfc, 0xb0, 0xac, 0xe3, 0xaa, 0x99, 0x93, 0xe4, 0x64, 0xa2, 0xf1, 0x47, 0x05,
+	0x15, 0x61, 0xf0, 0x70, 0xeb, 0x42, 0x93, 0xec, 0x99, 0x57, 0xdb, 0x8b, 0x35, 0x01, 0xe0, 0x75,
+	0x09, 0xb8, 0x8b, 0x2b, 0x79, 0x80, 0x2e, 0x67, 0x9e, 0x2d, 0x22, 0xfc, 0x45, 0x41, 0xe5, 0xbc,
+	0x11, 0xc6, 0xfb, 0x17, 0x7a, 0xe7, 0xe7, 0x42, 0xbd, 0xbb, 0x78, 0x23, 0x80, 0xef, 0x49, 0x70,
+	0x13, 0xd7, 0xf3, 0xc0, 0x93, 0xeb, 0xaf, 0xc3, 0xdc, 0xd4, 0xe3, 0x50, 0xe1, 0x4f, 0x0a, 0xbc,
+	0x6e, 0xd2, 0xc9, 0xc0, 0xed, 0x45, 0x50, 0x92, 0xa0, 0xa9, 0x7b, 0x0b, 0x76, 0x01, 0x7d, 0x43,
+	0xd2, 0xdf, 0xc2, 0x37, 0xe6, 0xa5, 0xe7, 0xf8, 0xb3, 0x02, 0xaf, 0xdd, 0x94, 0xe8, 0x5f, 0xa6,
+	0x25, 0x3b, 0x92, 0x6a, 0x7b, 0xb1, 0x26, 0xc0, 0xbe, 0x27, 0xb1, 0xdb, 0xb8, 0x39, 0x2f, 0xb6,
+	0xf9, 0x1a, 0x92, 0xfe, 0xe6, 0xc1, 0xc1, 0xd7, 0x91, 0xa6, 0x9c, 0x8f, 0x34, 0xe5, 0xc7, 0x48,
+	0x53, 0xde, 0x8d, 0xb5, 0xa5, 0xf3, 0xb1, 0xb6, 0xf4, 0x7d, 0xac, 0x2d, 0x3d, 0x37, 0x1c, 0x57,
+	0xf4, 0xc3, 0xae, 0xd1, 0x63, 0x03, 0x73, 0x40, 0x84, 0xdb, 0xf3, 0xa9, 0x78, 0xc5, 0x86, 0x2f,
+	0x67, 0x26, 0x11, 0xd8, 0xc8, 0xa4, 0x77, 0x0b, 0xf2, 0x6f, 0xa8, 0xf5, 0x3b, 0x00, 0x00, 0xff,
+	0xff, 0xd8, 0x9c, 0xd9, 0xf3, 0x1e, 0x07, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -151,8 +548,15 @@ const _ = grpc.SupportPackageIsVersion4
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type QueryClient interface {
-	// this line is used by starport scaffolding # 2
+	// Sequence query sequence no
 	Sequence(ctx context.Context, in *QuerySequenceRequest, opts ...grpc.CallOption) (*QuerySequenceResponse, error)
+	// IsOldTx checking tx is old or not
+	IsOldTx(ctx context.Context, in *QueryIsOldTxSequenceRequest, opts ...grpc.CallOption) (*QueryIsOldTxSequenceResponse, error)
+	// QueryDividendAccountRoot will get the dividend account root hash
+	QueryDividendAccountRoot(ctx context.Context, in *QueryDividendAccountRootRequest, opts ...grpc.CallOption) (*QueryDividendAccountRootResponse, error)
+	//
+	QueryDividendAccounts(ctx context.Context, in *QueryDividendAccountsRequest, opts ...grpc.CallOption) (*QueryDividendAccountsResponse, error)
+	QueryDividendAccount(ctx context.Context, in *QueryDividendAccountRequest, opts ...grpc.CallOption) (*QueryDividendAccountResponse, error)
 }
 
 type queryClient struct {
@@ -172,10 +576,53 @@ func (c *queryClient) Sequence(ctx context.Context, in *QuerySequenceRequest, op
 	return out, nil
 }
 
+func (c *queryClient) IsOldTx(ctx context.Context, in *QueryIsOldTxSequenceRequest, opts ...grpc.CallOption) (*QueryIsOldTxSequenceResponse, error) {
+	out := new(QueryIsOldTxSequenceResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.topup.v1beta1.Query/IsOldTx", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) QueryDividendAccountRoot(ctx context.Context, in *QueryDividendAccountRootRequest, opts ...grpc.CallOption) (*QueryDividendAccountRootResponse, error) {
+	out := new(QueryDividendAccountRootResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.topup.v1beta1.Query/QueryDividendAccountRoot", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) QueryDividendAccounts(ctx context.Context, in *QueryDividendAccountsRequest, opts ...grpc.CallOption) (*QueryDividendAccountsResponse, error) {
+	out := new(QueryDividendAccountsResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.topup.v1beta1.Query/QueryDividendAccounts", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *queryClient) QueryDividendAccount(ctx context.Context, in *QueryDividendAccountRequest, opts ...grpc.CallOption) (*QueryDividendAccountResponse, error) {
+	out := new(QueryDividendAccountResponse)
+	err := c.cc.Invoke(ctx, "/heimdall.topup.v1beta1.Query/QueryDividendAccount", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 type QueryServer interface {
-	// this line is used by starport scaffolding # 2
+	// Sequence query sequence no
 	Sequence(context.Context, *QuerySequenceRequest) (*QuerySequenceResponse, error)
+	// IsOldTx checking tx is old or not
+	IsOldTx(context.Context, *QueryIsOldTxSequenceRequest) (*QueryIsOldTxSequenceResponse, error)
+	// QueryDividendAccountRoot will get the dividend account root hash
+	QueryDividendAccountRoot(context.Context, *QueryDividendAccountRootRequest) (*QueryDividendAccountRootResponse, error)
+	//
+	QueryDividendAccounts(context.Context, *QueryDividendAccountsRequest) (*QueryDividendAccountsResponse, error)
+	QueryDividendAccount(context.Context, *QueryDividendAccountRequest) (*QueryDividendAccountResponse, error)
 }
 
 // UnimplementedQueryServer can be embedded to have forward compatible implementations.
@@ -184,6 +631,18 @@ type UnimplementedQueryServer struct {
 
 func (*UnimplementedQueryServer) Sequence(ctx context.Context, req *QuerySequenceRequest) (*QuerySequenceResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Sequence not implemented")
+}
+func (*UnimplementedQueryServer) IsOldTx(ctx context.Context, req *QueryIsOldTxSequenceRequest) (*QueryIsOldTxSequenceResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsOldTx not implemented")
+}
+func (*UnimplementedQueryServer) QueryDividendAccountRoot(ctx context.Context, req *QueryDividendAccountRootRequest) (*QueryDividendAccountRootResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryDividendAccountRoot not implemented")
+}
+func (*UnimplementedQueryServer) QueryDividendAccounts(ctx context.Context, req *QueryDividendAccountsRequest) (*QueryDividendAccountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryDividendAccounts not implemented")
+}
+func (*UnimplementedQueryServer) QueryDividendAccount(ctx context.Context, req *QueryDividendAccountRequest) (*QueryDividendAccountResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method QueryDividendAccount not implemented")
 }
 
 func RegisterQueryServer(s grpc1.Server, srv QueryServer) {
@@ -208,6 +667,78 @@ func _Query_Sequence_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_IsOldTx_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryIsOldTxSequenceRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).IsOldTx(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.topup.v1beta1.Query/IsOldTx",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).IsOldTx(ctx, req.(*QueryIsOldTxSequenceRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_QueryDividendAccountRoot_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDividendAccountRootRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryDividendAccountRoot(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.topup.v1beta1.Query/QueryDividendAccountRoot",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryDividendAccountRoot(ctx, req.(*QueryDividendAccountRootRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_QueryDividendAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDividendAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryDividendAccounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.topup.v1beta1.Query/QueryDividendAccounts",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryDividendAccounts(ctx, req.(*QueryDividendAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Query_QueryDividendAccount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryDividendAccountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).QueryDividendAccount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/heimdall.topup.v1beta1.Query/QueryDividendAccount",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).QueryDividendAccount(ctx, req.(*QueryDividendAccountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 var _Query_serviceDesc = grpc.ServiceDesc{
 	ServiceName: "heimdall.topup.v1beta1.Query",
 	HandlerType: (*QueryServer)(nil),
@@ -215,6 +746,22 @@ var _Query_serviceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Sequence",
 			Handler:    _Query_Sequence_Handler,
+		},
+		{
+			MethodName: "IsOldTx",
+			Handler:    _Query_IsOldTx_Handler,
+		},
+		{
+			MethodName: "QueryDividendAccountRoot",
+			Handler:    _Query_QueryDividendAccountRoot_Handler,
+		},
+		{
+			MethodName: "QueryDividendAccounts",
+			Handler:    _Query_QueryDividendAccounts_Handler,
+		},
+		{
+			MethodName: "QueryDividendAccount",
+			Handler:    _Query_QueryDividendAccount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
@@ -284,6 +831,252 @@ func (m *QuerySequenceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
+func (m *QueryIsOldTxSequenceRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryIsOldTxSequenceRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryIsOldTxSequenceRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.LogIndex != 0 {
+		i = encodeVarintQuery(dAtA, i, uint64(m.LogIndex))
+		i--
+		dAtA[i] = 0x10
+	}
+	if len(m.TxHash) > 0 {
+		i -= len(m.TxHash)
+		copy(dAtA[i:], m.TxHash)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.TxHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryIsOldTxSequenceResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryIsOldTxSequenceResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryIsOldTxSequenceResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.Status {
+		i--
+		if m.Status {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x8
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDividendAccountRootRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDividendAccountRootRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDividendAccountRootRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDividendAccountRootResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDividendAccountRootResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDividendAccountRootResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.AccountRootHash) > 0 {
+		i -= len(m.AccountRootHash)
+		copy(dAtA[i:], m.AccountRootHash)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.AccountRootHash)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDividendAccountsRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDividendAccountsRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDividendAccountsRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDividendAccountsResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDividendAccountsResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDividendAccountsResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.DividendAccounts) > 0 {
+		for iNdEx := len(m.DividendAccounts) - 1; iNdEx >= 0; iNdEx-- {
+			{
+				size, err := m.DividendAccounts[iNdEx].MarshalToSizedBuffer(dAtA[:i])
+				if err != nil {
+					return 0, err
+				}
+				i -= size
+				i = encodeVarintQuery(dAtA, i, uint64(size))
+			}
+			i--
+			dAtA[i] = 0xa
+		}
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDividendAccountRequest) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDividendAccountRequest) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDividendAccountRequest) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if len(m.Address) > 0 {
+		i -= len(m.Address)
+		copy(dAtA[i:], m.Address)
+		i = encodeVarintQuery(dAtA, i, uint64(len(m.Address)))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
+func (m *QueryDividendAccountResponse) Marshal() (dAtA []byte, err error) {
+	size := m.Size()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBuffer(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *QueryDividendAccountResponse) MarshalTo(dAtA []byte) (int, error) {
+	size := m.Size()
+	return m.MarshalToSizedBuffer(dAtA[:size])
+}
+
+func (m *QueryDividendAccountResponse) MarshalToSizedBuffer(dAtA []byte) (int, error) {
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.DividendAccount != nil {
+		{
+			size, err := m.DividendAccount.MarshalToSizedBuffer(dAtA[:i])
+			if err != nil {
+				return 0, err
+			}
+			i -= size
+			i = encodeVarintQuery(dAtA, i, uint64(size))
+		}
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func encodeVarintQuery(dAtA []byte, offset int, v uint64) int {
 	offset -= sovQuery(v)
 	base := offset
@@ -319,6 +1112,106 @@ func (m *QuerySequenceResponse) Size() (n int) {
 	_ = l
 	if m.Sequence != 0 {
 		n += 1 + sovQuery(uint64(m.Sequence))
+	}
+	return n
+}
+
+func (m *QueryIsOldTxSequenceRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.TxHash)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	if m.LogIndex != 0 {
+		n += 1 + sovQuery(uint64(m.LogIndex))
+	}
+	return n
+}
+
+func (m *QueryIsOldTxSequenceResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.Status {
+		n += 2
+	}
+	return n
+}
+
+func (m *QueryDividendAccountRootRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryDividendAccountRootResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.AccountRootHash)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDividendAccountsRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	return n
+}
+
+func (m *QueryDividendAccountsResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if len(m.DividendAccounts) > 0 {
+		for _, e := range m.DividendAccounts {
+			l = e.Size()
+			n += 1 + l + sovQuery(uint64(l))
+		}
+	}
+	return n
+}
+
+func (m *QueryDividendAccountRequest) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	l = len(m.Address)
+	if l > 0 {
+		n += 1 + l + sovQuery(uint64(l))
+	}
+	return n
+}
+
+func (m *QueryDividendAccountResponse) Size() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.DividendAccount != nil {
+		l = m.DividendAccount.Size()
+		n += 1 + l + sovQuery(uint64(l))
 	}
 	return n
 }
@@ -481,6 +1374,635 @@ func (m *QuerySequenceResponse) Unmarshal(dAtA []byte) error {
 					break
 				}
 			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryIsOldTxSequenceRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryIsOldTxSequenceRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryIsOldTxSequenceRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field TxHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.TxHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		case 2:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LogIndex", wireType)
+			}
+			m.LogIndex = 0
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				m.LogIndex |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryIsOldTxSequenceResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryIsOldTxSequenceResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryIsOldTxSequenceResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Status", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.Status = bool(v != 0)
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDividendAccountRootRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDividendAccountRootRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDividendAccountRootRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDividendAccountRootResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDividendAccountRootResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDividendAccountRootResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field AccountRootHash", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.AccountRootHash = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDividendAccountsRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDividendAccountsRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDividendAccountsRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDividendAccountsResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDividendAccountsResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDividendAccountsResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DividendAccounts", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.DividendAccounts = append(m.DividendAccounts, &types.DividendAccount{})
+			if err := m.DividendAccounts[len(m.DividendAccounts)-1].Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDividendAccountRequest) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDividendAccountRequest: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDividendAccountRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Address", wireType)
+			}
+			var stringLen uint64
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				stringLen |= uint64(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			intStringLen := int(stringLen)
+			if intStringLen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + intStringLen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.Address = string(dAtA[iNdEx:postIndex])
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := skipQuery(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if skippy < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
+func (m *QueryDividendAccountResponse) Unmarshal(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return ErrIntOverflowQuery
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: QueryDividendAccountResponse: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: QueryDividendAccountResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field DividendAccount", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return ErrIntOverflowQuery
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return ErrInvalidLengthQuery
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return ErrInvalidLengthQuery
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.DividendAccount == nil {
+				m.DividendAccount = &types.DividendAccount{}
+			}
+			if err := m.DividendAccount.Unmarshal(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := skipQuery(dAtA[iNdEx:])
