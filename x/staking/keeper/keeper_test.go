@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/maticnetwork/heimdall/helper/mocks"
+
 	"github.com/maticnetwork/heimdall/x/staking/test_helper"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -31,10 +33,13 @@ type KeeperTestSuite struct {
 
 	app *app.HeimdallApp
 	ctx sdk.Context
+
+	contractCaller *mocks.IContractCaller
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
 	suite.app, suite.ctx, _ = test_helper.CreateTestApp(false)
+	suite.contractCaller = &mocks.IContractCaller{}
 }
 
 func TestKeeperTestSuite(t *testing.T) {

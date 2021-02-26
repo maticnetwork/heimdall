@@ -3,6 +3,7 @@ package heimdall.topup.v1beta1;
 
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
+import "heimdall/base/v1beta1/divident.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/topup/types";
 
@@ -12,22 +13,72 @@ option (gogoproto.unmarshaler_all) = true;
 
 // Query defines the gRPC querier service.
 service Query {
-    // this line is used by starport scaffolding # 2
+    // Sequence query sequence no
     rpc Sequence(QuerySequenceRequest) returns (QuerySequenceResponse) {
-        // TODO confirm path
-        option (google.api.http).get = "/x/topup/types/msg_topup/{tx_hash}";
+        option (google.api.http).get = "/heimdall/topup/v1beta1/sequence";
+    }
+
+    // IsOldTx checking tx is old or not
+    rpc IsOldTx(QueryIsOldTxSequenceRequest)
+        returns (QueryIsOldTxSequenceResponse) {
+        option (google.api.http).get = "/heimdall/topup/v1beta1/isoldtx";
+    }
+
+    // QueryDividendAccountRoot will get the dividend account root hash
+    rpc QueryDividendAccountRoot(QueryDividendAccountRootRequest)
+        returns (QueryDividendAccountRootResponse) {
+        option (google.api.http).get =
+            "/heimdall/topup/v1beta1/dividend-account-root";
+    }
+
+    //
+    rpc QueryDividendAccounts(QueryDividendAccountsRequest)
+        returns (QueryDividendAccountsResponse) {
+        option (google.api.http).get =
+            "/heimdall/topup/v1beta1/dividend-accounts";
+    }
+
+    rpc QueryDividendAccount(QueryDividendAccountRequest)
+        returns (QueryDividendAccountResponse) {
+        option (google.api.http).get =
+            "/heimdall/topup/v1beta1/dividend-account/{address}";
     }
 }
 
-// this line is used by starport scaffolding # 3
-
+// Sequence request and response messages
 message QuerySequenceRequest {
-    option (gogoproto.goproto_getters) = false;
-    string tx_hash                     = 1;
-    uint64 log_index                   = 2;
+    string tx_hash   = 1;
+    uint64 log_index = 2;
+}
+message QuerySequenceResponse {
+    uint64 sequence = 1;
 }
 
-message QuerySequenceResponse {
-    option (gogoproto.goproto_getters) = false;
-    uint64 sequence                    = 1;
+// IsOldTx Request and response
+message QueryIsOldTxSequenceRequest {
+    string tx_hash   = 1;
+    uint64 log_index = 2;
+}
+message QueryIsOldTxSequenceResponse {
+    bool status = 1;
+}
+
+// dividend account root
+message QueryDividendAccountRootRequest {}
+message QueryDividendAccountRootResponse {
+    string account_root_hash = 1;
+}
+
+// dividend accounts
+message QueryDividendAccountsRequest {}
+message QueryDividendAccountsResponse {
+    repeated heimdall.types.DividendAccount dividend_accounts = 1;
+}
+
+// QueryDividendAccountRequest request for query dividend account
+message QueryDividendAccountRequest {
+    string address = 1;
+}
+message QueryDividendAccountResponse {
+    heimdall.types.DividendAccount dividend_account = 1;
 }

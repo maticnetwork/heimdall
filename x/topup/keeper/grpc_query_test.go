@@ -42,7 +42,7 @@ func (suite *KeeperTestSuite) TestSequence() {
 		})
 
 		require.Nil(t, resp)
-		require.NoError(t, err)
+		require.Error(t, err)
 	})
 
 	t.Run("With Sequence Setup ", func(t *testing.T) {

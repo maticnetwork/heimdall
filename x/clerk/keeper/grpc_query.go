@@ -2,6 +2,9 @@ package keeper
 
 import (
 	"context"
+	"math/big"
+
+	hmTypes "github.com/maticnetwork/heimdall/types/common"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"google.golang.org/grpc/codes"
@@ -39,4 +42,55 @@ func (k Querier) Record(c context.Context, req *types.QueryRecordParams) (*types
 	}
 
 	return &types.QueryRecordResponse{EventRecord: record}, nil
+}
+
+// QueryIsOldTxClerk will returns bool if isoldtx or not
+func (k Querier) QueryIsOldTxClerk(c context.Context, req *types.QueryIsOldTxRequest) (*types.QueryIsOldTxResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	txHash := req.GetTxHash()
+	logIndex := req.GetLogIndex()
+	chainParams := k.ChainKeeper.GetParams(ctx)
+	receipt, err := k.contractCaller.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txHash).EthHash(), chainParams.MainchainTxConfirmations)
+
+	if err != nil || receipt == nil {
+		return nil, status.Errorf(codes.NotFound, "Transaction is not confirmed yet. Please wait for sometime and try again")
+	}
+
+	// sequence id
+
+	sequence := new(big.Int).Mul(receipt.BlockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	sequence.Add(sequence, new(big.Int).SetUint64(logIndex))
+
+	// check if incoming tx already exists
+	if !k.HasRecordSequence(ctx, sequence.String()) {
+		return nil, status.Errorf(codes.NotFound, "Sequence not found")
+	}
+
+	return &types.QueryIsOldTxResponse{Status: true}, nil
+}
+
+// Event Records List
+func (k Querier) Records(c context.Context, req *types.QueryRecordListRequest) (*types.QueryRecordListResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	pagination := req.GetPagination()
+	if pagination == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+
+	records, err := k.GetEventRecordList(ctx, req.Pagination.Page, req.Pagination.Limit)
+	if err != nil {
+		return nil, err
+	}
+	return &types.QueryRecordListResponse{
+		EventRecords: records,
+	}, nil
 }
