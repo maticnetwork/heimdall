@@ -492,11 +492,14 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	proposerAddress, _ :=sdk.AccAddressFromHex(string(req.Header.GetProposerAddress()))
-	app.ChainKeeper.SetBlockProposer(
-		ctx,
-		proposerAddress,
-	)
+	if len(req.Header.GetProposerAddress()) != 0{
+		proposerAddress, _ :=sdk.AccAddressFromHex(string(req.Header.GetProposerAddress()))
+		app.ChainKeeper.SetBlockProposer(
+			ctx,
+			proposerAddress,
+		)
+	}
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
