@@ -286,6 +286,9 @@ func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]
 	}
 
 	err = tx.Sign(txf, fromName, txBuilder)
+	if err != nil {
+		return nil, err
+	}
 	// todo: remove sign method for tx and sign with priv key
 	//cryptoPrivKey := GetCryptoPrivKey().
 	//signData := authsign.SignerData{

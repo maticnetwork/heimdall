@@ -36,22 +36,21 @@ import (
 
 const (
 	AccountDetailsURL       = "/auth/accounts/%v"
-	LastNoAckURL            = "/heimdall/checkpoint/v1beta1/genesisstate/lastnoack"
+	LastNoAckURL            = "/heimdall/checkpoint/v1beta1/last-no-ack"
 	CheckpointParamsURL     = "/heimdall/checkpoint/v1beta1/params"
 	ChainManagerParamsURL   = "/heimdall/chainmanager/v1beta1/params"
-	ProposersURL            = "/staking/proposer/%v"
-	BufferedCheckpointURL   = "/heimdall/checkpoint/v1beta1/genesisstate/bufferedcheckpoint"
+	ProposersURL            = "/heimdall/staking/v1beta1/proposer/%v"
+	BufferedCheckpointURL   = "/heimdall/checkpoint/v1beta1/buffer"
 	LatestCheckpointURL     = "/heimdall/checkpoint/v1beta1/latest"
-	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/heimdall/bor/v1beta1/latest-span"
 	NextSpanInfoURL         = "/heimdall/bor/v1beta1/prepare-next-span"
 	NextSpanSeedURL         = "/heimdall/bor/v1beta1/next-span-seed"
 	DividendAccountRootURL  = "/topup/dividend-account-root"
-	ValidatorURL            = "/heimdall/base/v1beta1/validator/%v"
-	CurrentValidatorSetURL  = "/heimdall/base/v1beta1/validatorSet"
-	StakingTxStatusURL      = "/staking/isoldtx"
-	TopupTxStatusURL        = "/topup/isoldtx"
-	ClerkTxStatusURL        = "/clerk/isoldtx"
+	ValidatorURL            = "/heimdall/staking/v1beta1/validator/%v"
+	CurrentValidatorSetURL  = "/heimdall/staking/v1beta1/validator-set"
+	StakingTxStatusURL      = "/heimdall/staking/v1beta1/isoldtx"
+	TopupTxStatusURL        = "/heimdall/topup/v1beta1/isoldtx"
+	ClerkTxStatusURL        = "/heimdall/clerk/v1beta1/isoldtx"
 	LatestSlashInfoBytesURL = "/slashing/latest_slash_info_bytes"
 	TickSlashInfoListURL    = "/slashing/tick_slash_infos"
 	SlashingTxStatusURL     = "/slashing/isoldtx"
@@ -202,21 +201,21 @@ func CalculateSpanTaskDelay(cliContext client.Context, id uint64, start uint64) 
 
 // IsCurrentProposer checks if we are current proposer
 func IsCurrentProposer(cliCtx client.Context) (bool, error) {
-	var proposer hmTypes.Validator
-	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentProposerURL))
+	var validatorSet hmTypes.ValidatorSet
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
 		return false, err
 	}
 
-	err = json.Unmarshal(result, &proposer)
+	err = json.Unmarshal(result, &validatorSet)
 	if err != nil {
 		logger.Error("error unmarshalling validator", "error", err)
 		return false, err
 	}
-	logger.Debug("Current proposer fetched", "validator", proposer.String())
+	logger.Debug("Current proposer fetched", "validator", validatorSet.Proposer.Signer)
 
-	if bytes.Equal(proposer.GetSigner(), helper.GetAddress()) {
+	if bytes.Equal(validatorSet.Proposer.GetSigner(), helper.GetAddress()) {
 		return true, nil
 	}
 

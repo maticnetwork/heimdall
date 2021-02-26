@@ -5,7 +5,6 @@ go 1.15
 require (
 	github.com/RichardKnop/machinery v1.10.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
-	github.com/btcsuite/btcd v0.21.0-beta
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cosmos/cosmos-sdk v0.41.0
 	github.com/cosmos/iavl v0.15.3
@@ -31,6 +30,7 @@ require (
 	github.com/tendermint/go-amino v0.16.0
 	github.com/tendermint/tendermint v0.34.3
 	github.com/tendermint/tm-db v0.6.4
+	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
 	google.golang.org/grpc v1.35.0
 	gopkg.in/yaml.v2 v2.4.0

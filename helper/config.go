@@ -7,7 +7,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/btcsuite/btcd/rpcclient"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
 
@@ -117,8 +116,6 @@ var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
 
 var maticEthClient *eth.EthAPIBackend
-
-var heimdallClient *rpcclient.Client
 
 // private key object
 var FilePV *privval.FilePV
