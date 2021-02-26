@@ -660,25 +660,6 @@ const (
 	defaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
 )
 
-// // Proposer contains metadata of a governance proposal used for querying a
-// // proposer.
-// type Proposer struct {
-// 	ProposalID uint64 `json:"proposal_id" yaml:"proposal_id"`
-// 	Proposer   string `json:"proposer" yaml:"proposer"`
-// }
-
-// // NewProposer returns a new Proposer given id and proposer
-// func NewProposer(proposalID uint64, proposer string) Proposer {
-// 	return Proposer{proposalID, proposer}
-// }
-
-// func (p Proposer) String() string {
-// 	return fmt.Sprintf("Proposal with ID %d was proposed by %s", p.ProposalID, p.Proposer)
-// }
-
-// func (*Proposer) ProtoMessage() {}
-// func (m *Proposer) Reset()      { *m = Proposer{} }
-
 // QueryDepositsByTxQuery will query for deposits via a direct txs tags query. It
 // will fetch and build deposits directly from the returned txs and return a
 // JSON marshalled result or any error that occurred.

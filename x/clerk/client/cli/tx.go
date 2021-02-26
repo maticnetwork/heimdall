@@ -3,6 +3,7 @@ package cli
 import (
 	"fmt"
 	"strconv"
+	"strings"
 
 	"github.com/spf13/cobra"
 
@@ -63,6 +64,7 @@ func CreateNewStateRecord() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			proposerCmdStr = strings.ToLower(proposerCmdStr)
 			proposer, err := sdk.AccAddressFromHex(proposerCmdStr)
 			if err != nil {
 				return err
@@ -99,6 +101,7 @@ func CreateNewStateRecord() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			contractAddrCmdStr = strings.ToLower(contractAddrCmdStr)
 			contractAddr, err := sdk.AccAddressFromHex(contractAddrCmdStr)
 			if err != nil {
 				return err
