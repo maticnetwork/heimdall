@@ -31,6 +31,12 @@ service Query {
         returns (QueryStakingOldTxResponse) {
         option (google.api.http).get = "/heimdall/staking/v1beta1/isoldtx";
     }
+
+    // Proposer
+    rpc QueryProposer(QueryProposerRequest) returns (QueryProposerResponse) {
+        option (google.api.http).get =
+            "/heimdall/staking/v1beta1/proposer/{times}";
+    }
 }
 
 // QueryValidatorRequest is request type for the Query/Validator RPC method
@@ -66,3 +72,13 @@ message QueryStakingOldTxRequest {
 message QueryStakingOldTxResponse {
     bool status = 1;
 }
+
+//
+message QueryProposerRequest {
+    uint32 times = 1;
+}
+
+message QueryProposerResponse {
+    repeated heimdall.types.Validator proposers = 1;
+}
+

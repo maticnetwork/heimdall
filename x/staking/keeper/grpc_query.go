@@ -90,3 +90,33 @@ func (k Querier) StakingOldTx(c context.Context, req *types.QueryStakingOldTxReq
 		Status: true,
 	}, nil
 }
+
+// QueryProposer will the proposers list
+func (k Querier) QueryProposer(c context.Context, req *types.QueryProposerRequest) (*types.QueryProposerResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+
+	// get validator set
+	validatorSet := k.GetValidatorSet(ctx)
+
+	times := int(req.GetTimes())
+	if times > len(validatorSet.Validators) {
+		times = len(validatorSet.Validators)
+	}
+
+	// init proposers
+	var proposers []*hmTypes.Validator
+
+	// get proposers
+	for index := 0; index < times; index++ {
+		proposers = append(proposers, validatorSet.GetProposer())
+		validatorSet.IncrementProposerPriority(1)
+	}
+
+	return &types.QueryProposerResponse{
+		Proposers: proposers,
+	}, nil
+}
