@@ -81,4 +81,3 @@ message QueryProposerRequest {
 message QueryProposerResponse {
     repeated heimdall.types.Validator proposers = 1;
 }
-
