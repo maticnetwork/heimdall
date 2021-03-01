@@ -319,7 +319,7 @@ func (sp *StakingProcessor) isOldTx(cliCtx client.Context, txHash string, logInd
 		return false, err
 	}
 
-	res, err := helper.FetchFromAPI(sp.cliCtx, url)
+	res, err := helper.FetchFromAPI(url)
 	if err != nil {
 		sp.Logger.Error("Error fetching tx status", "url", url, "error", err)
 		return false, err

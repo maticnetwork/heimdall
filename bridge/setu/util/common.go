@@ -13,11 +13,15 @@ import (
 	"sync"
 	"time"
 
+	borTypes "github.com/maticnetwork/heimdall/x/bor/types"
+
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+
+	types2 "github.com/maticnetwork/heimdall/x/staking/types"
+
 	"github.com/gogo/protobuf/jsonpb"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	mLog "github.com/RichardKnop/machinery/v1/log"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -35,7 +39,7 @@ import (
 )
 
 const (
-	AccountDetailsURL       = "/auth/accounts/%v"
+	AccountDetailsURL       = "/cosmos/auth/v1beta1/accounts/%v"
 	LastNoAckURL            = "/heimdall/checkpoint/v1beta1/last-no-ack"
 	CheckpointParamsURL     = "/heimdall/checkpoint/v1beta1/params"
 	ChainManagerParamsURL   = "/heimdall/chainmanager/v1beta1/params"
@@ -45,7 +49,7 @@ const (
 	LatestSpanURL           = "/heimdall/bor/v1beta1/latest-span"
 	NextSpanInfoURL         = "/heimdall/bor/v1beta1/prepare-next-span"
 	NextSpanSeedURL         = "/heimdall/bor/v1beta1/next-span-seed"
-	DividendAccountRootURL  = "/topup/dividend-account-root"
+	DividendAccountRootURL  = "/heimdall/topup/v1beta1/dividend-account-root"
 	ValidatorURL            = "/heimdall/staking/v1beta1/validator/%v"
 	CurrentValidatorSetURL  = "/heimdall/staking/v1beta1/validator-set"
 	StakingTxStatusURL      = "/heimdall/staking/v1beta1/isoldtx"
@@ -86,24 +90,21 @@ func Logger() log.Logger {
 
 // IsProposer  checks if we are proposer
 func IsProposer(cliCtx client.Context) (bool, error) {
-	var validatorSet ValidatorSetResponse
-	result, err := helper.FetchFromAPI(cliCtx,
-		helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL),
-	)
+	var validatorSet types2.QueryValidatorSetResponse
+	result, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
 
 	if err != nil {
 		logger.Error("Error fetching proposers", "url", CurrentValidatorSetURL, "error", err)
 		return false, err
 	}
 
-	err = json.Unmarshal(result, &validatorSet)
+	err = jsonpb.UnmarshalString(string(result), &validatorSet)
 	if err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false, err
 	}
 
-	signer, _ := sdk.AccAddressFromHex(validatorSet.ValidatorSet.Proposer.Signer)
-	if bytes.Equal(signer, helper.GetAddress()) {
+	if bytes.Equal(validatorSet.ValidatorSet.Proposer.GetSigner(), helper.GetAddress()) {
 		return true, nil
 	}
 
@@ -113,25 +114,22 @@ func IsProposer(cliCtx client.Context) (bool, error) {
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx client.Context, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
-	response, err := helper.FetchFromAPI(
-		cliCtx,
-		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
-	)
+	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))))
 	if err != nil {
 		logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
 		return false, err
 	}
 
 	// unmarshall data from buffer
-	var proposers []hmTypes.Validator
+	var proposers types2.QueryProposerResponse
 
-	if err := json.Unmarshal(response, &proposers); err != nil {
+	if err := jsonpb.UnmarshalString(string(response), &proposers); err != nil {
 		logger.Error("Error unmarshalling validator data ", "error", err)
 		return false, err
 	}
 
 	logger.Debug("Fetched proposers list", "numberOfProposers", count)
-	for _, proposer := range proposers {
+	for _, proposer := range proposers.Proposers {
 		if bytes.Equal(proposer.GetSigner(), helper.GetAddress()) {
 			return true, nil
 		}
@@ -145,14 +143,14 @@ func CalculateTaskDelay(cliCtx client.Context) (bool, time.Duration) {
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
-	response, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
 	if err != nil {
 		logger.Error("Unable to send request for current validatorset", "url", CurrentValidatorSetURL, "error", err)
 		return false, 0
 	}
 	// unmarshall data from buffer
-	var validatorSet ValidatorSetResponse
-	err = json.Unmarshal(response, &validatorSet)
+	var validatorSet types2.QueryValidatorSetResponse
+	err = jsonpb.UnmarshalString(string(response), &validatorSet)
 	if err != nil {
 		logger.Error("Error unmarshalling current validatorset data ", "error", err)
 		return false, 0
@@ -160,8 +158,7 @@ func CalculateTaskDelay(cliCtx client.Context) (bool, time.Duration) {
 
 	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.ValidatorSet.Validators))
 	for i, validator := range validatorSet.ValidatorSet.Validators {
-		signer, _ := sdk.AccAddressFromHex(validator.Signer)
-		if bytes.Equal(signer, helper.GetAddress()) {
+		if bytes.Equal(validator.GetSigner(), helper.GetAddress()) {
 			valPosition = i + 1
 			isCurrentValidator = true
 			break
@@ -201,21 +198,21 @@ func CalculateSpanTaskDelay(cliContext client.Context, id uint64, start uint64) 
 
 // IsCurrentProposer checks if we are current proposer
 func IsCurrentProposer(cliCtx client.Context) (bool, error) {
-	var validatorSet hmTypes.ValidatorSet
-	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+	var validatorSet types2.QueryValidatorSetResponse
+	result, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
 		return false, err
 	}
 
-	err = json.Unmarshal(result, &validatorSet)
+	err = jsonpb.UnmarshalString(string(result), &validatorSet)
 	if err != nil {
 		logger.Error("error unmarshalling validator", "error", err)
 		return false, err
 	}
-	logger.Debug("Current proposer fetched", "validator", validatorSet.Proposer.Signer)
+	logger.Debug("Current proposer fetched", "validator", validatorSet.ValidatorSet.Proposer.Signer)
 
-	if bytes.Equal(validatorSet.Proposer.GetSigner(), helper.GetAddress()) {
+	if bytes.Equal(validatorSet.ValidatorSet.Proposer.GetSigner(), helper.GetAddress()) {
 		return true, nil
 	}
 
@@ -224,24 +221,22 @@ func IsCurrentProposer(cliCtx client.Context) (bool, error) {
 
 // IsEventSender check if we are the EventSender
 func IsEventSender(cliCtx client.Context, validatorID uint64) bool {
-	var validator hmTypes.Validator
+	var validator types2.QueryValidatorResponse
 
-	result, err := helper.FetchFromAPI(cliCtx,
-		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
-	)
+	result, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))))
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
 		return false
 	}
 
-	err = json.Unmarshal(result, &validator)
+	err = jsonpb.UnmarshalString(string(result), &validator)
 	if err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
 	logger.Debug("Current event sender received", "validator", validator.String())
 
-	return bytes.Equal(validator.GetSigner(), helper.GetAddress())
+	return bytes.Equal(validator.Validator.GetSigner(), helper.GetAddress())
 }
 
 //CreateURLWithQuery receives the uri and parameters in key value form
@@ -311,7 +306,7 @@ func IsCatchingUp(cliCtx client.Context) bool {
 func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (account authTypes.BaseAccount, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
 	// call account rest api
-	response, err := helper.FetchFromAPI(cliCtx, url)
+	response, err := helper.FetchFromAPI(url)
 	if err != nil {
 		return
 	}
@@ -324,31 +319,25 @@ func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (a
 }
 
 // GetChainmanagerParams return chain manager params
-func GetChainmanagerParams(cliCtx client.Context) (*ChainmanageParams, error) {
-	response, err := helper.FetchFromAPI(
-		cliCtx,
-		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
-	)
+func GetChainmanagerParams(cliCtx client.Context) (*chainmanagerTypes.Params, error) {
+	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(ChainManagerParamsURL))
 
 	if err != nil {
 		logger.Error("Error fetching chainmanager params", "err", err)
 		return nil, err
 	}
 
-	var chainmanagerParamsResponse ChainmanagerParamsResponse
-	if err := json.Unmarshal(response, &chainmanagerParamsResponse); err != nil {
+	var chainmanagerParamsResponse chainmanagerTypes.QueryParamsResponse
+	if err := jsonpb.UnmarshalString(string(response), &chainmanagerParamsResponse); err != nil {
 		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err
 	}
-	return &chainmanagerParamsResponse.Params, nil
+	return chainmanagerParamsResponse.Params, nil
 }
 
 // GetCheckpointParams return params
 func GetCheckpointParams(cliCtx client.Context) (*checkpointTypes.Params, error) {
-	response, err := helper.FetchFromAPI(
-		cliCtx,
-		helper.GetHeimdallServerEndpoint(CheckpointParamsURL),
-	)
+	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(CheckpointParamsURL))
 
 	if err != nil {
 		logger.Error("Error fetching Checkpoint params", "err", err)
@@ -366,10 +355,7 @@ func GetCheckpointParams(cliCtx client.Context) (*checkpointTypes.Params, error)
 
 // GetBufferedCheckpoint return checkpoint from buffer
 func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
-	response, err := helper.FetchFromAPI(
-		cliCtx,
-		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
-	)
+	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(BufferedCheckpointURL))
 
 	if err != nil {
 		logger.Debug("Error fetching buffered checkpoint", "err", err)
@@ -377,7 +363,7 @@ func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 	}
 
 	var checkpoint hmTypes.Checkpoint
-	if err := json.Unmarshal(response, &checkpoint); err != nil {
+	if err := jsonpb.UnmarshalString(string(response), &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
 		return nil, err
 	}
@@ -387,10 +373,7 @@ func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 
 // GetlastestCheckpoint return last successful checkpoint
 func GetlastestCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
-	response, err := helper.FetchFromAPI(
-		cliCtx,
-		helper.GetHeimdallServerEndpoint(LatestCheckpointURL),
-	)
+	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(LatestCheckpointURL))
 
 	if err != nil {
 		logger.Debug("Error fetching latest checkpoint", "err", err)
@@ -437,35 +420,35 @@ func FetchNextSpanDetails(cliCtx client.Context, id uint64, start uint64) (*type
 	req.URL.RawQuery = q.Encode()
 
 	// fetch next span details
-	result, err := helper.FetchFromAPI(cliCtx, req.URL.String())
+	result, err := helper.FetchFromAPI(req.URL.String())
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
 		return nil, err
 	}
 
-	var msg types.Span
-	if err = json.Unmarshal(result, &msg); err != nil {
+	var msg borTypes.QueryPrepareNextSpanResponse
+	if err = jsonpb.UnmarshalString(string(result), &msg); err != nil {
 		logger.Error("Error unmarshalling propose tx msg ", "error", err)
 		return nil, err
 	}
 
 	logger.Debug("◽ Generated proposer span msg", "msg", msg.String())
-	return &msg, nil
+	return msg.Span, nil
 }
 
 // get Last span
 func GetLastSpan(cliCtx client.Context) (*types.Span, error) {
 	// fetch last span
-	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(LatestSpanURL))
+	result, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(LatestSpanURL))
 	if err != nil {
 		logger.Error("Error while fetching latest span")
 		return nil, err
 	}
-	var lastSpan types.Span
+	var lastSpan borTypes.QueryLatestSpanResponse
 	err = json.Unmarshal(result, &lastSpan)
 	if err != nil {
 		logger.Error("Error unmarshalling span", "error", err)
 		return nil, err
 	}
-	return &lastSpan, nil
+	return lastSpan.Span, nil
 }

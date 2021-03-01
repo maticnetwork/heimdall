@@ -94,7 +94,7 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 }
 
 // FetchFromAPI fetches data from any URL
-func FetchFromAPI(cliCtx client.Context, URL string) ([]byte, error) {
+func FetchFromAPI(URL string) ([]byte, error) {
 	resp, err := http.Get(URL)
 	if err != nil {
 		return nil, err
@@ -107,17 +107,11 @@ func FetchFromAPI(cliCtx client.Context, URL string) ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		//// unmarshall data from buffer
-		//if err := json.Unmarshal(body, &result); err != nil {
-		//	Logger.Debug("Error while json unmarshal the data", "err", err)
-		//	return result, err
-		//}
-		//return result, err
 		return body, err
 	}
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
-	return nil, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
+	return nil, fmt.Errorf("error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
 
 // GetFromAddress get from address

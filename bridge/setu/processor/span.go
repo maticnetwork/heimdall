@@ -90,7 +90,7 @@ func (sp *SpanProcessor) sendSpanToHeimdall(headerBlockStr string) error {
 // fetchNextSpanSeed - fetches seed for next span
 func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed common.Hash, err error) {
 	sp.Logger.Debug("Sending Rest call to Get Seed for next span")
-	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.NextSpanSeedURL))
+	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(util.NextSpanSeedURL))
 	if err != nil {
 		sp.Logger.Error("Error Fetching nextspanseed from HeimdallServer ", "error", err)
 		return nextSpanSeed, err

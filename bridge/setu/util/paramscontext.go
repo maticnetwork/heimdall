@@ -3,6 +3,8 @@ package util
 import (
 	"time"
 
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+
 	checkpointtypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 
 	"github.com/patrickmn/go-cache"
@@ -17,7 +19,7 @@ type ParamsContext struct {
 }
 
 type Params struct {
-	ChainmanagerParams *ChainmanageParams
+	ChainmanagerParams *chainmanagerTypes.Params
 	CheckpointParams   *checkpointtypes.Params
 }
 

@@ -63,7 +63,11 @@ func GetBeginBlockEvents(client *httpClient.HTTP, height int64) ([]abci.Event, e
 	}
 
 	// unsubscribe query
-	defer client.Unsubscribe(c, subscriber, query)
+	defer func() {
+		if subErr := client.Unsubscribe(c, subscriber, query); subErr != nil {
+			Logger.Error(fmt.Sprintf("Error while Unsubscribe the %s the subscriber ", query), "Subscriber", subscriber, "Err", err)
+		}
+	}()
 
 	for {
 		select {

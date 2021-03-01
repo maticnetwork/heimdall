@@ -8,6 +8,8 @@ import (
 	"strconv"
 	"time"
 
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+
 	"github.com/RichardKnop/machinery/v1/tasks"
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi"
@@ -20,7 +22,7 @@ import (
 
 // RootChainListenerContext root chain listener context
 type RootChainListenerContext struct {
-	ChainmanagerParams *util.ChainmanageParams
+	ChainmanagerParams *chainmanagerTypes.Params
 }
 
 // RootChainListener - Listens to and process events from rootchain

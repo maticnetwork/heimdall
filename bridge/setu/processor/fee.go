@@ -107,7 +107,7 @@ func (fp *FeeProcessor) isOldTx(cliCtx client.Context, txHash string, logIndex u
 		return false, err
 	}
 
-	res, err := helper.FetchFromAPI(fp.cliCtx, url)
+	res, err := helper.FetchFromAPI(url)
 	if err != nil {
 		fp.Logger.Error("Error fetching tx status", "url", url, "error", err)
 		return false, err

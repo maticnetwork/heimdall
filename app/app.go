@@ -323,6 +323,7 @@ func NewHeimdallApp(
 		app.ChainKeeper,
 		app.StakingKeeper,
 		app.caller,
+		app.CheckpointKeeper,
 	)
 
 	// Contract caller

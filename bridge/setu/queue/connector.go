@@ -1,6 +1,8 @@
 package queue
 
 import (
+	"fmt"
+
 	"github.com/streadway/amqp"
 	"github.com/tendermint/tendermint/libs/log"
 
@@ -40,7 +42,7 @@ func NewQueueConnector(dialer string) *QueueConnector {
 
 	server, err := machinery.NewServer(cnf)
 	if err != nil {
-		// do something with the error
+		fmt.Printf("error while starting the new server %v error ", err)
 	}
 
 	// queue connector

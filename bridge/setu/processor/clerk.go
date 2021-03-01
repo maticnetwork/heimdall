@@ -124,7 +124,7 @@ func (cp *ClerkProcessor) isOldTx(cliCtx client.Context, txHash string, logIndex
 		return false, err
 	}
 
-	res, err := helper.FetchFromAPI(cp.cliCtx, url)
+	res, err := helper.FetchFromAPI(url)
 	if err != nil {
 		cp.Logger.Error("Error fetching tx status", "url", url, "error", err)
 		return false, err
