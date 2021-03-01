@@ -166,7 +166,6 @@ func ValidatorJoinTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 
-	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
 
@@ -264,7 +263,6 @@ func SignerUpdateTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 
-	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
 
@@ -357,7 +355,6 @@ func StakeUpdateTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 
-	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
 
@@ -447,7 +444,6 @@ func ValidatorExitTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 
-	_ = cmd.MarkFlagRequired(FlagActivationEpoch)
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
 
