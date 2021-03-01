@@ -93,7 +93,7 @@ func (k Keeper) Deposit(c context.Context, req *types.QueryDepositRequest) (*typ
 	}
 
 	if req.Depositor == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty depositor address")
+		return nil, status.Error(codes.InvalidArgument, "empty depositor id")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)
@@ -162,7 +162,7 @@ func (k Keeper) Vote(c context.Context, req *types.QueryVoteRequest) (*types.Que
 	}
 
 	if req.Voter == 0 {
-		return nil, status.Error(codes.InvalidArgument, "empty voter address")
+		return nil, status.Error(codes.InvalidArgument, "empty voter id")
 	}
 
 	ctx := sdk.UnwrapSDKContext(c)

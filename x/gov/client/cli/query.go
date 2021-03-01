@@ -311,7 +311,7 @@ $ %[1]s query gov votes 1
 // get a specific Deposit Information
 func GetCmdQueryDeposit() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "deposit [proposal-id] [depositer-addr]",
+		Use:   "deposit [proposal-id] [depositer-id]",
 		Args:  cobra.ExactArgs(2),
 		Short: "Query details of a deposit",
 		Long: strings.TrimSpace(
