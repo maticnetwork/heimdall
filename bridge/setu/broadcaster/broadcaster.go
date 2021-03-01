@@ -71,6 +71,8 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		WithAccountNumber(tb.accNum).
 		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID).
+		WithTxConfig(tb.cliCtx.TxConfig).
+		WithAccountRetriever(tb.cliCtx.AccountRetriever).
 		WithTxConfig(tb.cliCtx.TxConfig)
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txf, []sdk.Msg{msg})

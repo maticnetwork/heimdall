@@ -312,7 +312,7 @@ func GetAccount(cliCtx client.Context, address hmCommonTypes.HeimdallAddress) (a
 	}
 
 	if err = json.Unmarshal(response, &account); err != nil {
-		logger.Error("Error unmarshalling account details", "url", url, "Asasd", err)
+		logger.Error("Error unmarshalling account details", "url", url, "Error", err)
 		return
 	}
 	return

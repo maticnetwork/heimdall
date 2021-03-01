@@ -59,20 +59,20 @@ func NewProcessorService(
 	checkpointProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "checkpoint", checkpointProcessor)
 
 	// initialize fee processor
-	//feeProcessor := NewFeeProcessor(&contractCaller.StakingInfoABI)
-	//feeProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "fee", feeProcessor)
+	feeProcessor := NewFeeProcessor(&contractCaller.StakingInfoABI)
+	feeProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "fee", feeProcessor)
 
 	// initialize staking processor
 	stakingProcessor := NewStakingProcessor(&contractCaller.StakingInfoABI)
 	stakingProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "staking", stakingProcessor)
 
 	// initialize clerk processor
-	//clerkProcessor := NewClerkProcessor(&contractCaller.StateSenderABI)
-	//clerkProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "clerk", clerkProcessor)
+	clerkProcessor := NewClerkProcessor(&contractCaller.StateSenderABI)
+	clerkProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "clerk", clerkProcessor)
 
 	// initialize span processor
-	//spanProcessor := &SpanProcessor{}
-	//spanProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "span", spanProcessor)
+	spanProcessor := &SpanProcessor{}
+	spanProcessor.BaseProcessor = *NewBaseProcessor(cliCtx, queueConnector, httpClient, txBroadcaster, paramsContext, "span", spanProcessor)
 
 	// initialize slashing processor
 	//slashingProcessor := NewSlashingProcessor(&contractCaller.StakingInfoABI)
@@ -90,9 +90,9 @@ func NewProcessorService(
 		processorService.processors = append(processorService.processors,
 			checkpointProcessor,
 			stakingProcessor,
-			//clerkProcessor,
-			//feeProcessor,
-			//spanProcessor,
+			clerkProcessor,
+			feeProcessor,
+			spanProcessor,
 			nil,
 		)
 	} else {
@@ -102,12 +102,12 @@ func NewProcessorService(
 				processorService.processors = append(processorService.processors, checkpointProcessor)
 			case "staking":
 				processorService.processors = append(processorService.processors, stakingProcessor)
-				////case "clerk":
-				////	processorService.processors = append(processorService.processors, clerkProcessor)
-				////case "fee":
-				////	processorService.processors = append(processorService.processors, feeProcessor)
-				////case "span":
-				////	processorService.processors = append(processorService.processors, spanProcessor)
+			case "clerk":
+				processorService.processors = append(processorService.processors, clerkProcessor)
+			case "fee":
+				processorService.processors = append(processorService.processors, feeProcessor)
+			case "span":
+				processorService.processors = append(processorService.processors, spanProcessor)
 				//case "slashing":
 				//	processorService.processors = append(processorService.processors, nil)
 			}

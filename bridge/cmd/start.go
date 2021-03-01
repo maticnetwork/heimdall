@@ -43,6 +43,8 @@ func GetStartCmd() *cobra.Command {
 
 			// create codec
 			cdc, _ := app.MakeCodecs()
+			// encoding
+			encoding := app.MakeEncodingConfig()
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()
@@ -54,7 +56,9 @@ func GetStartCmd() *cobra.Command {
 
 			cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl).
 				WithClient(_httpClient).
-				WithAccountRetriever(authtypes.AccountRetriever{})
+				WithAccountRetriever(authtypes.AccountRetriever{}).
+				WithInterfaceRegistry(encoding.InterfaceRegistry).
+				WithTxConfig(encoding.TxConfig)
 
 			cliCtx.BroadcastMode = flags.BroadcastAsync
 
