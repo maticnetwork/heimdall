@@ -3,12 +3,10 @@ package cli
 import (
 	"context"
 	"fmt"
-	"strconv"
-
-	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
+	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
@@ -43,14 +41,7 @@ func GetStateRecord() *cobra.Command {
 				return err
 			}
 
-			recordIDStr, err := cmd.Flags().GetString(FlagRecordID)
-			if err != nil {
-				return err
-			}
-			if recordIDStr == "" {
-				return fmt.Errorf("record id cannot be empty")
-			}
-			recordID, err := strconv.ParseUint(recordIDStr, 10, 64)
+			recordID, err := cmd.Flags().GetUint64(FlagRecordID)
 			if err != nil {
 				return err
 			}
@@ -67,9 +58,11 @@ func GetStateRecord() *cobra.Command {
 		},
 	}
 
-	flags.AddQueryFlagsToCmd(cmd)
 	cmd.Flags().Uint64(FlagRecordID, 0, "--id=<record ID here>")
+
 	_ = cmd.MarkFlagRequired(FlagRecordID)
+
+	flags.AddQueryFlagsToCmd(cmd)
 
 	return cmd
 }
