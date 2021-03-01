@@ -126,7 +126,7 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			//
 			// staking state change
 			//
-			_, err = stakingtypes.SetGenesisStateToAppState(appState, vals, validatorSet)
+			_, err = stakingtypes.SetGenesisStateToAppState(authclient.Codec,appState, vals, validatorSet)
 			if err != nil {
 				return err
 			}

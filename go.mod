@@ -8,7 +8,7 @@ require (
 	github.com/cosmos/cosmos-sdk v0.41.3
 	github.com/cosmos/iavl v0.15.3
 	github.com/go-ole/go-ole v1.2.4 // indirect
-	github.com/gogo/protobuf v1.3.2
+	github.com/gogo/protobuf v1.3.3
 	github.com/golang/protobuf v1.4.3
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
