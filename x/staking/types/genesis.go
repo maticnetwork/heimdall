@@ -3,8 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
-
-	"github.com/cosmos/cosmos-sdk/x/auth/types"
+	"github.com/cosmos/cosmos-sdk/codec"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -54,21 +53,22 @@ func ValidateGenesis(data GenesisState) error {
 }
 
 // GetGenesisStateFromAppState returns staking GenesisState given raw application genesis state
-func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisState {
+func GetGenesisStateFromAppState(cdc codec.Marshaler, appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState
 	if appState[ModuleName] != nil {
-		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
+		cdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
+
 	return genesisState
 }
 
 // SetGenesisStateToAppState sets state into app state
-func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet *hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
+func SetGenesisStateToAppState(cdc codec.Marshaler, appState map[string]json.RawMessage, validators []*hmTypes.Validator, currentValSet *hmTypes.ValidatorSet) (map[string]json.RawMessage, error) {
 	// set state to staking state
-	stakingState := GetGenesisStateFromAppState(appState)
+	stakingState := GetGenesisStateFromAppState(cdc, appState)
 	stakingState.Validators = validators
 	stakingState.CurrentValSet = currentValSet
 
-	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&stakingState)
+	appState[ModuleName] = cdc.MustMarshalJSON(&stakingState)
 	return appState, nil
 }

@@ -17,6 +17,16 @@ const (
 	MemStoreKey = "mem_capability"
 )
 
+var (
+	// ProposerKeyPrefix prefix for proposer
+	ProposerKeyPrefix = []byte("proposer")
+)
+
 func KeyPrefix(p string) []byte {
 	return []byte(p)
+}
+
+// ProposerKey returns proposer key
+func ProposerKey() []byte {
+	return ProposerKeyPrefix
 }
