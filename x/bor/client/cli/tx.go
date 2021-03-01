@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
@@ -63,6 +64,7 @@ func PostSendProposeSpanTx() *cobra.Command {
 			if err != nil {
 				return err
 			}
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return fmt.Errorf("invalid proposer address: %v", err)
