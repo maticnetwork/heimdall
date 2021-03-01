@@ -1,18 +1,19 @@
 package cli
 
 import (
+	"context"
+	"errors"
 	"fmt"
-	"strconv"
-
-	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	hmTypesCommon "github.com/maticnetwork/heimdall/types/common"
+	hmTypes "github.com/maticnetwork/heimdall/types/common"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	"github.com/maticnetwork/heimdall/x/clerk/types"
 )
 
@@ -44,10 +45,40 @@ func CreateNewStateRecord() *cobra.Command {
 		Short: "new state record",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
 			if err != nil {
 				return err
 			}
+
+			chainmanagerParams, err := getChainmanagerParams(clientCtx)
+			if err != nil {
+				return err
+			}
+
+			// Get contractCaller ref
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			// get proposer
+			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+			if err != nil {
+				return fmt.Errorf("invalid proposer address: %v", err)
+			}
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(clientCtx)
+			}
+
+			// get txHash
+			txhash, _ := cmd.Flags().GetString(FlagTxHash)
+			if txhash == "" {
+				return fmt.Errorf("transaction hash is required")
+			}
+
+			// parse log index
+			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
 
 			// bor chain id
 			borChainID, err := cmd.Flags().GetString(FlagBorChainId)
@@ -58,84 +89,20 @@ func CreateNewStateRecord() *cobra.Command {
 				return fmt.Errorf("BorChainID cannot be empty")
 			}
 
-			// get proposer
-			proposerCmdStr, err := cmd.Flags().GetString(FlagProposerAddress)
-			if err != nil {
-				return err
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(
+				hmTypes.HexToHeimdallHash(txhash).EthHash(),
+				chainmanagerParams.MainchainTxConfirmations,
+			)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
-			proposer, err := sdk.AccAddressFromHex(proposerCmdStr)
-			if err != nil {
-				return err
-			}
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(clientCtx)
-			}
-
-			// tx hash
-			txHashStr, err := cmd.Flags().GetString(FlagTxHash)
-			if err != nil {
-				return err
-			}
-			if txHashStr == "" {
-				return fmt.Errorf("tx hash cannot be empty")
-			}
-
-			// tx hash
-			recordIDStr, err := cmd.Flags().GetString(FlagRecordID)
-			if err != nil {
-				return err
-			}
-			if recordIDStr == "" {
-				return fmt.Errorf("record id cannot be empty")
-			}
-
-			recordID, err := strconv.ParseUint(recordIDStr, 10, 64)
-			if err != nil {
-				return fmt.Errorf("record id cannot be empty")
-			}
-
-			// get contract Addr
-			contractAddrCmdStr, err := cmd.Flags().GetString(FlagContractAddress)
-			if err != nil {
-				return err
-			}
-			contractAddr, err := sdk.AccAddressFromHex(contractAddrCmdStr)
-			if err != nil {
-				return err
-			}
-			if contractAddr.Empty() {
-				return fmt.Errorf("contract Address cannot be empty")
-			}
-
-			// log index
-			logIndexStr, err := cmd.Flags().GetString(FlagLogIndex)
-			if err != nil {
-				return err
-			}
-			if logIndexStr == "" {
-				return fmt.Errorf("log index cannot be empty")
-			}
-
-			logIndex, err := strconv.ParseUint(logIndexStr, 10, 64)
-			if err != nil {
-				return fmt.Errorf("log index cannot be parsed")
-			}
-
-			// log index
-			dataStr, err := cmd.Flags().GetString(FlagData)
-			if err != nil {
-				return err
-			}
-			if dataStr == "" {
-				return fmt.Errorf("data cannot be empty")
-			}
-
-			data := hmTypes.HexToHexBytes(dataStr)
-			if dataStr == "" {
-				return fmt.Errorf("data should be hex string")
-			}
-
-			flagBlockNumber, err := cmd.Flags().GetUint64(FlagBlockNumber)
+			stateSenderAddress, _ := sdk.AccAddressFromHex(chainmanagerParams.ChainParams.StateSenderAddress)
+			event, err := contractCallerObj.DecodeStateSyncedEvent(
+				stateSenderAddress,
+				receipt,
+				logIndex,
+			)
 			if err != nil {
 				return err
 			}
@@ -143,26 +110,46 @@ func CreateNewStateRecord() *cobra.Command {
 			// create new state record
 			msg := types.NewMsgEventRecord(
 				proposer,
-				hmTypesCommon.HexToHeimdallHash(txHashStr),
+				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
-				flagBlockNumber,
-				recordID,
-				contractAddr,
-				data,
+				receipt.BlockNumber.Uint64(),
+				event.Id.Uint64(),
+				sdk.AccAddress(event.ContractAddress.Bytes()),
+				event.Data,
 				borChainID,
 			)
 
 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
 		},
 	}
+
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<tx-hash>")
 	cmd.Flags().String(FlagLogIndex, "", "--log-index=<log-index>")
-	cmd.Flags().String(FlagRecordID, "", "--id=<record-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().String(FlagContractAddress, "", "--contract-addr=<contract-addr>")
-	cmd.Flags().String(FlagData, "", "--data=<data>")
+
+	_ = cmd.MarkFlagRequired(FlagTxHash)
+	_ = cmd.MarkFlagRequired(FlagLogIndex)
+	_ = cmd.MarkFlagRequired(FlagBorChainId)
+
+	// add common tx flags to cmd
+	flags.AddTxFlagsToCmd(cmd)
 
 	return cmd
+}
+
+//
+// Get chainmanager params
+//
+
+// Fetch chain manager params
+func getChainmanagerParams(clientCtx client.Context) (*chainmanagerTypes.Params, error) {
+	// create query client
+	queryClient := chainmanagerTypes.NewQueryClient(clientCtx)
+	req := &chainmanagerTypes.QueryParamsRequest{}
+	res, err := queryClient.Params(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return res.GetParams(), nil
 }
