@@ -105,7 +105,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 		k.Logger(ctx).Error(
 			"Signer Pubkey does not match",
 			"msgPubKey", pubkey.String(),
-			"compressedPubKey", string(expectedPubKey),
+			"compressedPubKey", hmTypes.BytesToHexBytes(expectedPubKey),
 		)
 		return hmCommon.ErrorSideTx(hmCommon.ErrValSignerPubKeyMismatch)
 	}
