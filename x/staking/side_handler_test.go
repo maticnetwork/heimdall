@@ -6,6 +6,8 @@ import (
 	"testing"
 	"time"
 
+	ethcrypto "github.com/maticnetwork/bor/crypto"
+
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -110,13 +112,18 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			nonce.Uint64(),
 		)
 
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubkey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
+
 		stakingInfoStaked := &stakinginfo.StakinginfoStaked{
 			Signer:          commonAddr,
 			ValidatorId:     new(big.Int).SetUint64(validatorId.Uint64()),
 			ActivationEpoch: big.NewInt(1),
 			Amount:          amount,
 			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
+			SignerPubkey:    uncompressedBytes,
 			Nonce:           nonce,
 		}
 
@@ -280,7 +287,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 
 		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should Fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
-		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
+		require.Equal(t, hmCommon.ErrValSignerPubKeyMismatch.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid Validator Id", func() {
@@ -301,6 +308,11 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			nonce.Uint64(),
 		)
 
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubkey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
+
 		stakingInfoStaked := &stakinginfo.StakinginfoStaked{
 			Signer:          commonAddr,
 			ValidatorId:     big.NewInt(1),
@@ -308,7 +320,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			ActivationEpoch: big.NewInt(1),
 			Amount:          amount,
 			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
+			SignerPubkey:    uncompressedBytes,
 		}
 
 		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
@@ -342,6 +354,11 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			nonce.Uint64(),
 		)
 
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubkey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
+
 		stakingInfoStaked := &stakinginfo.StakinginfoStaked{
 			Signer:          commonAddr,
 			ValidatorId:     new(big.Int).SetUint64(validatorId.Uint64()),
@@ -349,7 +366,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			ActivationEpoch: big.NewInt(1),
 			Amount:          amount,
 			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
+			SignerPubkey:    uncompressedBytes,
 		}
 
 		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
@@ -382,6 +399,10 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			blockNumber.Uint64(),
 			nonce.Uint64(),
 		)
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubkey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
 
 		stakingInfoStaked := &stakinginfo.StakinginfoStaked{
 			Signer:          commonAddr,
@@ -390,7 +411,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			ActivationEpoch: big.NewInt(1),
 			Amount:          amount,
 			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
+			SignerPubkey:    uncompressedBytes,
 		}
 
 		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
@@ -423,6 +444,10 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			uint64(20),
 			nonce.Uint64(),
 		)
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubkey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
 
 		stakingInfoStaked := &stakinginfo.StakinginfoStaked{
 			Signer:          commonAddr,
@@ -431,7 +456,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			ActivationEpoch: big.NewInt(1),
 			Amount:          amount,
 			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
+			SignerPubkey:    uncompressedBytes,
 		}
 
 		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
@@ -463,6 +488,10 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			blockNumber.Uint64(),
 			uint64(9),
 		)
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubkey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
 
 		stakingInfoStaked := &stakinginfo.StakinginfoStaked{
 			Signer:          commonAddr,
@@ -471,7 +500,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 			ActivationEpoch: big.NewInt(1),
 			Amount:          amount,
 			Total:           big.NewInt(10),
-			SignerPubkey:    pubkey.Bytes()[1:],
+			SignerPubkey:    uncompressedBytes,
 		}
 
 		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)

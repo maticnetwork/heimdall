@@ -6,7 +6,7 @@ require (
 	github.com/RichardKnop/machinery v1.10.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/cbergoon/merkletree v0.2.0
-	github.com/cosmos/cosmos-sdk v0.41.0
+	github.com/cosmos/cosmos-sdk v0.41.3
 	github.com/cosmos/iavl v0.15.3
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gogo/protobuf v1.3.2
@@ -28,7 +28,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tendermint v0.34.3
+	github.com/tendermint/tendermint v0.34.8
 	github.com/tendermint/tm-db v0.6.4
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4

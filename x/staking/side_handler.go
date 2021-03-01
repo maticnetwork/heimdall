@@ -100,11 +100,13 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	signer := pubkey.Address()
 
 	// check signer pubkey in message corresponds
-	if !bytes.Equal(eventLog.SignerPubkey, pubkey.Bytes()[1:]) {
+	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
+
+	if err != nil || !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
 		k.Logger(ctx).Error(
 			"Signer Pubkey does not match",
 			"msgPubKey", pubkey.String(),
-			"compressdPubKey", hmTypes.BytesToHexBytes(eventLog.SignerPubkey),
+			"compressedPubKey", string(expectedPubKey),
 		)
 		return hmCommon.ErrorSideTx(hmCommon.ErrValSignerPubKeyMismatch)
 	}
@@ -137,7 +139,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
-	// check Blocknumber
+	// check Block Number
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)

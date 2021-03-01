@@ -32,4 +32,3 @@ message MsgEventRecordRequest {
 
 // MsgEventRecordResponse defines MsgEventRecord response type.
 message MsgEventRecordResponse {}
-
