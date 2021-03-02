@@ -810,10 +810,11 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 	msgTxHash := hmCommonTypes.HexToHeimdallHash("123")
 	accAddr, _ := sdk.AccAddressFromHex(newSigner[0].Signer)
 	suite.Run("Success", func() {
+		pubKey := hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey)
 		msg := types.NewMsgSignerUpdate(
 			accAddr,
 			uint64(oldSigner.ID),
-			hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey),
+			pubKey,
 			msgTxHash,
 			0,
 			blockNumber.Uint64(),
@@ -823,12 +824,17 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		txReceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
 		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
 
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubKey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
+
 		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
 			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
 			Nonce:        nonce,
 			OldSigner:    hmCommonTypes.HexToHeimdallAddress(oldSigner.Signer).EthAddress(),
 			NewSigner:    hmCommonTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
-			SignerPubkey: hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey).Bytes()[1:],
+			SignerPubkey: uncompressedBytes[1:],
 		}
 
 		stakingInfoAddress, err := sdk.AccAddressFromHex(chainParams.ChainParams.StakingInfoAddress)
@@ -942,7 +948,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		result := suite.sideHandler(ctx, &msg)
 		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
+		require.Equal(t, hmCommon.ErrValSignerPubKeyMismatch.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid new signer address", func() {
@@ -971,10 +977,12 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		result := suite.sideHandler(ctx, &msg)
 		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, tmprototypes.SideTxResultType_SKIP, result.Result, "Result should skip")
-		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
+		require.Equal(t, hmCommon.ErrValSignerPubKeyMismatch.ABCICode(), result.Code)
 	})
 
 	suite.Run("Invalid nonce", func() {
+		pubKey := hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey)
+
 		suite.contractCaller = mocks.IContractCaller{}
 
 		msg := types.NewMsgSignerUpdate(sdk.AccAddress(newSigner[0].Signer), uint64(oldSigner.ID), hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey), msgTxHash, 0, blockNumber.Uint64(), uint64(12))
@@ -982,12 +990,17 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 		txReceipt := &ethTypes.Receipt{BlockNumber: blockNumber}
 		suite.contractCaller.On("GetConfirmedTxReceipt", msgTxHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
 
+		// uncompressed the pub key for staking event
+		uncompressed, err := ethcrypto.DecompressPubkey(pubKey)
+		require.NoError(t, err)
+		uncompressedBytes := ethcrypto.FromECDSAPub(uncompressed)
+
 		signerUpdateEvent := &stakinginfo.StakinginfoSignerChange{
 			ValidatorId:  new(big.Int).SetUint64(oldSigner.ID.Uint64()),
 			Nonce:        nonce,
 			OldSigner:    hmCommonTypes.HexToHeimdallAddress(oldSigner.Signer).EthAddress(),
 			NewSigner:    hmCommonTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
-			SignerPubkey: hmCommonTypes.NewPubKeyFromHex(newSigner[0].PubKey).Bytes()[1:],
+			SignerPubkey: uncompressedBytes[1:],
 		}
 		stakingInfoAddress, err := sdk.AccAddressFromHex(chainParams.ChainParams.StakingInfoAddress)
 		require.NoError(t, err)

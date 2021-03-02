@@ -54,8 +54,8 @@ import (
 	hmparams "github.com/maticnetwork/heimdall/app/params"
 	"github.com/maticnetwork/heimdall/helper"
 	hmtypes "github.com/maticnetwork/heimdall/types"
-	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/types/common"
+	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	hmmodule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/maticnetwork/heimdall/x/chainmanager"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
@@ -493,8 +493,8 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	if len(req.Header.GetProposerAddress()) != 0{
-		proposerAddress, _ :=sdk.AccAddressFromHex(string(req.Header.GetProposerAddress()))
+	if len(req.Header.GetProposerAddress()) != 0 {
+		proposerAddress, _ := sdk.AccAddressFromHex(string(req.Header.GetProposerAddress()))
 		app.ChainKeeper.SetBlockProposer(
 			ctx,
 			proposerAddress,
@@ -509,9 +509,9 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 
 	if proposer, ok := app.ChainKeeper.GetBlockProposer(ctx); ok {
 		moduleAccount := app.AccountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName)
-		amount :=app.BankKeeper.GetBalance(ctx,moduleAccount.GetAddress(),stakingtypes.FeeToken)
+		amount := app.BankKeeper.GetBalance(ctx, moduleAccount.GetAddress(), stakingtypes.FeeToken)
 		if !amount.IsZero() {
-			coins := sdk.Coins{sdk.Coin{Denom: stakingtypes.FeeToken, Amount:sdk.NewInt(1000) }} //check amount
+			coins := sdk.Coins{sdk.Coin{Denom: stakingtypes.FeeToken, Amount: sdk.NewInt(1000)}} //check amount
 			if err := app.BankKeeper.SendCoinsFromModuleToAccount(ctx, authtypes.FeeCollectorName, proposer, coins); err != nil {
 				logger.Error("EndBlocker | SendCoinsFromModuleToAccount", "Error", err)
 			}
@@ -530,8 +530,8 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	// get validator updates
 	setUpdates := helper.GetUpdatedValidators(
 		currentValidatorSet, // pointer to current validator set -- UpdateValidators will modify it
-		allValidators,        // All validators
-		ackCount,             // ack count
+		allValidators,       // All validators
+		ackCount,            // ack count
 	)
 
 	if len(setUpdates) > 0 {
@@ -593,9 +593,8 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	app.mm.InitGenesis(ctx, app.AppCodec(), genesisState)
 
 	// get staking state
-	stakingState := stakingtypes.GetGenesisStateFromAppState(app.AppCodec(),genesisState)
-	checkpointState := checkpointtypes.GetGenesisStateFromAppState(app.AppCodec(),genesisState)
-
+	stakingState := stakingtypes.GetGenesisStateFromAppState(app.AppCodec(), genesisState)
+	checkpointState := checkpointtypes.GetGenesisStateFromAppState(app.AppCodec(), genesisState)
 
 	// check if validator is current validator
 	// add to val updates else skip
@@ -604,7 +603,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		// TODO use checkpoint state to get current validator set once checkpoint module is ready
 
 		if validator.IsCurrentValidator(checkpointState.AckCount) {
-		// convert to Validator Update
+			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
 				Power:  int64(validator.VotingPower),
 				PubKey: common.NewPubKeyFromHex(validator.PubKey).TMProtoCryptoPubKey(),

@@ -193,10 +193,10 @@ func New(t *testing.T, cfg Config) *Network {
 	valPubKeys := make([]cryptotypes.PubKey, cfg.NumValidators)
 
 	var (
-		genAccounts []authtypes.GenesisAccount
-		genBalances []banktypes.Balance
-		genFiles    []string
-		vals  []*hmtypes.Validator
+		genAccounts  []authtypes.GenesisAccount
+		genBalances  []banktypes.Balance
+		genFiles     []string
+		vals         []*hmtypes.Validator
 		addressesIPs []string
 	)
 
@@ -301,7 +301,7 @@ func New(t *testing.T, cfg Config) *Network {
 
 		hmPubKey := hmcommon.NewPubKey(pubKey.Bytes())
 
-		hmAddr,_ := sdk.AccAddressFromHex(hmPubKey.Address().String())
+		hmAddr, _ := sdk.AccAddressFromHex(hmPubKey.Address().String())
 
 		// create validator account
 		validator := hmtypes.NewValidator(

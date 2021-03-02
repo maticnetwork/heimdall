@@ -104,7 +104,6 @@ func startInProcess(cfg Config, val *Validator) error {
 	return nil
 }
 
-
 func collectGenFiles(cfg Config, vals []*Validator, outputDir string, addressesIPs []string) error {
 	genTime := tmtime.Now()
 
@@ -114,7 +113,6 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string, addressesI
 		nodeDir := filepath.Join(outputDir, vals[i].Moniker, "heimdalld")
 		tmCfg.Moniker = vals[i].Moniker
 		tmCfg.SetRoot(nodeDir)
-
 
 		genFile := tmCfg.GenesisFile()
 		genDoc, err := types.GenesisDocFromFile(genFile)
@@ -134,7 +132,7 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string, addressesI
 
 		appState, err := json.MarshalIndent(appGenesisState, "", "  ")
 		if err != nil {
-			return  err
+			return err
 		}
 
 		// overwrite each validator's genesis file to have a canonical genesis time
@@ -145,7 +143,6 @@ func collectGenFiles(cfg Config, vals []*Validator, outputDir string, addressesI
 
 	return nil
 }
-
 
 func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalances []banktypes.Balance, genFiles []string) error {
 	genTime := tmtime.Now()
@@ -175,9 +172,9 @@ func initGenFiles(cfg Config, genAccounts []authtypes.GenesisAccount, genBalance
 
 	genDoc := types.GenesisDoc{
 		GenesisTime: genTime,
-		ChainID:    cfg.ChainID,
-		AppState:   appGenStateJSON,
-		Validators: nil,
+		ChainID:     cfg.ChainID,
+		AppState:    appGenStateJSON,
+		Validators:  nil,
 	}
 
 	// generate empty genesis files for each validator and save
