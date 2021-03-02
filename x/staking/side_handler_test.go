@@ -834,7 +834,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			Nonce:        nonce,
 			OldSigner:    hmCommonTypes.HexToHeimdallAddress(oldSigner.Signer).EthAddress(),
 			NewSigner:    hmCommonTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
-			SignerPubkey: uncompressedBytes,
+			SignerPubkey: uncompressedBytes[1:],
 		}
 
 		stakingInfoAddress, err := sdk.AccAddressFromHex(chainParams.ChainParams.StakingInfoAddress)
@@ -1000,7 +1000,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 			Nonce:        nonce,
 			OldSigner:    hmCommonTypes.HexToHeimdallAddress(oldSigner.Signer).EthAddress(),
 			NewSigner:    hmCommonTypes.HexToHeimdallAddress(newSigner[0].Signer).EthAddress(),
-			SignerPubkey: uncompressedBytes,
+			SignerPubkey: uncompressedBytes[1:],
 		}
 		stakingInfoAddress, err := sdk.AccAddressFromHex(chainParams.ChainParams.StakingInfoAddress)
 		require.NoError(t, err)
