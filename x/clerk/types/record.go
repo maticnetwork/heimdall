@@ -1,8 +1,8 @@
 package types
 
 import (
-	"time"
 	"strings"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
