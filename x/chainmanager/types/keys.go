@@ -16,6 +16,7 @@ const (
 	// MemStoreKey defines the in-memory store key
 	MemStoreKey = "mem_capability"
 )
+
 var (
 	// ProposerKeyPrefix prefix for proposer
 	ProposerKeyPrefix = []byte("proposer")
