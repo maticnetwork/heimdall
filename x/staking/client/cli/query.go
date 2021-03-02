@@ -3,6 +3,7 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/spf13/cobra"
@@ -47,6 +48,7 @@ func GetValidatorInfoCmd() *cobra.Command {
 
 			validatorID := hmTypes.ValidatorID(viper.GetInt64(FlagValidatorID))
 			validatorAddressStr := viper.GetString(FlagValidatorAddress)
+			validatorAddressStr = strings.ToLower(validatorAddressStr)
 			if validatorID == 0 && validatorAddressStr == "" {
 				return fmt.Errorf("validator ID or validator address required")
 			}

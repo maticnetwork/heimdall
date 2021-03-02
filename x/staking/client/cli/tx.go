@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -101,6 +102,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return fmt.Errorf("invalid proposer address: %v", err)
@@ -201,6 +203,7 @@ func SignerUpdateTxCmd() *cobra.Command {
 
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return fmt.Errorf("invalid proposer address: %v", err)
@@ -299,6 +302,7 @@ func StakeUpdateTxCmd() *cobra.Command {
 
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return fmt.Errorf("invalid proposer address: %v", err)
@@ -392,6 +396,7 @@ func ValidatorExitTxCmd() *cobra.Command {
 
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return fmt.Errorf("invalid proposer address: %v", err)
