@@ -10,10 +10,14 @@ var bridgeDB *leveldb.DB
 var bridgeDBOnce sync.Once
 var bridgeDBCloseOnce sync.Once
 
-// GetBridgeDBInstance get sington object for bridge-db
+// GetBridgeDBInstance get singleton object for bridge-db
 func GetBridgeDBInstance(filePath string) *leveldb.DB {
 	bridgeDBOnce.Do(func() {
-		bridgeDB, _ = leveldb.OpenFile(filePath, nil)
+		var err error
+		bridgeDB, err = leveldb.OpenFile(filePath, nil)
+		if err != nil {
+			panic(err)
+		}
 	})
 
 	return bridgeDB

@@ -31,7 +31,6 @@ type ListenerService struct {
 func NewListenerService(cliCtx client.Context, cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
 
 	var logger = util.Logger().With("service", ListenerServiceStr)
-
 	// creating listener object
 	listenerService := &ListenerService{}
 
@@ -41,11 +40,11 @@ func NewListenerService(cliCtx client.Context, cdc codec.Marshaler, queueConnect
 	rootchainListener.BaseListener = *NewBaseListener(cliCtx, queueConnector, httpClient, helper.GetMainClient(), RootChainListenerStr, rootchainListener)
 	listenerService.listeners = append(listenerService.listeners, rootchainListener)
 
-	maticchainListener := &MaticChainListener{}
+	maticchainListener := NewMaticChainListener()
 	maticchainListener.BaseListener = *NewBaseListener(cliCtx, queueConnector, httpClient, helper.GetMaticClient(), MaticChainListenerStr, maticchainListener)
 	listenerService.listeners = append(listenerService.listeners, maticchainListener)
 
-	heimdallListener := &HeimdallListener{}
+	heimdallListener := NewHeimdallListener()
 	heimdallListener.BaseListener = *NewBaseListener(cliCtx, queueConnector, httpClient, nil, HeimdallListenerStr, heimdallListener)
 	listenerService.listeners = append(listenerService.listeners, heimdallListener)
 

@@ -381,7 +381,7 @@ func GetlastestCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 	}
 
 	var checkpoint hmTypes.Checkpoint
-	if err := json.Unmarshal(response, &checkpoint); err != nil {
+	if err := jsonpb.UnmarshalString(string(response), &checkpoint); err != nil {
 		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
 		return nil, err
 	}
@@ -445,7 +445,7 @@ func GetLastSpan(cliCtx client.Context) (*types.Span, error) {
 		return nil, err
 	}
 	var lastSpan borTypes.QueryLatestSpanResponse
-	err = json.Unmarshal(result, &lastSpan)
+	err = jsonpb.UnmarshalString(string(result), &lastSpan)
 	if err != nil {
 		logger.Error("Error unmarshalling span", "error", err)
 		return nil, err

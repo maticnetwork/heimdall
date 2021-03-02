@@ -10,6 +10,10 @@ import (
 	"strconv"
 	"time"
 
+	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
+
+	"github.com/gogo/protobuf/jsonpb"
+
 	"github.com/cosmos/cosmos-sdk/client"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -532,19 +536,20 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(params util.Pa
 }
 
 // fetchDividendAccountRoot - fetches dividend accountroothash
-func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmCommonTypes.HeimdallHash, err error) {
+func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountRootHash hmCommonTypes.HeimdallHash, err error) {
 	cp.Logger.Info("Sending Rest call to Get Dividend AccountRootHash")
 	response, err := helper.FetchFromAPI(helper.GetHeimdallServerEndpoint(util.DividendAccountRootURL))
 	if err != nil {
-		cp.Logger.Error("Error Fetching accountroothash from HeimdallServer ", "error", err)
-		return accountroothash, err
+		cp.Logger.Error("Error Fetching account-root-hash from HeimdallServer ", "error", err)
+		return accountRootHash, err
 	}
 	cp.Logger.Info("Divident account root fetched")
-	if err := json.Unmarshal(response, &accountroothash); err != nil {
-		cp.Logger.Error("Error unmarshalling accountroothash received from Heimdall Server", "error", err)
-		return accountroothash, err
+	var accountRootHashResponse topuptypes.QueryDividendAccountRootResponse
+	if err := jsonpb.UnmarshalString(string(response), &accountRootHashResponse); err != nil {
+		cp.Logger.Error("Error unmarshalling account-root-hash received from Heimdall Server", "error", err)
+		return accountRootHash, err
 	}
-	return accountroothash, nil
+	return hmCommonTypes.HexToHeimdallHash(accountRootHashResponse.GetAccountRootHash()), nil
 }
 
 // fetchLatestCheckpointTime - get latest checkpoint time from rootchain
