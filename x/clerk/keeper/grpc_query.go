@@ -3,6 +3,7 @@ package keeper
 import (
 	"context"
 	"math/big"
+	"time"
 
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
 
@@ -76,17 +77,67 @@ func (k Querier) QueryIsOldTxClerk(c context.Context, req *types.QueryIsOldTxReq
 
 // Event Records List
 func (k Querier) Records(c context.Context, req *types.QueryRecordListRequest) (*types.QueryRecordListResponse, error) {
+	var records []types.EventRecord
+	var err error
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	pagination := req.GetPagination()
-	if pagination == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
+	page := uint64(1)
+	if req.Page != 0 {
+		page = req.Page
 	}
+
+	limit := uint64(50)
+	if req.Limit != 0 {
+		limit = req.Limit
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
 
-	records, err := k.GetEventRecordList(ctx, req.Pagination.Page, req.Pagination.Limit)
+	if req.FromTime != 0 && req.ToTime != 0 {
+		records, err = k.GetEventRecordListWithTime(ctx, time.Unix(int64(req.FromTime), 0), time.Unix(int64(req.ToTime), 0), page, limit)
+	} else if (req.FromId != 0) && (req.ToTime != 0) {
+		fromRecord, err := k.GetEventRecord(ctx, req.FromId)
+		if err != nil {
+			return nil, err
+		}
+		fromTime := fromRecord.RecordTime.Unix()
+		rangeRecords, err := k.GetEventRecordListWithTime(ctx, time.Unix(fromTime, 0), time.Unix(int64(req.ToTime), 0), 1, limit)
+		if err != nil {
+			return nil, err
+		}
+
+		rangeMapping := make(map[uint64]*types.EventRecord)
+		for _, r := range rangeRecords {
+			rangeMapping[r.Id] = &r
+		}
+
+		nextID := req.FromId
+		toTimeObj := time.Unix(int64(req.ToTime), 0)
+		for nextID-req.FromId < limit {
+			if found, ok := rangeMapping[nextID]; ok {
+				records = append(records, *found)
+			} else {
+				// fetch record for nextID and unmarshal to record
+				record, err := k.GetEventRecord(ctx, nextID)
+				if err != nil {
+					return nil, err
+				}
+				// checks if record time < to time
+				if !record.RecordTime.Before(toTimeObj) {
+					break
+				}
+				// add into records
+				records = append(records, *record)
+			}
+			nextID++
+		}
+	} else {
+		records, err = k.GetEventRecordList(ctx, req.Page, req.Limit)
+	}
+
 	if err != nil {
 		return nil, err
 	}
