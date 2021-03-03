@@ -2,9 +2,15 @@ package cli
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"strconv"
+
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
+
+	"github.com/maticnetwork/bor/common"
 
 	"github.com/spf13/cobra"
 
@@ -31,7 +37,7 @@ func GetTxCmd() *cobra.Command {
 
 	checkpointTxCmd.AddCommand(
 		CheckpointTxCmd(),
-		// CheckpointACKTxCmd(),
+		CheckpointACKTxCmd(),
 		CheckpointNoACKTxCmd(),
 	)
 
@@ -93,7 +99,7 @@ func CheckpointTxCmd() *cobra.Command {
 					return err
 				}
 
-				// unmarsall the checkpoint msg
+				// unmarshall the checkpoint msg
 				var newCheckpointMsg types.MsgCheckpoint
 				if err := json.Unmarshal(result, &newCheckpointMsg); err != nil {
 					return err
@@ -109,7 +115,10 @@ func CheckpointTxCmd() *cobra.Command {
 				return err
 			}
 
-			proposer := sdk.AccAddress([]byte(proposerAddressStr))
+			proposer, err := sdk.AccAddressFromHex(proposerAddressStr)
+			if err != nil {
+				return err
+			}
 			if proposer.Empty() {
 				proposer = helper.GetFromAddress(clientCtx)
 			}
@@ -194,102 +203,110 @@ func CheckpointTxCmd() *cobra.Command {
 	return cmd
 }
 
-// // CheckpointACKTxCmd send checkpoint ack transaction
-// func CheckpointACKTxCmd() *cobra.Command {
-// 	cmd := &cobra.Command{
-// 		Use:   "send-ack",
-// 		Short: "send acknowledgement for checkpoint in buffer",
-// 		RunE: func(cmd *cobra.Command, args []string) error {
-// 			clientCtx := client.GetClientContextFromCmd(cmd)
-// 			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
-// 			if err != nil {
-// 				return err
-// 			}
+// CheckpointACKTxCmd send checkpoint ack transaction
+func CheckpointACKTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "send-ack",
+		Short: "send acknowledgement for checkpoint in buffer",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
 
-// 			// get proposer
-// 			proposer := sdk.AccAddress([]byte(cmd.Flags().GetString(FlagProposerAddress)))
-// 			if proposer.Empty() {
-// 				proposer = helper.GetFromAddress(clientCtx)
-// 			}
+			// get proposer
+			proposerAddressStr, err := cmd.Flags().GetString(FlagProposerAddress)
+			if err != nil {
+				return err
+			}
 
-// 			headerBlockStr := cmd.Flags().GetString(FlagHeaderNumber)
-// 			if headerBlockStr == "" {
-// 				return fmt.Errorf("header number cannot be empty")
-// 			}
+			proposer, err := sdk.AccAddressFromHex(proposerAddressStr)
+			if err != nil {
+				return err
+			}
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(clientCtx)
+			}
 
-// 			headerBlock, err := strconv.ParseUint(headerBlockStr, 10, 64)
-// 			if err != nil {
-// 				return err
-// 			}
+			headerBlock, err := cmd.Flags().GetUint64(FlagHeaderNumber)
+			if err != nil {
+				return err
+			}
 
-// 			txHashStr := cmd.Flags().GetString(FlagCheckpointTxHash)
-// 			if txHashStr == "" {
-// 				return fmt.Errorf("checkpoint tx hash cannot be empty")
-// 			}
+			txHashStr, err := cmd.Flags().GetString(FlagCheckpointTxHash)
+			if err != nil {
+				return err
+			}
 
-// 			txHash := hmCommonTypes.BytesToHeimdallHash(common.FromHex(txHashStr))
+			if txHashStr == "" {
+				return fmt.Errorf("checkpoint tx hash cannot be empty")
+			}
 
-// 			//
-// 			// Get header details
-// 			//
+			txHash := hmCommonTypes.BytesToHeimdallHash(common.FromHex(txHashStr))
 
-// 			contractCallerObj, err := helper.NewContractCaller()
-// 			if err != nil {
-// 				return err
-// 			}
+			// Get header details
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
 
-// 			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
-// 			if err != nil {
-// 				return err
-// 			}
+			chainManagerQueryClient := chainmanagerTypes.NewQueryClient(clientCtx)
+			chainManagerParams, err := chainManagerQueryClient.Params(context.Background(), &chainmanagerTypes.QueryParamsRequest{})
+			if err != nil {
+				return err
+			}
 
-// 			// get main tx receipt
-// 			receipt, err := contractCallerObj.GetConfirmedTxReceipt(txHash.EthHash(), chainmanagerParams.MainchainTxConfirmations)
-// 			if err != nil || receipt == nil {
-// 				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
-// 			}
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(txHash.EthHash(), chainManagerParams.Params.MainchainTxConfirmations)
+			if err != nil || receipt == nil {
+				return errors.New("transaction is not confirmed yet. Please wait for sometime and try again")
+			}
 
-// 			// decode new header block event
-// 			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
-// 				chainmanagerParams.ChainParams.RootChainAddress.EthAddress(),
-// 				receipt,
-// 				uint64(cmd.Flags().GetInt64(FlagCheckpointLogIndex)),
-// 			)
-// 			if err != nil {
-// 				return errors.New("Invalid transaction for header block")
-// 			}
+			logIndex, err := cmd.Flags().GetUint64(FlagCheckpointLogIndex)
+			if err != nil {
+				return errors.New(fmt.Sprintf("error while getting the log-index Err %v", err))
+			}
+			// decode new header block event
+			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
+				common.HexToAddress(chainManagerParams.Params.ChainParams.RootChainAddress),
+				receipt,
+				logIndex,
+			)
+			if err != nil {
+				return errors.New("invalid transaction for header block")
+			}
 
-// 			// draft new checkpoint no-ack msg
-// 			msg := types.NewMsgCheckpointAck(
-// 				proposer, // ack tx sender
-// 				headerBlock,
-// 				sdk.AccAddress(res.Proposer.Bytes()),
-// 				res.Start.Uint64(),
-// 				res.End.Uint64(),
-// 				res.Root,
-// 				txHash,
-// 				uint64(cmd.Flags().GetInt64(FlagCheckpointLogIndex)),
-// 			)
+			// draft new checkpoint no-ack msg
+			msg := types.NewMsgCheckpointAck(
+				proposer, // ack tx sender
+				headerBlock,
+				res.Proposer.Bytes(),
+				res.Start.Uint64(),
+				res.End.Uint64(),
+				res.Root,
+				txHash,
+				logIndex,
+			)
 
-// 			// broadcast messages
-// 			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			// broadcast messages
+			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+		},
+	}
 
-// 		},
-// 	}
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+	cmd.Flags().Uint64(FlagHeaderNumber, 0, "--header=<header-index>")
+	cmd.Flags().StringP(FlagCheckpointTxHash, "t", "", "--txhash=<checkpoint-txhash>")
+	cmd.Flags().Uint64(FlagCheckpointLogIndex, 0, "--log-index=<log-index>")
 
-// 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-// 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
-// 	cmd.Flags().StringP(FlagCheckpointTxHash, "t", "", "--txhash=<checkpoint-txhash>")
-// 	cmd.Flags().String(FlagCheckpointLogIndex, "", "--log-index=<log-index>")
+	_ = cmd.MarkFlagRequired(FlagHeaderNumber)
+	_ = cmd.MarkFlagRequired(FlagCheckpointTxHash)
+	_ = cmd.MarkFlagRequired(FlagCheckpointLogIndex)
 
-// 	_ = cmd.MarkFlagRequired(FlagHeaderNumber)
-// 	_ = cmd.MarkFlagRequired(FlagCheckpointTxHash)
-// 	_ = cmd.MarkFlagRequired(FlagCheckpointLogIndex)
+	flags.AddTxFlagsToCmd(cmd)
 
-// 	flags.AddTxFlagsToCmd(cmd)
-
-// 	return cmd
-// }
+	return cmd
+}
 
 // CheckpointNoACKTxCmd send no-ack transaction
 func CheckpointNoACKTxCmd() *cobra.Command {
