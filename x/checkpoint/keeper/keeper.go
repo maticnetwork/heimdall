@@ -121,7 +121,7 @@ func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.
 			return _checkpoint, nil
 		}
 	} else {
-		return _checkpoint, errors.New("Invalid checkpoint Index")
+		return _checkpoint, errors.New("invalid checkpoint index")
 	}
 }
 

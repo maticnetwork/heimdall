@@ -23,41 +23,45 @@ service Query {
 
     // AckCount queries the AckCount.
     rpc AckCount(QueryAckCountRequest) returns (QueryAckCountResponse) {
-        option (google.api.http).get =
-            "/heimdall/checkpoint/v1beta1/genesisstate/ackcount";
+        option (google.api.http).get = "/heimdall/checkpoint/v1beta1/ack-count";
     }
 
     // Checkpoint queries the checkpoint.
     rpc Checkpoint(QueryCheckpointRequest) returns (QueryCheckpointResponse) {
         option (google.api.http).get =
-            "/heimdall/checkpoint/v1beta1/genesisstate/checkpoints";
+            "/heimdall/checkpoint/v1beta1/checkpoint/{number}";
     }
 
-    // CheckpointBuffe queries the Checkpoint Buffer.
+    // CheckpointBuffer queries the Checkpoint Buffer.
     rpc CheckpointBuffer(QueryCheckpointBufferRequest)
         returns (QueryCheckpointBufferResponse) {
-        option (google.api.http).get =
-            "/heimdall/checkpoint/v1beta1/genesisstate/bufferedcheckpoint";
+        option (google.api.http).get = "/heimdall/checkpoint/v1beta1/buffer";
     }
 
     // LastNoAck queries the last no-ack.
     rpc LastNoAck(QueryLastNoAckRequest) returns (QueryLastNoAckResponse) {
         option (google.api.http).get =
-            "/heimdall/checkpoint/v1beta1/genesisstate/lastnoack";
+            "/heimdall/checkpoint/v1beta1/last-no-ack";
     }
 
-    // CheckpointList queries chepoing list .
+    // CheckpointList queries checkpoint list .
     rpc CheckpointList(QueryCheckpointListRequest)
         returns (QueryCheckpointListResponse) {
         option (google.api.http).get =
-            "/heimdall/checkpoint/v1beta1/genesisstate/checkpoints";
+            "/heimdall/checkpoint/v1beta1/checkpoints";
     }
 
     // NextCheckpoint queries the next checkpoint.
     rpc NextCheckpoint(QueryNextCheckpointRequest)
         returns (QueryNextCheckpointResponse) {
         option (google.api.http).get =
-            "/heimdall/checkpoint/v1beta1/genesisstate/checkpoints";
+            "/heimdall/checkpoint/v1beta1/next-checkpoint";
+    }
+
+    // NextCheckpoint queries the next checkpoint.
+    rpc LatestCheckpoint(QueryLatestCheckpointRequest)
+        returns (QueryLatestCheckpointResponse) {
+        option (google.api.http).get = "/heimdall/checkpoint/v1beta1/latest";
     }
 }
 
@@ -120,4 +124,12 @@ message QueryBorChainID {
     option (gogoproto.goproto_getters) = false;
 
     string bor_chainID = 1;
+}
+
+// QueryLatestCheckpointRequest is request for latest checkpoint
+message QueryLatestCheckpointRequest {}
+
+// Latest Checkpoint response
+message QueryLatestCheckpointResponse {
+    heimdall.types.Checkpoint latest_checkpoint = 1;
 }

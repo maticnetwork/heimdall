@@ -24,15 +24,12 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
 	"github.com/maticnetwork/heimdall/merr"
-
-	"github.com/maticnetwork/heimdall/types"
 )
 
 // IContractCaller represents contract caller
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer sdk.AccAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
-	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
@@ -333,32 +330,6 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 	}
 
 	return balance, nil
-}
-
-// GetValidatorInfo get validator info
-func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error) {
-	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
-	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
-	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", stakerDetails.Status)
-		return
-	}
-
-	newAmount, err := GetPowerFromAmount(stakerDetails.Amount)
-	if err != nil {
-		return
-	}
-
-	// newAmount
-	validator = types.Validator{
-		ID:          valID,
-		VotingPower: newAmount.Int64(),
-		StartEpoch:  stakerDetails.ActivationEpoch.Uint64(),
-		EndEpoch:    stakerDetails.DeactivationEpoch.Uint64(),
-		Signer:      stakerDetails.Signer.String(),
-	}
-
-	return validator, nil
 }
 
 // GetMainChainBlock returns main chain block header

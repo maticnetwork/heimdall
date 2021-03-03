@@ -10,6 +10,17 @@ import (
 	"github.com/maticnetwork/heimdall/x/gov/types"
 )
 
+// Querier is used as Keeper will have duplicate methods if used directly, and gRPC names take precedence over keeper
+type Querier struct {
+	Keeper
+}
+
+// NewQueryServerImpl returns an implementation of the  QueryServer interface
+// for the provided Keeper.
+func NewQueryServerImpl(keeper Keeper) types.QueryServer {
+	return &Querier{Keeper: keeper}
+}
+
 var _ types.QueryServer = Keeper{}
 
 // Proposal returns proposal details based on ProposalID
@@ -117,12 +128,12 @@ func (k Keeper) Params(c context.Context, req *types.QueryParamsRequest) (*types
 
 	switch req.ParamsType {
 	case types.ParamDeposit:
-		depositParmas := k.GetDepositParams(ctx)
-		return &types.QueryParamsResponse{DepositParams: depositParmas}, nil
+		depositParams := k.GetDepositParams(ctx)
+		return &types.QueryParamsResponse{DepositParams: depositParams}, nil
 
 	case types.ParamVoting:
-		votingParmas := k.GetVotingParams(ctx)
-		return &types.QueryParamsResponse{VotingParams: votingParmas}, nil
+		votingParams := k.GetVotingParams(ctx)
+		return &types.QueryParamsResponse{VotingParams: votingParams}, nil
 
 	case types.ParamTallying:
 		tallyParams := k.GetTallyParams(ctx)

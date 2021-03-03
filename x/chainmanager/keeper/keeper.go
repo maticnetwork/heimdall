@@ -50,3 +50,30 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSubspace.GetParamSet(ctx, &params)
 	return
 }
+
+//
+// proposer
+//
+
+// GetBlockProposer returns block proposer
+func (k Keeper) GetBlockProposer(ctx sdk.Context) (sdk.AccAddress, bool) {
+	store := ctx.KVStore(k.storeKey)
+	if !store.Has(types.ProposerKey()) {
+		return sdk.AccAddress{}, false
+	}
+
+	bz := store.Get(types.ProposerKey())
+	return sdk.AccAddress(bz), true
+}
+
+// SetBlockProposer sets block proposer
+func (k Keeper) SetBlockProposer(ctx sdk.Context, addr sdk.AccAddress) {
+	store := ctx.KVStore(k.storeKey)
+	store.Set(types.ProposerKey(), addr.Bytes())
+}
+
+// RemoveBlockProposer removes block proposer from store
+func (k Keeper) RemoveBlockProposer(ctx sdk.Context) {
+	store := ctx.KVStore(k.storeKey)
+	store.Delete(types.ProposerKey())
+}

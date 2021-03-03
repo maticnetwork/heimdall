@@ -85,7 +85,7 @@ func (k *Keeper) GetAllEventRecords(ctx sdk.Context) (records []*types.EventReco
 	return
 }
 
-// IterateRecordsAndApplyFn interate records and apply the given function.
+// IterateRecordsAndApplyFn iterate records and apply the given function.
 func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.EventRecord) error) {
 	store := ctx.KVStore(k.storeKey)
 

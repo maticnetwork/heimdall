@@ -2,7 +2,6 @@ package staking
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -100,11 +99,13 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 	signer := pubkey.Address()
 
 	// check signer pubkey in message corresponds
-	if !bytes.Equal(eventLog.SignerPubkey, pubkey.Bytes()[1:]) {
+	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
+
+	if err != nil || !bytes.Equal(expectedPubKey, pubkey.Bytes()) {
 		k.Logger(ctx).Error(
 			"Signer Pubkey does not match",
 			"msgPubKey", pubkey.String(),
-			"compressdPubKey", hmTypes.BytesToHexBytes(eventLog.SignerPubkey),
+			"compressedPubKey", hmTypes.BytesToHexBytes(expectedPubKey),
 		)
 		return hmCommon.ErrorSideTx(hmCommon.ErrValSignerPubKeyMismatch)
 	}
@@ -137,7 +138,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k k
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
 	}
 
-	// check Blocknumber
+	// check Block Number
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
 		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
@@ -252,9 +253,11 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k kee
 	}
 
 	// check signer pubkey in message corresponds
-	if !bytes.Equal(newPubKey.Bytes()[1:], eventLog.SignerPubkey) {
-		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyFromTx", hex.EncodeToString(eventLog.SignerPubkey[:]))
-		return hmCommon.ErrorSideTx(hmCommon.ErrInvalidMsg)
+	expectedPubKey, err := helper.CompressPubKey(eventLog.SignerPubkey)
+
+	if err != nil || !bytes.Equal(expectedPubKey, newPubKey) {
+		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyFromTx", hmTypes.BytesToHexBytes(expectedPubKey))
+		return hmCommon.ErrorSideTx(hmCommon.ErrValSignerPubKeyMismatch)
 	}
 
 	// check signer corresponding to pubkey matches signer from event

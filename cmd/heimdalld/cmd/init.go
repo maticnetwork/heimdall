@@ -6,6 +6,10 @@ import (
 	"os"
 	"path/filepath"
 
+	borTypes "github.com/maticnetwork/heimdall/x/bor/types"
+
+	topupTypes "github.com/maticnetwork/heimdall/x/topup/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -30,7 +34,6 @@ import (
 	hmtypes "github.com/maticnetwork/heimdall/types"
 	hmcommon "github.com/maticnetwork/heimdall/types/common"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
-	// borTypes "github.com/maticnetwork/heimdall/x/bor/types"
 )
 
 // InitCmd initialises files required to start heimdall
@@ -84,13 +87,16 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 				valPubKey.Address().Bytes(),
 			)
 
+			// validators and validator set
+			validators := []*hmtypes.Validator{validator}
+			validatorSet := hmtypes.NewValidatorSet(validators)
+
+			// signer address
+			signer, _ := sdk.AccAddressFromHex(validator.Signer)
 			// create dividend account for validator
-			// dividendAccount := hmtypes.NewDividendAccount(validator.Signer, ZeroIntString)
-
-			vals := []*hmtypes.Validator{validator}
-			validatorSet := hmtypes.NewValidatorSet(vals)
-
-			// dividendAccounts := []hmtypes.DividendAccount{dividendAccount}
+			dividendAccount := hmtypes.NewDividendAccount(signer, ZeroIntString)
+			// dividend accounts
+			dividendAccounts := []*hmtypes.DividendAccount{&dividendAccount}
 
 			// create validator signing info
 			valSigningInfo := hmtypes.NewValidatorSigningInfo(validator.ID, 0, 0, 0)
@@ -103,19 +109,18 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			// authState.Accounts = accounts
 			// appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&authState)
 
-			signer, _ := sdk.AccAddressFromHex(validator.Signer)
 			genesisAccount := getGenesisAccount(signer.Bytes(), newPubkey)
 
 			//
 			// auth state change
 			//
 			authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appState)
-			accs, err := authtypes.UnpackAccounts(authGenState.Accounts)
+			accounts, err := authtypes.UnpackAccounts(authGenState.Accounts)
 			if err != nil {
 				return fmt.Errorf("failed to unpack accounts: %w", err)
 			}
-			accs = append(accs, genesisAccount)
-			genAccs, err := authtypes.PackAccounts(accs)
+			accounts = append(accounts, genesisAccount)
+			genAccs, err := authtypes.PackAccounts(accounts)
 			if err != nil {
 				return fmt.Errorf("failed to convert accounts into any's: %w", err)
 			}
@@ -126,28 +131,28 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			//
 			// staking state change
 			//
-			_, err = stakingtypes.SetGenesisStateToAppState(appState, vals, validatorSet)
+			_, err = stakingtypes.SetGenesisStateToAppState(authclient.Codec, appState, validators, validatorSet)
 			if err != nil {
 				return err
 			}
 
 			// // slashing state change
-			// appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap)
-			// if err != nil {
-			// 	return err
-			// }
+			//appStateBytes, err = slashingTypes.SetGenesisStateToAppState(appStateBytes, valSigningInfoMap)
+			//if err != nil {
+			//	return err
+			//}
 
-			// // bor state change
-			// appStateBytes, err = borTypes.SetGenesisStateToAppState(appStateBytes, *validatorSet)
-			// if err != nil {
-			// 	return err
-			// }
+			// bor state change
+			appState, err = borTypes.SetGenesisStateToAppState(appState, *validatorSet)
+			if err != nil {
+				return err
+			}
 
-			// // topup state change
-			// appStateBytes, err = topupTypes.SetGenesisStateToAppState(appStateBytes, dividendAccounts)
-			// if err != nil {
-			// 	return err
-			// }
+			// topup state change
+			appState, err = topupTypes.SetGenesisStateToAppState(appState, dividendAccounts)
+			if err != nil {
+				return err
+			}
 
 			// app state json
 			appStateJSON, err := json.MarshalIndent(appState, "", " ")
