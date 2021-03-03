@@ -265,7 +265,7 @@ func CheckpointACKTxCmd() *cobra.Command {
 
 			logIndex, err := cmd.Flags().GetUint64(FlagCheckpointLogIndex)
 			if err != nil {
-				return errors.New(fmt.Sprintf("error while getting the log-index Err %v", err))
+				return fmt.Errorf("error while getting the log-index Err %v", err)
 			}
 			// decode new header block event
 			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
