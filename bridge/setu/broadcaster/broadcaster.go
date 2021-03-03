@@ -66,14 +66,13 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	//chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
-	// tx factory
+	//tx factory
 	txf := tx.NewFactoryCLI(tb.cliCtx, tb.flagSet).
 		WithAccountNumber(tb.accNum).
 		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID).
 		WithTxConfig(tb.cliCtx.TxConfig).
-		WithAccountRetriever(tb.cliCtx.AccountRetriever).
-		WithTxConfig(tb.cliCtx.TxConfig)
+		WithAccountRetriever(tb.cliCtx.AccountRetriever)
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txf, []sdk.Msg{msg})
 	if err != nil {

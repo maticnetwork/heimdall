@@ -7,6 +7,10 @@ import (
 	"path/filepath"
 	"time"
 
+	hmCommon "github.com/maticnetwork/heimdall/types/common"
+
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/privval"
 
@@ -250,6 +254,10 @@ func GetMaticEthClient() *eth.EthAPIBackend {
 // GetPrivKey returns priv key object
 func GetPrivKey() secp256k1.PrivKey {
 	return FilePV.Key.PrivKey.Bytes()
+}
+
+func GetPubKeyForCosmos() cryptotypes.PubKey {
+	return hmCommon.CosmosCryptoPubKey(GetPubKey())
 }
 
 // GetECDSAPrivKey return ecdsa private key

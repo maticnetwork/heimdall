@@ -53,12 +53,16 @@ func GetStartCmd() *cobra.Command {
 
 			// cli context
 			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
+			chainID := helper.GetGenesisDoc().ChainID
 
 			cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl).
 				WithClient(_httpClient).
 				WithAccountRetriever(authtypes.AccountRetriever{}).
 				WithInterfaceRegistry(encoding.InterfaceRegistry).
-				WithTxConfig(encoding.TxConfig)
+				WithTxConfig(encoding.TxConfig).
+				WithFromAddress(helper.GetAddress()).
+				WithChainID(chainID).
+				WithSkipConfirmation(true)
 
 			cliCtx.BroadcastMode = flags.BroadcastAsync
 

@@ -1,7 +1,6 @@
 package helper
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/hex"
 	"errors"
@@ -10,15 +9,16 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
-	"os"
 	"path"
 	"sort"
+
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+
+	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	tmTypes "github.com/tendermint/tendermint/types"
-
-	"github.com/cosmos/cosmos-sdk/client/input"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -32,6 +32,7 @@ import (
 	borCrypto "github.com/maticnetwork/bor/crypto"
 	ethCrypto "github.com/maticnetwork/bor/crypto/secp256k1"
 
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 )
@@ -214,7 +215,7 @@ func ToBytes32(x []byte) [32]byte {
 
 // BuildAndBroadcastMsgs creates transaction and broadcasts it
 func BuildAndBroadcastMsgs(cliCtx client.Context, txFactory tx.Factory, msgs []sdk.Msg) (res *sdk.TxResponse, err error) {
-	txBytes, err := GetSignedTxBytes(cliCtx, txFactory, msgs)
+	txBytes, err := GetSignedTxBytesNew(cliCtx, txFactory, msgs)
 	if err != nil {
 		return &sdk.TxResponse{}, err
 	}
@@ -223,34 +224,11 @@ func BuildAndBroadcastMsgs(cliCtx client.Context, txFactory tx.Factory, msgs []s
 	return BroadcastTxBytes(cliCtx, txBytes, "")
 }
 
-// GetSignedTxBytes returns signed tx bytes
-func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]byte, error) {
+// Get Sing
+func GetSignedTxBytesNew(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]byte, error) {
 	txf, err := PrepareTxBuilderFactory(cliCtx, txf)
 	if err != nil {
 		return nil, err
-	}
-
-	fromName := cliCtx.GetFromName()
-	// todo: we need to find sign the msg when there is no fromName
-	if fromName == "" {
-		//return txBldr.BuildAndSign(GetPrivKey(), msgs)
-
-		txBuilder, err := tx.BuildUnsignedTx(txf, msgs...)
-		if err != nil {
-			return nil, err
-		}
-
-		err = tx.Sign(txf, fromName, txBuilder)
-		if err != nil {
-			return nil, err
-		}
-
-		txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
-		if err != nil {
-			return nil, err
-		}
-
-		return txBytes, nil
 	}
 
 	if cliCtx.Simulate {
@@ -262,43 +240,20 @@ func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]
 		return nil, err
 	}
 
-	if !cliCtx.SkipConfirm {
-		out, err := cliCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
-		if err != nil {
-			return nil, err
-		}
-
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", out)
-
-		buf := bufio.NewReader(os.Stdin)
-		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf, os.Stderr)
-
-		if err != nil || !ok {
-			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return nil, err
-		}
+	signData := authsign.SignerData{
+		ChainID:       txf.ChainID(),
+		AccountNumber: txf.AccountNumber(),
+		Sequence:      txf.Sequence(),
 	}
 
-	err = tx.Sign(txf, fromName, txBuilder)
+	sig, err := SignWithPrivKey(txf.SignMode(), signData, txBuilder, cliCtx.TxConfig, txf.Sequence())
 	if err != nil {
 		return nil, err
 	}
-	// todo: remove sign method for tx and sign with priv key
-	//cryptoPrivKey := GetCryptoPrivKey().
-	//signData := authsign.SignerData{
-	//	ChainID:       txf.ChainID(),
-	//	AccountNumber: txf.AccountNumber(),
-	//	Sequence:      txf.Sequence(),
-	//}
-	//sig, err := tx.SignWithPrivKey(txf.SignMode(), signData, txBuilder, cryptoPrivKey, cliCtx.TxConfig, txf.Sequence())
-	//if err != nil {
-	//	return nil, err
-	//}
-	//
-	//err = txBuilder.SetSignatures(sig)
-	//if err != nil {
-	//	return nil, err
-	//}
+	err = txBuilder.SetSignatures(sig)
+	if err != nil {
+		return nil, err
+	}
 
 	txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
 	if err != nil {
@@ -307,6 +262,131 @@ func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]
 
 	return txBytes, nil
 }
+
+func Sign(msg []byte) ([]byte, error) {
+	return ethcrypto.Sign(ethcrypto.Keccak256Hash(msg).Bytes(), GetPrivKey().ToECDSA())
+}
+
+// SignWithPrivKey signs a given tx with the given private key, and returns the
+// corresponding SignatureV2 if the signing is successful.
+func SignWithPrivKey(
+	signMode signing.SignMode, signerData authsigning.SignerData,
+	txBuilder client.TxBuilder, txConfig client.TxConfig,
+	accSeq uint64,
+) (signing.SignatureV2, error) {
+	var sigV2 signing.SignatureV2
+
+	// Generate the bytes to be signed.
+	signBytes, err := txConfig.SignModeHandler().GetSignBytes(signMode, signerData, txBuilder.GetTx())
+	if err != nil {
+		return sigV2, err
+	}
+
+	// Sign those bytes
+	signature, err := Sign(signBytes)
+	if err != nil {
+		return sigV2, err
+	}
+
+	// Construct the SignatureV2 struct
+	sigData := signing.SingleSignatureData{
+		SignMode:  signMode,
+		Signature: signature,
+	}
+
+	sigV2 = signing.SignatureV2{
+		PubKey:   GetPubKeyForCosmos(),
+		Data:     &sigData,
+		Sequence: accSeq,
+	}
+
+	return sigV2, nil
+}
+
+// GetSignedTxBytes returns signed tx bytes
+//func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]byte, error) {
+//	txf, err := PrepareTxBuilderFactory(cliCtx, txf)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	fromName := cliCtx.GetFromName()
+//	// todo: we need to find sign the msg when there is no fromName
+//	if fromName == "" {
+//		//return txBldr.BuildAndSign(GetPrivKey(), msgs)
+//
+//		txBuilder, err := tx.BuildUnsignedTx(txf, msgs...)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		err = tx.Sign(txf, fromName, txBuilder)
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		return txBytes, nil
+//	}
+//
+//	if cliCtx.Simulate {
+//		return nil, nil
+//	}
+//
+//	txBuilder, err := tx.BuildUnsignedTx(txf, msgs...)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	if !cliCtx.SkipConfirm {
+//		out, err := cliCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
+//		if err != nil {
+//			return nil, err
+//		}
+//
+//		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", out)
+//
+//		buf := bufio.NewReader(os.Stdin)
+//		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf, os.Stderr)
+//
+//		if err != nil || !ok {
+//			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+//			return nil, err
+//		}
+//	}
+//
+//	err = tx.Sign(txf, fromName, txBuilder)
+//	if err != nil {
+//		return nil, err
+//	}
+//	// todo: remove sign method for tx and sign with priv key
+//	//cryptoPrivKey := GetCryptoPrivKey()
+//	signData := authsign.SignerData{
+//		ChainID:       txf.ChainID(),
+//		AccountNumber: txf.AccountNumber(),
+//		Sequence:      txf.Sequence(),
+//	}
+//	sig, err := tx.SignWithPrivKey(txf.SignMode(), signData, txBuilder, cryptoPrivKey, cliCtx.TxConfig, txf.Sequence())
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	err = txBuilder.SetSignatures(sig)
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
+//	if err != nil {
+//		return nil, err
+//	}
+//
+//	return txBytes, nil
+//}
 
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx client.Context, txBytes []byte, mode string) (res *sdk.TxResponse, err error) {
@@ -344,6 +424,7 @@ func PrepareTxBuilderFactory(cliCtx client.Context, txf tx.Factory) (tx.Factory,
 		}
 	}
 
+	txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
 	return txf, nil
 }
 

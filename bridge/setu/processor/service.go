@@ -93,7 +93,6 @@ func NewProcessorService(
 			clerkProcessor,
 			feeProcessor,
 			spanProcessor,
-			nil,
 		)
 	} else {
 		for _, service := range onlyServices {
