@@ -58,8 +58,8 @@ func PostSendProposeSpanTx() *cobra.Command {
 			if borChainID == "" {
 				return fmt.Errorf("BorChainID cannot be empty")
 			}
-			//
-			//// get proposer
+
+			// get proposer
 			proposerAddrStr, err := cmd.Flags().GetString(FlagProposerAddress)
 			if err != nil {
 				return err

@@ -4,13 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-<<<<<<< HEAD
-	"strconv"
 	"strings"
-
-	"github.com/spf13/cobra"
-=======
->>>>>>> be39d7d2c94f0b91d3fbb314ecd5a15abd039a34
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
