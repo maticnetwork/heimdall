@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -111,6 +113,7 @@ func TopupTxCmd() *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagFeeAmount)
 	_ = cmd.MarkFlagRequired(FlagBlockNumber)
 
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
 
@@ -157,5 +160,6 @@ func WithdrawFeeTxCmd() *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagAmount, "0", "--amount=<withdraw-amount>")
 
+	flags.AddTxFlagsToCmd(cmd)
 	return cmd
 }
