@@ -3,8 +3,10 @@ package cli
 import (
 	"context"
 	"fmt"
+	"strings"
 
-	"github.com/gogo/protobuf/codec"
+	"github.com/cosmos/cosmos-sdk/version"
+
 	"github.com/spf13/cobra"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -26,6 +28,10 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 
 	checkpointQueryCmd.AddCommand(
 		GetCmdQueryParams(),
+		GetCmdQueryCheckpointBuffer(),
+		GetCmdQueryLastNoACK(),
+		GetCmdQueryHeaderFromIndex(),
+		GetCmdQueryCheckpointCount(),
 	)
 
 	return checkpointQueryCmd
@@ -34,8 +40,18 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 // GetCmdQueryParams implements the params query command.
 func GetCmdQueryParams() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "validator-info",
-		Short: "show validator information via validator id",
+		Use:   "params",
+		Args:  cobra.NoArgs,
+		Short: "show the current checkpoint parameters information",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Query values set as checkpoint parameters.
+
+Example:
+$ %s query checkpoint params
+`,
+				version.AppName,
+			),
+		),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
 			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
@@ -63,6 +79,7 @@ func GetCmdQueryParams() *cobra.Command {
 func GetCmdQueryCheckpointBuffer() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "checkpoint-buffer",
+		Args:  cobra.NoArgs,
 		Short: "show checkpoint present in buffer",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
@@ -87,7 +104,7 @@ func GetCmdQueryCheckpointBuffer() *cobra.Command {
 }
 
 // GetCmdQueryLastNoACK get last no ack time
-func GetCmdQueryLastNoACK(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryLastNoACK() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "last-noack",
 		Short: "get last no ack received time",
@@ -113,7 +130,7 @@ func GetCmdQueryLastNoACK(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdQueryHeaderFromIndex get checkpoint given header index
-func GetCmdQueryHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryHeaderFromIndex() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "header",
 		Short: "get checkpoint (header) from index",
@@ -149,7 +166,7 @@ func GetCmdQueryHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetCmdQueryCheckpointCount get number of checkpoint received count
-func GetCmdQueryCheckpointCount(cdc *codec.Codec) *cobra.Command {
+func GetCmdQueryCheckpointCount() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "checkpoint-count",
 		Short: "get checkpoint counts",
