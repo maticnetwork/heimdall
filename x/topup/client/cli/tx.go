@@ -1,17 +1,18 @@
 package cli
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"math/big"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-
 	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
+	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 	"github.com/maticnetwork/heimdall/x/topup/types"
 	topupTypes "github.com/maticnetwork/heimdall/x/topup/types"
 	"github.com/spf13/cobra"
@@ -37,6 +38,18 @@ func GetTxCmd() *cobra.Command {
 	// this line is used by starport scaffolding # 1
 
 	return txCmd
+}
+
+// Fetch chain manager params
+func getChainmanagerParams(clientCtx client.Context) (*chainmanagerTypes.Params, error) {
+	// create query client
+	queryClient := chainmanagerTypes.NewQueryClient(clientCtx)
+	req := &chainmanagerTypes.QueryParamsRequest{}
+	res, err := queryClient.Params(context.Background(), req)
+	if err != nil {
+		return nil, err
+	}
+	return res.GetParams(), nil
 }
 
 // TopupTxCmd will create a topup tx
@@ -71,28 +84,52 @@ func TopupTxCmd() *cobra.Command {
 				return fmt.Errorf("user address cannot be zero")
 			}
 
-			// fee amount
-			feeStr, _ := cmd.Flags().GetString(FlagFeeAmount)
-			fee, ok := sdk.NewIntFromString(feeStr)
-			if !ok {
-				return errors.New("Invalid fee amount")
-			}
-
 			txhash, _ := cmd.Flags().GetString(FlagTxHash)
 			if txhash == "" {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
 			logIndex, _ := cmd.Flags().GetUint64(FlagLogIndex)
-			blockNumber, _ := cmd.Flags().GetUint64(FlagBlockNumber)
+
+			// Get contractCaller ref
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			chainmanagerParams, err := getChainmanagerParams(cliCtx)
+			if err != nil {
+				return err
+			}
+
+			stakingManagerAddress, _ := sdk.AccAddressFromHex(chainmanagerParams.ChainParams.StakingManagerAddress)
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(
+				hmTypes.HexToHeimdallHash(txhash).EthHash(),
+				chainmanagerParams.MainchainTxConfirmations,
+			)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
+
+			event, err := contractCallerObj.DecodeValidatorTopupFeesEvent(
+				stakingManagerAddress,
+				receipt,
+				logIndex,
+			)
+			if err != nil {
+				return err
+			}
+
 			// build and sign the transaction, then broadcast to Tendermint
 			msg := topupTypes.NewMsgTopup(
 				proposer,
 				user,
-				fee,
+				sdk.NewIntFromBigInt(event.Fee),
 				hmTypes.HexToHeimdallHash(txhash),
 				logIndex,
-				blockNumber,
+				receipt.BlockNumber.Uint64(),
 			)
 
 			// broadcast msg with cli
