@@ -59,11 +59,6 @@ func TopupTxCmd() *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validatorID, _ := cmd.Flags().GetUint64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("Validator ID cannot be zero")
-			}
-
 			// get user
 			userAddrStr, _ := cmd.Flags().GetString(FlagUserAddress)
 			user, err := sdk.AccAddressFromHex(userAddrStr)
