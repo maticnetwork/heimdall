@@ -140,15 +140,11 @@ func TopupTxCmd() *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().String(FlagUserAddress, "", "--user=<user>")
-	cmd.Flags().String(FlagFeeAmount, "", "--topup-amount=<topup-amount>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 
 	_ = cmd.MarkFlagRequired(FlagTxHash)
 	_ = cmd.MarkFlagRequired(FlagLogIndex)
 	_ = cmd.MarkFlagRequired(FlagUserAddress)
-	_ = cmd.MarkFlagRequired(FlagFeeAmount)
-	_ = cmd.MarkFlagRequired(FlagBlockNumber)
 
 	flags.AddTxFlagsToCmd(cmd)
 	return cmd
