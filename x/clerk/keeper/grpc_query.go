@@ -120,7 +120,10 @@ func (k Querier) Records(c context.Context, req *types.QueryRecordListRequest) (
 	var ptrRecords []*types.EventRecord
 	for _, record := range records {
 		newRecord := types.EventRecord{}
-		copier.Copy(&newRecord, &record)
+		err := copier.Copy(&newRecord, &record)
+		if err != nil {
+			return nil, err
+		}
 		ptrRecords = append(ptrRecords, &newRecord)
 	}
 	return &types.QueryRecordListResponse{
