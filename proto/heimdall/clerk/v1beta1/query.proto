@@ -60,5 +60,5 @@ message QueryRecordListRequest {
 }
 
 message QueryRecordListResponse {
-    repeated EventRecord event_records = 1 [(gogoproto.nullable) = false];
+    repeated EventRecord event_records = 1;
 }
