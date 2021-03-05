@@ -130,7 +130,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 	user := msg.User
 
 	// create topup amount
-	topupAmount := sdk.Coins{sdk.Coin{Denom: types.FeeToken, Amount: msg.Fee}}
+	topupAmount := sdk.Coins{sdk.Coin{Denom: types.FeeToken, Amount: *msg.Fee}}
 
 	// increase coins in account
 	userAddr, _ := sdk.AccAddressFromHex(user)

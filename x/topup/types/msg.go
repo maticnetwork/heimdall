@@ -24,7 +24,7 @@ func NewMsgTopup(
 	return MsgTopup{
 		FromAddress: fromAddr.String(),
 		User:        user.String(),
-		Fee:         fee,
+		Fee:         &fee,
 		TxHash:      txhash.String(),
 		LogIndex:    logIndex,
 		BlockNumber: blockNumber,
