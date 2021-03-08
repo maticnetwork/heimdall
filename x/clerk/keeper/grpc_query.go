@@ -105,7 +105,7 @@ func (k Querier) Records(c context.Context, req *types.QueryRecordListRequest) (
 	}
 	} else if (req.FromId != 0) && (req.ToTime != 0) {
 		fromRecord, err := k.GetEventRecord(ctx, req.FromId)
-		if err.Error() != "No record found" {
+		if err != nil && err.Error() != "No record found" {
 			return nil, err
 		}
 		if fromRecord != nil {
