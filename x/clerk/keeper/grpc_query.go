@@ -100,21 +100,27 @@ func (k Querier) Records(c context.Context, req *types.QueryRecordListRequest) (
 
 	if req.FromTime != 0 && req.ToTime != 0 {
 		records, err = k.GetEventRecordListWithTime(ctx, time.Unix(int64(req.FromTime), 0), time.Unix(int64(req.ToTime), 0), page, limit)
+		if err != nil {
+		return nil, err
+	}
 	} else if (req.FromId != 0) && (req.ToTime != 0) {
 		fromRecord, err := k.GetEventRecord(ctx, req.FromId)
-		if err != nil {
+		if err.Error() != "No record found" {
 			return nil, err
 		}
-		fromTime := fromRecord.RecordTime.Unix()
+		if fromRecord != nil {
+			fromTime := fromRecord.RecordTime.Unix()
 		records, err = k.GetEventRecordListWithTime(ctx, time.Unix(fromTime, 0), time.Unix(int64(req.ToTime), 0), 1, limit)
 		if err != nil {
 			return nil, err
 		}
+		}
+
 	} else {
 		records, err = k.GetEventRecordList(ctx, page, limit)
-	}
-	if err != nil {
+		if err != nil {
 		return nil, err
+	}
 	}
 
 	var ptrRecords []*types.EventRecord
