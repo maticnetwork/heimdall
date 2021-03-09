@@ -4277,7 +4277,52 @@ paths:
                       format: byte
       tags:
         - Query
-  '/heimdall/clerk/v1beta1/records/{record_id}':
+  /heimdall/clerk/v1beta1/isoldtx:
+    get:
+      operationId: QueryIsOldTxClerk
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              status:
+                type: boolean
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: tx_hash
+          in: query
+          required: false
+          type: string
+        - name: log_index
+          in: query
+          required: false
+          type: string
+          format: uint64
+      tags:
+        - Query
+  '/heimdall/clerk/v1beta1/record/{record_id}':
     get:
       summary: Record queries the record that match by record id.
       operationId: Record
@@ -4337,6 +4382,74 @@ paths:
         - name: record_id
           in: path
           required: true
+          type: string
+          format: uint64
+      tags:
+        - Query
+  /heimdall/clerk/v1beta1/records:
+    get:
+      summary: Records
+      operationId: Records
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              event_records:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      format: uint64
+                    contract:
+                      type: string
+                    data:
+                      type: string
+                      format: byte
+                    record_time:
+                      type: string
+                      format: date-time
+                    log_index:
+                      type: string
+                      format: uint64
+                    tx_hash:
+                      type: string
+                    chain_id:
+                      type: string
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: pagination.page
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: pagination.limit
+          in: query
+          required: false
           type: string
           format: uint64
       tags:
@@ -6854,6 +6967,79 @@ paths:
           required: false
           type: string
           format: uint64
+      tags:
+        - Query
+  '/heimdall/staking/v1beta1/proposer/{times}':
+    get:
+      summary: Proposer
+      operationId: QueryProposer
+      responses:
+        '200':
+          description: A successful response.
+          schema:
+            type: object
+            properties:
+              proposers:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    ID:
+                      type: string
+                      enum:
+                        - DEFAULT
+                      default: DEFAULT
+                    start_epoch:
+                      type: string
+                      format: uint64
+                    end_epoch:
+                      type: string
+                      format: uint64
+                    nonce:
+                      type: string
+                      format: uint64
+                    voting_power:
+                      type: string
+                      format: int64
+                    pub_key:
+                      type: string
+                    signer:
+                      type: string
+                    last_updated:
+                      type: string
+                    jailed:
+                      type: boolean
+                    proposer_priority:
+                      type: string
+                      format: int64
+        default:
+          description: An unexpected error response.
+          schema:
+            type: object
+            properties:
+              error:
+                type: string
+              code:
+                type: integer
+                format: int32
+              message:
+                type: string
+              details:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    type_url:
+                      type: string
+                    value:
+                      type: string
+                      format: byte
+      parameters:
+        - name: times
+          in: path
+          required: true
+          type: integer
+          format: int64
       tags:
         - Query
   /heimdall/staking/v1beta1/validator-set:
@@ -13761,6 +13947,37 @@ definitions:
         type: string
       chain_id:
         type: string
+  heimdall.clerk.v1beta1.QueryIsOldTxResponse:
+    type: object
+    properties:
+      status:
+        type: boolean
+  heimdall.clerk.v1beta1.QueryRecordListResponse:
+    type: object
+    properties:
+      event_records:
+        type: array
+        items:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uint64
+            contract:
+              type: string
+            data:
+              type: string
+              format: byte
+            record_time:
+              type: string
+              format: date-time
+            log_index:
+              type: string
+              format: uint64
+            tx_hash:
+              type: string
+            chain_id:
+              type: string
   heimdall.clerk.v1beta1.QueryRecordResponse:
     type: object
     properties:
@@ -14914,6 +15131,42 @@ definitions:
     enum:
       - DEFAULT
     default: DEFAULT
+  heimdall.staking.v1beta1.QueryProposerResponse:
+    type: object
+    properties:
+      proposers:
+        type: array
+        items:
+          type: object
+          properties:
+            ID:
+              type: string
+              enum:
+                - DEFAULT
+              default: DEFAULT
+            start_epoch:
+              type: string
+              format: uint64
+            end_epoch:
+              type: string
+              format: uint64
+            nonce:
+              type: string
+              format: uint64
+            voting_power:
+              type: string
+              format: int64
+            pub_key:
+              type: string
+            signer:
+              type: string
+            last_updated:
+              type: string
+            jailed:
+              type: boolean
+            proposer_priority:
+              type: string
+              format: int64
   heimdall.staking.v1beta1.QueryStakingOldTxResponse:
     type: object
     properties:

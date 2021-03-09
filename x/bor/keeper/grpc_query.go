@@ -184,10 +184,10 @@ func (k Querier) PrepareNextSpan(context context.Context, req *types.PrepareNext
 	params := k.GetParams(ctx)
 	spanDuration := params.SpanDuration
 
-	//ackCount := k.checkpointKeeper.GetACKCount(ctx)
-	//if ackCount == 0 {
-	//	return nil, status.Errorf(codes.NotFound, "Ack not found")
-	//}
+	ackCount := k.checkpointKeeper.GetACKCount(ctx)
+	if ackCount == 0 {
+		return nil, status.Errorf(codes.NotFound, "Ack Count not found")
+	}
 
 	currentValidatorSet := k.sk.GetValidatorSet(ctx)
 	if currentValidatorSet == nil {

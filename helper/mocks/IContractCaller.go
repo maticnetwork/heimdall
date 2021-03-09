@@ -891,3 +891,31 @@ func (_m *IContractCaller) IsTxConfirmed(_a0 common.Hash, _a1 uint64) bool {
 
 	return r0
 }
+
+// SendCheckpoint provides a mock function with given fields: sigedData, sigs, rootchainAddress, rootChainInstance
+func (_m *IContractCaller) SendCheckpoint(sigedData []byte, sigs []byte, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) error {
+	ret := _m.Called(sigedData, sigs, rootchainAddress, rootChainInstance)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte, []byte, common.Address, *rootchain.Rootchain) error); ok {
+		r0 = rf(sigedData, sigs, rootchainAddress, rootChainInstance)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// SendTick provides a mock function with given fields: sigedData, sigs, slashManagerAddress, slashManagerInstance
+func (_m *IContractCaller) SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) error {
+	ret := _m.Called(sigedData, sigs, slashManagerAddress, slashManagerInstance)
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func([]byte, []byte, common.Address, *slashmanager.Slashmanager) error); ok {
+		r0 = rf(sigedData, sigs, slashManagerAddress, slashManagerInstance)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}

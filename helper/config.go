@@ -1,21 +1,25 @@
 package helper
 
 import (
-	"crypto/ecdsa"
 	"fmt"
 	"math/big"
 	"os"
 	"path/filepath"
 	"time"
 
+	hmCommon "github.com/maticnetwork/heimdall/types/common"
+
+	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	"github.com/tendermint/tendermint/privval"
+
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -75,8 +79,11 @@ var (
 var cdc = amino.NewCodec()
 
 func init() {
-	cdc.RegisterConcrete(secp256k1.PubKey{}, secp256k1.PubKeyName, nil)
-	cdc.RegisterConcrete(secp256k1.PrivKey{}, secp256k1.PrivKeyName, nil)
+	//interfaceRegistery := codectypes.NewInterfaceRegistry()
+
+	//interfaceRegistery.RegisterInterface("pubKey", (*secp256k1.PubKey{})(nil))
+	//cdc.RegisterConcrete(secp256k1.PubKey{}, secp256k1.PubKeyName, nil)
+	//cdc.RegisterConcrete(secp256k1.PrivKey{}, secp256k1.PrivKeyName, nil)
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
@@ -104,7 +111,7 @@ type Configuration struct {
 
 var conf Configuration
 
-// MainChainClient stores eth clie nt for Main chain Network
+// MainChainClient stores eth client for Main chain Network
 var mainChainClient *ethclient.Client
 var mainRPCClient *rpc.Client
 
@@ -115,9 +122,7 @@ var maticRPCClient *rpc.Client
 var maticEthClient *eth.EthAPIBackend
 
 // private key object
-var privObject secp256k1.PrivKey
-
-var pubObject secp256k1.PubKey
+var FilePV *privval.FilePV
 
 // Logger stores global logger object
 var Logger logger.Logger
@@ -130,8 +135,8 @@ var GenesisDoc tmTypes.GenesisDoc
 // var DepositManager types.Contract
 
 // InitHeimdallConfig initializes passed heimdall/tendermint config files
-func InitHeimdallConfig(rootViper *viper.Viper) error {
-	rootDir := rootViper.GetString(flags.FlagHome)
+func InitHeimdallConfig() error {
+	rootDir := viper.GetString(flags.FlagHome)
 	configDir := filepath.Join(rootDir, "config")
 
 	heimdallConfigFilePath := filepath.Join(configDir, "heimdall-config.toml")
@@ -152,11 +157,11 @@ func InitHeimdallConfig(rootViper *viper.Viper) error {
 	}
 
 	if err = configViper.UnmarshalExact(&conf); err != nil {
-		return fmt.Errorf("Unable to unmarshall config %v", err)
+		return fmt.Errorf("unable to unmarshall config %v", err)
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
-		return fmt.Errorf("Unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
+		return fmt.Errorf("unable to dial via ethClient. URL=%s, chain=eth, error=%v", conf.EthRPCUrl, err)
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
@@ -173,10 +178,14 @@ func InitHeimdallConfig(rootViper *viper.Viper) error {
 	}
 	GenesisDoc = *genDoc
 
+	var dataDir = filepath.Join(rootDir, "data")
+
+	FilePV = privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(dataDir, "priv_validator_state.json"))
+
 	return nil
 }
 
-// GetDefaultHeimdallConfig returns configration with default params
+// GetDefaultHeimdallConfig returns configuration with default params
 func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
@@ -244,25 +253,38 @@ func GetMaticEthClient() *eth.EthAPIBackend {
 
 // GetPrivKey returns priv key object
 func GetPrivKey() secp256k1.PrivKey {
-	return privObject
+	return FilePV.Key.PrivKey.Bytes()
+}
+
+func GetPubKeyForCosmos() cryptotypes.PubKey {
+	return hmCommon.CosmosCryptoPubKey(GetPubKey())
 }
 
 // GetECDSAPrivKey return ecdsa private key
-func GetECDSAPrivKey() *ecdsa.PrivateKey {
-	// get priv key
-	pkObject := GetPrivKey()
-
-	// create ecdsa private key
-	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
-	return ecdsaPrivateKey
-}
+//func GetECDSAPrivKey() *ecdsa.PrivateKey {
+//	// get priv key
+//	pkObject := GetPrivKey()
+//
+//	// create ecdsa private key
+//	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
+//	return ecdsaPrivateKey
+//}
 
 // GetPubKey returns pub key object
 func GetPubKey() secp256k1.PubKey {
-	return pubObject
+	return FilePV.Key.PubKey.Bytes()
 }
+
+//func GetCryptoPrivKey() cryptotypes.PrivKey {
+//	return FilePV.Key.PrivKey.
+//}
 
 // GetAddress returns address object
 func GetAddress() []byte {
 	return GetPubKey().Address().Bytes()
+}
+
+// GetAddressStr returns address string object
+func GetAddressStr() string {
+	return GetPubKey().Address().String()
 }

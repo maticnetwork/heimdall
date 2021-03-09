@@ -16,7 +16,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 	// Add genesis dividend accounts
 	for _, dividendAccount := range genState.DividendAccounts {
 		if err := k.AddDividendAccount(ctx, *dividendAccount); err != nil {
-			panic((err))
+			panic(err)
 		}
 	}
 

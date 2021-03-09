@@ -1,7 +1,6 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/big"
 
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -398,8 +397,6 @@ func (suite *KeeperTestSuite) TestQueryNextSpanSeed() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 
 	ethHeader := &ethTypes.Header{}
-	fmt.Println(ethHeader.Hash().String())
-
 	grpcQuery := keeper.NewQueryServerImpl(initApp.BorKeeper, &suite.contractCaller)
 
 	tc := []struct {
