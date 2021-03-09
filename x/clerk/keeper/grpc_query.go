@@ -3,6 +3,9 @@ package keeper
 import (
 	"context"
 	"math/big"
+	"time"
+
+	"github.com/jinzhu/copier"
 
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
 
@@ -76,21 +79,60 @@ func (k Querier) QueryIsOldTxClerk(c context.Context, req *types.QueryIsOldTxReq
 
 // Event Records List
 func (k Querier) Records(c context.Context, req *types.QueryRecordListRequest) (*types.QueryRecordListResponse, error) {
+	var records []types.EventRecord
+	var err error
+
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 
-	pagination := req.GetPagination()
-	if pagination == nil {
-		return nil, status.Error(codes.InvalidArgument, "empty request")
+	page := uint64(1)
+	if req.Page != 0 {
+		page = req.Page
 	}
+
+	limit := uint64(50)
+	if req.Limit != 0 {
+		limit = req.Limit
+	}
+
 	ctx := sdk.UnwrapSDKContext(c)
 
-	records, err := k.GetEventRecordList(ctx, req.Pagination.Page, req.Pagination.Limit)
-	if err != nil {
-		return nil, err
+	if req.FromTime != 0 && req.ToTime != 0 {
+		records, err = k.GetEventRecordListWithTime(ctx, time.Unix(int64(req.FromTime), 0), time.Unix(int64(req.ToTime), 0), page, limit)
+		if err != nil {
+			return nil, err
+		}
+	} else if (req.FromId != 0) && (req.ToTime != 0) {
+		fromRecord, err := k.GetEventRecord(ctx, req.FromId)
+		if err != nil && err.Error() != "No record found" {
+			return nil, err
+		}
+		if fromRecord != nil {
+			fromTime := fromRecord.RecordTime.Unix()
+			records, err = k.GetEventRecordListWithTime(ctx, time.Unix(fromTime, 0), time.Unix(int64(req.ToTime), 0), 1, limit)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+	} else {
+		records, err = k.GetEventRecordList(ctx, page, limit)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	var ptrRecords []*types.EventRecord
+	for _, record := range records {
+		newRecord := types.EventRecord{}
+		err := copier.Copy(&newRecord, &record)
+		if err != nil {
+			return nil, err
+		}
+		ptrRecords = append(ptrRecords, &newRecord)
 	}
 	return &types.QueryRecordListResponse{
-		EventRecords: records,
+		EventRecords: ptrRecords,
 	}, nil
 }
