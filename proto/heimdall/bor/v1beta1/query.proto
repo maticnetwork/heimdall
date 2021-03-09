@@ -34,8 +34,8 @@ service Query {
         option (google.api.http).get = "/heimdall/bor/v1beta1/latest-span";
     }
 
-    rpc NextProducers(QueryNextProducersRequest)
-        returns (QueryNextProducersResponse) {
+    rpc PrepareNextSpan(PrepareNextSpanRequest)
+        returns (PrepareNextSpanResponse) {
         option (google.api.http).get =
             "/heimdall/bor/v1beta1/prepare-next-span";
     }
@@ -78,7 +78,8 @@ message QuerySpanResponse {
 
 // span list
 message QuerySpanListRequest {
-    heimdall.types.QueryPaginationParams pagination = 1;
+    uint64 page  = 1;
+    uint64 limit = 2;
 }
 message QuerySpanListResponse {
     repeated heimdall.types.Span Spans = 1;
@@ -92,10 +93,13 @@ message QueryLatestSpanResponse {
 }
 
 // QueryNextProducers
-message QueryNextProducersRequest {}
-message QueryNextProducersResponse {
-    repeated heimdall.types.Validator next_producers = 1
-        [(gogoproto.nullable) = false];
+message PrepareNextSpanRequest {
+    uint64 start_block  = 1;
+    uint64 span_id      = 2;
+    string bor_chain_id = 3;
+}
+message PrepareNextSpanResponse {
+    heimdall.types.Span Span = 1;
 }
 
 // QueryNextSpanSeed

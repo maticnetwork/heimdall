@@ -34,8 +34,8 @@ message Span {
         (gogoproto.moretags) = "yaml:\"selected_producers\"",
         (gogoproto.nullable) = false
     ];
-    string chain_id = 6 [
-        (gogoproto.jsontag)  = "chain_id",
-        (gogoproto.moretags) = "yaml:\"chain_id\""
+    string bor_chain_id = 6 [
+        (gogoproto.jsontag)  = "bor_chain_id",
+        (gogoproto.moretags) = "yaml:\"bor_chain_id\""
     ];
 }

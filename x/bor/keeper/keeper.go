@@ -6,6 +6,8 @@ import (
 	"math/big"
 	"strconv"
 
+	checkpointKeeper "github.com/maticnetwork/heimdall/x/checkpoint/keeper"
+
 	"github.com/maticnetwork/bor/common"
 
 	"github.com/tendermint/tendermint/libs/log"
@@ -44,6 +46,8 @@ type Keeper struct {
 	ContractCaller helper.ContractCaller
 	// chain manager keeper
 	chainKeeper chainManagerKeeper.Keeper
+	// checkpoint keeper
+	checkpointKeeper checkpointKeeper.Keeper
 }
 
 // NewKeeper create new keeper
@@ -53,6 +57,7 @@ func NewKeeper(
 	paramSubspace paramtypes.Subspace,
 	chainKeeper chainManagerKeeper.Keeper,
 	stakingKeeper stakingKeeper.Keeper,
+	checkpointKeeper checkpointKeeper.Keeper,
 	caller helper.ContractCaller,
 ) Keeper {
 	// create keeper
@@ -60,12 +65,13 @@ func NewKeeper(
 		paramSubspace = paramSubspace.WithKeyTable(types.ParamKeyTable())
 	}
 	keeper := Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		paramSpace:     paramSubspace,
-		chainKeeper:    chainKeeper,
-		sk:             stakingKeeper,
-		ContractCaller: caller,
+		cdc:              cdc,
+		storeKey:         storeKey,
+		paramSpace:       paramSubspace,
+		chainKeeper:      chainKeeper,
+		sk:               stakingKeeper,
+		checkpointKeeper: checkpointKeeper,
+		ContractCaller:   caller,
 	}
 	return keeper
 }

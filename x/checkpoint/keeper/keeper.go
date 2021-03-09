@@ -228,7 +228,7 @@ func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 		// get current ACK count
 		result, err := strconv.ParseUint(string(store.Get(LastNoACKKey)), 10, 64)
 		if err == nil {
-			return uint64(result)
+			return result
 		}
 	}
 	return 0

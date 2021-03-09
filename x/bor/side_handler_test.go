@@ -165,7 +165,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgProposeSpan() {
 			code:   hmCommon.ErrInvalidMsg.ABCICode(),
 			result: tmprototypes.SideTxResultType_SKIP,
 			seed:   hmCommonTypes.HexToHeimdallHash(ethBlockHash).String(),
-			span:   hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, ChainId: "15001"},
+			span:   hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, BorChainId: "15001"},
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
@@ -183,7 +183,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgProposeSpan() {
 		{
 			seed:   hmCommonTypes.HexToHeimdallHash(ethBlockHash).String(),
 			result: tmprototypes.SideTxResultType_YES,
-			span:   hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 1, ChainId: "15001"},
+			span:   hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 1, BorChainId: "15001"},
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
@@ -257,16 +257,16 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgEventSpan() {
 		{
 			msg:            "Old txhash not allowed",
 			error:          true,
-			span:           hmTypes.Span{ID: 1, StartBlock: 1, EndBlock: 1, ChainId: "15001"},
+			span:           hmTypes.Span{ID: 1, StartBlock: 1, EndBlock: 1, BorChainId: "15001"},
 			result:         tmprototypes.SideTxResultType_YES,
-			proposeSpanMsg: borTypes.MsgProposeSpan{SpanId: 1, StartBlock: 1, EndBlock: 0, ChainId: "15001"},
+			proposeSpanMsg: borTypes.MsgProposeSpan{SpanId: 1, StartBlock: 1, EndBlock: 0, BorChainId: "15001"},
 		},
 		{
 			msg:            "success",
 			error:          false,
-			span:           hmTypes.Span{ID: 1, StartBlock: 1, EndBlock: 1, ChainId: "15001"},
+			span:           hmTypes.Span{ID: 1, StartBlock: 1, EndBlock: 1, BorChainId: "15001"},
 			result:         tmprototypes.SideTxResultType_YES,
-			proposeSpanMsg: borTypes.MsgProposeSpan{SpanId: 0, StartBlock: 1, EndBlock: 0, ChainId: "15001"},
+			proposeSpanMsg: borTypes.MsgProposeSpan{SpanId: 0, StartBlock: 1, EndBlock: 0, BorChainId: "15001"},
 		},
 	}
 	for _, c := range tc {

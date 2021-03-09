@@ -37,8 +37,8 @@ func (m msgServer) PostSendProposeSpanTx(goCtx context.Context, msg *types.MsgPr
 	chainParams := params.ChainParams
 
 	// check chain id
-	if chainParams.BorChainID != msg.ChainId {
-		m.Keeper.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainId)
+	if chainParams.BorChainID != msg.BorChainId {
+		m.Keeper.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.BorChainId)
 		return nil, hmCommon.ErrInvalidBorChainID
 	}
 

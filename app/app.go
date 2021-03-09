@@ -326,6 +326,7 @@ func NewHeimdallApp(
 		app.GetSubspace(bortypes.ModuleName),
 		app.ChainKeeper,
 		app.StakingKeeper,
+		app.CheckpointKeeper,
 		app.caller,
 	)
 

@@ -114,12 +114,12 @@ func (k Querier) SpanList(context context.Context, req *types.QuerySpanListReque
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 	ctx := sdk.UnwrapSDKContext(context)
-	resp, err := k.GetSpanList(ctx, req.Pagination.Page, req.Pagination.Limit)
+	resp, err := k.GetSpanList(ctx, req.Page, req.Limit)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 	if resp == nil {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("could not fetch span list with page %v and limit %v", req.Pagination.Page, req.Pagination.Limit))
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("could not fetch span list with page %v and limit %v", req.Page, req.Limit))
 	}
 	return &types.QuerySpanListResponse{
 		Spans: resp,
@@ -151,24 +151,6 @@ func (k Querier) LatestSpan(context context.Context, req *types.QueryLatestSpanR
 	return &types.QueryLatestSpanResponse{Span: span}, nil
 }
 
-func (k Querier) NextProducers(context context.Context, req *types.QueryNextProducersRequest) (*types.QueryNextProducersResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "invalid request")
-	}
-	ctx := sdk.UnwrapSDKContext(context)
-	nextSpanSeed, err := k.GetNextSpanSeed(ctx, k.contractCaller)
-	if err != nil {
-		return nil, err
-	}
-	nextProducers, err := k.SelectNextProducers(ctx, nextSpanSeed)
-	if err != nil {
-		return nil, err
-	}
-	return &types.QueryNextProducersResponse{
-		NextProducers: nextProducers,
-	}, nil
-}
-
 func (k Querier) NextSpanSeed(context context.Context, req *types.QueryNextSpanSeedRequest) (*types.QueryNextSpanSeedResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
@@ -180,5 +162,70 @@ func (k Querier) NextSpanSeed(context context.Context, req *types.QueryNextSpanS
 	}
 	return &types.QueryNextSpanSeedResponse{
 		NextSpanSeed: nextSpanSeed.String(),
+	}, nil
+}
+
+func (k Querier) PrepareNextSpan(context context.Context, req *types.PrepareNextSpanRequest) (*types.PrepareNextSpanResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+
+	spanId := req.GetSpanId()
+	if spanId < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid request, span_id should not negative")
+	}
+
+	startBlock := req.GetStartBlock()
+	if startBlock < 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid request, start_block should not negative")
+	}
+
+	chainId := req.GetBorChainId()
+	if len(chainId) == 0 {
+		return nil, status.Error(codes.InvalidArgument, "invalid request, chain_id required")
+	}
+
+	ctx := sdk.UnwrapSDKContext(context)
+	// Get the span duration
+	params := k.GetParams(ctx)
+	spanDuration := params.SpanDuration
+
+	//ackCount := k.checkpointKeeper.GetACKCount(ctx)
+	//if ackCount == 0 {
+	//	return nil, status.Errorf(codes.NotFound, "Ack not found")
+	//}
+
+	currentValidatorSet := k.sk.GetValidatorSet(ctx)
+	if currentValidatorSet == nil {
+		return nil, status.Errorf(codes.NotFound, "validator set not found")
+	}
+
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx, k.contractCaller)
+	if err != nil {
+		return nil, err
+	}
+	nextProducers, err := k.SelectNextProducers(ctx, nextSpanSeed)
+	if err != nil {
+		return nil, err
+	}
+
+	selectedProducers := hmTypes.SortValidatorByAddress(nextProducers)
+
+	// creat new span
+	newSpan := hmTypes.NewSpan(
+		spanId,
+		startBlock,
+		startBlock+spanDuration-1,
+		hmTypes.ValidatorSet{
+			Validators:       currentValidatorSet.Validators,
+			Proposer:         currentValidatorSet.Proposer,
+			TotalVotingPower: currentValidatorSet.TotalVotingPower,
+		},
+		selectedProducers,
+		chainId,
+	)
+
+	return &types.PrepareNextSpanResponse{
+		Span: &newSpan,
 	}, nil
 }
