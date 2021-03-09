@@ -426,7 +426,7 @@ func FetchNextSpanDetails(cliCtx client.Context, id uint64, start uint64) (*type
 		return nil, err
 	}
 
-	var msg borTypes.QueryPrepareNextSpanResponse
+	var msg borTypes.PrepareNextSpanResponse
 	if err = jsonpb.UnmarshalString(string(result), &msg); err != nil {
 		logger.Error("Error unmarshalling propose tx msg ", "error", err)
 		return nil, err

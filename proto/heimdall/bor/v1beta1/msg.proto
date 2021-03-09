@@ -35,9 +35,9 @@ message MsgProposeSpan {
         (gogoproto.jsontag)  = "end_block",
         (gogoproto.moretags) = "yaml:\"end_block\""
     ];
-    string chain_id = 5 [
-        (gogoproto.jsontag)  = "chain_id",
-        (gogoproto.moretags) = "yaml:\"chain_id\""
+    string bor_chain_id = 5 [
+        (gogoproto.jsontag)  = "bor_chain_id",
+        (gogoproto.moretags) = "yaml:\"bor_chain_id\""
     ];
     string seed = 6
         [(gogoproto.jsontag) = "seed", (gogoproto.moretags) = "yaml:\"seed\""];

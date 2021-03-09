@@ -10,7 +10,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/version"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	hmtypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/bor/types"
 	"github.com/spf13/cobra"
 )
@@ -31,8 +30,8 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 		GetQuerySpan(),
 		GetQuerySpanList(),
 		GetQueryLatestSpan(),
-		GetQueryNextProducers(),
 		GetQueryNextSpanSeed(),
+		PrepareNextSpan(),
 	)
 	return cmd
 }
@@ -57,36 +56,6 @@ $ %s query bor next-span-seed
 			}
 			queryClient := types.NewQueryClient(cliCmd)
 			resp, err := queryClient.NextSpanSeed(cmd.Context(), &types.QueryNextSpanSeedRequest{})
-			if err != nil {
-				return err
-			}
-			return clientCtx.PrintOutput(resp)
-		},
-	}
-	flags.AddQueryFlagsToCmd(cmd)
-	return cmd
-}
-
-func GetQueryNextProducers() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "next-producers",
-		Short: "Query the next-producers",
-		Long: strings.TrimSpace(
-			fmt.Sprintf(`Query the next-producers.
-Example:
-$ %s query bor next-producers
-`,
-				version.AppName,
-			),
-		),
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCmd := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadQueryCommandFlags(cliCmd, cmd.Flags())
-			if err != nil {
-				return err
-			}
-			queryClient := types.NewQueryClient(clientCtx)
-			resp, err := queryClient.NextProducers(context.Background(), &types.QueryNextProducersRequest{})
 			if err != nil {
 				return err
 			}
@@ -155,10 +124,8 @@ $ %s query|q bor span-list --page 1 --limit 10
 			}
 			queryClient := types.NewQueryClient(clientCtx)
 			resp, err := queryClient.SpanList(context.Background(), &types.QuerySpanListRequest{
-				Pagination: &hmtypes.QueryPaginationParams{
-					Page:  page,
-					Limit: limit,
-				},
+				Page:  page,
+				Limit: limit,
 			})
 			if err != nil {
 				return err
@@ -284,6 +251,66 @@ $ %s query bor params
 			return clientCtx.PrintOutput(resp)
 		},
 	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// PrepareNextSpan query it will fetch next span
+func PrepareNextSpan() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "prepare-next-span",
+		Args:  cobra.NoArgs,
+		Short: "prepare next span ",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Prepare next span with startBlock .
+
+Example:
+$ %s query bor prepare-next-span --bor-chain-id 1 --start-block 254 --span-id 1
+`,
+				version.AppName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			borChainId, err := cmd.Flags().GetString(FlagBorChainId)
+			if err != nil {
+				return err
+			}
+
+			startBlock, err := cmd.Flags().GetUint64(FlagStartBlock)
+			if err != nil {
+				return err
+			}
+
+			spanId, err := cmd.Flags().GetUint64(FlagSpanId)
+			if err != nil {
+				return err
+			}
+
+			cmdCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(cmdCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+			queryClient := types.NewQueryClient(clientCtx)
+			resp, err := queryClient.PrepareNextSpan(context.Background(), &types.PrepareNextSpanRequest{
+				SpanId:     spanId,
+				BorChainId: borChainId,
+				StartBlock: startBlock,
+			})
+			if err != nil {
+				return err
+			}
+			return clientCtx.PrintOutput(resp)
+		},
+	}
+	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=15001")
+	cmd.Flags().Uint64(FlagSpanId, 10, "--span-id=1")
+	cmd.Flags().Uint64(FlagStartBlock, 10, "--start-block=10 ")
+
+	_ = cmd.MarkFlagRequired(FlagBorChainId)
+	_ = cmd.MarkFlagRequired(FlagSpanId)
+	_ = cmd.MarkFlagRequired(FlagStartBlock)
+
 	flags.AddQueryFlagsToCmd(cmd)
 	return cmd
 }

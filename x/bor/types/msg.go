@@ -16,7 +16,7 @@ func NewMsgProposeSpan(
 	proposer string,
 	startBlock uint64,
 	endBlock uint64,
-	chainID string,
+	borChainId string,
 	seed string,
 ) MsgProposeSpan {
 	return MsgProposeSpan{
@@ -24,7 +24,7 @@ func NewMsgProposeSpan(
 		Proposer:   proposer,
 		StartBlock: startBlock,
 		EndBlock:   endBlock,
-		ChainId:    chainID,
+		BorChainId: borChainId,
 		Seed:       seed,
 	}
 }

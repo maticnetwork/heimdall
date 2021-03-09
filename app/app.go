@@ -326,8 +326,8 @@ func NewHeimdallApp(
 		app.GetSubspace(bortypes.ModuleName),
 		app.ChainKeeper,
 		app.StakingKeeper,
-		app.caller,
 		app.CheckpointKeeper,
+		app.caller,
 	)
 
 	// Contract caller

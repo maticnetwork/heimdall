@@ -122,7 +122,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k keeper.Keeper, msg types.MsgPropo
 	k.Logger(ctx).Debug("Persisting span state", "sideTxResult", sideTxResult)
 
 	// freeze for new span
-	err := k.FreezeSet(ctx, msg.SpanId, msg.StartBlock, msg.EndBlock, msg.ChainId, common.HexToHeimdallHash(msg.Seed).EthHash())
+	err := k.FreezeSet(ctx, msg.SpanId, msg.StartBlock, msg.EndBlock, msg.BorChainId, common.HexToHeimdallHash(msg.Seed).EthHash())
 	if err != nil {
 		k.Logger(ctx).Error("Unable to freeze validator set for span", "Error", err)
 		return nil, hmCommon.ErrUnableToFreezeValSet

@@ -69,7 +69,7 @@ func (suite *handlerSuite) TestHandleMsgProposeSpan() {
 				ID:         2,
 				StartBlock: 1,
 				EndBlock:   2,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			},
 			spanId:       3,
 			proposer:     addr1.String(),
@@ -91,7 +91,7 @@ func (suite *handlerSuite) TestHandleMsgProposeSpan() {
 			error:   true,
 		},
 		{
-			span:       hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, ChainId: "15001"},
+			span:       hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, BorChainId: "15001"},
 			chainID:    "15001", // default chain id
 			startBlock: 1,
 			endBlock:   0,
@@ -100,7 +100,7 @@ func (suite *handlerSuite) TestHandleMsgProposeSpan() {
 			error:      true,
 		},
 		{
-			span:       hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, ChainId: "15001"},
+			span:       hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, BorChainId: "15001"},
 			chainID:    "15001", // default chain id
 			startBlock: 0,
 			endBlock:   1,
@@ -109,7 +109,7 @@ func (suite *handlerSuite) TestHandleMsgProposeSpan() {
 			error:      true,
 		},
 		{
-			span:       hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, ChainId: "15001"},
+			span:       hmTypes.Span{ID: 1, StartBlock: 0, EndBlock: 0, BorChainId: "15001"},
 			chainID:    "15001",
 			startBlock: 1,
 			endBlock:   1,
@@ -123,7 +123,7 @@ func (suite *handlerSuite) TestHandleMsgProposeSpan() {
 				ID:         2,
 				StartBlock: 1,
 				EndBlock:   2,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			},
 			spanId:       3,
 			proposer:     addr1.String(),
@@ -141,7 +141,7 @@ func (suite *handlerSuite) TestHandleMsgProposeSpan() {
 		if c.spanDuration != 0 {
 			suite.app.BorKeeper.SetParams(ctx, &borTypes.Params{SpanDuration: c.spanDuration, SprintDuration: 1, ProducerCount: 2})
 		}
-		if len(c.span.ChainId) != 0 {
+		if len(c.span.BorChainId) != 0 {
 			err := suite.app.BorKeeper.AddNewSpan(ctx, c.span)
 			require.NoError(t, err)
 		}

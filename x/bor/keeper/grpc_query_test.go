@@ -3,8 +3,6 @@ package keeper_test
 import (
 	"math/big"
 
-	"github.com/maticnetwork/bor/common"
-
 	"github.com/maticnetwork/heimdall/helper/mocks"
 
 	chSim "github.com/maticnetwork/heimdall/x/checkpoint/simulation"
@@ -168,13 +166,13 @@ func (suite *KeeperTestSuite) TestQuerySpan() {
 				ID:         spanId,
 				StartBlock: 1,
 				EndBlock:   3,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			}},
 			span: hmTypes.Span{
 				ID:         spanId,
 				StartBlock: 1,
 				EndBlock:   3,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			},
 		},
 	}
@@ -220,29 +218,29 @@ func (suite *KeeperTestSuite) TestQuerySpanList() {
 		{
 			status: "no span list",
 			error:  true,
-			msg: &borTypes.QuerySpanListRequest{Pagination: &hmTypes.QueryPaginationParams{
+			msg: &borTypes.QuerySpanListRequest{
 				Page:  1,
 				Limit: 10,
-			}},
+			},
 		},
 		{
 			status: "success",
 			error:  false,
-			msg: &borTypes.QuerySpanListRequest{Pagination: &hmTypes.QueryPaginationParams{
+			msg: &borTypes.QuerySpanListRequest{
 				Page:  1,
 				Limit: 10,
-			}},
+			},
 			resp: &borTypes.QuerySpanListResponse{Spans: []*hmTypes.Span{{
 				ID:         spanId,
 				StartBlock: 1,
 				EndBlock:   3,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			}}},
 			span: hmTypes.Span{
 				ID:         spanId,
 				StartBlock: 1,
 				EndBlock:   3,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			},
 		},
 	}
@@ -293,13 +291,13 @@ func (suite *KeeperTestSuite) TestQueryLatestSpan() {
 				ID:         spanId,
 				StartBlock: 1,
 				EndBlock:   3,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			}},
 			span: hmTypes.Span{
 				ID:         spanId,
 				StartBlock: 1,
 				EndBlock:   3,
-				ChainId:    "15001",
+				BorChainId: "15001",
 			},
 		},
 	}
@@ -321,7 +319,7 @@ func (suite *KeeperTestSuite) TestQueryLatestSpan() {
 	}
 }
 
-func (suite *KeeperTestSuite) TestQueryNextProducers() {
+func (suite *KeeperTestSuite) TestQueryPrepareNextSpan() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 
 	grpcQuery := keeper.NewQueryServerImpl(initApp.BorKeeper, &suite.contractCaller)
@@ -329,15 +327,18 @@ func (suite *KeeperTestSuite) TestQueryNextProducers() {
 	tc := []struct {
 		status string
 		error  bool
-		msg    *borTypes.QueryNextProducersRequest
-		resp   *borTypes.QueryNextProducersResponse
+		msg    *borTypes.PrepareNextSpanRequest
 		span   hmTypes.Span
 		cm     []callerMethod
 	}{
 		{
 			status: "success",
 			error:  false,
-			msg:    &borTypes.QueryNextProducersRequest{},
+			msg: &borTypes.PrepareNextSpanRequest{
+				BorChainId: "15001",
+				StartBlock: 256,
+				SpanId:     1,
+			},
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
@@ -345,7 +346,6 @@ func (suite *KeeperTestSuite) TestQueryNextProducers() {
 					ret:  []interface{}{&ethTypes.Header{}, nil},
 				},
 			},
-			resp: &borTypes.QueryNextProducersResponse{NextProducers: []hmTypes.Validator{}},
 		},
 		{
 			status: "invalid request",
@@ -355,7 +355,7 @@ func (suite *KeeperTestSuite) TestQueryNextProducers() {
 		{
 			status: "not found",
 			error:  true,
-			msg:    &borTypes.QueryNextProducersRequest{},
+			msg:    &borTypes.PrepareNextSpanRequest{},
 			cm: []callerMethod{
 				{
 					name: "GetMainChainBlock",
@@ -378,7 +378,7 @@ func (suite *KeeperTestSuite) TestQueryNextProducers() {
 			_ = chSim.LoadValidatorSet(4, t, initApp.StakingKeeper, ctx, false, 10)
 			initApp.CheckpointKeeper.UpdateACKCountWithValue(ctx, 1)
 		}
-		resp, err := grpcQuery.NextProducers(sdk.WrapSDKContext(ctx), c.msg)
+		resp, err := grpcQuery.PrepareNextSpan(sdk.WrapSDKContext(ctx), c.msg)
 
 		if c.error {
 			require.Error(t, err)
@@ -462,89 +462,6 @@ func (suite *KeeperTestSuite) TestQueryNextSpanSeed() {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 			require.Equal(t, resp, c.resp)
-		}
-
-		// reset the contractCaller
-		suite.contractCaller = mocks.IContractCaller{}
-	}
-}
-
-func (suite *KeeperTestSuite) TestQueryPrepareNextSpan() {
-	t, initApp, ctx := suite.T(), suite.app, suite.ctx
-
-	ethHeader := &ethTypes.Header{}
-	grpcQuery := keeper.NewQueryServerImpl(initApp.BorKeeper, &suite.contractCaller)
-
-	tc := []struct {
-		status string
-		error  bool
-		msg    *borTypes.QueryPrepareNextSpanRequest
-		resp   *borTypes.QueryPrepareNextSpanResponse
-		span   hmTypes.Span
-		cm     []callerMethod
-	}{
-		{
-			status: "success",
-			error:  false,
-			msg: &borTypes.QueryPrepareNextSpanRequest{
-				SpanId:     1,
-				ChainId:    "15001",
-				StartBlock: 2,
-				Proposer:   common.HexToAddress("1231231").String(),
-			},
-			cm: []callerMethod{
-				{
-					name: "GetMainChainBlock",
-					args: []interface{}{big.NewInt(1)},
-					ret:  []interface{}{ethHeader, nil},
-				},
-			},
-			resp: &borTypes.QueryPrepareNextSpanResponse{},
-		},
-		{
-			status: "invalid request",
-			error:  true,
-			msg:    nil,
-		},
-		{
-			status: "not found",
-			error:  true,
-			msg:    &borTypes.QueryPrepareNextSpanRequest{},
-			cm: []callerMethod{
-				{
-					name: "GetMainChainBlock",
-					args: []interface{}{big.NewInt(1)},
-					ret:  []interface{}{nil, ethereum.NotFound},
-				},
-			},
-		},
-	}
-
-	for _, c := range tc {
-		var validatorSet hmTypes.ValidatorSet
-		if c.cm != nil {
-			for _, m := range c.cm {
-				suite.contractCaller.On(m.name, m.args...).Return(m.ret...)
-			}
-		}
-		if !c.error {
-			params := types.DefaultParams()
-			initApp.BorKeeper.SetParams(ctx, &params)
-			validatorSet = chSim.LoadValidatorSet(4, t, initApp.StakingKeeper, ctx, false, 10)
-			initApp.CheckpointKeeper.UpdateACKCountWithValue(ctx, 1)
-		}
-		resp, err := grpcQuery.PrepareNextSpan(sdk.WrapSDKContext(ctx), c.msg)
-
-		if c.error {
-			require.Error(t, err)
-			require.Nil(t, resp)
-		} else {
-			require.NoError(t, err)
-			require.NotNil(t, resp)
-			require.Equal(t, resp.Span.StartBlock, c.msg.StartBlock)
-			require.Equal(t, resp.Span.ChainId, c.msg.ChainId)
-			require.Equal(t, resp.Span.ID, c.msg.SpanId)
-			require.Equal(t, resp.Span.ValidatorSet, validatorSet)
 		}
 
 		// reset the contractCaller

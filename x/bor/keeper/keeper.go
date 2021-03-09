@@ -46,7 +46,7 @@ type Keeper struct {
 	ContractCaller helper.ContractCaller
 	// chain manager keeper
 	chainKeeper chainManagerKeeper.Keeper
-	// check point keeper
+	// checkpoint keeper
 	checkpointKeeper checkpointKeeper.Keeper
 }
 
@@ -57,8 +57,8 @@ func NewKeeper(
 	paramSubspace paramtypes.Subspace,
 	chainKeeper chainManagerKeeper.Keeper,
 	stakingKeeper stakingKeeper.Keeper,
-	caller helper.ContractCaller,
 	checkpointKeeper checkpointKeeper.Keeper,
+	caller helper.ContractCaller,
 ) Keeper {
 	// create keeper
 	if !paramSubspace.HasKeyTable() {
@@ -70,8 +70,8 @@ func NewKeeper(
 		paramSpace:       paramSubspace,
 		chainKeeper:      chainKeeper,
 		sk:               stakingKeeper,
-		ContractCaller:   caller,
 		checkpointKeeper: checkpointKeeper,
+		ContractCaller:   caller,
 	}
 	return keeper
 }

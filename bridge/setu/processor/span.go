@@ -73,7 +73,7 @@ func (sp *SpanProcessor) sendSpanToHeimdall(headerBlockStr string) error {
 			Proposer:   helper.GetAddressStr(),
 			StartBlock: nextSpanMsg.StartBlock,
 			EndBlock:   nextSpanMsg.EndBlock,
-			ChainId:    nextSpanMsg.ChainId,
+			BorChainId: nextSpanMsg.BorChainId,
 			Seed:       seed.String(),
 		}
 
