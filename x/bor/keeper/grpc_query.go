@@ -182,3 +182,49 @@ func (k Querier) NextSpanSeed(context context.Context, req *types.QueryNextSpanS
 		NextSpanSeed: nextSpanSeed.String(),
 	}, nil
 }
+
+// PrepareNextSpan will returns ths next span details
+func (k Querier) PrepareNextSpan(c context.Context, req *types.QueryPrepareNextSpanRequest) (*types.QueryPrepareNextSpanResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "invalid request")
+	}
+	ctx := sdk.UnwrapSDKContext(c)
+	params := k.GetParams(ctx)
+	// Get the span duration from params
+	spanDuration := params.GetSpanDuration()
+	// Get Ack Count from check point keeper
+	ackCount := k.checkpointKeeper.GetACKCount(ctx)
+	if ackCount == 0 {
+		return nil, status.Error(codes.NotFound, "Ack not found")
+	}
+	// Get current validator set
+	_validatorSet := k.sk.GetValidatorSet(ctx)
+	// next span seed
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx, k.contractCaller)
+	if err != nil {
+		return nil, err
+	}
+	// next producers
+	selectedProducers, err := k.SelectNextProducers(ctx, nextSpanSeed)
+	if err != nil {
+		return nil, err
+	}
+	selectedProducers = hmTypes.SortValidatorByAddress(selectedProducers)
+
+	// draft a propose span message
+	msg := hmTypes.NewSpan(
+		req.GetSpanId(),
+		req.GetStartBlock(),
+		req.GetStartBlock()+spanDuration-1,
+		hmTypes.ValidatorSet{
+			Validators:       _validatorSet.Validators,
+			Proposer:         _validatorSet.Proposer,
+			TotalVotingPower: _validatorSet.TotalVotingPower,
+		},
+		selectedProducers,
+		req.GetChainId(),
+	)
+	return &types.QueryPrepareNextSpanResponse{
+		Span: &msg,
+	}, nil
+}

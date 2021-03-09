@@ -327,6 +327,7 @@ func NewHeimdallApp(
 		app.ChainKeeper,
 		app.StakingKeeper,
 		app.caller,
+		app.CheckpointKeeper,
 	)
 
 	// Contract caller
@@ -394,10 +395,11 @@ func NewHeimdallApp(
 		chainmanagerTypes.ModuleName,
 		stakingtypes.ModuleName,
 		checkpointtypes.ModuleName,
-		// clerktypes.ModuleName,
+		clerktypes.ModuleName,
 		genutiltypes.ModuleName,
 		govtypes.ModuleName,
 		bortypes.ModuleName,
+		topuptypes.ModuleName,
 	)
 
 	// app.mm.RegisterInvariants(&app.CrisisKeeper)
@@ -484,8 +486,8 @@ func NewHeimdallApp(
 // HeimdallApp. It is useful for tests and clients who do not want to construct the
 // full HeimdallApp
 func MakeCodecs() (codec.Marshaler, *codec.LegacyAmino) {
-	config := MakeEncodingConfig()
-	return config.Marshaler, config.Amino
+	encodingConfig := MakeEncodingConfig()
+	return encodingConfig.Marshaler, encodingConfig.Amino
 }
 
 // Name returns the name of the App
@@ -779,6 +781,8 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(checkpointtypes.ModuleName)
 	paramsKeeper.Subspace(govtypes.ModuleName).WithKeyTable(govtypes.ParamKeyTable())
 	paramsKeeper.Subspace(bortypes.ModuleName)
+	paramsKeeper.Subspace(clerktypes.ModuleName)
+	paramsKeeper.Subspace(topuptypes.ModuleName)
 
 	return paramsKeeper
 }

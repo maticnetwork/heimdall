@@ -37,6 +37,12 @@ service Query {
     rpc NextProducers(QueryNextProducersRequest)
         returns (QueryNextProducersResponse) {
         option (google.api.http).get =
+            "/heimdall/bor/v1beta1/prepare-next-producers";
+    }
+
+    rpc PrepareNextSpan(QueryPrepareNextSpanRequest)
+        returns (QueryPrepareNextSpanResponse) {
+        option (google.api.http).get =
             "/heimdall/bor/v1beta1/prepare-next-span";
     }
 
@@ -102,4 +108,14 @@ message QueryNextProducersResponse {
 message QueryNextSpanSeedRequest {}
 message QueryNextSpanSeedResponse {
     string next_span_seed = 1;
+}
+// QueryPrepareNextSpan
+message QueryPrepareNextSpanRequest {
+    uint64 span_id     = 1;
+    uint64 start_block = 2;
+    string chain_id    = 3;
+    string proposer    = 4;
+}
+message QueryPrepareNextSpanResponse {
+    heimdall.types.Span Span = 1;
 }

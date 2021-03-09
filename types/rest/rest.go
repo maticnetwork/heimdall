@@ -41,6 +41,19 @@ type ResponseWithHeight struct {
 	Result json.RawMessage `json:"result"`
 }
 
+//
+//func (r ResponseWithHeight) Reset() {
+//	panic("implement me")
+//}
+//
+//func (r ResponseWithHeight) String() string {
+//	panic("implement me")
+//}
+//
+//func (r ResponseWithHeight) ProtoMessage() {
+//	panic("implement me")
+//}
+
 // NewResponseWithHeight creates a new ResponseWithHeight instance
 func NewResponseWithHeight(height int64, result json.RawMessage) ResponseWithHeight {
 	return ResponseWithHeight{

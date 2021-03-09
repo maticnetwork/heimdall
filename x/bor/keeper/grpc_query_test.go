@@ -1,8 +1,9 @@
 package keeper_test
 
 import (
-	"fmt"
 	"math/big"
+
+	"github.com/maticnetwork/bor/common"
 
 	"github.com/maticnetwork/heimdall/helper/mocks"
 
@@ -396,8 +397,6 @@ func (suite *KeeperTestSuite) TestQueryNextSpanSeed() {
 	t, initApp, ctx := suite.T(), suite.app, suite.ctx
 
 	ethHeader := &ethTypes.Header{}
-	fmt.Println(ethHeader.Hash().String())
-
 	grpcQuery := keeper.NewQueryServerImpl(initApp.BorKeeper, &suite.contractCaller)
 
 	tc := []struct {
@@ -463,6 +462,89 @@ func (suite *KeeperTestSuite) TestQueryNextSpanSeed() {
 			require.NoError(t, err)
 			require.NotNil(t, resp)
 			require.Equal(t, resp, c.resp)
+		}
+
+		// reset the contractCaller
+		suite.contractCaller = mocks.IContractCaller{}
+	}
+}
+
+func (suite *KeeperTestSuite) TestQueryPrepareNextSpan() {
+	t, initApp, ctx := suite.T(), suite.app, suite.ctx
+
+	ethHeader := &ethTypes.Header{}
+	grpcQuery := keeper.NewQueryServerImpl(initApp.BorKeeper, &suite.contractCaller)
+
+	tc := []struct {
+		status string
+		error  bool
+		msg    *borTypes.QueryPrepareNextSpanRequest
+		resp   *borTypes.QueryPrepareNextSpanResponse
+		span   hmTypes.Span
+		cm     []callerMethod
+	}{
+		{
+			status: "success",
+			error:  false,
+			msg: &borTypes.QueryPrepareNextSpanRequest{
+				SpanId:     1,
+				ChainId:    "15001",
+				StartBlock: 2,
+				Proposer:   common.HexToAddress("1231231").String(),
+			},
+			cm: []callerMethod{
+				{
+					name: "GetMainChainBlock",
+					args: []interface{}{big.NewInt(1)},
+					ret:  []interface{}{ethHeader, nil},
+				},
+			},
+			resp: &borTypes.QueryPrepareNextSpanResponse{},
+		},
+		{
+			status: "invalid request",
+			error:  true,
+			msg:    nil,
+		},
+		{
+			status: "not found",
+			error:  true,
+			msg:    &borTypes.QueryPrepareNextSpanRequest{},
+			cm: []callerMethod{
+				{
+					name: "GetMainChainBlock",
+					args: []interface{}{big.NewInt(1)},
+					ret:  []interface{}{nil, ethereum.NotFound},
+				},
+			},
+		},
+	}
+
+	for _, c := range tc {
+		var validatorSet hmTypes.ValidatorSet
+		if c.cm != nil {
+			for _, m := range c.cm {
+				suite.contractCaller.On(m.name, m.args...).Return(m.ret...)
+			}
+		}
+		if !c.error {
+			params := types.DefaultParams()
+			initApp.BorKeeper.SetParams(ctx, &params)
+			validatorSet = chSim.LoadValidatorSet(4, t, initApp.StakingKeeper, ctx, false, 10)
+			initApp.CheckpointKeeper.UpdateACKCountWithValue(ctx, 1)
+		}
+		resp, err := grpcQuery.PrepareNextSpan(sdk.WrapSDKContext(ctx), c.msg)
+
+		if c.error {
+			require.Error(t, err)
+			require.Nil(t, resp)
+		} else {
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+			require.Equal(t, resp.Span.StartBlock, c.msg.StartBlock)
+			require.Equal(t, resp.Span.ChainId, c.msg.ChainId)
+			require.Equal(t, resp.Span.ID, c.msg.SpanId)
+			require.Equal(t, resp.Span.ValidatorSet, validatorSet)
 		}
 
 		// reset the contractCaller
