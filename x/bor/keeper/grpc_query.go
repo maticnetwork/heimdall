@@ -170,17 +170,11 @@ func (k Querier) PrepareNextSpan(context context.Context, req *types.PrepareNext
 		return nil, status.Error(codes.InvalidArgument, "invalid request")
 	}
 
+	// get the query params
 	spanId := req.GetSpanId()
-	if spanId < 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid request, span_id should not negative")
-	}
-
 	startBlock := req.GetStartBlock()
-	if startBlock < 0 {
-		return nil, status.Error(codes.InvalidArgument, "invalid request, start_block should not negative")
-	}
-
 	chainId := req.GetBorChainId()
+
 	if len(chainId) == 0 {
 		return nil, status.Error(codes.InvalidArgument, "invalid request, chain_id required")
 	}
