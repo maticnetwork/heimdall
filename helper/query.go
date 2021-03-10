@@ -3,6 +3,7 @@ package helper
 import (
 	"context"
 	"fmt"
+	"math/big"
 	"time"
 
 	"github.com/pkg/errors"
@@ -141,7 +142,7 @@ func FetchSideTxSigs(
 	height int64,
 	txHash []byte,
 	sideTxData []byte,
-) ([]byte, error) {
+) ([][3]*big.Int, error) {
 	// get block client
 	blockDetails, err := GetBlockWithClient(client, height)
 
@@ -153,8 +154,5 @@ func FetchSideTxSigs(
 	preCommits := blockDetails.LastCommit.Signatures
 
 	// extract side-tx signs from votes
-	sigs := GetSideTxSigs(txHash, sideTxData, preCommits)
-
-	// return
-	return sigs, nil
+	return GetSideTxSigs(txHash, sideTxData, preCommits)
 }
