@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"strings"
 	"time"
 
@@ -330,7 +331,7 @@ func FetchSideTxSigs(
 	height int64,
 	txHash []byte,
 	sideTxData []byte,
-) ([]byte, error) {
+) ([][3]*big.Int, error) {
 	// get block client
 	blockDetails, err := GetBlockWithClient(client, height)
 
@@ -342,8 +343,5 @@ func FetchSideTxSigs(
 	preCommits := blockDetails.LastCommit.Precommits
 
 	// extract side-tx signs from votes
-	sigs := GetSideTxSigs(txHash, sideTxData, preCommits)
-
-	// return
-	return sigs, nil
+	return GetSideTxSigs(txHash, sideTxData, preCommits)
 }

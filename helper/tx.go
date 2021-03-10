@@ -3,7 +3,9 @@ package helper
 import (
 	"context"
 	"encoding/hex"
+	"fmt"
 	"math/big"
+	"strings"
 
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi/bind"
@@ -60,10 +62,10 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 // SendCheckpoint sends checkpoint to rootchain contract
 // todo return err
-func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs []byte, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) (er error) {
-	data, err := c.RootChainABI.Pack("submitHeaderBlock", signedData, sigs)
+func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs [][3]*big.Int, rootChainAddress common.Address, rootChainInstance *rootchain.Rootchain) (er error) {
+	data, err := c.RootChainABI.Pack("submitCheckpoint", signedData, sigs)
 	if err != nil {
-		Logger.Error("Unable to pack tx for submitHeaderBlock", "error", err)
+		Logger.Error("Unable to pack tx for submitCheckpoint", "error", err)
 		return err
 	}
 
@@ -74,12 +76,17 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs []byte, rootChai
 		auth.GasLimit = GetConfig().MainchainGasLimit
 	}
 
+	s := make([]string, 0)
+	for i := 0; i < len(sigs); i++ {
+		s = append(s, fmt.Sprintf("[%s,%s,%s]", sigs[i][0].String(), sigs[i][1].String(), sigs[i][2].String()))
+	}
+
 	Logger.Debug("Sending new checkpoint",
-		"sigs", hex.EncodeToString(sigs),
+		"sigs", strings.Join(s, ","),
 		"data", hex.EncodeToString(signedData),
 	)
 
-	tx, err := rootChainInstance.SubmitHeaderBlock(auth, signedData, sigs)
+	tx, err := rootChainInstance.SubmitCheckpoint(auth, signedData, sigs)
 	if err != nil {
 		Logger.Error("Error while submitting checkpoint", "error", err)
 		return err
