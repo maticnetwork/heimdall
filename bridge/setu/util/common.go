@@ -415,7 +415,7 @@ func FetchNextSpanDetails(cliCtx client.Context, id uint64, start uint64) (*type
 	q := req.URL.Query()
 	q.Add("span_id", strconv.FormatUint(id, 10))
 	q.Add("start_block", strconv.FormatUint(start, 10))
-	q.Add("chain_id", configParams.ChainParams.BorChainID)
+	q.Add("bor_chain_id", configParams.ChainParams.BorChainID)
 	q.Add("proposer", helper.GetFromAddress(cliCtx).String())
 	req.URL.RawQuery = q.Encode()
 

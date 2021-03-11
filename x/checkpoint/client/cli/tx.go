@@ -3,10 +3,11 @@ package cli
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
+
+	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 
 	chainmanagerTypes "github.com/maticnetwork/heimdall/x/chainmanager/types"
 
@@ -20,7 +21,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/helper"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 	"github.com/maticnetwork/heimdall/x/checkpoint/types"
 )
@@ -62,7 +62,7 @@ func CheckpointTxCmd() *cobra.Command {
 				return err
 			}
 
-			if borChainID == "" {
+			if borChainID == "" || len(borChainID) == 0 {
 				return fmt.Errorf("bor chain id cannot be empty")
 			}
 
@@ -72,41 +72,26 @@ func CheckpointTxCmd() *cobra.Command {
 			}
 
 			if isAutoConfigure {
-				var checkpointProposer hmTypes.Validator
-				proposerBytes, _, err := clientCtx.Query(fmt.Sprintf("custom/%s/%s", types.StakingQuerierRoute, types.QueryCurrentProposer))
+				stakingQueryClient := stakingtypes.NewQueryClient(clientCtx)
+				validatorSet, err := stakingQueryClient.ValidatorSet(context.Background(), &stakingtypes.QueryValidatorSetRequest{})
 				if err != nil {
 					return err
 				}
 
-				if err := json.Unmarshal(proposerBytes, &checkpointProposer); err != nil {
-					return err
+				if !bytes.Equal([]byte(validatorSet.ValidatorSet.Proposer.Signer), helper.GetAddress()) {
+					return fmt.Errorf("Please wait for your turn to propose checkpoint. Checkpoint proposer:%v", validatorSet.ValidatorSet.Proposer.Signer)
 				}
 
-				if !bytes.Equal([]byte(checkpointProposer.Signer), helper.GetAddress()) {
-					return fmt.Errorf("Please wait for your turn to propose checkpoint. Checkpoint proposer:%v", checkpointProposer.String())
-				}
+				checkpointQueryClient := types.NewQueryClient(clientCtx)
 
-				// create bor chain id params
-				borChainIDParams := types.QueryBorChainID{BorChainID: borChainID}
-				bz, err := clientCtx.JSONMarshaler.MarshalJSON(&borChainIDParams)
+				nextCheckpoint, err := checkpointQueryClient.NextCheckpoint(context.Background(), &types.QueryNextCheckpointRequest{BorChainID: borChainID})
 				if err != nil {
 					return err
 				}
-
-				// fetch msg checkpoint
-				result, _, err := clientCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextCheckpoint), bz)
-				if err != nil {
-					return err
+				if nextCheckpoint.NextCheckpoint == nil {
+					return fmt.Errorf("nextcheckpoint is not found")
 				}
-
-				// unmarshall the checkpoint msg
-				var newCheckpointMsg types.MsgCheckpoint
-				if err := json.Unmarshal(result, &newCheckpointMsg); err != nil {
-					return err
-				}
-
-				// broadcast this checkpoint
-				return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &newCheckpointMsg)
+				return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), nextCheckpoint.NextCheckpoint)
 			}
 
 			// get proposer
@@ -197,6 +182,8 @@ func CheckpointTxCmd() *cobra.Command {
 	_ = cmd.MarkFlagRequired(FlagRootHash)
 	_ = cmd.MarkFlagRequired(FlagAccountRootHash)
 	_ = cmd.MarkFlagRequired(FlagBorChainID)
+	_ = cmd.MarkFlagRequired(FlagStartBlock)
+	_ = cmd.MarkFlagRequired(FlagEndBlock)
 
 	flags.AddTxFlagsToCmd(cmd)
 
