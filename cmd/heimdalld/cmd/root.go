@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -10,6 +11,8 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	ethCommon "github.com/maticnetwork/bor/common"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -137,6 +140,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debugCmd,
+		showAccountCmd(),
+		showPrivateKeyCmd(),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -347,4 +352,58 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 			_ = cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
 		}
 	})
+}
+
+// ValidatorAccountFormatter helps to print local validator account information
+type ValidatorAccountFormatter struct {
+	Address string `json:"address,omitempty" yaml:"address"`
+	PrivKey string `json:"priv_key,omitempty" yaml:"priv_key"`
+	PubKey  string `json:"pub_key,omitempty" yaml:"pub_key"`
+}
+
+func showAccountCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-account",
+		Short: "Print the account's address and public key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// get public keys
+			pubObject := helper.GetPubKey()
+
+			account := &ValidatorAccountFormatter{
+				Address: ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
+				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+			}
+
+			b, err := json.MarshalIndent(account, "", "    ")
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
+}
+
+func showPrivateKeyCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-privatekey",
+		Short: "Print the account's private key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// get private and public keys
+			privObject := helper.GetPrivKey()
+
+			account := &ValidatorAccountFormatter{
+				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+			}
+
+			b, err := json.MarshalIndent(account, "", "    ")
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
 }
