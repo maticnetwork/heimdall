@@ -4,13 +4,21 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/big"
 	"os"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/maticnetwork/bor/console/prompt"
+
+	"github.com/pborman/uuid"
+
+	"github.com/maticnetwork/bor/accounts/keystore"
 
 	ethCommon "github.com/maticnetwork/bor/common"
 
@@ -46,6 +54,7 @@ import (
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
 
+	bcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/app/params"
 	"github.com/maticnetwork/heimdall/helper"
@@ -142,6 +151,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		debugCmd,
 		showAccountCmd(),
 		showPrivateKeyCmd(),
+		generateKeystoreCmd(),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -406,4 +416,135 @@ func showPrivateKeyCmd() *cobra.Command {
 			fmt.Printf("%s", string(b))
 		},
 	}
+}
+
+//// exportCmd a state dump file
+//func exportCmd(ctx *server.Context, cdc *codec.Marshaler) *cobra.Command {
+//	cmd := &cobra.Command{
+//		Use:   "export-heimdall",
+//		Short: "Export genesis file with state-dump",
+//		Args:  cobra.NoArgs,
+//		RunE: func(_ *cobra.Command, _ []string) error {
+//
+//			// cliCtx := context.NewCLIContext().WithCodec(cdc)
+//			config := ctx.Config
+//			config.SetRoot(viper.GetString(cli.HomeFlag))
+//
+//			// create chain id
+//			chainID := viper.GetString(flags.FlagChainID)
+//			if chainID == "" {
+//				chainID = fmt.Sprintf("heimdall-%v", ivalcommon.RandStr(6))
+//			}
+//
+//			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
+//			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+//			db, err := sdk.NewLevelDB("application", dataDir)
+//			if err != nil {
+//				panic(err)
+//			}
+//
+//			//happ := app.NewHeimdallApp(logger, db)
+//			happ := app.NewHeimdallApp(
+//				logger, db, traceStore, true, skipUpgradeHeights,
+//				viper.GetString(cli.HomeFlag),
+//				cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
+//				app.MakeEncodingConfig())
+//				//appState, _, err := happ.ExportAppStateAndValidators()
+//
+//			appState, err := createSimappAndExport(logger, db)
+//			if err != nil {
+//				panic(err)
+//			}
+//
+//			err = writeGenesisFile(tmtime.Now(), file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
+//			if err == nil {
+//				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
+//			}
+//			return err
+//		},
+//	}
+//	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
+//	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
+//	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+//	return cmd
+//}
+
+// generateKeystore generate keystore file from private key
+func generateKeystoreCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "generate-keystore <private-key>",
+		Short: "Generates keystore file using private key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := strings.ReplaceAll(args[0], "0x", "")
+			pk, err := bcrypto.HexToECDSA(s)
+			if err != nil {
+				return err
+			}
+
+			id := uuid.NewRandom()
+			key := &keystore.Key{
+				Id:         id,
+				Address:    bcrypto.PubkeyToAddress(pk.PublicKey),
+				PrivateKey: pk,
+			}
+
+			passphrase, err := promptPassphrase(true)
+			if err != nil {
+				return err
+			}
+
+			keyjson, err := keystore.EncryptKey(key, passphrase, keystore.StandardScryptN, keystore.StandardScryptP)
+			if err != nil {
+				return err
+			}
+
+			// Then write the new keyfile in place of the old one.
+			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0600); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+}
+
+// keyFileName implements the naming convention for keyfiles:
+// UTC--<created_at UTC ISO8601>-<address hex>
+func keyFileName(keyAddr ethCommon.Address) string {
+	ts := time.Now().UTC()
+	return fmt.Sprintf("UTC--%s--%s", toISO8601(ts), hex.EncodeToString(keyAddr[:]))
+}
+
+func toISO8601(t time.Time) string {
+	var tz string
+	name, offset := t.Zone()
+	if name == "UTC" {
+		tz = "Z"
+	} else {
+		tz = fmt.Sprintf("%03d00", offset/3600)
+	}
+	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d.%09d%s",
+		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), tz)
+}
+
+// promptPassphrase prompts the user for a passphrase.  Set confirmation to true
+// to require the user to confirm the passphrase.
+func promptPassphrase(confirmation bool) (string, error) {
+	passphrase, err := prompt.Stdin.PromptPassword("Passphrase: ")
+	if err != nil {
+		return "", err
+	}
+
+	if confirmation {
+		confirm, err := prompt.Stdin.PromptPassword("Repeat passphrase: ")
+		if err != nil {
+			return "", err
+		}
+
+		if passphrase != confirm {
+			return "", errors.New("Passphrases do not match")
+		}
+	}
+
+	return passphrase, nil
 }
