@@ -2,14 +2,31 @@ package cmd
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"math/big"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/tendermint/tendermint/libs/cli"
+	tmjson "github.com/tendermint/tendermint/libs/json"
+
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"github.com/maticnetwork/bor/console/prompt"
+
+	"github.com/pborman/uuid"
+
+	"github.com/maticnetwork/bor/accounts/keystore"
+
+	ethCommon "github.com/maticnetwork/bor/common"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -43,8 +60,11 @@ import (
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
 
+	ivalcommon "github.com/cosmos/iavl/common"
+	bcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/app/params"
+	"github.com/maticnetwork/heimdall/file"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sdkutil"
 	"github.com/maticnetwork/heimdall/types/common"
@@ -137,6 +157,13 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		AddGenesisAccountCmd(app.DefaultNodeHome),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debugCmd,
+		showAccountCmd(),
+		showPrivateKeyCmd(),
+		generateKeystoreCmd(),
+		generateValidatorKey(),
+		convertAddressToHexCmd(),
+		convertHexToAddressCmd(),
+		exportCmd(ctx),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -347,4 +374,252 @@ func bindFlags(cmd *cobra.Command, v *viper.Viper) {
 			_ = cmd.Flags().Set(f.Name, fmt.Sprintf("%v", val))
 		}
 	})
+}
+
+// ValidatorAccountFormatter helps to print local validator account information
+type ValidatorAccountFormatter struct {
+	Address string `json:"address,omitempty" yaml:"address"`
+	PrivKey string `json:"priv_key,omitempty" yaml:"priv_key"`
+	PubKey  string `json:"pub_key,omitempty" yaml:"pub_key"`
+}
+
+func showAccountCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-account",
+		Short: "Print the account's address and public key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// get public keys
+			pubObject := helper.GetPubKey()
+
+			account := &ValidatorAccountFormatter{
+				Address: ethCommon.BytesToAddress(pubObject.Address().Bytes()).String(),
+				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
+			}
+
+			b, err := json.MarshalIndent(account, "", "    ")
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
+}
+
+func showPrivateKeyCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "show-privatekey",
+		Short: "Print the account's private key",
+		Run: func(cmd *cobra.Command, args []string) {
+			// get private and public keys
+			privObject := helper.GetPrivKey()
+
+			account := &ValidatorAccountFormatter{
+				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
+			}
+
+			b, err := json.MarshalIndent(account, "", "    ")
+			if err != nil {
+				panic(err)
+			}
+
+			// prints json info
+			fmt.Printf("%s", string(b))
+		},
+	}
+}
+
+// exportCmd a state dump file
+func exportCmd(ctx *server.Context) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "export-heimdall",
+		Short: "Export genesis file with state-dump",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
+
+			// create chain id
+			chainID := viper.GetString(flags.FlagChainID)
+			if chainID == "" {
+				chainID = fmt.Sprintf("heimdall-%v", ivalcommon.RandStr(6))
+			}
+
+			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
+			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			db, err := sdk.NewLevelDB("application", dataDir)
+			if err != nil {
+				panic(err)
+			}
+
+			happ := app.NewHeimdallApp(logger, db, nil, true, map[int64]bool{}, viper.GetString(cli.HomeFlag), 5, app.MakeEncodingConfig())
+			appState, err := happ.ExportAppStateAndValidators(false, []string{})
+
+			if err != nil {
+				panic(err)
+			}
+
+			err = writeGenesisFile(tmtime.Now(), file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState.AppState)
+			if err == nil {
+				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
+			}
+			return err
+		},
+	}
+	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
+	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
+	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	return cmd
+}
+
+// generateKeystore generate keystore file from private key
+func generateKeystoreCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "generate-keystore <private-key>",
+		Short: "Generates keystore file using private key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := strings.ReplaceAll(args[0], "0x", "")
+			pk, err := bcrypto.HexToECDSA(s)
+			if err != nil {
+				return err
+			}
+
+			id := uuid.NewRandom()
+			key := &keystore.Key{
+				Id:         id,
+				Address:    bcrypto.PubkeyToAddress(pk.PublicKey),
+				PrivateKey: pk,
+			}
+
+			passphrase, err := promptPassphrase(true)
+			if err != nil {
+				return err
+			}
+
+			keyjson, err := keystore.EncryptKey(key, passphrase, keystore.StandardScryptN, keystore.StandardScryptP)
+			if err != nil {
+				return err
+			}
+
+			// Then write the new keyfile in place of the old one.
+			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0600); err != nil {
+				return err
+			}
+			return nil
+		},
+	}
+}
+
+// generateValidatorKey generate validator key
+func generateValidatorKey() *cobra.Command {
+	return &cobra.Command{
+		Use:   "generate-validatorkey <private-key>",
+		Short: "Generate validator key file using private key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := strings.ReplaceAll(args[0], "0x", "")
+			ds, err := hex.DecodeString(s)
+			if err != nil {
+				return err
+			}
+
+			// set private object
+			var privObject secp256k1.PrivKey
+			copy(privObject[:], ds)
+
+			// node key
+			nodeKey := privval.FilePVKey{
+				Address: privObject.PubKey().Address(),
+				PubKey:  privObject.PubKey(),
+				PrivKey: privObject,
+			}
+
+			jsonBytes, err := tmjson.MarshalIndent(nodeKey, "", "  ")
+			if err != nil {
+				return err
+			}
+			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0600)
+			if err != nil {
+				return err
+			}
+
+			return nil
+		},
+	}
+}
+
+// convertAddressToHexCmd convert address to hex
+func convertAddressToHexCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "address-to-hex [address]",
+		Short: "Convert address to hex",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			key, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Hex:", ethCommon.BytesToAddress(key).String())
+			return nil
+		},
+	}
+}
+
+// convertHexToAddressCmd converts hex to address
+func convertHexToAddressCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "hex-to-address [hex]",
+		Short: "Convert hex to address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			address := ethCommon.HexToAddress(args[0])
+			fmt.Println("Address:", sdk.AccAddress(address.Bytes()).String())
+			return nil
+		},
+	}
+}
+
+// keyFileName implements the naming convention for keyfiles:
+// UTC--<created_at UTC ISO8601>-<address hex>
+func keyFileName(keyAddr ethCommon.Address) string {
+	ts := time.Now().UTC()
+	return fmt.Sprintf("UTC--%s--%s", toISO8601(ts), hex.EncodeToString(keyAddr[:]))
+}
+
+func toISO8601(t time.Time) string {
+	var tz string
+	name, offset := t.Zone()
+	if name == "UTC" {
+		tz = "Z"
+	} else {
+		tz = fmt.Sprintf("%03d00", offset/3600)
+	}
+	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d.%09d%s",
+		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), tz)
+}
+
+// promptPassphrase prompts the user for a passphrase.  Set confirmation to true
+// to require the user to confirm the passphrase.
+func promptPassphrase(confirmation bool) (string, error) {
+	passphrase, err := prompt.Stdin.PromptPassword("Passphrase: ")
+	if err != nil {
+		return "", err
+	}
+
+	if confirmation {
+		confirm, err := prompt.Stdin.PromptPassword("Repeat passphrase: ")
+		if err != nil {
+			return "", err
+		}
+
+		if passphrase != confirm {
+			return "", errors.New("Passphrases do not match")
+		}
+	}
+
+	return passphrase, nil
 }
