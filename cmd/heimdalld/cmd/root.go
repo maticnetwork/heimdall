@@ -14,6 +14,10 @@ import (
 	"strings"
 	"time"
 
+	tmjson "github.com/tendermint/tendermint/libs/json"
+
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+
 	"github.com/maticnetwork/bor/console/prompt"
 
 	"github.com/pborman/uuid"
@@ -152,6 +156,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		showAccountCmd(),
 		showPrivateKeyCmd(),
 		generateKeystoreCmd(),
+		generateValidatorKey(),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -503,6 +508,42 @@ func generateKeystoreCmd() *cobra.Command {
 			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0600); err != nil {
 				return err
 			}
+			return nil
+		},
+	}
+}
+
+// generateValidatorKey generate validator key
+func generateValidatorKey() *cobra.Command {
+	return &cobra.Command{
+		Use:   "generate-validatorkey <private-key>",
+		Short: "Generate validator key file using private key",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			s := strings.ReplaceAll(args[0], "0x", "")
+			ds, err := hex.DecodeString(s)
+			if err != nil {
+				return err
+			}
+
+			// set private object
+			var privObject secp256k1.PrivKey
+			copy(privObject[:], ds)
+
+			// node key
+			nodeKey := privval.FilePVKey{
+				Address: privObject.PubKey().Address(),
+				PubKey:  privObject.PubKey(),
+				PrivKey: privObject,
+			}
+
+			jsonBytes, err := tmjson.MarshalIndent(nodeKey, "", "  ")
+
+			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0600)
+			if err != nil {
+				return err
+			}
+
 			return nil
 		},
 	}
