@@ -14,7 +14,7 @@ require (
 	github.com/gorilla/mux v1.8.0
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/hashicorp/golang-lru v0.5.4
-	github.com/jinzhu/copier v0.2.5
+	github.com/jinzhu/copier v0.2.8
 	github.com/maticnetwork/bor v0.2.2-0.20200807103547-4d42b15906aa
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/pborman/uuid v1.2.0
