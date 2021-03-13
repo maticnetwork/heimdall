@@ -10,10 +10,12 @@ import (
 	"io/ioutil"
 	"math/big"
 	"os"
+	"path"
 	"path/filepath"
 	"strings"
 	"time"
 
+	"github.com/tendermint/tendermint/libs/cli"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -58,9 +60,11 @@ import (
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
 
+	ivalcommon "github.com/cosmos/iavl/common"
 	bcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/app/params"
+	"github.com/maticnetwork/heimdall/file"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/sdkutil"
 	"github.com/maticnetwork/heimdall/types/common"
@@ -159,6 +163,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		generateValidatorKey(),
 		convertAddressToHexCmd(),
 		convertHexToAddressCmd(),
+		exportCmd(ctx),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -425,56 +430,49 @@ func showPrivateKeyCmd() *cobra.Command {
 	}
 }
 
-//// exportCmd a state dump file
-//func exportCmd(ctx *server.Context, cdc *codec.Marshaler) *cobra.Command {
-//	cmd := &cobra.Command{
-//		Use:   "export-heimdall",
-//		Short: "Export genesis file with state-dump",
-//		Args:  cobra.NoArgs,
-//		RunE: func(_ *cobra.Command, _ []string) error {
-//
-//			// cliCtx := context.NewCLIContext().WithCodec(cdc)
-//			config := ctx.Config
-//			config.SetRoot(viper.GetString(cli.HomeFlag))
-//
-//			// create chain id
-//			chainID := viper.GetString(flags.FlagChainID)
-//			if chainID == "" {
-//				chainID = fmt.Sprintf("heimdall-%v", ivalcommon.RandStr(6))
-//			}
-//
-//			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
-//			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-//			db, err := sdk.NewLevelDB("application", dataDir)
-//			if err != nil {
-//				panic(err)
-//			}
-//
-//			//happ := app.NewHeimdallApp(logger, db)
-//			happ := app.NewHeimdallApp(
-//				logger, db, traceStore, true, skipUpgradeHeights,
-//				viper.GetString(cli.HomeFlag),
-//				cast.ToUint(appOpts.Get(server.FlagInvCheckPeriod)),
-//				app.MakeEncodingConfig())
-//				//appState, _, err := happ.ExportAppStateAndValidators()
-//
-//			appState, err := createSimappAndExport(logger, db)
-//			if err != nil {
-//				panic(err)
-//			}
-//
-//			err = writeGenesisFile(tmtime.Now(), file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
-//			if err == nil {
-//				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
-//			}
-//			return err
-//		},
-//	}
-//	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
-//	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
-//	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-//	return cmd
-//}
+// exportCmd a state dump file
+func exportCmd(ctx *server.Context) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "export-heimdall",
+		Short: "Export genesis file with state-dump",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
+
+			// create chain id
+			chainID := viper.GetString(flags.FlagChainID)
+			if chainID == "" {
+				chainID = fmt.Sprintf("heimdall-%v", ivalcommon.RandStr(6))
+			}
+
+			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
+			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			db, err := sdk.NewLevelDB("application", dataDir)
+			if err != nil {
+				panic(err)
+			}
+
+			happ := app.NewHeimdallApp(logger, db, nil, true, map[int64]bool{}, viper.GetString(cli.HomeFlag), 5, app.MakeEncodingConfig())
+			appState, err := happ.ExportAppStateAndValidators(false, []string{})
+
+			if err != nil {
+				panic(err)
+			}
+
+			err = writeGenesisFile(tmtime.Now(), file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState.AppState)
+			if err == nil {
+				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
+			}
+			return err
+		},
+	}
+	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
+	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
+	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	return cmd
+}
 
 // generateKeystore generate keystore file from private key
 func generateKeystoreCmd() *cobra.Command {
@@ -551,6 +549,7 @@ func generateValidatorKey() *cobra.Command {
 	}
 }
 
+// convertAddressToHexCmd convert address to hex
 func convertAddressToHexCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "address-to-hex [address]",
@@ -568,6 +567,7 @@ func convertAddressToHexCmd() *cobra.Command {
 	}
 }
 
+// convertHexToAddressCmd converts hex to address
 func convertHexToAddressCmd() *cobra.Command {
 	return &cobra.Command{
 		Use:   "hex-to-address [hex]",
