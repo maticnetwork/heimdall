@@ -157,6 +157,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		showPrivateKeyCmd(),
 		generateKeystoreCmd(),
 		generateValidatorKey(),
+		convertAddressToHexCmd(),
+		convertHexToAddressCmd(),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -544,6 +546,36 @@ func generateValidatorKey() *cobra.Command {
 				return err
 			}
 
+			return nil
+		},
+	}
+}
+
+func convertAddressToHexCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "address-to-hex [address]",
+		Short: "Convert address to hex",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			key, err := sdk.AccAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			fmt.Println("Hex:", ethCommon.BytesToAddress(key).String())
+			return nil
+		},
+	}
+}
+
+func convertHexToAddressCmd() *cobra.Command {
+	return &cobra.Command{
+		Use:   "hex-to-address [hex]",
+		Short: "Convert hex to address",
+		Args:  cobra.ExactArgs(1),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			address := ethCommon.HexToAddress(args[0])
+			fmt.Println("Address:", sdk.AccAddress(address.Bytes()).String())
 			return nil
 		},
 	}
