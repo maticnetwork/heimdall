@@ -538,7 +538,9 @@ func generateValidatorKey() *cobra.Command {
 			}
 
 			jsonBytes, err := tmjson.MarshalIndent(nodeKey, "", "  ")
-
+			if err != nil {
+				return err
+			}
 			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0600)
 			if err != nil {
 				return err
