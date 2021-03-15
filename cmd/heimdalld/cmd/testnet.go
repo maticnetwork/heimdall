@@ -11,25 +11,25 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cobra"
-	"github.com/tendermint/tendermint/crypto"
-	cfg "github.com/tendermint/tendermint/config"
-	tmtime "github.com/tendermint/tendermint/types/time"
-	"github.com/tendermint/tendermint/p2p"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	ethCommon "github.com/maticnetwork/bor/common"
+	"github.com/spf13/cobra"
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
+	"github.com/tendermint/tendermint/p2p"
+	tmtime "github.com/tendermint/tendermint/types/time"
 
-	"github.com/maticnetwork/heimdall/app"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	bortypes "github.com/maticnetwork/heimdall/x/bor/types"
-	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	bortypes "github.com/maticnetwork/heimdall/x/bor/types"
 	stakingcli "github.com/maticnetwork/heimdall/x/staking/client/cli"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -212,11 +212,12 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// new app state
 			appStateBytes := app.NewDefaultGenesisState()
 
+			// TODO - Check this
 			// auth state change
-			appStateBytes, err = authtypes.SetGenesisStateToAppState(appStateBytes, accounts)
-			if err != nil {
-				return err
-			}
+			// appStateBytes, err = authtypes.SetGenesisStateToAppState(appStateBytes, accounts)
+			// if err != nil {
+			// 	return err
+			// }
 
 			// staking state change
 			appStateBytes, err = stakingtypes.SetGenesisStateToAppState(cdc, appStateBytes, validators, validatorSet)
