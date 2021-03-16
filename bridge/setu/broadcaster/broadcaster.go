@@ -74,7 +74,9 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		WithTxConfig(tb.cliCtx.TxConfig).
 		WithAccountRetriever(tb.cliCtx.AccountRetriever)
 
+	fmt.Println("txf ", txf)
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txf, []sdk.Msg{msg})
+	fmt.Println("errot BuildAndBroadcastMsgs ", err)
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 		// current address
