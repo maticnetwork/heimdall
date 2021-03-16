@@ -212,12 +212,14 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// new app state
 			appStateBytes := app.NewDefaultGenesisState()
 
-			// TODO - Check this
-			// auth state change
-			// appStateBytes, err = authtypes.SetGenesisStateToAppState(appStateBytes, accounts)
-			// if err != nil {
-			// 	return err
-			// }
+			authGenState := authtypes.GetGenesisStateFromAppState(cdc, appStateBytes)
+			anyGenAccounts, err := authtypes.PackAccounts(accounts)
+			if err != nil {
+				return err
+			}
+			authGenState.Accounts = anyGenAccounts
+			appStateBytes[authtypes.ModuleName] = authtypes.ModuleCdc.MustMarshalJSON(&authGenState)
+
 
 			// staking state change
 			appStateBytes, err = stakingtypes.SetGenesisStateToAppState(cdc, appStateBytes, validators, validatorSet)
