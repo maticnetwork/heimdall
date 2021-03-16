@@ -137,7 +137,6 @@ var GenesisDoc tmTypes.GenesisDoc
 // InitHeimdallConfig initializes passed heimdall/tendermint config files
 func InitHeimdallConfig() error {
 	rootDir := viper.GetString(flags.FlagHome)
-	fmt.Println("rootdir ", rootDir)
 	configDir := filepath.Join(rootDir, "config")
 
 	heimdallConfigFilePath := filepath.Join(configDir, "heimdall-config.toml")

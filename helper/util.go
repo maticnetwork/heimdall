@@ -259,9 +259,6 @@ func GetSignedTxBytesNew(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) 
 	if err != nil {
 		return nil, err
 	}
-
-	fmt.Println("txBytes ", txBytes)
-
 	return txBytes, nil
 }
 
@@ -406,10 +403,7 @@ func PrepareTxBuilderFactory(cliCtx client.Context, txf tx.Factory) (tx.Factory,
 		from = GetAddress()
 	}
 
-	fmt.Println("get address ", from)
-	fmt.Println("clictx ", cliCtx.AccountRetriever)
 	if err := cliCtx.AccountRetriever.EnsureExists(cliCtx, from); err != nil {
-		fmt.Println("Err is AccountRetriever ", err)
 		return txf, err
 	}
 
@@ -430,7 +424,6 @@ func PrepareTxBuilderFactory(cliCtx client.Context, txf tx.Factory) (tx.Factory,
 	}
 
 	txf = txf.WithSignMode(signing.SignMode_SIGN_MODE_DIRECT)
-	fmt.Println("txf adsasd ", txf)
 	return txf, nil
 }
 

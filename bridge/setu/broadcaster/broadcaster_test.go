@@ -1,9 +1,10 @@
 package broadcaster
 
 import (
-	"fmt"
 	"os"
 	"testing"
+
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 
 	httpClient "github.com/tendermint/tendermint/rpc/client/http"
 
@@ -38,23 +39,21 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	viper.Set(flags.FlagNode, tendermintNode)
 	viper.Set(flags.FlagHome, os.ExpandEnv("$HOME/.heimdalld"))
 
-	rootDir := viper.GetString(flags.FlagHome)
-	fmt.Println("rootdir ", rootDir)
-	//cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
-	//client.Con
-	//cliCtx.BroadcastMode = client.BroadcastSync
-	//cliCtx.TrustNode = true
 	cdc, _ = app.MakeCodecs()
 	// encoding
 	encoding := app.MakeEncodingConfig()
-	// cli context
-	cliCtx := client.Context{}.WithJSONMarshaler(cdc)
-	chainID := helper.GetGenesisDoc().ChainID
-	_httpClient, _ := httpClient.New(helper.GetConfig().TendermintRPCUrl, "/websocket")
-
 	err := helper.InitHeimdallConfig()
 	require.NoError(t, err)
 
+	chainID := helper.GetGenesisDoc().ChainID
+	_httpClient, _ := httpClient.New(helper.GetConfig().TendermintRPCUrl, "/websocket")
+
+	// queue connector & http client
+	_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
+	_queueConnector.StartWorker()
+
+	// cli context
+	cliCtx := client.Context{}.WithJSONMarshaler(cdc)
 	cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl).
 		WithClient(_httpClient).
 		WithAccountRetriever(authtypes.AccountRetriever{}).
@@ -65,8 +64,6 @@ func TestBroadcastToHeimdall(t *testing.T) {
 		WithSkipConfirmation(true)
 
 	cliCtx.BroadcastMode = flags.BroadcastAsync
-
-	// *pflag.FlagSet
 
 	cmd := cobra.Command{}
 
@@ -108,9 +105,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 				hmCommon.HexToHeimdallHash(test.AccountRootHash),
 				"15001",
 			)
-
 			err = _txBroadcaster.BroadcastToHeimdall(&msg)
-			fmt.Println("Err is ", err)
 			assert.Empty(t, err, "Error broadcasting tx to heimdall", err)
 		})
 	}

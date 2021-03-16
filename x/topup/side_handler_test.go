@@ -1,7 +1,6 @@
 package topup_test
 
 import (
-	"fmt"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -170,7 +169,6 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, &msg)
-		fmt.Printf("fee result %+v\n", result)
 		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
 		require.Equal(t, hmCommon.ErrWaitForConfirmation.ABCICode(), result.Code)
@@ -244,9 +242,6 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgTopup() {
 
 		// execute handler
 		result := suite.sideHandler(ctx, &msg)
-		fmt.Printf("Result %+v\n", result)
-
-		fmt.Printf("result %+v\n", result)
 		require.NotEqual(t, SuccessCode, result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_SKIP, result.Result, "Result should be `skip`")
 		require.Equal(t, hmCommon.ErrInvalidMsg.ABCICode(), result.Code)
