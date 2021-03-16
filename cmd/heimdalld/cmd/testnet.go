@@ -139,6 +139,8 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// get genesis time
 			genesisTime := tmtime.Now()
 
+			fmt.Println(config)
+
 			for i := 0; i < totalValidators; i++ {
 				// get node dir name = PREFIX+INDEX
 				nodeDirName, err := cmd.Flags().GetString(flagNodeDirPrefix)
