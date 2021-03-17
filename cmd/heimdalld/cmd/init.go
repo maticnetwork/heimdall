@@ -207,7 +207,7 @@ func displayInfo(info printInfo) error {
 	return err
 }
 
-func getGenesisAccount(address []byte, pk []byte) *authtypes.BaseAccount {
+func getGenesisAccount(address []byte, pk []byte) authtypes.GenesisAccount {
 	acc := authtypes.NewBaseAccountWithAddress(address)
 	pkObject := hmcommon.CosmosCryptoPubKey(pk)
 	obj, err := codectypes.NewAnyWithValue(pkObject)
