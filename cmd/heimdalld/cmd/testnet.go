@@ -8,12 +8,15 @@ import (
 	"path/filepath"
 	"strings"
 
+	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/cosmos/iavl/common"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
@@ -216,13 +219,14 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// new app state
 			appStateBytes := app.NewDefaultGenesisState()
 
-			authGenState := authtypes.GetGenesisStateFromAppState(cdc, appStateBytes)
+			authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appStateBytes)
 			anyGenAccounts, err := authtypes.PackAccounts(accounts)
 			if err != nil {
 				return err
 			}
 			authGenState.Accounts = anyGenAccounts
-			appStateBytes[authtypes.ModuleName] = authtypes.ModuleCdc.MustMarshalJSON(&authGenState)
+
+			appStateBytes[authtypes.ModuleName] = authclient.Codec.MustMarshalJSON(&authGenState)
 
 			// staking state change
 			appStateBytes, err = stakingtypes.SetGenesisStateToAppState(cdc, appStateBytes, validators, validatorSet)
@@ -249,9 +253,15 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// 	return err
 			// }
 
-			appStateJSON, err := json.Marshal(appStateBytes)
+			//appStateJSON, err := json.Marshal(appStateBytes)
+			//if err != nil {
+			//	return err
+			//}
+
+			// app state json
+			appStateJSON, err := json.MarshalIndent(appStateBytes, "", " ")
 			if err != nil {
-				return err
+				return errors.Wrap(err, "Failed to marshall default genesis state")
 			}
 
 			for i := 0; i < totalValidators; i++ {
