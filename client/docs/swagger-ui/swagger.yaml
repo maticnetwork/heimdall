@@ -4442,12 +4442,27 @@ paths:
                       type: string
                       format: byte
       parameters:
-        - name: pagination.page
+        - name: page
           in: query
           required: false
           type: string
           format: uint64
-        - name: pagination.limit
+        - name: limit
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: from_id
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: from_time
+          in: query
+          required: false
+          type: string
+          format: uint64
+        - name: to_time
           in: query
           required: false
           type: string
