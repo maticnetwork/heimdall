@@ -52,13 +52,6 @@ const (
 	nodeDirPerm = 0755
 )
 
-// ValidatorAccountFormatter helps to print local validator account information
-type ValidatorAccountFormatter struct {
-	Address string `json:"address,omitempty" yaml:"address"`
-	PrivKey string `json:"priv_key,omitempty" yaml:"priv_key"`
-	PubKey  string `json:"pub_key,omitempty" yaml:"pub_key"`
-}
-
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd(ctx *server.Context) *cobra.Command {
 	cmd := &cobra.Command{
@@ -251,11 +244,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// if err != nil {
 			// 	return err
 			// }
-
-			//appStateJSON, err := json.Marshal(appStateBytes)
-			//if err != nil {
-			//	return err
-			//}
 
 			// app state json
 			appStateJSON, err := json.MarshalIndent(appStateBytes, "", " ")
