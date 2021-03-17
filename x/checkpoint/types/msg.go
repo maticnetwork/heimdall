@@ -51,7 +51,8 @@ func (msg MsgCheckpoint) Route() string {
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpoint) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.Proposer))}
+	addr, _ := sdk.AccAddressFromHex(msg.Proposer)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgCheckpoint) GetSignBytes() []byte {
