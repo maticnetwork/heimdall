@@ -178,7 +178,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 
 				genFiles[i] = config.GenesisFile()
-				//newPubkey := CryptoKeyToPubkey(valPubKeys[i])
 				newPubkey := hmCommon.NewPubKey(valPubKeys[i].Bytes())
 
 				if i < numValidators {
