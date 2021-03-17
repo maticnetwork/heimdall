@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/iavl/common"
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/spf13/cobra"
 	cfg "github.com/tendermint/tendermint/config"
@@ -26,10 +27,12 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
+	hmcommon "github.com/maticnetwork/heimdall/types/common"
 	bortypes "github.com/maticnetwork/heimdall/x/bor/types"
 	stakingcli "github.com/maticnetwork/heimdall/x/staking/client/cli"
 	stakingtypes "github.com/maticnetwork/heimdall/x/staking/types"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
+	tmcommontempfile "github.com/tendermint/tendermint/libs/tempfile"
 )
 
 var (
@@ -88,10 +91,9 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			if err != nil {
 				return err
 			}
-			// TODO - check this
-			// if chainID == "" {
-			// 	chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
-			// }
+			if chainID == "" {
+				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
+			}
 
 			// num of validators = validators in genesis files
 			numValidators, err := cmd.Flags().GetInt(flagNumValidators)
@@ -173,7 +175,8 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 
 				genFiles[i] = config.GenesisFile()
-				newPubkey := CryptoKeyToPubkey(valPubKeys[i])
+				//newPubkey := CryptoKeyToPubkey(valPubKeys[i])
+				newPubkey := hmCommon.NewPubKey(valPubKeys[i].Bytes())
 
 				if i < numValidators {
 					sdkAddress := hmCommon.HeimdallAddressToAccAddress(hmCommon.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
@@ -202,10 +205,11 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 			// other data
 			accounts := make([]authtypes.GenesisAccount, totalValidators)
+
 			for i := 0; i < totalValidators; i++ {
 				populatePersistentPeersInConfigAndWriteIt(config, cmd)
 				// genesis account
-				accounts[i] = getGenesisAccount([]byte(validators[i].Signer), valPubKeys[i].Address().Bytes())
+				accounts[i] = getGenesisAccount(valPubKeys[i].Address().Bytes(), hmcommon.NewPubKey(valPubKeys[i].Bytes()))
 			}
 			validatorSet := hmTypes.NewValidatorSet(validators)
 
@@ -256,21 +260,19 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 			}
 
-			// TODO - check this
 			// dump signer information in a json file
-			// TODO move to const string flag
-			// dump := cmd.Flags().GetBool("signer-dump")
-			// if dump {
-			// 	signerJSON, err := json.MarshalIndent(signers, "", "  ")
-			// 	if err != nil {
-			// 		return err
-			// 	}
+			dump, _ := cmd.Flags().GetBool("signer-dump")
+			if dump {
+				signerJSON, err := json.MarshalIndent(signers, "", "  ")
+				if err != nil {
+					return err
+				}
 
-			// 	if err := common.WriteFileAtomic(filepath.Join(outDir, "signer-dump.json"), signerJSON, 0600); err != nil {
-			// 		fmt.Println("Error writing signer-dump", err)
-			// 		return err
-			// 	}
-			// }
+				if err := tmcommontempfile.WriteFileAtomic(filepath.Join(outDir, "signer-dump.json"), signerJSON, 0600); err != nil {
+					fmt.Println("Error writing signer-dump", err)
+					return err
+				}
+			}
 
 			fmt.Printf("Successfully initialized %d node directories\n", totalValidators)
 			return nil
@@ -367,9 +369,10 @@ func hostnameOrIP(i int, cmd *cobra.Command) string {
 // GetSignerInfo returns signer information
 func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc codec.Marshaler) ValidatorAccountFormatter {
 	privObject := secp256k1.GenPrivKeyFromSecret(priv)
+	pubKey := hmCommon.NewPubKey(pub.Bytes())
 	return ValidatorAccountFormatter{
 		Address: ethCommon.BytesToAddress(pub.Address().Bytes()).String(),
-		PubKey:  CryptoKeyToPubkey(pub).String(),
+		PubKey:  pubKey.String(),
 		PrivKey: "0x" + hex.EncodeToString(privObject.Bytes()),
 	}
 }

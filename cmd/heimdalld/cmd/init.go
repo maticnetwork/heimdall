@@ -6,6 +6,8 @@ import (
 	"os"
 	"path/filepath"
 
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
+
 	borTypes "github.com/maticnetwork/heimdall/x/bor/types"
 
 	topupTypes "github.com/maticnetwork/heimdall/x/topup/types"
@@ -13,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -206,7 +207,7 @@ func displayInfo(info printInfo) error {
 	return err
 }
 
-func getGenesisAccount(address []byte, pk []byte) authtypes.GenesisAccount {
+func getGenesisAccount(address []byte, pk []byte) *authtypes.BaseAccount {
 	acc := authtypes.NewBaseAccountWithAddress(address)
 	pkObject := hmcommon.CosmosCryptoPubKey(pk)
 	obj, err := codectypes.NewAnyWithValue(pkObject)
