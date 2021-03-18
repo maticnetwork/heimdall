@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
+
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -52,7 +54,7 @@ const (
 )
 
 // TestnetCmd initialises files required to start heimdall testnet
-func testnetCmd(ctx *server.Context) *cobra.Command {
+func testnetCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "create-testnet",
 		Short: "Initialize files for a Heimdall testnet",
@@ -89,6 +91,15 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
+
+			simappConfig := srvconfig.DefaultConfig()
+			simappConfig.API.Enable = true
+			simappConfig.API.Swagger = true
+			simappConfig.API.Enable = true
+			simappConfig.Telemetry.Enabled = true
+			simappConfig.Telemetry.PrometheusRetentionTime = 60
+			simappConfig.Telemetry.EnableHostnameLabel = false
+			simappConfig.Telemetry.GlobalLabels = [][]string{{"chain_id", chainID}}
 
 			// num of validators = validators in genesis files
 			numValidators, err := cmd.Flags().GetInt(flagNumValidators)
@@ -192,9 +203,11 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					valSigningInfoMap[validators[i].ID.String()] = hmTypes.NewValidatorSigningInfo(validators[i].ID, 0, 0, 0)
 				}
 
-				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes(), cdc)
+				signers[i] = GetSignerInfo(valPubKeys[i], privKeys[i].Bytes())
 
-				WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
+				srvconfig.WriteConfigFile(filepath.Join(nodeDir, "config/app.toml"), simappConfig)
+
+				WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"))
 			}
 
 			// other data
@@ -319,7 +332,7 @@ func totalValidators(cmd *cobra.Command) int {
 }
 
 // WriteDefaultHeimdallConfig writes default heimdall config to the given path
-func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
+func WriteDefaultHeimdallConfig(path string) {
 	heimdallConf := helper.GetDefaultHeimdallConfig()
 	helper.WriteConfigFile(path, &heimdallConf)
 }
@@ -363,7 +376,7 @@ func hostnameOrIP(i int, cmd *cobra.Command) string {
 }
 
 // GetSignerInfo returns signer information
-func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc codec.Marshaler) ValidatorAccountFormatter {
+func GetSignerInfo(pub crypto.PubKey, priv []byte) ValidatorAccountFormatter {
 	pubKey := hmCommon.NewPubKey(pub.Bytes())
 	return ValidatorAccountFormatter{
 		Address: ethCommon.BytesToAddress(pub.Address().Bytes()).String(),
