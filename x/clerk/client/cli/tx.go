@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -60,10 +61,11 @@ func CreateNewStateRecord() *cobra.Command {
 			if err != nil {
 				return err
 			}
-
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
+
 			if err != nil {
 				return fmt.Errorf("invalid proposer address: %v", err)
 			}

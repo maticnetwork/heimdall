@@ -1,6 +1,8 @@
 package topup
 
 import (
+	"strings"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/x/topup/keeper"
 	"github.com/maticnetwork/heimdall/x/topup/types"
@@ -15,6 +17,7 @@ func InitGenesis(ctx sdk.Context, k keeper.Keeper, genState types.GenesisState) 
 
 	// Add genesis dividend accounts
 	for _, dividendAccount := range genState.DividendAccounts {
+		dividendAccount.User = strings.ToLower(dividendAccount.User)
 		if err := k.AddDividendAccount(ctx, *dividendAccount); err != nil {
 			panic(err)
 		}

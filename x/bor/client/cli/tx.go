@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
@@ -57,12 +58,13 @@ func PostSendProposeSpanTx() *cobra.Command {
 			if borChainID == "" {
 				return fmt.Errorf("BorChainID cannot be empty")
 			}
-			//
-			//// get proposer
+
+			// get proposer
 			proposerAddrStr, err := cmd.Flags().GetString(FlagProposerAddress)
 			if err != nil {
 				return err
 			}
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return fmt.Errorf("invalid proposer address: %v", err)

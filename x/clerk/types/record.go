@@ -1,6 +1,7 @@
 package types
 
 import (
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,9 +18,10 @@ func NewEventRecord(
 	chainID string,
 	recordTime time.Time,
 ) EventRecord {
+	contractStr := strings.ToLower(contract.String())
 	return EventRecord{
 		Id:         id,
-		Contract:   contract.String(),
+		Contract:   contractStr,
 		Data:       data,
 		TxHash:     txHash.String(),
 		LogIndex:   logIndex,

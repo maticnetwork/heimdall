@@ -1,6 +1,8 @@
 package types
 
 import (
+	"strings"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -24,13 +26,16 @@ func NewMsgEventRecord(
 	chainID string,
 
 ) MsgEventRecordRequest {
+	fromStr := strings.ToLower(from.String())
+	contractAddressStr := strings.ToLower(contractAddress.String())
+
 	return MsgEventRecordRequest{
-		From:            from.String(),
+		From:            fromStr,
 		TxHash:          txHash.String(),
 		LogIndex:        logIndex,
 		BlockNumber:     blockNumber,
 		Id:              id,
-		ContractAddress: contractAddress.String(),
+		ContractAddress: contractAddressStr,
 		Data:            data,
 		ChainId:         chainID,
 	}
