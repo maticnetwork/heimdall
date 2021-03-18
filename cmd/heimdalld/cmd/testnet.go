@@ -13,7 +13,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -365,11 +364,10 @@ func hostnameOrIP(i int, cmd *cobra.Command) string {
 
 // GetSignerInfo returns signer information
 func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc codec.Marshaler) ValidatorAccountFormatter {
-	privObject := secp256k1.GenPrivKeyFromSecret(priv)
 	pubKey := hmCommon.NewPubKey(pub.Bytes())
 	return ValidatorAccountFormatter{
 		Address: ethCommon.BytesToAddress(pub.Address().Bytes()).String(),
 		PubKey:  pubKey.String(),
-		PrivKey: "0x" + hex.EncodeToString(privObject.Bytes()),
+		PrivKey: "0x" + hex.EncodeToString(priv),
 	}
 }
