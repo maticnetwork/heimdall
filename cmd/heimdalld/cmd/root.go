@@ -528,8 +528,7 @@ func generateValidatorKey() *cobra.Command {
 			}
 
 			// set private object
-			var privObject secp256k1.PrivKey
-			copy(privObject[:], ds)
+			var privObject secp256k1.PrivKey = ds
 
 			// node key
 			nodeKey := privval.FilePVKey{
