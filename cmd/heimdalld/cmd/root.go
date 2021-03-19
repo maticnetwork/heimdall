@@ -155,7 +155,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		genutilcli.GenTxCmd(app.ModuleBasics, encodingConfig.TxConfig, banktypes.GenesisBalancesIterator{}, app.DefaultNodeHome),
 		genutilcli.ValidateGenesisCmd(app.ModuleBasics, encodingConfig.TxConfig),
 		AddGenesisAccountCmd(app.DefaultNodeHome),
-		testnetCmd(ctx),
+		testnetCmd(),
 		tmcli.NewCompletionCmd(rootCmd, true),
 		debugCmd,
 		showAccountCmd(),
@@ -528,8 +528,7 @@ func generateValidatorKey() *cobra.Command {
 			}
 
 			// set private object
-			var privObject secp256k1.PrivKey
-			copy(privObject[:], ds)
+			var privObject secp256k1.PrivKey = ds
 
 			// node key
 			nodeKey := privval.FilePVKey{
