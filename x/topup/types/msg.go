@@ -56,7 +56,8 @@ func (msg MsgTopup) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgTopup) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.FromAddress)}
+	addr, _ := sdk.AccAddressFromHex(msg.FromAddress)
+	return []sdk.AccAddress{addr}
 }
 
 // GetTxHash Returns tx hash
@@ -115,5 +116,6 @@ func (msg MsgWithdrawFee) GetSignBytes() []byte {
 
 // GetSigners Implements Msg.
 func (msg MsgWithdrawFee) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress(msg.UserAddress)}
+	addr, _ := sdk.AccAddressFromHex(msg.UserAddress)
+	return []sdk.AccAddress{addr}
 }

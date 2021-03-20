@@ -1,15 +1,12 @@
 package cmd
 
 import (
-	"bufio"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 
 	borTypes "github.com/maticnetwork/heimdall/x/bor/types"
 
@@ -18,7 +15,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
-	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/errors"
@@ -78,23 +74,8 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 				return fmt.Errorf("genesis.json file already exists: %v", genFile)
 			}
 
-			// attempt to lookup address from Keybase if no address was provided
-			inBuf := bufio.NewReader(cmd.InOrStdin())
-			keyringBackend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
-
-			kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, clientCtx.HomeDir, inBuf)
-			if err != nil {
-				return err
-			}
-
-			info, err := kb.SavePubKey("local", valPubKey, hd.Secp256k1Type)
-			if err != nil {
-				return err
-			}
-			fmt.Println("Saved into kb ", info)
-
 			// get pubkey
-			newPubKey := hmcommon.NewPubKey(info.GetPubKey().Bytes())
+			newPubkey := hmcommon.NewPubKey(valPubKey.Bytes())
 
 			// create validator account
 			validator := hmtypes.NewValidator(
@@ -103,7 +84,7 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 				0,
 				1,
 				1,
-				newPubKey,
+				newPubkey,
 				valPubKey.Address().Bytes(),
 			)
 
@@ -129,7 +110,7 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 			// authState.Accounts = accounts
 			// appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(&authState)
 
-			genesisAccount := getGenesisAccount(signer.Bytes(), newPubKey)
+			genesisAccount := getGenesisAccount(signer.Bytes(), newPubkey)
 
 			//
 			// auth state change
@@ -195,8 +176,6 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().BoolP(genutilcli.FlagOverwrite, "o", false, "overwrite the genesis.json file")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
-	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|kwallet|pass|test)")
-
 	return cmd
 }
 

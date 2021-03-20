@@ -1,16 +1,16 @@
-name: Docker Image CI
+name: Docker Images For Latest Branches
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-  
+    branches:
+      - master
+
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Docker image
+    - name: Build the docker image
       env:
         DOCKERHUB: ${{ secrets.DOCKERHUB }}
         DOCKERHUB_KEY: ${{ secrets.DOCKERHUB_KEY }}
@@ -19,7 +19,7 @@ jobs:
         echo "Docker login"
         docker login -u $DOCKERHUB -p $DOCKERHUB_KEY
         echo "Running build"
-        docker build -f docker/Dockerfile -t maticnetwork/heimdall:${GITHUB_REF/refs\/tags\//} .
+        docker build -f docker/Dockerfile -t maticnetwork/heimdall:${GITHUB_REF/refs\/heads\//} .
         echo "Pushing image"
-        docker push maticnetwork/heimdall:${GITHUB_REF/refs\/tags\//}
+        docker push maticnetwork/heimdall:${GITHUB_REF/refs\/heads\//}
         echo "DONE!"

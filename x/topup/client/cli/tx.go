@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math/big"
+	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
@@ -66,6 +67,7 @@ func TopupTxCmd() *cobra.Command {
 
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return fmt.Errorf("Invalid proposer address: %s", err)
@@ -76,6 +78,7 @@ func TopupTxCmd() *cobra.Command {
 
 			// get user
 			userAddrStr, _ := cmd.Flags().GetString(FlagUserAddress)
+			userAddrStr = strings.ToLower(userAddrStr)
 			user, err := sdk.AccAddressFromHex(userAddrStr)
 			if err != nil {
 				return fmt.Errorf("Invalid user address: %s", err)
@@ -164,6 +167,7 @@ func WithdrawFeeTxCmd() *cobra.Command {
 
 			// get proposer
 			proposerAddrStr, _ := cmd.Flags().GetString(FlagProposerAddress)
+			proposerAddrStr = strings.ToLower(proposerAddrStr)
 			proposer, err := sdk.AccAddressFromHex(proposerAddrStr)
 			if err != nil {
 				return err
