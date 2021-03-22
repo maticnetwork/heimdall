@@ -60,7 +60,7 @@ func initCmd(ctx *server.Context, amino *codec.LegacyAmino, mbm module.BasicMana
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
 
-			nodeID, valPubKey, err := InitializeNodeValidatorFiles(config, "")
+			nodeID, valPubKey, _, err := InitializeNodeValidatorFiles(config, "")
 			if err != nil {
 				return err
 			}
