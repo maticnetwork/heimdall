@@ -6,7 +6,7 @@ require (
 	github.com/RichardKnop/machinery v1.10.0
 	github.com/StackExchange/wmi v0.0.0-20190523213315-cbe66965904d // indirect
 	github.com/cbergoon/merkletree v0.2.0
-	github.com/cosmos/cosmos-sdk v0.41.4
+	github.com/cosmos/cosmos-sdk v0.42.2
 	github.com/cosmos/iavl v0.15.3
 	github.com/go-ole/go-ole v1.2.4 // indirect
 	github.com/gogo/protobuf v1.3.3
