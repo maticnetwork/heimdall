@@ -9,7 +9,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - name: Build the Bor Docker image
+    - name: Build the heimdall Docker image
       env:
         DOCKERHUB: ${{ secrets.DOCKERHUB }}
         DOCKERHUB_KEY: ${{ secrets.DOCKERHUB_KEY }}
@@ -18,7 +18,7 @@ jobs:
         echo "Docker login"
         docker login -u $DOCKERHUB -p $DOCKERHUB_KEY
         echo "running build"
-        docker build -t maticnetwork/heimdall:gov-porting-fixes .
+        docker build -t maticnetwork/heimdall:gov-porting-fixes -f docker/Dockerfile .
         echo "pushing image"
         docker push maticnetwork/heimdall:gov-porting-fixes
         echo "DONE!"
