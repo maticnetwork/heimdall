@@ -167,6 +167,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		convertAddressToHexCmd(),
 		convertHexToAddressCmd(),
 		exportCmd(ctx),
+		newCreateTestCmd(app.ModuleBasics),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)

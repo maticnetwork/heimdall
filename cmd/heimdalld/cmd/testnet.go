@@ -1,21 +1,12 @@
 package cmd
 
 import (
-	"bufio"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
-
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-
-	tmos "github.com/tendermint/tendermint/libs/os"
-
-	"github.com/cosmos/cosmos-sdk/crypto/hd"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 
@@ -65,7 +56,7 @@ const (
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-testnet",
+		Use:   "old-create-testnet",
 		Short: "Initialize files for a Heimdall testnet",
 		Long: `testnet will create "v" + "n" number of directories and populate each with
 necessary files (private validator, genesis, config, etc.).
@@ -100,11 +91,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
-
-			keyringBackend, _ := cmd.Flags().GetString(flags.FlagKeyringBackend)
-			algo, _ := cmd.Flags().GetString(flags.FlagKeyAlgorithm)
-
-			inBuf := bufio.NewReader(cmd.InOrStdin())
 
 			simappConfig := srvconfig.DefaultConfig()
 			simappConfig.API.Enable = true
@@ -189,61 +175,16 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					return err
 				}
 
+				nodeIDs[i], valPubKeys[i], privKeys[i], err = InitializeNodeValidatorFiles(config, "")
 				if err != nil {
 					return err
 				}
 
 				genFiles[i] = config.GenesisFile()
+				newPubkey := hmCommon.NewPubKey(valPubKeys[i].Bytes())
 
-				///////////
-
-				//memo := fmt.Sprintf("%s@%s:26656", nodeIDs[i], ip)
-
-				kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
-				if err != nil {
-					return err
-				}
-
-				keyringAlgos, _ := kb.SupportedAlgorithms()
-				algo, err := keyring.NewSigningAlgoFromString(algo, keyringAlgos)
-				if err != nil {
-					return err
-				}
-
-				addr, secret, err := server.GenerateSaveCoinKey(kb, nodeDirName, true, algo)
-				fmt.Println("Addr ", addr)
-				fmt.Println("Scret ", secret)
-				if err != nil {
-					_ = os.RemoveAll(outDir)
-					return err
-				}
-
-				info := map[string]string{"secret": secret}
-
-				cliPrint, err := json.Marshal(info)
-				if err != nil {
-					return err
-				}
-
-				// save private key seed words
-				if err := writeFile(fmt.Sprintf("%v.json", "key_seed"), nodeDir, cliPrint); err != nil {
-					return err
-				}
-
-				///////
-
-				keyInfo, err := kb.Key(nodeDirName)
-				newPubkey := hmCommon.NewPubKey(keyInfo.GetPubKey().Bytes())
-				fmt.Println("old pubkey ", keyInfo.GetPubKey().String())
-				fmt.Println("odl convert ", newPubkey)
-				nodeIDs[i], valPubKeys[i], privKeys[i], err = InitializeNodeValidatorFiles(config, secret)
-				fmt.Println("new pubkey ", hmCommon.NewPubKey(valPubKeys[i].Bytes()))
-				nPub, err := cryptocodec.FromTmPubKeyInterface(valPubKeys[i])
-				fmt.Println("new convert ", hmCommon.NewPubKey(nPub.Bytes()))
-				//fmt.Println("privKeys[i] ", privKeys[i])
 				if i < numValidators {
-					sdkAddress := addr
-					//sdkAddress := hmCommon.HeimdallAddressToAccAddress(hmCommon.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
+					sdkAddress := hmCommon.HeimdallAddressToAccAddress(hmCommon.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
 					// create validator account
 					validators[i] = hmTypes.NewValidator(
 						hmTypes.NewValidatorID(uint64(startID+int64(i))),
@@ -255,7 +196,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 						sdkAddress,
 					)
 
-					signer := sdkAddress
+					signer, _ := sdk.AccAddressFromHex(validators[i].Signer)
 					// create dividend account for validator
 					dividendAcc := hmTypes.NewDividendAccount(signer, ZeroIntString)
 					dividendAccounts[i] = &dividendAcc
@@ -380,10 +321,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Bool("signer-dump", true, "dumps all signer information in a json file")
-
-	cmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
-	cmd.Flags().String(flags.FlagKeyAlgorithm, string(hd.Secp256k1Type), "Key signing algorithm to generate keys for")
-
 	return cmd
 }
 
@@ -446,21 +383,4 @@ func GetSignerInfo(pub crypto.PubKey, priv []byte) ValidatorAccountFormatter {
 		PubKey:  pubKey.String(),
 		PrivKey: "0x" + hex.EncodeToString(priv),
 	}
-}
-
-func writeFile(name string, dir string, contents []byte) error {
-	writePath := filepath.Join(dir)
-	file := filepath.Join(writePath, name)
-
-	err := tmos.EnsureDir(writePath, 0755)
-	if err != nil {
-		return err
-	}
-
-	err = tmos.WriteFile(file, contents, 0644)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
