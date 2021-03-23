@@ -1,0 +1,24 @@
+name: Docker Image CI for gov fixes
+
+on:
+  push:
+    branches: arpit/gov-porting-fixes
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the Bor Docker image
+      env:
+        DOCKERHUB: ${{ secrets.DOCKERHUB }}
+        DOCKERHUB_KEY: ${{ secrets.DOCKERHUB_KEY }}
+      run: |
+        ls -l
+        echo "Docker login"
+        docker login -u $DOCKERHUB -p $DOCKERHUB_KEY
+        echo "running build"
+        docker build -t maticnetwork/heimdall:arpit/gov-porting-fixes .
+        echo "pushing image"
+        docker push maticnetwork/heimdall:arpit/gov-porting-fixes
+        echo "DONE!"
