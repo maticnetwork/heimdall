@@ -18,7 +18,7 @@ jobs:
         echo "Docker login"
         docker login -u $DOCKERHUB -p $DOCKERHUB_KEY
         echo "running build"
-        docker build -t maticnetwork/heimdall:arpit/gov-porting-fixes .
+        docker build -t maticnetwork/heimdall:gov-porting-fixes .
         echo "pushing image"
-        docker push maticnetwork/heimdall:arpit/gov-porting-fixes
+        docker push maticnetwork/heimdall:gov-porting-fixes
         echo "DONE!"
