@@ -2,7 +2,7 @@ name: Docker Image CI for gov fixes
 
 on:
   push:
-    branches: arpit/gov-porting-fixes
+    branches: gov-porting-fixes
 
 jobs:
   build:
