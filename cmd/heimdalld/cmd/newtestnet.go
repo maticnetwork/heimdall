@@ -49,10 +49,6 @@ import (
 )
 
 var (
-	//flagNodeDirPrefix     = "node-dir-prefix"
-	//flagNumValidators     = "v"
-	//flagOutputDir         = "output-dir"
-	//flagNodeDaemonHome    = "node-daemon-home"
 	flagValidatorID       = "id"
 	flagStartingIPAddress = "starting-ip-address"
 	flagSignerDump        = "signer-dump"
@@ -100,6 +96,7 @@ Example:
 	cmd.Flags().Int(flagNumNonValidators, 4, "Number of non validators to initialize the testnet with")
 	cmd.Flags().StringP(flagOutputDir, "o", "./mytestnet", "Directory to store initialization data for the testnet")
 	cmd.Flags().String(flagNodeDirPrefix, "node", "Prefix the directory name for each node with (node results in node0, node1, ...)")
+	cmd.Flags().String(flagNodeHostPrefix, "node", "Hostname prefix (node results in persistent peers list ID0@node0:26656, ID1@node1:26656, ...)")
 	cmd.Flags().String(flagNodeDaemonHome, "heimdalld", "Home directory of the node's daemon configuration")
 	cmd.Flags().String(flagStartingIPAddress, "192.168.0.1", "Starting IP address (192.168.0.1 results in persistent peers list ID0@192.168.0.1:46656, ID1@192.168.0.2:46656, ...)")
 	cmd.Flags().String(flags.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
@@ -148,7 +145,6 @@ func initTestnet(clientCtx client.Context, cmd *cobra.Command, nodeConfig *cfg.C
 		nodeDirName := fmt.Sprintf("%s%d", nodeDirPrefix, i)
 		nodeDir := filepath.Join(outputDir, nodeDirName, nodeDaemonHome)
 		nodeConfig.SetRoot(nodeDir)
-		//nodeConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 
 		if err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm); err != nil {
 			_ = os.RemoveAll(outputDir)
@@ -350,7 +346,7 @@ func newpopulatePersistentPeersInConfigAndWriteIt(config *cfg.Config, cmd *cobra
 
 // hostname of ip of nodes
 func ahostnameOrIP(i int, cmd *cobra.Command) string {
-	hOrIP, _ := cmd.Flags().GetString(flagNodeDirPrefix)
+	hOrIP, _ := cmd.Flags().GetString(flagNodeHostPrefix)
 	return fmt.Sprintf("%s%d", hOrIP, i)
 }
 
