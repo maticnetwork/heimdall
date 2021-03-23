@@ -36,6 +36,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramproposal "github.com/cosmos/cosmos-sdk/x/params/types/proposal"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -295,6 +296,7 @@ func NewHeimdallApp(
 
 	govRouter := govtypes.NewRouter()
 	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler)
+	govRouter.AddRoute(paramproposal.RouterKey, gov.NewParamChangeProposalHandler(app.ParamsKeeper))
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec,
