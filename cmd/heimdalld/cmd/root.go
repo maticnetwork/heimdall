@@ -15,6 +15,9 @@ import (
 	"strings"
 	"time"
 
+	tmed25519 "github.com/tendermint/tendermint/crypto/ed25519"
+	"github.com/tendermint/tendermint/privval"
+
 	"github.com/tendermint/tendermint/libs/cli"
 	tmjson "github.com/tendermint/tendermint/libs/json"
 
@@ -55,7 +58,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	tmos "github.com/tendermint/tendermint/libs/os"
 	"github.com/tendermint/tendermint/p2p"
-	"github.com/tendermint/tendermint/privval"
 	tmtypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
@@ -165,6 +167,7 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 		convertAddressToHexCmd(),
 		convertHexToAddressCmd(),
 		exportCmd(ctx),
+		newCreateTestCmd(app.ModuleBasics),
 	)
 
 	server.AddCommands(rootCmd, app.DefaultNodeHome, newApp, createSimappAndExport, addModuleInitFlags)
@@ -320,8 +323,7 @@ func writeGenesisFile(genesisTime time.Time, genesisFile, chainID string, appSta
 
 // InitializeNodeValidatorFiles initializes node and priv validator files
 func InitializeNodeValidatorFiles(
-	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
-) {
+	config *cfg.Config, mnemonic string) (nodeID string, valPubKey crypto.PubKey, valPrivKey crypto.PrivKey, err error) {
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 	if err != nil {
@@ -340,21 +342,42 @@ func InitializeNodeValidatorFiles(
 		return "", nil, nil, err
 	}
 
-	filePV := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
+	//filePV := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
+	//
+	//valPrivKey := filePV.Key.PrivKey
+	//
+	//// tmValPubKey, err := filePV.GetPubKey()
+	//// if err != nil {
+	//// 	return "", nil, nil, err
+	//// }
+	//
+	//// valPubKey, err = secp256k1.FromTmSecp256k1(tmValPubKey)
+	//// if err != nil {
+	//// 	return "", nil, nil, err
+	//// }
+	//valPubKey, _ = filePV.GetPubKey()
+	//return nodeID, valPubKey, valPrivKey, nil
 
-	valPrivKey := filePV.Key.PrivKey
+	var filePV *privval.FilePV
+	if len(mnemonic) == 0 {
+		filePV = privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
+	} else {
+		privKey := tmed25519.GenPrivKeyFromSecret([]byte(mnemonic))
+		filePV = privval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+		filePV.Save()
+	}
 
-	// tmValPubKey, err := filePV.GetPubKey()
-	// if err != nil {
-	// 	return "", nil, nil, err
-	// }
+	tmValPubKey, err := filePV.GetPubKey()
+	if err != nil {
+		return "", nil, nil, err
+	}
 
-	// valPubKey, err = secp256k1.FromTmSecp256k1(tmValPubKey)
-	// if err != nil {
-	// 	return "", nil, nil, err
-	// }
-	valPubKey, _ = filePV.GetPubKey()
-	return nodeID, valPubKey, valPrivKey, nil
+	//valPubKey, err = cryptocodec.FromTmPubKeyInterface(tmValPubKey)
+	//if err != nil {
+	//	return "", nil, nil, err
+	//}
+
+	return nodeID, tmValPubKey, filePV.Key.PrivKey, nil
 }
 
 func CryptoKeyToPubkey(key crypto.PubKey) common.PubKey {

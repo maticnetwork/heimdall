@@ -2,6 +2,7 @@ package keeper
 
 import (
 	"context"
+	"fmt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -156,11 +157,11 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 		return nil, status.Error(codes.InvalidArgument, "root has error")
 	}
 
-	// accs := k.tk.GetAllDividendAccounts(ctx)
-	// accRootHash, err := types.GetAccountRootHash(accs)
-	// if err != nil {
-	// 	return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error()))
-	// }
+	accs := k.moduleCommunicator.GetAllDividendAccounts(ctx)
+	accRootHash, err := types.GetAccountRootHash(accs)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error())
+	}
 
 	accAddr, _ := sdk.AccAddressFromHex(proposer.Signer)
 	checkpointMsg := types.NewMsgCheckpointBlock(
@@ -168,7 +169,7 @@ func (k Querier) NextCheckpoint(c context.Context, req *types.QueryNextCheckpoin
 		start,
 		start+params.AvgCheckpointLength,
 		hmCommonTypes.BytesToHeimdallHash(rootHash),
-		hmCommonTypes.BytesToHeimdallHash(rootHash), //hmTypes.BytesToHeimdallHash(accRootHash),
+		hmCommonTypes.BytesToHeimdallHash(accRootHash),
 		borChainID,
 	)
 

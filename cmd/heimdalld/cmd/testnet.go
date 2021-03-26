@@ -56,7 +56,7 @@ const (
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "create-testnet",
+		Use:   "old-create-testnet",
 		Short: "Initialize files for a Heimdall testnet",
 		Long: `testnet will create "v" + "n" number of directories and populate each with
 necessary files (private validator, genesis, config, etc.).
@@ -175,7 +175,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 					return err
 				}
 
-				nodeIDs[i], valPubKeys[i], privKeys[i], err = InitializeNodeValidatorFiles(config)
+				nodeIDs[i], valPubKeys[i], privKeys[i], err = InitializeNodeValidatorFiles(config, "")
 				if err != nil {
 					return err
 				}
