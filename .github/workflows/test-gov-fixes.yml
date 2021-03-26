@@ -2,7 +2,7 @@ name: Docker Image CI for gov fixes
 
 on:
   push:
-    branches: gov-porting-fixes
+    branches: gov-fixes-1
 
 jobs:
   build:
@@ -18,7 +18,7 @@ jobs:
         echo "Docker login"
         docker login -u $DOCKERHUB -p $DOCKERHUB_KEY
         echo "running build"
-        docker build -t maticnetwork/heimdall:gov-porting-fixes -f docker/Dockerfile .
+        docker build -t maticnetwork/heimdall:gov-fixes-1 -f docker/Dockerfile .
         echo "pushing image"
-        docker push maticnetwork/heimdall:gov-porting-fixes
+        docker push maticnetwork/heimdall:gov-fixes-1
         echo "DONE!"
