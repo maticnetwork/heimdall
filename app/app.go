@@ -295,8 +295,8 @@ func NewHeimdallApp(
 	)
 
 	govRouter := govtypes.NewRouter()
-	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler)
-	govRouter.AddRoute(paramproposal.RouterKey, gov.NewParamChangeProposalHandler(app.ParamsKeeper))
+	govRouter.AddRoute(govtypes.RouterKey, govtypes.ProposalHandler).
+			  AddRoute(paramproposal.RouterKey, gov.NewParamChangeProposalHandler(app.ParamsKeeper))
 
 	app.GovKeeper = govkeeper.NewKeeper(
 		appCodec,
