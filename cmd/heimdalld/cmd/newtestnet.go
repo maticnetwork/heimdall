@@ -120,7 +120,7 @@ func initTestnet(clientCtx client.Context, cmd *cobra.Command, nodeConfig *cfg.C
 
 	totalNumberOfValidators := totalValidators(cmd)
 	nodeIDs := make([]string, totalNumberOfValidators)
-	valPubKeys := make([]cryptotypes.PubKey, totalNumberOfValidators)
+	valPubKeys := make([]crypto.PubKey, totalNumberOfValidators)
 	valPrivKeys := make([]crypto.PrivKey, totalNumberOfValidators)
 
 	genAccounts := make([]authtypes.GenesisAccount, totalNumberOfValidators)
@@ -153,21 +153,6 @@ func initTestnet(clientCtx client.Context, cmd *cobra.Command, nodeConfig *cfg.C
 
 		nodeConfig.Moniker = nodeDirName
 
-		var err error
-		var tmValPubKey crypto.PubKey
-		nodeIDs[i], tmValPubKey, valPrivKeys[i], err = InitializeNodeValidatorFiles(nodeConfig, "")
-		if err != nil {
-			_ = os.RemoveAll(outputDir)
-			return err
-		}
-
-		valPubKeys[i], err = cryptocodec.FromTmPubKeyInterface(tmValPubKey)
-		if err != nil {
-			return err
-		}
-
-		genFiles[i] = nodeConfig.GenesisFile()
-
 		// keyring
 		kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, nodeDir, inBuf)
 		if err != nil {
@@ -186,6 +171,7 @@ func initTestnet(clientCtx client.Context, cmd *cobra.Command, nodeConfig *cfg.C
 			return err
 		}
 
+		fmt.Println("sdkAddress ", sdkAddress)
 		info := map[string]string{"secret": secret}
 
 		cliPrint, err := json.Marshal(info)
@@ -198,8 +184,26 @@ func initTestnet(clientCtx client.Context, cmd *cobra.Command, nodeConfig *cfg.C
 			return err
 		}
 
+		var tmValPubKey cryptotypes.PubKey
+		nodeIDs[i], valPubKeys[i], valPrivKeys[i], err = InitializeNodeValidatorFiles(nodeConfig, secret)
+		if err != nil {
+			_ = os.RemoveAll(outputDir)
+			return err
+		}
+
+		tmValPubKey, err = cryptocodec.FromTmPubKeyInterface(valPubKeys[i])
+		if err != nil {
+			return err
+		}
+
+		fmt.Println("tender val pub addr ", valPubKeys[i].Address().String())
+		fmt.Println("cosmos val pub addr ", tmValPubKey.Address().String())
+
+		genFiles[i] = nodeConfig.GenesisFile()
+
 		// get the key info
 		newPubkey := hmCommon.NewPubKey(valPubKeys[i].Bytes())
+
 		genAccounts[i] = authtypes.NewBaseAccount(sdkAddress, nil, 0, 0)
 
 		if i < numValidators {
@@ -333,6 +337,7 @@ func newpopulatePersistentPeersInConfigAndWriteIt(config *cfg.Config, cmd *cobra
 	}
 
 	persistentPeersList := strings.Join(persistentPeers, ",")
+	persistentPeersList = ""
 	for i := 0; i < totalValidators; i++ {
 		config.Moniker = ahostnameOrIP(i, cmd)
 		config.SetRoot(nodeDir(i, cmd))

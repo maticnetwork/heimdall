@@ -3,6 +3,7 @@ package listener
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -86,7 +87,8 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					if err != nil {
 						hl.Logger.Error("Error fetching begin block events", "error", err)
 					}
-					for _, event := range events {
+					for j, event := range events {
+						fmt.Println("event at ", j, " ", event)
 						hl.ProcessBlockEvent(sdk.StringifyEvent(event), int64(i))
 					}
 				}
@@ -127,9 +129,9 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					}
 				} */
 				// set last block to storage
-				if err := hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(strconv.FormatUint(toBlock, 10)), nil); err != nil {
-					hl.Logger.Error("hl.storageClient.Put", "Error", err)
-				}
+				//if err := hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(strconv.FormatUint(toBlock, 10)), nil); err != nil {
+				//	hl.Logger.Error("hl.storageClient.Put", "Error", err)
+				//}
 			}
 
 		case <-ctx.Done():
@@ -150,10 +152,15 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		hl.Logger.Error("Error while fetching heimdall node status", "error", err)
 		return fromBlock, toBlock, err
 	}
+
 	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
 
 	// fromBlock - get last block from storage
-	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
+	hasLastBlock, err := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
+	if err != nil {
+		hl.Logger.Error("Error while fetching "+heimdallLastBlockKey+" from storage", "error", err)
+	}
+
 	if hasLastBlock {
 		lastBlockBytes, err := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
 		if err != nil {
@@ -177,6 +184,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight int64) {
 	hl.Logger.Info("Received block event from Heimdall", "eventType", event.Type)
 	eventBytes, err := json.Marshal(event)
+	fmt.Println("Receviev event ", eventBytes)
 	if err != nil {
 		hl.Logger.Error("Error while parsing block event", "error", err, "eventType", event.Type)
 		return

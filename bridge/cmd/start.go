@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/maticnetwork/heimdall/bridge/setu/processor"
@@ -31,6 +33,8 @@ import (
 const (
 	waitDuration = 1 * time.Minute
 	logLevel     = "log_level"
+	keyName      = "key-name"
+	AccountAddr  = "account-address"
 )
 
 // GetStartCmd returns the start command to start bridge
@@ -41,6 +45,11 @@ func GetStartCmd() *cobra.Command {
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
 
+			nodeKeyName := viper.GetString(keyName)
+			fmt.Println("key name  ", nodeKeyName, " ", len(nodeKeyName))
+			if nodeKeyName == "" || len(nodeKeyName) == 0 {
+				panic(fmt.Sprintf("Validator key name is required"))
+			}
 			// create codec
 			cdc, _ := app.MakeCodecs()
 			// encoding
@@ -55,12 +64,14 @@ func GetStartCmd() *cobra.Command {
 			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
 			chainID := helper.GetGenesisDoc().ChainID
 
+			acctAddr, _ := sdk.AccAddressFromHex(viper.GetString(AccountAddr))
 			cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl).
 				WithClient(_httpClient).
 				WithAccountRetriever(authtypes.AccountRetriever{}).
 				WithInterfaceRegistry(encoding.InterfaceRegistry).
 				WithTxConfig(encoding.TxConfig).
-				WithFromAddress(helper.GetAddress()).
+				WithFromAddress(acctAddr).
+				WithFromName(nodeKeyName).
 				WithChainID(chainID).
 				WithSkipConfirmation(true)
 
@@ -147,6 +158,16 @@ func GetStartCmd() *cobra.Command {
 		logger.Error("GetStartCmd | BindPFlag | logLevel", "Error", err)
 	}
 
+	startCmd.Flags().String(AccountAddr, "", "node genesis account address ")
+	if err := viper.BindPFlag(AccountAddr, startCmd.Flags().Lookup(AccountAddr)); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | "+AccountAddr, "Error", err)
+	}
+
+	startCmd.Flags().String(keyName, "", "Validator key name in keyring")
+	if err := viper.BindPFlag(keyName, startCmd.Flags().Lookup(keyName)); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | "+keyName, "Error", err)
+	}
+
 	startCmd.Flags().Bool("all", false, "start all bridge services")
 	if err := viper.BindPFlag("all", startCmd.Flags().Lookup("all")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | all", "Error", err)
@@ -155,6 +176,11 @@ func GetStartCmd() *cobra.Command {
 	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
 	if err := viper.BindPFlag("only", startCmd.Flags().Lookup("only")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
+	}
+
+	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
+	if err := viper.BindPFlag(flags.FlagKeyringBackend, startCmd.Flags().Lookup(flags.FlagKeyringBackend)); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | "+flags.FlagKeyringBackend, "Error", err)
 	}
 	return startCmd
 }

@@ -362,8 +362,11 @@ func InitializeNodeValidatorFiles(
 	if len(mnemonic) == 0 {
 		filePV = privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
 	} else {
-		privKey := tmed25519.GenPrivKeyFromSecret([]byte(mnemonic))
-		filePV = privval.NewFilePV(privKey, pvKeyFile, pvStateFile)
+		old_privKey := tmed25519.GenPrivKeyFromSecret([]byte(mnemonic))
+		fmt.Println("old_privKey ", old_privKey)
+		newPrivKey := secp256k1.GenPrivKeySecp256k1([]byte(mnemonic))
+		fmt.Println("newPrivKey ", newPrivKey)
+		filePV = privval.NewFilePV(newPrivKey, pvKeyFile, pvStateFile)
 		filePV.Save()
 	}
 

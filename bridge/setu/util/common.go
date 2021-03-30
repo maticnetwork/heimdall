@@ -361,14 +361,13 @@ func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 		logger.Debug("Error fetching buffered checkpoint", "err", err)
 		return nil, err
 	}
-
-	var checkpoint hmTypes.Checkpoint
+	var checkpoint checkpointTypes.QueryCheckpointBufferResponse
 	if err := jsonpb.UnmarshalString(string(response), &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
 		return nil, err
 	}
 
-	return &checkpoint, nil
+	return checkpoint.CheckpointBuffer, nil
 }
 
 // GetlastestCheckpoint return last successful checkpoint

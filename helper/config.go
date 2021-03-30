@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
@@ -281,10 +283,12 @@ func GetPubKey() secp256k1.PubKey {
 
 // GetAddress returns address object
 func GetAddress() []byte {
-	return GetPubKey().Address().Bytes()
+	addr, _ := sdk.AccAddressFromHex(viper.GetString("account-address"))
+	return addr
 }
 
 // GetAddressStr returns address string object
 func GetAddressStr() string {
-	return GetPubKey().Address().String()
+	addr, _ := sdk.AccAddressFromHex(viper.GetString("account-address"))
+	return addr.String()
 }

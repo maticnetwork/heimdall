@@ -1,6 +1,8 @@
 package processor
 
 import (
+	"fmt"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
@@ -133,6 +135,8 @@ func (processorService *ProcessorService) OnStart() error {
 		go func() {
 			if err := processor.Start(); err != nil {
 				processorService.Logger.Error("processor is failed", "Err", err)
+			} else {
+				fmt.Println(processor.String(), " is started ....")
 			}
 		}()
 	}

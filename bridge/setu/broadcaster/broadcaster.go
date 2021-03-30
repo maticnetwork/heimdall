@@ -5,6 +5,12 @@ import (
 	"fmt"
 	"sync"
 
+	"github.com/cosmos/cosmos-sdk/client/flags"
+
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+
+	"github.com/spf13/viper"
+
 	"github.com/spf13/pflag"
 
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -40,7 +46,8 @@ type TxBroadcaster struct {
 // NewTxBroadcaster creates new broadcaster
 func NewTxBroadcaster(cliCtx client.Context, cdc codec.Marshaler, flagSet *pflag.FlagSet) *TxBroadcaster {
 	// current address
-	address := hmCommonTypes.BytesToHeimdallAddress(helper.GetAddress())
+	addr := helper.GetAddress()
+	address := hmCommonTypes.BytesToHeimdallAddress(addr)
 	account, err := util.GetAccount(cliCtx, address)
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
@@ -63,6 +70,12 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
 
+	keyringBackend := viper.GetString(flags.FlagKeyringBackend)
+	// keyring
+	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, tb.cliCtx.HomeDir, nil)
+	if err != nil {
+		return err
+	}
 	//chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
@@ -72,9 +85,11 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID).
 		WithTxConfig(tb.cliCtx.TxConfig).
-		WithAccountRetriever(tb.cliCtx.AccountRetriever)
+		WithAccountRetriever(tb.cliCtx.AccountRetriever).
+		WithKeybase(kb)
 
-	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txf, []sdk.Msg{msg})
+	//txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txf, []sdk.Msg{msg})
+	err = tx.GenerateOrBroadcastTxWithFactory(tb.cliCtx, txf, msg)
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 		// current address
@@ -93,8 +108,8 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		return err
 	}
 
-	tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", tb.lastSeqNo, "accNum", tb.accNum)
-	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
+	//tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", tb.lastSeqNo, "accNum", tb.accNum)
+	//tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
 	// increment account sequence
 	tb.lastSeqNo += 1
 	return nil

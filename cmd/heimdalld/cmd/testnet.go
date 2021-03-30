@@ -8,6 +8,8 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/maticnetwork/heimdall/app"
+
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 
 	authclient "github.com/cosmos/cosmos-sdk/x/auth/client"
@@ -27,7 +29,6 @@ import (
 	tmtime "github.com/tendermint/tendermint/types/time"
 
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
@@ -184,7 +185,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				newPubkey := hmCommon.NewPubKey(valPubKeys[i].Bytes())
 
 				if i < numValidators {
-					sdkAddress := hmCommon.HeimdallAddressToAccAddress(hmCommon.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
+					//sdkAddress := hmCommon.HeimdallAddressToAccAddress(hmCommon.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
 					// create validator account
 					validators[i] = hmTypes.NewValidator(
 						hmTypes.NewValidatorID(uint64(startID+int64(i))),
@@ -193,7 +194,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 						1,
 						10000,
 						newPubkey,
-						sdkAddress,
+						valPubKeys[i].Address().Bytes(),
 					)
 
 					signer, _ := sdk.AccAddressFromHex(validators[i].Signer)
@@ -221,7 +222,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			validatorSet := hmTypes.NewValidatorSet(validators)
 
 			// new app state
-			appStateBytes := app.NewDefaultGenesisState()
+			appStateBytes := app.ModuleBasics.DefaultGenesis(cdc)
 
 			authGenState := authtypes.GetGenesisStateFromAppState(authclient.Codec, appStateBytes)
 			anyGenAccounts, err := authtypes.PackAccounts(accounts)
@@ -350,6 +351,7 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config, cmd *cobra.Co
 	}
 
 	persistentPeersList := strings.Join(persistentPeers, ",")
+	persistentPeersList = ""
 	for i := 0; i < totalValidators(cmd); i++ {
 		config.SetRoot(nodeDir(i, cmd))
 		config.P2P.PersistentPeers = persistentPeersList
