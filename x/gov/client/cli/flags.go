@@ -12,6 +12,7 @@ const (
 	FlagNumLimit     = "limit"
 	FlagProposal     = "proposal"
 	FlagValidatorID  = "validator-id"
+	FlagProposerAddress    = "proposer"
 )
 
 // ProposalFlags defines the core required fields of a proposal. It is used to

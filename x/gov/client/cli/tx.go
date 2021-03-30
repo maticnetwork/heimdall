@@ -113,6 +113,7 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 	}
 
 	cmd.Flags().String(FlagTitle, "", "The proposal title")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagDescription, "", "The proposal description")
 	cmd.Flags().String(FlagProposalType, "", "The proposal Type")
 	cmd.Flags().String(FlagDeposit, "", "The proposal deposit")
