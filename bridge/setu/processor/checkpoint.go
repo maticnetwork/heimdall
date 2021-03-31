@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -288,9 +287,6 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			hmCommonTypes.BytesToHeimdallHash(log.TxHash.Bytes()),
 			uint64(log.Index),
 		)
-
-		fmt.Printf("msg %+v\n", msg)
-
 		// return broadcast to heimdall
 		if err := cp.txBroadcaster.BroadcastToHeimdall(&msg); err != nil {
 			cp.Logger.Error("Error while broadcasting checkpoint-ack to heimdall", "error", err)
