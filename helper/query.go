@@ -46,8 +46,6 @@ func GetBeginBlockEvents(client *httpClient.HTTP, height int64) ([]abci.Event, e
 
 	// get block using client
 	blockResults, err := client.BlockResults(c, &height)
-	fmt.Printf("blockResults %+v\n", blockResults)
-	//fmt.Printf("BeginBlockEvents %+v\n", blockResults.BeginBlockEvents)
 
 	if err == nil && blockResults != nil {
 		return blockResults.BeginBlockEvents, nil

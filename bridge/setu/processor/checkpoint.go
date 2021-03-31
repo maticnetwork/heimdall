@@ -5,16 +5,17 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"strconv"
 	"time"
 
+	"github.com/maticnetwork/heimdall/app"
+
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
 	"github.com/gogo/protobuf/jsonpb"
-
-	"github.com/cosmos/cosmos-sdk/client"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -251,7 +252,6 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		checkpointNumber := big.NewInt(0).Div(event.HeaderBlockId, big.NewInt(0).SetUint64(params.CheckpointParams.ChildBlockInterval))
-
 		cp.Logger.Info(
 			"✅ Received task to send checkpoint-ack to heimdall",
 			"event", eventName,
@@ -274,20 +274,22 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		}
 
 		// create msg checkpoint ack message
-		accAddr, err := sdk.AccAddressFromHex(event.Proposer.Hex())
-		if err != nil {
-			return err
-		}
+		// accAddr, err := sdk.AccAddressFromHex(event.Proposer.Hex())
+		// if err != nil {
+		// return err
+		// }
 		msg := checkpointTypes.NewMsgCheckpointAck(
-			helper.GetFromAddress(cp.cliCtx),
+			helper.GetAddress(),
 			checkpointNumber.Uint64(),
-			accAddr,
+			event.Proposer.Bytes(),
 			event.Start.Uint64(),
 			event.End.Uint64(),
 			event.Root,
 			hmCommonTypes.BytesToHeimdallHash(log.TxHash.Bytes()),
 			uint64(log.Index),
 		)
+
+		fmt.Printf("msg %+v\n", msg)
 
 		// return broadcast to heimdall
 		if err := cp.txBroadcaster.BroadcastToHeimdall(&msg); err != nil {
@@ -485,14 +487,17 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(params util.Pa
 	}
 
 	// fetch side txs sigs
-	//decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
-	//stdTx, err := decoder(tx.Tx)
-	//if err != nil {
-	//	cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
-	//	return err
-	//}
+	decoder := app.MakeEncodingConfig().TxConfig.TxDecoder()
 
-	cmsg := client.TxConfig(nil).NewTxBuilder().GetTx().GetMsgs()[0]
+	stdTx, err := decoder(tx.Tx)
+	if err != nil {
+		cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
+		return err
+	}
+
+	cmsgs := stdTx.GetMsgs()
+	//cmsg := getMsgs[0]
+	cmsg := cmsgs[0]
 	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
 	if !ok {
 		cp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())

@@ -58,7 +58,7 @@ func NewRootChainListener() *RootChainListener {
 
 // Start starts new block subscription
 func (rl *RootChainListener) Start() error {
-	rl.Logger.Info("Starting")
+	rl.Logger.Info("Starting the root chain listener .....")
 
 	// create cancellable context
 	ctx, cancelSubscription := context.WithCancel(context.Background())
@@ -157,6 +157,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 	chainParams := rootchainContext.ChainmanagerParams.ChainParams
 
 	// draft a query
+
 	query := ethereum.FilterQuery{FromBlock: fromBlock, ToBlock: toBlock, Addresses: []ethCommon.Address{
 		ethCommon.HexToAddress(chainParams.RootChainAddress),
 		ethCommon.HexToAddress(chainParams.StakingInfoAddress),

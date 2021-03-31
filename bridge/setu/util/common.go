@@ -379,13 +379,13 @@ func GetlastestCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 		return nil, err
 	}
 
-	var checkpoint hmTypes.Checkpoint
+	var checkpoint checkpointTypes.QueryLatestCheckpointResponse
 	if err := jsonpb.UnmarshalString(string(response), &checkpoint); err != nil {
 		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
 		return nil, err
 	}
 
-	return &checkpoint, nil
+	return checkpoint.LatestCheckpoint, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format

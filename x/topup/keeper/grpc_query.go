@@ -2,7 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 
@@ -99,8 +98,6 @@ func (k Querier) QueryDividendAccounts(c context.Context, req *types.QueryDivide
 		return nil, status.Error(codes.InvalidArgument, "empty request")
 	}
 	ctx := sdk.UnwrapSDKContext(c)
-	fmt.Println("Ctx", ctx)
-
 	dividendAccounts := k.GetAllDividendAccounts(ctx)
 	return &types.QueryDividendAccountsResponse{DividendAccounts: dividendAccounts}, nil
 }

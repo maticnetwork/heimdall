@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 
 	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	tmcrypto "github.com/tendermint/tendermint/crypto"
 
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
@@ -25,11 +26,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
+	borCrypto "github.com/maticnetwork/bor/crypto"
 	ethcrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
-	borCrypto "github.com/maticnetwork/bor/crypto"
 	ethCrypto "github.com/maticnetwork/bor/crypto/secp256k1"
 
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -117,10 +118,10 @@ func FetchFromAPI(URL string) ([]byte, error) {
 
 // GetFromAddress get from address
 func GetFromAddress(cliCtx client.Context) sdk.AccAddress {
-	fromAddress := cliCtx.GetFromAddress()
-	if !fromAddress.Empty() {
-		return fromAddress
-	}
+	// fromAddress := cliCtx.GetFromAddress()
+	// if !fromAddress.Empty() {
+	// 	return fromAddress
+	// }
 
 	return GetAddress()
 }
@@ -436,7 +437,14 @@ type sideTxSig struct {
 // RecoverPubkey builds a StdSignature for given a StdSignMsg.
 func recoverPubkey(msg []byte, sig []byte) ([]byte, error) {
 	data := borCrypto.Keccak256(msg)
-	return ethCrypto.RecoverPubkey(data, sig[:])
+
+	pubkey, _ := ethCrypto.RecoverPubkey(data, sig[:])
+	ecdsa, err := borCrypto.UnmarshalPubkey(pubkey)
+	if err != nil {
+		return nil, err
+	}
+	addr := tmcrypto.Address(ethcrypto.PubkeyToAddress(*ecdsa).Bytes())
+	return addr, nil
 }
 
 // GetSideTxSigs returns sigs bytes from vote by tx hash
@@ -462,12 +470,10 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 				len(sideTxResult.Sig) == 65 &&
 				sideTxResult.Result == tmproto.SideTxResultType_YES {
 				// validate sig
-				var pk secp256k1.PubKey
-				if p, err := recoverPubkey(signedData, sideTxResult.Sig); err == nil {
-					copy(pk[:], p[:])
 
-					// if it has valid sig, add it into side-tx sig array
-					if bytes.Equal(vote.ValidatorAddress.Bytes(), pk.Address().Bytes()) {
+				p, err := recoverPubkey(signedData, sideTxResult.Sig)
+				if err == nil {
+					if bytes.Equal(vote.ValidatorAddress.Bytes(), p) {
 						sideTxSigs = append(sideTxSigs, &sideTxSig{
 							Address: vote.ValidatorAddress.Bytes(),
 							Sig:     sideTxResult.Sig,

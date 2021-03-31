@@ -33,7 +33,7 @@ func NewHeimdallListener() *HeimdallListener {
 
 // Start starts new block subscription
 func (hl *HeimdallListener) Start() error {
-	hl.Logger.Info("Starting")
+	hl.Logger.Info("Starting the heimdall listener...")
 
 	// create cancellable context
 	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
@@ -87,8 +87,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					if err != nil {
 						hl.Logger.Error("Error fetching begin block events", "error", err)
 					}
-					for j, event := range events {
-						fmt.Println("event at ", j, " ", event)
+					for _, event := range events {
 						hl.ProcessBlockEvent(sdk.StringifyEvent(event), int64(i))
 					}
 				}
@@ -170,7 +169,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
 			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", result)
-			fromBlock = uint64(result) + 1
+			fromBlock = result + 1
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
 			toBlock = 0
