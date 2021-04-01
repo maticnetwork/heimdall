@@ -78,7 +78,7 @@ func CheckpointTxCmd() *cobra.Command {
 					return err
 				}
 
-				if !bytes.Equal([]byte(validatorSet.ValidatorSet.Proposer.Signer), helper.GetAddress()) {
+				if !bytes.Equal([]byte(validatorSet.ValidatorSet.Proposer.Signer), helper.GetAddressForHeimdall()) {
 					return fmt.Errorf("Please wait for your turn to propose checkpoint. Checkpoint proposer:%v", validatorSet.ValidatorSet.Proposer.Signer)
 				}
 

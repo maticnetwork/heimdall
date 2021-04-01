@@ -118,10 +118,10 @@ func FetchFromAPI(URL string) ([]byte, error) {
 
 // GetFromAddress get from address
 func GetFromAddress(cliCtx client.Context) sdk.AccAddress {
-	// fromAddress := cliCtx.GetFromAddress()
-	// if !fromAddress.Empty() {
-	// 	return fromAddress
-	// }
+	fromAddress := cliCtx.GetFromAddress()
+	if !fromAddress.Empty() {
+		return fromAddress
+	}
 
 	return GetAddress()
 }

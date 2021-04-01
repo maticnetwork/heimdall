@@ -2,12 +2,11 @@ package helper
 
 import (
 	"fmt"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"math/big"
 	"os"
 	"path/filepath"
 	"time"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 
@@ -292,3 +291,14 @@ func GetAddressStr() string {
 	addr, _ := sdk.AccAddressFromHex(viper.GetString("account-address"))
 	return addr.String()
 }
+
+/// GetAddress returns address object
+func GetAddressForHeimdall() []byte {
+	return GetPubKey().Address().Bytes()
+}
+
+//
+// GetAddressStr returns address string object
+//func GetAddressStr() string {
+//	return GetPubKey().Address().String()
+//}

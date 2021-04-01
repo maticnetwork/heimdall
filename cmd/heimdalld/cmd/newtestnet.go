@@ -9,9 +9,6 @@ import (
 	"path/filepath"
 	"strings"
 
-	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
-	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
-
 	tmos "github.com/tendermint/tendermint/libs/os"
 
 	"github.com/tendermint/tendermint/crypto"
@@ -171,7 +168,6 @@ func initTestnet(clientCtx client.Context, cmd *cobra.Command, nodeConfig *cfg.C
 			return err
 		}
 
-		fmt.Println("sdkAddress ", sdkAddress)
 		info := map[string]string{"secret": secret}
 
 		cliPrint, err := json.Marshal(info)
@@ -184,20 +180,11 @@ func initTestnet(clientCtx client.Context, cmd *cobra.Command, nodeConfig *cfg.C
 			return err
 		}
 
-		var tmValPubKey cryptotypes.PubKey
-		nodeIDs[i], valPubKeys[i], valPrivKeys[i], err = InitializeNodeValidatorFiles(nodeConfig, secret)
+		nodeIDs[i], valPubKeys[i], valPrivKeys[i], err = InitializeNodeValidatorFiles(nodeConfig, "")
 		if err != nil {
 			_ = os.RemoveAll(outputDir)
 			return err
 		}
-
-		tmValPubKey, err = cryptocodec.FromTmPubKeyInterface(valPubKeys[i])
-		if err != nil {
-			return err
-		}
-
-		fmt.Println("tender val pub addr ", valPubKeys[i].Address().String())
-		fmt.Println("cosmos val pub addr ", tmValPubKey.Address().String())
 
 		genFiles[i] = nodeConfig.GenesisFile()
 

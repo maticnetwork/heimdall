@@ -3,7 +3,6 @@ package listener
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -128,9 +127,9 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 					}
 				} */
 				// set last block to storage
-				//if err := hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(strconv.FormatUint(toBlock, 10)), nil); err != nil {
-				//	hl.Logger.Error("hl.storageClient.Put", "Error", err)
-				//}
+				if err := hl.storageClient.Put([]byte(heimdallLastBlockKey), []byte(strconv.FormatUint(toBlock, 10)), nil); err != nil {
+					hl.Logger.Error("hl.storageClient.Put", "Error", err)
+				}
 			}
 
 		case <-ctx.Done():
@@ -183,7 +182,6 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight int64) {
 	hl.Logger.Info("Received block event from Heimdall", "eventType", event.Type)
 	eventBytes, err := json.Marshal(event)
-	fmt.Println("Receviev event ", eventBytes)
 	if err != nil {
 		hl.Logger.Error("Error while parsing block event", "error", err, "eventType", event.Type)
 		return
