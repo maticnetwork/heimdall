@@ -324,7 +324,6 @@ func newpopulatePersistentPeersInConfigAndWriteIt(config *cfg.Config, cmd *cobra
 	}
 
 	persistentPeersList := strings.Join(persistentPeers, ",")
-	persistentPeersList = ""
 	for i := 0; i < totalValidators; i++ {
 		config.Moniker = ahostnameOrIP(i, cmd)
 		config.SetRoot(nodeDir(i, cmd))

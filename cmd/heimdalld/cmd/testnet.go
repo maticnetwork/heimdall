@@ -351,7 +351,6 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config, cmd *cobra.Co
 	}
 
 	persistentPeersList := strings.Join(persistentPeers, ",")
-	persistentPeersList = ""
 	for i := 0; i < totalValidators(cmd); i++ {
 		config.SetRoot(nodeDir(i, cmd))
 		config.P2P.PersistentPeers = persistentPeersList

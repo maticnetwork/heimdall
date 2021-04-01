@@ -44,11 +44,9 @@ func GetStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			nodeKeyName := viper.GetString(keyName)
-			fmt.Println("key name  ", nodeKeyName, " ", len(nodeKeyName))
 			if nodeKeyName == "" || len(nodeKeyName) == 0 {
-				panic(fmt.Sprintf("Validator key name is required"))
+				panic("Validator key name is required")
 			}
 			// create codec
 			cdc, _ := app.MakeCodecs()
