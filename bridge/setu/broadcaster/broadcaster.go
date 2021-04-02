@@ -5,12 +5,6 @@ import (
 	"fmt"
 	"sync"
 
-	"github.com/cosmos/cosmos-sdk/client/flags"
-
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-
-	"github.com/spf13/viper"
-
 	"github.com/spf13/pflag"
 
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -69,13 +63,6 @@ func NewTxBroadcaster(cliCtx client.Context, cdc codec.Marshaler, flagSet *pflag
 func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
-
-	keyringBackend := viper.GetString(flags.FlagKeyringBackend)
-	// keyring
-	kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, tb.cliCtx.HomeDir, nil)
-	if err != nil {
-		return err
-	}
 	//chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
@@ -86,10 +73,10 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		WithChainID(chainID).
 		WithTxConfig(tb.cliCtx.TxConfig).
 		WithAccountRetriever(tb.cliCtx.AccountRetriever).
-		WithKeybase(kb)
+		WithKeybase(tb.cliCtx.Keyring)
 
 	//txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txf, []sdk.Msg{msg})
-	err = tx.GenerateOrBroadcastTxWithFactory(tb.cliCtx, txf, msg)
+	err := tx.GenerateOrBroadcastTxWithFactory(tb.cliCtx, txf, msg)
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 		// current address

@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	"github.com/tendermint/tendermint/libs/cli"
 	"os"
 	"os/signal"
 	"sync"
@@ -48,6 +50,24 @@ func GetStartCmd() *cobra.Command {
 			if nodeKeyName == "" || len(nodeKeyName) == 0 {
 				panic("Validator key name is required")
 			}
+
+			keyringBackend := viper.GetString(flags.FlagKeyringBackend)
+			homeDir := viper.GetString(flags.FlagKeyringBackend)
+
+			// keyring
+			kb, err := keyring.New(sdk.KeyringServiceName(), keyringBackend, homeDir, nil)
+			if err != nil {
+				panic(fmt.Sprintf("Keyring initialization failed %v\n", err))
+			}
+
+			keyInfo, err := kb.Key(nodeKeyName)
+			if err != nil {
+				panic(fmt.Sprintf("Error while getting the node key into failed %v\n", err))
+			}
+
+			accountAddr, _ := sdk.AccAddressFromHex(keyInfo.GetAddress().String())
+			// set the signer account address from keyring
+			viper.Set(AccountAddr, accountAddr.String())
 			// create codec
 			cdc, _ := app.MakeCodecs()
 			// encoding
@@ -62,15 +82,16 @@ func GetStartCmd() *cobra.Command {
 			cliCtx := client.Context{}.WithJSONMarshaler(cdc)
 			chainID := helper.GetGenesisDoc().ChainID
 
-			acctAddr, _ := sdk.AccAddressFromHex(viper.GetString(AccountAddr))
 			cliCtx = cliCtx.WithNodeURI(helper.GetConfig().TendermintRPCUrl).
 				WithClient(_httpClient).
 				WithAccountRetriever(authtypes.AccountRetriever{}).
 				WithInterfaceRegistry(encoding.InterfaceRegistry).
 				WithTxConfig(encoding.TxConfig).
-				WithFromAddress(acctAddr).
+				WithFromAddress(accountAddr).
 				WithFromName(nodeKeyName).
 				WithChainID(chainID).
+				WithHomeDir(homeDir).
+				WithKeyring(kb).
 				WithSkipConfirmation(true)
 
 			cliCtx.BroadcastMode = flags.BroadcastAsync
@@ -118,7 +139,7 @@ func GetStartCmd() *cobra.Command {
 			}()
 
 			// Start http client
-			err := _httpClient.Start()
+			err = _httpClient.Start()
 			if err != nil {
 				panic(fmt.Sprintf("Error connecting to server %v", err))
 			}
@@ -156,11 +177,6 @@ func GetStartCmd() *cobra.Command {
 		logger.Error("GetStartCmd | BindPFlag | logLevel", "Error", err)
 	}
 
-	startCmd.Flags().String(AccountAddr, "", "node genesis account address ")
-	if err := viper.BindPFlag(AccountAddr, startCmd.Flags().Lookup(AccountAddr)); err != nil {
-		logger.Error("GetStartCmd | BindPFlag | "+AccountAddr, "Error", err)
-	}
-
 	startCmd.Flags().String(keyName, "", "Validator key name in keyring")
 	if err := viper.BindPFlag(keyName, startCmd.Flags().Lookup(keyName)); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | "+keyName, "Error", err)
@@ -180,6 +196,12 @@ func GetStartCmd() *cobra.Command {
 	if err := viper.BindPFlag(flags.FlagKeyringBackend, startCmd.Flags().Lookup(flags.FlagKeyringBackend)); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | "+flags.FlagKeyringBackend, "Error", err)
 	}
+
+	startCmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
+	if err := viper.BindPFlag(cli.HomeFlag, startCmd.Flags().Lookup(cli.HomeFlag)); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | "+cli.HomeFlag, "Error", err)
+	}
+
 	return startCmd
 }
 
