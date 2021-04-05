@@ -151,7 +151,6 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 
 	// current public key
 	pubkeyBytes := helper.GetPubKey().Bytes()
-	//pubkeyBytes := pubkey[1:]
 
 	// get chain params
 	chainParams := rootchainContext.ChainmanagerParams.ChainParams

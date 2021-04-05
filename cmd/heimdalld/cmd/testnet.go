@@ -57,7 +57,7 @@ const (
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "old-create-testnet",
+		Use:   "create-testnet",
 		Short: "Initialize files for a Heimdall testnet",
 		Long: `testnet will create "v" + "n" number of directories and populate each with
 necessary files (private validator, genesis, config, etc.).
