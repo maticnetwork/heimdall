@@ -3,6 +3,7 @@ package tx
 import (
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"net/http"
 	"strconv"
 	"strings"
@@ -349,7 +350,7 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// commit tx proof
 		result := hmRest.SideTxProof{
-			Sigs: sigs,
+			Sigs: formattedSigs(sigs),
 			Tx:   hex.EncodeToString(tx.Tx),
 			Data: hex.EncodeToString(sideTxData),
 		}
@@ -359,4 +360,11 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
+}
+
+func formattedSigs(sigs [][3]*big.Int) (result [][3]string) {
+	for _, s := range sigs {
+		result = append(result, [3]string{s[0].String(), s[1].String(), s[2].String()})
+	}
+	return result
 }
