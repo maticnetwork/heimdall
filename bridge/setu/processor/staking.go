@@ -308,8 +308,8 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 // isOldTx  checks if tx is already processed or not
 func (sp *StakingProcessor) isOldTx(cliCtx client.Context, txHash string, logIndex uint64) (bool, error) {
 	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
+		"tx_hash":   txHash,
+		"log_index": logIndex,
 	}
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
