@@ -179,11 +179,7 @@ func CheckpointTxCmd() *cobra.Command {
 	cmd.Flags().String(FlagBorChainID, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().Bool(FlagAutoConfigure, false, "--auto-configure=true/false")
 
-	_ = cmd.MarkFlagRequired(FlagRootHash)
-	_ = cmd.MarkFlagRequired(FlagAccountRootHash)
 	_ = cmd.MarkFlagRequired(FlagBorChainID)
-	_ = cmd.MarkFlagRequired(FlagStartBlock)
-	_ = cmd.MarkFlagRequired(FlagEndBlock)
 
 	flags.AddTxFlagsToCmd(cmd)
 
