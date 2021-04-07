@@ -341,30 +341,11 @@ func InitializeNodeValidatorFiles(
 		return "", nil, nil, err
 	}
 
-	//filePV := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
-	//
-	//valPrivKey := filePV.Key.PrivKey
-	//
-	//// tmValPubKey, err := filePV.GetPubKey()
-	//// if err != nil {
-	//// 	return "", nil, nil, err
-	//// }
-	//
-	//// valPubKey, err = secp256k1.FromTmSecp256k1(tmValPubKey)
-	//// if err != nil {
-	//// 	return "", nil, nil, err
-	//// }
-	//valPubKey, _ = filePV.GetPubKey()
-	//return nodeID, valPubKey, valPrivKey, nil
-
 	var filePV *privval.FilePV
 	if len(mnemonic) == 0 {
 		filePV = privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
 	} else {
 		privKey := tmed25519.GenPrivKeyFromSecret([]byte(mnemonic))
-		//fmt.Println("old_privKey ", old_privKey)
-		//newPrivKey := secp256k1.GenPrivKeySecp256k1([]byte(mnemonic))
-		//fmt.Println("newPrivKey ", newPrivKey)
 		filePV = privval.NewFilePV(privKey, pvKeyFile, pvStateFile)
 		filePV.Save()
 	}
@@ -373,11 +354,6 @@ func InitializeNodeValidatorFiles(
 	if err != nil {
 		return "", nil, nil, err
 	}
-
-	//valPubKey, err = cryptocodec.FromTmPubKeyInterface(tmValPubKey)
-	//if err != nil {
-	//	return "", nil, nil, err
-	//}
 
 	return nodeID, tmValPubKey, filePV.Key.PrivKey, nil
 }

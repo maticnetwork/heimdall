@@ -42,7 +42,7 @@ func GetStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-			homeDir := viper.GetString(flags.FlagKeyringBackend)
+			homeDir := viper.GetString(cli.HomeFlag)
 			cdc, _ := app.MakeCodecs()
 			// encoding
 			encoding := app.MakeEncodingConfig()
@@ -157,11 +157,6 @@ func GetStartCmd() *cobra.Command {
 	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
 	if err := viper.BindPFlag("only", startCmd.Flags().Lookup("only")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
-	}
-
-	startCmd.Flags().String(flags.FlagKeyringBackend, flags.DefaultKeyringBackend, "Select keyring's backend (os|file|test)")
-	if err := viper.BindPFlag(flags.FlagKeyringBackend, startCmd.Flags().Lookup(flags.FlagKeyringBackend)); err != nil {
-		logger.Error("GetStartCmd | BindPFlag | "+flags.FlagKeyringBackend, "Error", err)
 	}
 
 	startCmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
