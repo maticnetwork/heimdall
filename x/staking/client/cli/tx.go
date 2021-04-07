@@ -39,28 +39,6 @@ func GetTxCmd() *cobra.Command {
 	return stakingTxCmd
 }
 
-// validateAndCompressPubKey validate and compress the pubkey
-func validateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
-	if len(pubkeyBytes) == helper.UNCOMPRESSED_PUBKEY_SIZE {
-		pubkeyBytes = helper.AppendPubkeyPrefix(pubkeyBytes)
-	}
-
-	// check if key is uncompressed
-	if len(pubkeyBytes) == helper.UNCOMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
-		var err error
-		pubkeyBytes, err = helper.CompressPubKey(pubkeyBytes)
-		if err != nil {
-			return nil, fmt.Errorf("Invalid uncompressed pubkey %s", err)
-		}
-	}
-
-	if len(pubkeyBytes) != helper.COMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
-		return nil, fmt.Errorf("Invalid compressed pubkey")
-	}
-
-	return pubkeyBytes, nil
-}
-
 // Fetch chain manager params
 func getChainmanagerParams(clientCtx client.Context) (*chainmanagerTypes.Params, error) {
 	// create query client
@@ -139,7 +117,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			}
 
 			// convert PubKey to bytes
-			pubkeyBytes, err := validateAndCompressPubKey(event.SignerPubkey)
+			pubkeyBytes, err := helper.ValidateAndCompressPubKey(event.SignerPubkey)
 			if err != nil {
 				return fmt.Errorf("Invalid uncompressed pubkey %s", err)
 			}
@@ -239,7 +217,7 @@ func SignerUpdateTxCmd() *cobra.Command {
 			}
 
 			// convert PubKey to bytes
-			pubkeyBytes, err := validateAndCompressPubKey(event.SignerPubkey)
+			pubkeyBytes, err := helper.ValidateAndCompressPubKey(event.SignerPubkey)
 			if err != nil {
 				return fmt.Errorf("Invalid uncompressed pubkey %s", err)
 			}

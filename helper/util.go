@@ -431,3 +431,25 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 
 	return
 }
+
+// ValidateAndCompressPubKey validate and compress the pubkey
+func ValidateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
+	if len(pubkeyBytes) == UNCOMPRESSED_PUBKEY_SIZE {
+		pubkeyBytes = AppendPubkeyPrefix(pubkeyBytes)
+	}
+
+	// check if key is uncompressed
+	if len(pubkeyBytes) == UNCOMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
+		var err error
+		pubkeyBytes, err = CompressPubKey(pubkeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid uncompressed pubkey %s", err)
+		}
+	}
+
+	if len(pubkeyBytes) != COMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
+		return nil, fmt.Errorf("Invalid compressed pubkey")
+	}
+
+	return pubkeyBytes, nil
+}
