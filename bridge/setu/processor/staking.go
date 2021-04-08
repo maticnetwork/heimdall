@@ -65,9 +65,6 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		signerPubKey := event.SignerPubkey
-		//if len(signerPubKey) == 64 {
-		//	signerPubKey = util.AppendPrefix(signerPubKey)
-		//}
 		// convert PubKey to bytes
 		pubkeyBytes, err := helper.ValidateAndCompressPubKey(signerPubKey)
 		if err != nil {
@@ -263,10 +260,6 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		//newSignerPubKey := event.SignerPubkey
-		//if len(newSignerPubKey) == 64 {
-		//	newSignerPubKey = util.AppendPrefix(newSignerPubKey)
-		//}
 		// convert PubKey to bytes
 		newSignerPubKey, err := helper.ValidateAndCompressPubKey(event.SignerPubkey)
 		if err != nil {

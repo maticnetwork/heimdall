@@ -273,10 +273,6 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		}
 
 		// create msg checkpoint ack message
-		// accAddr, err := sdk.AccAddressFromHex(event.Proposer.Hex())
-		// if err != nil {
-		// return err
-		// }
 		msg := checkpointTypes.NewMsgCheckpointAck(
 			helper.GetAddress(),
 			checkpointNumber.Uint64(),
@@ -491,10 +487,9 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(params util.Pa
 		return err
 	}
 
-	cmsgs := stdTx.GetMsgs()
-	//cmsg := getMsgs[0]
-	cmsg := cmsgs[0]
-	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
+	getMsgs := stdTx.GetMsgs()
+	msg := getMsgs[0]
+	sideMsg, ok := msg.(hmTypes.SideTxMsg)
 	if !ok {
 		cp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
 		return err

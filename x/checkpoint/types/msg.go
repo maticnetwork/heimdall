@@ -132,7 +132,6 @@ func (msg MsgCheckpointAck) Route() string {
 
 // GetSigners returns signers
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
-	//return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
 	addr, _ := sdk.AccAddressFromHex(msg.From)
 	return []sdk.AccAddress{addr}
 }

@@ -62,7 +62,7 @@ func CheckpointTxCmd() *cobra.Command {
 				return err
 			}
 
-			if borChainID == "" || len(borChainID) == 0 {
+			if borChainID == "" {
 				return fmt.Errorf("bor chain id cannot be empty")
 			}
 
