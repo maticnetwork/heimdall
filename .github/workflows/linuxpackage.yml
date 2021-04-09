@@ -60,7 +60,7 @@ jobs:
           DEST_DIR: "v${{ env.RELEASE_VERSION }}"
 
       - name: Slack Notification
-        uses: rtCamp/action-slack-notify@v2.1.2
+        uses: rtCamp/action-slack-notify@v2.1.3
         env:
           SLACK_CHANNEL: code-releases
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}

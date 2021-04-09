@@ -84,3 +84,4 @@ include make/test.mk
 include make/tools.mk
 include make/environment.mk
 include make/codegen.mk
+include make/contracts.mk
