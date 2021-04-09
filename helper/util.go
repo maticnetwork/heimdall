@@ -12,11 +12,13 @@ import (
 	"path"
 	"sort"
 
+	ethTypes "github.com/maticnetwork/bor/core/types"
+
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 
 	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	tmcrypto "github.com/tendermint/tendermint/crypto"
 
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
 
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -24,18 +26,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
-	borCrypto "github.com/maticnetwork/bor/crypto"
 	ethcrypto "github.com/maticnetwork/bor/crypto"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-
-	ethCrypto "github.com/maticnetwork/bor/crypto/secp256k1"
-
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	secp256k1Crypto "github.com/maticnetwork/bor/crypto/secp256k1"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 // ZeroHash represents empty hash
@@ -368,19 +366,12 @@ type sideTxSig struct {
 
 // RecoverPubkey builds a StdSignature for given a StdSignMsg.
 func recoverPubkey(msg []byte, sig []byte) ([]byte, error) {
-	data := borCrypto.Keccak256(msg)
-
-	pubkey, _ := ethCrypto.RecoverPubkey(data, sig[:])
-	ecdsa, err := borCrypto.UnmarshalPubkey(pubkey)
-	if err != nil {
-		return nil, err
-	}
-	addr := tmcrypto.Address(ethcrypto.PubkeyToAddress(*ecdsa).Bytes())
-	return addr, nil
+	data := ethcrypto.Keccak256(msg)
+	return secp256k1Crypto.RecoverPubkey(data, sig[:])
 }
 
 // GetSideTxSigs returns sigs bytes from vote by tx hash
-func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.CommitSig) (sigs []byte) {
+func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.CommitSig) (sigs [][3]*big.Int, err error) {
 	// side tx result with data
 	sideTxResultWithData := tmproto.SideTxResultWithData{
 		Result: &tmproto.SideTxResult{
@@ -402,10 +393,12 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 				len(sideTxResult.Sig) == 65 &&
 				sideTxResult.Result == tmproto.SideTxResultType_YES {
 				// validate sig
+				var pk secp256k1.PubKey
+				if p, err := recoverPubkey(signedData, sideTxResult.Sig); err == nil {
+					copy(pk[:], p[:])
 
-				p, err := recoverPubkey(signedData, sideTxResult.Sig)
-				if err == nil {
-					if bytes.Equal(vote.ValidatorAddress.Bytes(), p) {
+					// if it has valid sig, add it into side-tx sig array
+					if bytes.Equal(vote.ValidatorAddress.Bytes(), pk.Address().Bytes()) {
 						sideTxSigs = append(sideTxSigs, &sideTxSig{
 							Address: vote.ValidatorAddress.Bytes(),
 							Sig:     sideTxResult.Sig,
@@ -425,11 +418,15 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 
 		// loop votes and append to sig to sigs
 		for _, sideTxSig := range sideTxSigs {
-			sigs = append(sigs, sideTxSig.Sig...)
+			R, S, V, err := ethTypes.HomesteadSigner{}.SignatureValues(nil, sideTxSig.Sig)
+			if err != nil {
+				return nil, err
+			}
+			sigs = append(sigs, [3]*big.Int{R, S, V})
 		}
 	}
 
-	return
+	return sigs, nil
 }
 
 // ValidateAndCompressPubKey validate and compress the pubkey
