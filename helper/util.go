@@ -12,27 +12,22 @@ import (
 	"path"
 	"sort"
 
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-
-	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
-
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-
-	tmTypes "github.com/tendermint/tendermint/types"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
-	ethcrypto "github.com/maticnetwork/bor/crypto"
+	ethTypes "github.com/maticnetwork/bor/core/types"
+	ethCrypto "github.com/maticnetwork/bor/crypto"
+	secp256k1Crypto "github.com/maticnetwork/bor/crypto/secp256k1"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+	tmTypes "github.com/tendermint/tendermint/types"
 
-	borCrypto "github.com/maticnetwork/bor/crypto"
-	ethCrypto "github.com/maticnetwork/bor/crypto/secp256k1"
-
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
 )
@@ -147,11 +142,11 @@ func AppendPubkeyPrefix(signerPubKey []byte) []byte {
 
 // DecompressPubKey decompress pub key
 func DecompressPubKey(compressed []byte) ([]byte, error) {
-	ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressed)
+	ecdsaPubkey, err := ethCrypto.DecompressPubkey(compressed)
 	if err != nil {
 		return nil, err
 	}
-	return ethcrypto.FromECDSAPub(ecdsaPubkey), nil
+	return ethCrypto.FromECDSAPub(ecdsaPubkey), nil
 }
 
 // CompressPubKey decompress pub key
@@ -159,11 +154,11 @@ func CompressPubKey(uncompressedBytes []byte) ([]byte, error) {
 	if len(uncompressedBytes) == UNCOMPRESSED_PUBKEY_SIZE {
 		uncompressedBytes = AppendPubkeyPrefix(uncompressedBytes)
 	}
-	uncompressed, err := ethcrypto.UnmarshalPubkey(uncompressedBytes)
+	uncompressed, err := ethCrypto.UnmarshalPubkey(uncompressedBytes)
 	if err != nil {
 		return nil, err
 	}
-	return ethcrypto.CompressPubkey(uncompressed), nil
+	return ethCrypto.CompressPubkey(uncompressed), nil
 }
 
 // GetUpdatedValidators updates validators in validator set
@@ -264,7 +259,7 @@ func GetSignedTxBytesNew(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) 
 }
 
 func Sign(msg []byte) ([]byte, error) {
-	return ethcrypto.Sign(ethcrypto.Keccak256Hash(msg).Bytes(), GetPrivKey().ToECDSA())
+	return ethCrypto.Sign(ethCrypto.Keccak256Hash(msg).Bytes(), GetPrivKey().ToECDSA())
 }
 
 // SignWithPrivKey signs a given tx with the given private key, and returns the
@@ -435,12 +430,12 @@ type sideTxSig struct {
 
 // RecoverPubkey builds a StdSignature for given a StdSignMsg.
 func recoverPubkey(msg []byte, sig []byte) ([]byte, error) {
-	data := borCrypto.Keccak256(msg)
-	return ethCrypto.RecoverPubkey(data, sig[:])
+	data := ethCrypto.Keccak256(msg)
+	return secp256k1Crypto.RecoverPubkey(data, sig[:])
 }
 
 // GetSideTxSigs returns sigs bytes from vote by tx hash
-func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.CommitSig) (sigs []byte) {
+func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.CommitSig) (sigs [][3]*big.Int, err error) {
 	// side tx result with data
 	sideTxResultWithData := tmproto.SideTxResultWithData{
 		Result: &tmproto.SideTxResult{
@@ -487,9 +482,13 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 
 		// loop votes and append to sig to sigs
 		for _, sideTxSig := range sideTxSigs {
-			sigs = append(sigs, sideTxSig.Sig...)
+			R, S, V, err := ethTypes.HomesteadSigner{}.SignatureValues(nil, sideTxSig.Sig)
+			if err != nil {
+				return nil, err
+			}
+			sigs = append(sigs, [3]*big.Int{R, S, V})
 		}
 	}
 
-	return
+	return sigs, nil
 }
