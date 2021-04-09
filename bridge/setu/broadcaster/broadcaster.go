@@ -40,8 +40,7 @@ type TxBroadcaster struct {
 // NewTxBroadcaster creates new broadcaster
 func NewTxBroadcaster(cliCtx client.Context, cdc codec.Marshaler, flagSet *pflag.FlagSet) *TxBroadcaster {
 	// current address
-	addr := helper.GetAddress()
-	address := hmCommonTypes.BytesToHeimdallAddress(addr)
+	address := hmCommonTypes.BytesToHeimdallAddress(helper.GetAddress())
 	account, err := util.GetAccount(cliCtx, address)
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")

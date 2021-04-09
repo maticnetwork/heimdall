@@ -185,7 +185,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				newPubkey := hmCommon.NewPubKey(valPubKeys[i].Bytes())
 
 				if i < numValidators {
-					//sdkAddress := hmCommon.HeimdallAddressToAccAddress(hmCommon.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()))
 					// create validator account
 					validators[i] = hmTypes.NewValidator(
 						hmTypes.NewValidatorID(uint64(startID+int64(i))),

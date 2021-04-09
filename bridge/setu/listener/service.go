@@ -2,7 +2,6 @@ package listener
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
@@ -18,8 +17,6 @@ const (
 	MaticChainListenerStr = "maticchain"
 )
 
-// var logger = util.Logger().With("service", ListenerServiceStr)
-
 // ListenerService starts and stops all chain event listeners
 type ListenerService struct {
 	// Base service
@@ -27,8 +24,8 @@ type ListenerService struct {
 	listeners []Listener
 }
 
-// NewListenerService returns new service object for listneing to events
-func NewListenerService(cliCtx client.Context, cdc codec.Marshaler, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
+// NewListenerService returns new service object for listening to events
+func NewListenerService(cliCtx client.Context, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
 
 	var logger = util.Logger().With("service", ListenerServiceStr)
 	// creating listener object
@@ -78,5 +75,4 @@ func (listenerService *ListenerService) OnStop() {
 	}
 
 	listenerService.Logger.Info("all listeners stopped")
-
 }
