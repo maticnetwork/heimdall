@@ -80,7 +80,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	// Validate data from root chain
 	//
 
-	rootChainInstance, err := contractCaller.GetRootChainInstance(borCommon.BytesToAddress([]byte(chainParams.RootChainAddress)))
+	rootChainInstance, err := contractCaller.GetRootChainInstance(borCommon.HexToAddress(chainParams.RootChainAddress))
 	if err != nil {
 		logger.Error("Unable to fetch rootchain contract instance", "error", err)
 		// TODO fix this
@@ -100,7 +100,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 	if msg.StartBlock != start ||
 		msg.EndBlock != end ||
 		msg.Proposer != proposer.String() ||
-		!bytes.Equal([]byte(msg.RootHash), root.Bytes()) {
+		!bytes.Equal(hmCommonTypes.HexToHeimdallHash(msg.RootHash).Bytes(), root.Bytes()) {
 
 		logger.Error("Invalid message. It doesn't match with contract state", "error", err, "checkpointNumber", msg.Number)
 		// TODO fix this
@@ -229,7 +229,9 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k keeper.Keeper, msg types.MsgChec
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 
 }
 
@@ -317,5 +319,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 		),
 	})
 
-	return &sdk.Result{}, nil
+	return &sdk.Result{
+		Events: ctx.EventManager().ABCIEvents(),
+	}, nil
 }

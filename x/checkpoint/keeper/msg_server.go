@@ -46,7 +46,7 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 			k.FlushCheckpointBuffer(ctx)
 		} else {
 			expiryTime := checkpointBuffer.TimeStamp + checkpointBufferTime
-			logger.Error("Checkpoint already exits in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
+			logger.Error("Checkpoint already exists in buffer", "Checkpoint", checkpointBuffer.String(), "Expires", expiryTime)
 			return nil, types.ErrNoACK
 		}
 	}

@@ -62,7 +62,6 @@ func NewTxBroadcaster(cliCtx client.Context, cdc codec.Marshaler, flagSet *pflag
 func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
-
 	//chain id
 	chainID := helper.GetGenesisDoc().ChainID
 

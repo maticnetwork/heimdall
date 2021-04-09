@@ -1,0 +1,24 @@
+name: Docker Image CI for gov fixes
+
+on:
+  push:
+    branches: fix_gensisaccount_keyring
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build the heimdall Docker image
+      env:
+        DOCKERHUB: ${{ secrets.DOCKERHUB }}
+        DOCKERHUB_KEY: ${{ secrets.DOCKERHUB_KEY }}
+      run: |
+        ls -l
+        echo "Docker login"
+        docker login -u $DOCKERHUB -p $DOCKERHUB_KEY
+        echo "running build"
+        docker build -t maticnetwork/heimdall:fix_gensisaccount_keyring -f docker/Dockerfile .
+        echo "pushing image"
+        docker push maticnetwork/heimdall:fix_gensisaccount_keyring
+        echo "DONE!"

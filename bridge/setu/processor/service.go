@@ -2,7 +2,6 @@ package processor
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/service"
 	httpClient "github.com/tendermint/tendermint/rpc/client/http"
@@ -31,7 +30,6 @@ type ProcessorService struct {
 // NewProcessorService returns new service object for processing queue msg
 func NewProcessorService(
 	cliCtx client.Context,
-	cdc codec.Marshaler,
 	queueConnector *queue.QueueConnector,
 	httpClient *httpClient.HTTP,
 	txBroadcaster *broadcaster.TxBroadcaster,
@@ -51,7 +49,7 @@ func NewProcessorService(
 	processorService.BaseService = *service.NewBaseService(logger, processorServiceStr, processorService)
 
 	//
-	// Intitialize processors
+	// Initialize processors
 	//
 
 	// initialize checkpoint processor
@@ -95,8 +93,8 @@ func NewProcessorService(
 			spanProcessor,
 		)
 	} else {
-		for _, service := range onlyServices {
-			switch service {
+		for _, serviceName := range onlyServices {
+			switch serviceName {
 			case "checkpoint":
 				processorService.processors = append(processorService.processors, checkpointProcessor)
 			case "staking":

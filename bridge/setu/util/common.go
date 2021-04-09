@@ -39,28 +39,29 @@ import (
 )
 
 const (
-	AccountDetailsURL       = "/cosmos/auth/v1beta1/accounts/%v"
-	LastNoAckURL            = "/heimdall/checkpoint/v1beta1/last-no-ack"
-	CheckpointParamsURL     = "/heimdall/checkpoint/v1beta1/params"
-	ChainManagerParamsURL   = "/heimdall/chainmanager/v1beta1/params"
-	ProposersURL            = "/heimdall/staking/v1beta1/proposer/%v"
-	BufferedCheckpointURL   = "/heimdall/checkpoint/v1beta1/buffer"
-	LatestCheckpointURL     = "/heimdall/checkpoint/v1beta1/latest"
-	LatestSpanURL           = "/heimdall/bor/v1beta1/latest-span"
-	NextSpanInfoURL         = "/heimdall/bor/v1beta1/prepare-next-span"
-	NextSpanSeedURL         = "/heimdall/bor/v1beta1/next-span-seed"
-	DividendAccountRootURL  = "/heimdall/topup/v1beta1/dividend-account-root"
-	ValidatorURL            = "/heimdall/staking/v1beta1/validator/%v"
-	CurrentValidatorSetURL  = "/heimdall/staking/v1beta1/validator-set"
-	StakingTxStatusURL      = "/heimdall/staking/v1beta1/isoldtx"
-	TopupTxStatusURL        = "/heimdall/topup/v1beta1/isoldtx"
-	ClerkTxStatusURL        = "/heimdall/clerk/v1beta1/isoldtx"
-	LatestSlashInfoBytesURL = "/slashing/latest_slash_info_bytes"
-	TickSlashInfoListURL    = "/slashing/tick_slash_infos"
-	SlashingTxStatusURL     = "/slashing/isoldtx"
-	SlashingTickCountURL    = "/slashing/tick-count"
-
-	TransactionTimeout      = 1 * time.Minute
+	AccountDetailsURL      = "/cosmos/auth/v1beta1/accounts/%v"
+	LastNoAckURL           = "/heimdall/checkpoint/v1beta1/last-no-ack"
+	CheckpointParamsURL    = "/heimdall/checkpoint/v1beta1/params"
+	ChainManagerParamsURL  = "/heimdall/chainmanager/v1beta1/params"
+	ProposersURL           = "/heimdall/staking/v1beta1/proposer/%v"
+	BufferedCheckpointURL  = "/heimdall/checkpoint/v1beta1/buffer"
+	LatestCheckpointURL    = "/heimdall/checkpoint/v1beta1/latest"
+	LatestSpanURL          = "/heimdall/bor/v1beta1/latest-span"
+	NextSpanInfoURL        = "/heimdall/bor/v1beta1/prepare-next-span"
+	NextSpanSeedURL        = "/heimdall/bor/v1beta1/next-span-seed"
+	DividendAccountRootURL = "/heimdall/topup/v1beta1/dividend-account-root"
+	ValidatorURL           = "/heimdall/staking/v1beta1/validator/%v"
+	CurrentValidatorSetURL = "/heimdall/staking/v1beta1/validator-set"
+	StakingTxStatusURL     = "/heimdall/staking/v1beta1/isoldtx"
+	TopupTxStatusURL       = "/heimdall/topup/v1beta1/isoldtx"
+	ClerkTxStatusURL       = "/heimdall/clerk/v1beta1/isoldtx"
+	// Todo: once slashing enabled uncomment this
+	//LatestSlashInfoBytesURL = "/slashing/latest_slash_info_bytes"
+	//TickSlashInfoListURL    = "/slashing/tick_slash_infos"
+	//SlashingTxStatusURL     = "/slashing/isoldtx"
+	//SlashingTickCountURL    = "/slashing/tick-count"
+	//
+	//TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
 	BlockInterval           = 6 * time.Second
 	TaskDelayBetweenEachVal = 3 * BlockInterval
@@ -361,14 +362,13 @@ func GetBufferedCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 		logger.Debug("Error fetching buffered checkpoint", "err", err)
 		return nil, err
 	}
-
-	var checkpoint hmTypes.Checkpoint
+	var checkpoint checkpointTypes.QueryCheckpointBufferResponse
 	if err := jsonpb.UnmarshalString(string(response), &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
 		return nil, err
 	}
 
-	return &checkpoint, nil
+	return checkpoint.CheckpointBuffer, nil
 }
 
 // GetlastestCheckpoint return last successful checkpoint
@@ -380,13 +380,13 @@ func GetlastestCheckpoint(cliCtx client.Context) (*hmTypes.Checkpoint, error) {
 		return nil, err
 	}
 
-	var checkpoint hmTypes.Checkpoint
+	var checkpoint checkpointTypes.QueryLatestCheckpointResponse
 	if err := jsonpb.UnmarshalString(string(response), &checkpoint); err != nil {
 		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
 		return nil, err
 	}
 
-	return &checkpoint, nil
+	return checkpoint.LatestCheckpoint, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format
@@ -415,7 +415,7 @@ func FetchNextSpanDetails(cliCtx client.Context, id uint64, start uint64) (*type
 	q := req.URL.Query()
 	q.Add("span_id", strconv.FormatUint(id, 10))
 	q.Add("start_block", strconv.FormatUint(start, 10))
-	q.Add("chain_id", configParams.ChainParams.BorChainID)
+	q.Add("bor_chain_id", configParams.ChainParams.BorChainID)
 	q.Add("proposer", helper.GetFromAddress(cliCtx).String())
 	req.URL.RawQuery = q.Encode()
 
