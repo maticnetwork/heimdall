@@ -84,11 +84,11 @@ func (msg MsgCheckpoint) GetSideSignBytes() []byte {
 	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
 	borChainID, _ := strconv.ParseUint(msg.BorChainID, 10, 64)
 	return appendBytes32(
-		[]byte(msg.Proposer),
+		hmCommonTypes.HexToHeimdallAddress(msg.Proposer).Bytes(),
 		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
-		[]byte(msg.RootHash),
-		[]byte(msg.AccountRootHash),
+		hmCommonTypes.HexToHeimdallHash(msg.RootHash).Bytes(),
+		hmCommonTypes.HexToHeimdallHash(msg.AccountRootHash).Bytes(),
 		new(big.Int).SetUint64(borChainID).Bytes(),
 	)
 }
@@ -132,8 +132,8 @@ func (msg MsgCheckpointAck) Route() string {
 
 // GetSigners returns signers
 func (msg MsgCheckpointAck) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
-
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 // GetSignBytes returns sign bytes
@@ -201,7 +201,8 @@ func (msg MsgCheckpointNoAck) Route() string {
 }
 
 func (msg MsgCheckpointNoAck) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{sdk.AccAddress([]byte(msg.From))}
+	addr, _ := sdk.AccAddressFromHex(msg.From)
+	return []sdk.AccAddress{addr}
 }
 
 func (msg MsgCheckpointNoAck) GetSignBytes() []byte {

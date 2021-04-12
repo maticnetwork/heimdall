@@ -32,7 +32,7 @@ func NewHeimdallListener() *HeimdallListener {
 
 // Start starts new block subscription
 func (hl *HeimdallListener) Start() error {
-	hl.Logger.Info("Starting")
+	hl.Logger.Info("Starting the heimdall listener...")
 
 	// create cancellable context
 	headerCtx, cancelHeaderProcess := context.WithCancel(context.Background())
@@ -150,10 +150,15 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		hl.Logger.Error("Error while fetching heimdall node status", "error", err)
 		return fromBlock, toBlock, err
 	}
+
 	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
 
 	// fromBlock - get last block from storage
-	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
+	hasLastBlock, err := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
+	if err != nil {
+		hl.Logger.Error("Error while fetching "+heimdallLastBlockKey+" from storage", "error", err)
+	}
+
 	if hasLastBlock {
 		lastBlockBytes, err := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
 		if err != nil {
@@ -163,7 +168,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
 			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", result)
-			fromBlock = uint64(result) + 1
+			fromBlock = result + 1
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
 			toBlock = 0

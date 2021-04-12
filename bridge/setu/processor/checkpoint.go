@@ -10,11 +10,11 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/maticnetwork/heimdall/app"
+
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
 	"github.com/gogo/protobuf/jsonpb"
-
-	"github.com/cosmos/cosmos-sdk/client"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -150,7 +150,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		}
 
 		if bufferedCheckpoint != nil && !(bufferedCheckpoint.TimeStamp == 0 || ((timeStamp > bufferedCheckpoint.TimeStamp) && timeStamp-bufferedCheckpoint.TimeStamp >= checkpointBufferTime)) {
-			cp.Logger.Info("Checkpoint already exits in buffer", "Checkpoint", bufferedCheckpoint.String())
+			cp.Logger.Info("Checkpoint already exists in buffer", "Checkpoint", bufferedCheckpoint.String())
 			return nil
 		}
 
@@ -251,7 +251,6 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		checkpointNumber := big.NewInt(0).Div(event.HeaderBlockId, big.NewInt(0).SetUint64(params.CheckpointParams.ChildBlockInterval))
-
 		cp.Logger.Info(
 			"✅ Received task to send checkpoint-ack to heimdall",
 			"event", eventName,
@@ -274,21 +273,16 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		}
 
 		// create msg checkpoint ack message
-		accAddr, err := sdk.AccAddressFromHex(event.Proposer.Hex())
-		if err != nil {
-			return err
-		}
 		msg := checkpointTypes.NewMsgCheckpointAck(
-			helper.GetFromAddress(cp.cliCtx),
+			helper.GetAddress(),
 			checkpointNumber.Uint64(),
-			accAddr,
+			event.Proposer.Bytes(),
 			event.Start.Uint64(),
 			event.End.Uint64(),
 			event.Root,
 			hmCommonTypes.BytesToHeimdallHash(log.TxHash.Bytes()),
 			uint64(log.Index),
 		)
-
 		// return broadcast to heimdall
 		if err := cp.txBroadcaster.BroadcastToHeimdall(&msg); err != nil {
 			cp.Logger.Error("Error while broadcasting checkpoint-ack to heimdall", "error", err)
@@ -485,15 +479,17 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(params util.Pa
 	}
 
 	// fetch side txs sigs
-	//decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
-	//stdTx, err := decoder(tx.Tx)
-	//if err != nil {
-	//	cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
-	//	return err
-	//}
+	decoder := app.MakeEncodingConfig().TxConfig.TxDecoder()
 
-	cmsg := client.TxConfig(nil).NewTxBuilder().GetTx().GetMsgs()[0]
-	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
+	stdTx, err := decoder(tx.Tx)
+	if err != nil {
+		cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
+		return err
+	}
+
+	getMsgs := stdTx.GetMsgs()
+	msg := getMsgs[0]
+	sideMsg, ok := msg.(hmTypes.SideTxMsg)
 	if !ok {
 		cp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
 		return err

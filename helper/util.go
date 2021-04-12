@@ -12,24 +12,28 @@ import (
 	"path"
 	"sort"
 
+	ethTypes "github.com/maticnetwork/bor/core/types"
+
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+
+	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
+
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
+
+	tmTypes "github.com/tendermint/tendermint/types"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authsign "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
-	ethTypes "github.com/maticnetwork/bor/core/types"
-	ethCrypto "github.com/maticnetwork/bor/crypto"
+	ethcrypto "github.com/maticnetwork/bor/crypto"
 	secp256k1Crypto "github.com/maticnetwork/bor/crypto/secp256k1"
-	"github.com/tendermint/tendermint/crypto"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-	tmproto "github.com/tendermint/tendermint/proto/tendermint/types"
-	tmTypes "github.com/tendermint/tendermint/types"
-
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmCommonTypes "github.com/maticnetwork/heimdall/types/common"
+	"github.com/tendermint/tendermint/crypto"
 )
 
 // ZeroHash represents empty hash
@@ -142,11 +146,11 @@ func AppendPubkeyPrefix(signerPubKey []byte) []byte {
 
 // DecompressPubKey decompress pub key
 func DecompressPubKey(compressed []byte) ([]byte, error) {
-	ecdsaPubkey, err := ethCrypto.DecompressPubkey(compressed)
+	ecdsaPubkey, err := ethcrypto.DecompressPubkey(compressed)
 	if err != nil {
 		return nil, err
 	}
-	return ethCrypto.FromECDSAPub(ecdsaPubkey), nil
+	return ethcrypto.FromECDSAPub(ecdsaPubkey), nil
 }
 
 // CompressPubKey decompress pub key
@@ -154,11 +158,11 @@ func CompressPubKey(uncompressedBytes []byte) ([]byte, error) {
 	if len(uncompressedBytes) == UNCOMPRESSED_PUBKEY_SIZE {
 		uncompressedBytes = AppendPubkeyPrefix(uncompressedBytes)
 	}
-	uncompressed, err := ethCrypto.UnmarshalPubkey(uncompressedBytes)
+	uncompressed, err := ethcrypto.UnmarshalPubkey(uncompressedBytes)
 	if err != nil {
 		return nil, err
 	}
-	return ethCrypto.CompressPubkey(uncompressed), nil
+	return ethcrypto.CompressPubkey(uncompressed), nil
 }
 
 // GetUpdatedValidators updates validators in validator set
@@ -210,7 +214,7 @@ func ToBytes32(x []byte) [32]byte {
 
 // BuildAndBroadcastMsgs creates transaction and broadcasts it
 func BuildAndBroadcastMsgs(cliCtx client.Context, txFactory tx.Factory, msgs []sdk.Msg) (res *sdk.TxResponse, err error) {
-	txBytes, err := GetSignedTxBytesNew(cliCtx, txFactory, msgs)
+	txBytes, err := GetSignedTxBytes(cliCtx, txFactory, msgs)
 	if err != nil {
 		return &sdk.TxResponse{}, err
 	}
@@ -220,7 +224,7 @@ func BuildAndBroadcastMsgs(cliCtx client.Context, txFactory tx.Factory, msgs []s
 }
 
 // Get Sing
-func GetSignedTxBytesNew(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]byte, error) {
+func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]byte, error) {
 	txf, err := PrepareTxBuilderFactory(cliCtx, txf)
 	if err != nil {
 		return nil, err
@@ -235,17 +239,33 @@ func GetSignedTxBytesNew(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) 
 		return nil, err
 	}
 
+	signMode := txf.SignMode()
+	sigData := signing.SingleSignatureData{
+		SignMode:  signMode,
+		Signature: nil,
+	}
+	sig := signing.SignatureV2{
+		PubKey:   GetPubKeyForCosmos(),
+		Data:     &sigData,
+		Sequence: txf.Sequence(),
+	}
+
+	if err := txBuilder.SetSignatures(sig); err != nil {
+		return nil, err
+	}
+
 	signData := authsign.SignerData{
 		ChainID:       txf.ChainID(),
 		AccountNumber: txf.AccountNumber(),
 		Sequence:      txf.Sequence(),
 	}
 
-	sig, err := SignWithPrivKey(txf.SignMode(), signData, txBuilder, cliCtx.TxConfig, txf.Sequence())
+	sigV2Bytes, err := SignWithPrivKey(txf.SignMode(), signData, txBuilder, cliCtx.TxConfig, txf.Sequence())
 	if err != nil {
 		return nil, err
 	}
-	err = txBuilder.SetSignatures(sig)
+
+	err = txBuilder.SetSignatures(sigV2Bytes)
 	if err != nil {
 		return nil, err
 	}
@@ -258,8 +278,9 @@ func GetSignedTxBytesNew(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) 
 	return txBytes, nil
 }
 
+// Sign the msg with private key
 func Sign(msg []byte) ([]byte, error) {
-	return ethCrypto.Sign(ethCrypto.Keccak256Hash(msg).Bytes(), GetPrivKey().ToECDSA())
+	return ethcrypto.Sign(ethcrypto.Keccak256Hash(msg).Bytes(), GetPrivKey().ToECDSA())
 }
 
 // SignWithPrivKey signs a given tx with the given private key, and returns the
@@ -297,91 +318,6 @@ func SignWithPrivKey(
 
 	return sigV2, nil
 }
-
-// GetSignedTxBytes returns signed tx bytes
-//func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]byte, error) {
-//	txf, err := PrepareTxBuilderFactory(cliCtx, txf)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	fromName := cliCtx.GetFromName()
-//	// todo: we need to find sign the msg when there is no fromName
-//	if fromName == "" {
-//		//return txBldr.BuildAndSign(GetPrivKey(), msgs)
-//
-//		txBuilder, err := tx.BuildUnsignedTx(txf, msgs...)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		err = tx.Sign(txf, fromName, txBuilder)
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		return txBytes, nil
-//	}
-//
-//	if cliCtx.Simulate {
-//		return nil, nil
-//	}
-//
-//	txBuilder, err := tx.BuildUnsignedTx(txf, msgs...)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	if !cliCtx.SkipConfirm {
-//		out, err := cliCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
-//		if err != nil {
-//			return nil, err
-//		}
-//
-//		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", out)
-//
-//		buf := bufio.NewReader(os.Stdin)
-//		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf, os.Stderr)
-//
-//		if err != nil || !ok {
-//			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-//			return nil, err
-//		}
-//	}
-//
-//	err = tx.Sign(txf, fromName, txBuilder)
-//	if err != nil {
-//		return nil, err
-//	}
-//	// todo: remove sign method for tx and sign with priv key
-//	//cryptoPrivKey := GetCryptoPrivKey()
-//	signData := authsign.SignerData{
-//		ChainID:       txf.ChainID(),
-//		AccountNumber: txf.AccountNumber(),
-//		Sequence:      txf.Sequence(),
-//	}
-//	sig, err := tx.SignWithPrivKey(txf.SignMode(), signData, txBuilder, cryptoPrivKey, cliCtx.TxConfig, txf.Sequence())
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	err = txBuilder.SetSignatures(sig)
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
-//	if err != nil {
-//		return nil, err
-//	}
-//
-//	return txBytes, nil
-//}
 
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx client.Context, txBytes []byte, mode string) (res *sdk.TxResponse, err error) {
@@ -430,7 +366,7 @@ type sideTxSig struct {
 
 // RecoverPubkey builds a StdSignature for given a StdSignMsg.
 func recoverPubkey(msg []byte, sig []byte) ([]byte, error) {
-	data := ethCrypto.Keccak256(msg)
+	data := ethcrypto.Keccak256(msg)
 	return secp256k1Crypto.RecoverPubkey(data, sig[:])
 }
 
@@ -491,4 +427,26 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 	}
 
 	return sigs, nil
+}
+
+// ValidateAndCompressPubKey validate and compress the pubkey
+func ValidateAndCompressPubKey(pubkeyBytes []byte) ([]byte, error) {
+	if len(pubkeyBytes) == UNCOMPRESSED_PUBKEY_SIZE {
+		pubkeyBytes = AppendPubkeyPrefix(pubkeyBytes)
+	}
+
+	// check if key is uncompressed
+	if len(pubkeyBytes) == UNCOMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
+		var err error
+		pubkeyBytes, err = CompressPubKey(pubkeyBytes)
+		if err != nil {
+			return nil, fmt.Errorf("Invalid uncompressed pubkey %s", err)
+		}
+	}
+
+	if len(pubkeyBytes) != COMPRESSED_PUBKEY_SIZE_WITH_PREFIX {
+		return nil, fmt.Errorf("Invalid compressed pubkey")
+	}
+
+	return pubkeyBytes, nil
 }

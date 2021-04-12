@@ -8,6 +8,8 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/tendermint/tendermint/libs/cli"
+
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 
 	"github.com/maticnetwork/heimdall/bridge/setu/processor"
@@ -40,8 +42,7 @@ func GetStartCmd() *cobra.Command {
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-
-			// create codec
+			homeDir := viper.GetString(cli.HomeFlag)
 			cdc, _ := app.MakeCodecs()
 			// encoding
 			encoding := app.MakeEncodingConfig()
@@ -62,6 +63,7 @@ func GetStartCmd() *cobra.Command {
 				WithTxConfig(encoding.TxConfig).
 				WithFromAddress(helper.GetAddress()).
 				WithChainID(chainID).
+				WithHomeDir(homeDir).
 				WithSkipConfirmation(true)
 
 			cliCtx.BroadcastMode = flags.BroadcastAsync
@@ -74,8 +76,8 @@ func GetStartCmd() *cobra.Command {
 			// selected services to start
 			var services []service.Service
 			services = append(services,
-				listener.NewListenerService(cliCtx, cdc, _queueConnector, _httpClient),
-				processor.NewProcessorService(cliCtx, cdc, _queueConnector, _httpClient, _txBroadcaster, _paramsContext),
+				listener.NewListenerService(cliCtx, _queueConnector, _httpClient),
+				processor.NewProcessorService(cliCtx, _queueConnector, _httpClient, _txBroadcaster, _paramsContext),
 			)
 
 			// sync group
@@ -156,6 +158,12 @@ func GetStartCmd() *cobra.Command {
 	if err := viper.BindPFlag("only", startCmd.Flags().Lookup("only")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
 	}
+
+	startCmd.Flags().String(cli.HomeFlag, app.DefaultNodeHome, "node's home directory")
+	if err := viper.BindPFlag(cli.HomeFlag, startCmd.Flags().Lookup(cli.HomeFlag)); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | "+cli.HomeFlag, "Error", err)
+	}
+
 	return startCmd
 }
 

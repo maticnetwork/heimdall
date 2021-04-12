@@ -2,6 +2,7 @@ package processor
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -64,8 +65,11 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		signerPubKey := event.SignerPubkey
-		if len(signerPubKey) == 64 {
-			signerPubKey = util.AppendPrefix(signerPubKey)
+		// convert PubKey to bytes
+		pubkeyBytes, err := helper.ValidateAndCompressPubKey(signerPubKey)
+		if err != nil {
+			sp.Logger.Error("Error while uncompressed pubkey", "name", eventName, "error", err)
+			return fmt.Errorf("Invalid uncompressed pubkey %s", err)
 		}
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
 			sp.Logger.Info("Ignoring task to send validatorjoin to heimdall as already processed",
@@ -75,7 +79,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 				"nonce", event.Nonce,
 				"amount", event.Amount,
 				"totalAmount", event.Total,
-				"SignerPubkey", hmCommonTypes.NewPubKey(signerPubKey).String(),
+				"SignerPubkey", hmCommonTypes.NewPubKey(pubkeyBytes).String(),
 				"txHash", hmCommonTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 				"logIndex", uint64(vLog.Index),
 				"blockNumber", vLog.BlockNumber,
@@ -101,19 +105,20 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			"nonce", event.Nonce,
 			"amount", event.Amount,
 			"totalAmount", event.Total,
-			"SignerPubkey", hmCommonTypes.NewPubKey(signerPubKey).String(),
+			"SignerPubkey", hmCommonTypes.NewPubKey(pubkeyBytes).String(),
 			"txHash", hmCommonTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			"logIndex", uint64(vLog.Index),
 			"blockNumber", vLog.BlockNumber,
 		)
 
 		// msg validator exit
+		accAddr, _ := sdk.AccAddressFromHex(helper.GetAddressStr())
 		msg := stakingTypes.NewMsgValidatorJoin(
-			helper.GetAddress(),
+			accAddr,
 			event.ValidatorId.Uint64(),
 			event.ActivationEpoch.Uint64(),
 			sdk.NewIntFromBigInt(event.Amount),
-			hmCommonTypes.NewPubKey(signerPubKey),
+			hmCommonTypes.NewPubKey(pubkeyBytes),
 			hmCommonTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
 			uint64(vLog.Index),
 			vLog.BlockNumber,
@@ -122,7 +127,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(&msg); err != nil {
-			sp.Logger.Error("Error while broadcasting unstakeInit to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
+			sp.Logger.Error("Error while broadcasting validatorJoin to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
 			return err
 		}
 	}
@@ -169,8 +174,9 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 		)
 
 		// msg validator exit
+		accAddr, _ := sdk.AccAddressFromHex(helper.GetAddressStr())
 		msg := stakingTypes.NewMsgValidatorExit(
-			helper.GetAddress(),
+			accAddr,
 			event.ValidatorId.Uint64(),
 			event.DeactivationEpoch.Uint64(),
 			hmCommonTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -223,8 +229,9 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		)
 
 		// msg validator exit
+		accAddr, _ := sdk.AccAddressFromHex(helper.GetAddressStr())
 		msg := stakingTypes.NewMsgStakeUpdate(
-			helper.GetAddress(),
+			accAddr,
 			event.ValidatorId.Uint64(),
 			sdk.NewIntFromBigInt(event.NewAmount),
 			hmCommonTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -253,9 +260,10 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		newSignerPubKey := event.SignerPubkey
-		if len(newSignerPubKey) == 64 {
-			newSignerPubKey = util.AppendPrefix(newSignerPubKey)
+		// convert PubKey to bytes
+		newSignerPubKey, err := helper.ValidateAndCompressPubKey(event.SignerPubkey)
+		if err != nil {
+			return fmt.Errorf("Invalid uncompressed pubkey %s", err)
 		}
 
 		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
@@ -286,8 +294,9 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 		)
 
 		// signer change
+		accAddr, _ := sdk.AccAddressFromHex(helper.GetAddressStr())
 		msg := stakingTypes.NewMsgSignerUpdate(
-			helper.GetAddress(),
+			accAddr,
 			event.ValidatorId.Uint64(),
 			hmCommonTypes.NewPubKey(newSignerPubKey),
 			hmCommonTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),
@@ -308,8 +317,8 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 // isOldTx  checks if tx is already processed or not
 func (sp *StakingProcessor) isOldTx(cliCtx client.Context, txHash string, logIndex uint64) (bool, error) {
 	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
+		"tx_hash":   txHash,
+		"log_index": logIndex,
 	}
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
