@@ -9,7 +9,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types/common"
@@ -136,7 +135,7 @@ func TopupTxCmd() *cobra.Command {
 			)
 
 			// broadcast msg with cli
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(cliCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -188,9 +187,9 @@ func WithdrawFeeTxCmd() *cobra.Command {
 				proposer,
 				sdk.NewIntFromBigInt(amount),
 			)
-			// broadcast msg with cli
 
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+			// broadcast msg with cli
+			return helper.GenerateOrBroadcastTxCli(cliCtx, cmd.Flags(), &msg)
 		},
 	}
 

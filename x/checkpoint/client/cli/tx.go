@@ -17,7 +17,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -91,7 +90,7 @@ func CheckpointTxCmd() *cobra.Command {
 				if nextCheckpoint.NextCheckpoint == nil {
 					return fmt.Errorf("nextcheckpoint is not found")
 				}
-				return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), nextCheckpoint.NextCheckpoint)
+				return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), nextCheckpoint.NextCheckpoint)
 			}
 
 			// get proposer
@@ -167,7 +166,7 @@ func CheckpointTxCmd() *cobra.Command {
 			)
 
 			// broadcast message
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -273,7 +272,7 @@ func CheckpointACKTxCmd() *cobra.Command {
 			)
 
 			// broadcast messages
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -320,8 +319,7 @@ func CheckpointNoACKTxCmd() *cobra.Command {
 			)
 
 			// broadcast messages
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
-
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
