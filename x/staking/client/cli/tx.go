@@ -138,7 +138,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			)
 
 			// broadcast message
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
