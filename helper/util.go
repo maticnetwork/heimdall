@@ -33,6 +33,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
+	tmcrypto "github.com/tendermint/tendermint/crypto"
+
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	ethcrypto "github.com/maticnetwork/bor/crypto"
@@ -437,7 +439,16 @@ type sideTxSig struct {
 // RecoverPubkey builds a StdSignature for given a StdSignMsg.
 func recoverPubkey(msg []byte, sig []byte) ([]byte, error) {
 	data := ethcrypto.Keccak256(msg)
-	return secp256k1Crypto.RecoverPubkey(data, sig[:])
+	pubkey, err := secp256k1Crypto.RecoverPubkey(data, sig[:])
+	if err != nil {
+		return nil, err
+	}
+	ecdsa, err := ethcrypto.UnmarshalPubkey(pubkey)
+	if err != nil {
+		return nil, err
+	}
+	addr := tmcrypto.Address(ethcrypto.PubkeyToAddress(*ecdsa).Bytes())
+	return addr, nil
 }
 
 // GetSideTxSigs returns sigs bytes from vote by tx hash
@@ -463,12 +474,10 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 				len(sideTxResult.Sig) == 65 &&
 				sideTxResult.Result == tmproto.SideTxResultType_YES {
 				// validate sig
-				var pk secp256k1.PubKey
-				if p, err := recoverPubkey(signedData, sideTxResult.Sig); err == nil {
-					copy(pk[:], p[:])
-
+				p, err := recoverPubkey(signedData, sideTxResult.Sig)
+				if err == nil {
 					// if it has valid sig, add it into side-tx sig array
-					if bytes.Equal(vote.ValidatorAddress.Bytes(), pk.Address().Bytes()) {
+					if bytes.Equal(vote.ValidatorAddress.Bytes(), p) {
 						sideTxSigs = append(sideTxSigs, &sideTxSig{
 							Address: vote.ValidatorAddress.Bytes(),
 							Sig:     sideTxResult.Sig,
