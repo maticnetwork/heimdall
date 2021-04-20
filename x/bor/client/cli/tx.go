@@ -8,7 +8,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/flags"
 
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
 
@@ -118,7 +117,7 @@ func PostSendProposeSpanTx() *cobra.Command {
 				seed,
 			)
 			//broadcast message
-			return tx.GenerateOrBroadcastTxCLI(cliCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(cliCtx, cmd.Flags(), &msg)
 		},
 	}
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")

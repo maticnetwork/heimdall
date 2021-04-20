@@ -8,7 +8,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
@@ -138,7 +137,7 @@ func ValidatorJoinTxCmd() *cobra.Command {
 			)
 
 			// broadcast message
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -236,7 +235,7 @@ func SignerUpdateTxCmd() *cobra.Command {
 			)
 
 			// broadcast messages
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -329,7 +328,7 @@ func StakeUpdateTxCmd() *cobra.Command {
 			}
 
 			// broadcast message
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 
@@ -419,7 +418,7 @@ func ValidatorExitTxCmd() *cobra.Command {
 			)
 
 			// broadcast message
-			return tx.GenerateOrBroadcastTxCLI(clientCtx, cmd.Flags(), &msg)
+			return helper.GenerateOrBroadcastTxCli(clientCtx, cmd.Flags(), &msg)
 		},
 	}
 

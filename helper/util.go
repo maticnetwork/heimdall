@@ -1,6 +1,7 @@
 package helper
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/hex"
 	"errors"
@@ -9,8 +10,13 @@ import (
 	"math/big"
 	"net/http"
 	"net/url"
+	"os"
 	"path"
 	"sort"
+
+	"github.com/cosmos/cosmos-sdk/client/input"
+
+	"github.com/spf13/pflag"
 
 	ethTypes "github.com/maticnetwork/bor/core/types"
 
@@ -214,6 +220,36 @@ func ToBytes32(x []byte) [32]byte {
 //	return legacytx.DefaultTxDecoder(cdc)
 //}
 
+func GenerateOrBroadcastTxCli(clientCtx client.Context, flagSet *pflag.FlagSet, msgs ...sdk.Msg) error {
+	txf := tx.NewFactoryCLI(clientCtx, flagSet)
+	if clientCtx.GenerateOnly {
+		return tx.GenerateTx(clientCtx, txf, msgs...)
+	}
+
+	return BuildAndBroadcastMsgsWithCli(clientCtx, txf, msgs...)
+}
+
+func BuildAndBroadcastMsgsWithCli(cliCtx client.Context, txf tx.Factory, msgs ...sdk.Msg) error {
+	txBytes, err := GetSignedTxBytes(cliCtx, txf, msgs)
+	if err != nil {
+		return err
+	}
+
+	// just simulate
+	if cliCtx.Simulate {
+		fmt.Println("TxBytes", "0x"+hex.EncodeToString(txBytes))
+		return nil
+	}
+
+	// broadcast to a Tendermint node
+	resp, err := BroadcastTxBytes(cliCtx, txBytes, "")
+	if err != nil {
+		return err
+	}
+
+	return cliCtx.PrintOutput(resp)
+}
+
 // BuildAndBroadcastMsgs creates transaction and broadcasts it
 func BuildAndBroadcastMsgs(cliCtx client.Context, txFactory tx.Factory, msgs []sdk.Msg) (res *sdk.TxResponse, err error) {
 	txBytes, err := GetSignedTxBytes(cliCtx, txFactory, msgs)
@@ -241,6 +277,40 @@ func GetSignedTxBytes(cliCtx client.Context, txf tx.Factory, msgs []sdk.Msg) ([]
 		return nil, err
 	}
 
+	if !cliCtx.SkipConfirm {
+		out, err := cliCtx.TxConfig.TxJSONEncoder()(txBuilder.GetTx())
+		if err != nil {
+			return nil, err
+		}
+
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", out)
+
+		buf := bufio.NewReader(os.Stdin)
+		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf, os.Stderr)
+
+		if err != nil || !ok {
+			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
+			return nil, err
+		}
+	}
+
+	// checking the fromName exists in CliCtx , then sign with msg with keyring
+	fromName := cliCtx.GetFromName()
+	if fromName != "" {
+		err = tx.Sign(txf, cliCtx.GetFromName(), txBuilder)
+		if err != nil {
+			return nil, err
+		}
+
+		txBytes, err := cliCtx.TxConfig.TxEncoder()(txBuilder.GetTx())
+		if err != nil {
+			return nil, err
+		}
+
+		return txBytes, nil
+	}
+
+	// if there is no fromName in cliCtx we will sign the msg with private key
 	signMode := txf.SignMode()
 	sigData := signing.SingleSignatureData{
 		SignMode:  signMode,
