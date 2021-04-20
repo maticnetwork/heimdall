@@ -30,7 +30,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20200815110645-5c35d600f0ca
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tendermint v0.34.8
+	github.com/tendermint/tendermint v0.34.10
 	github.com/tendermint/tm-db v0.6.4
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
