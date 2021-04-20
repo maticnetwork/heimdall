@@ -305,7 +305,7 @@ func StakeUpdateTxCmd() *cobra.Command {
 			}
 
 			event, err := contractCallerObj.DecodeValidatorStakeUpdateEvent(
-				common.FromHex(chainmanagerParams.ChainParams.StakingManagerAddress),
+				common.FromHex(chainmanagerParams.ChainParams.StakingInfoAddress),
 				receipt,
 				logIndex,
 			)
