@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -117,7 +118,7 @@ func (k msgServer) Checkpoint(goCtx context.Context, msg *types.MsgCheckpoint) (
 		return nil, types.ErrInvalidMsg
 	}
 
-	if !bytes.Equal([]byte(msg.Proposer), []byte(validatorSet.Proposer.Signer)) {
+	if !bytes.Equal([]byte(strings.ToLower(msg.Proposer)), []byte(strings.ToLower(validatorSet.Proposer.Signer))) {
 		logger.Error(
 			"Invalid proposer in msg",
 			"proposer", validatorSet.Proposer.Signer,
