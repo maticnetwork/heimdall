@@ -30,9 +30,26 @@ FROM ubuntu:latest
 
 RUN apt update && apt install ca-certificates -y
 
+RUN apt update -y && apt upgrade -y && apt install build-essential -y
+
+RUN apt update && apt install make
+
+RUN apt update && apt install vim -y
+
+RUN apt update && apt install -y wget
+
+RUN wget -c https://golang.org/dl/go1.16.3.linux-amd64.tar.gz
+
+RUN rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.3.linux-amd64.tar.gz
+
+ENV PATH $PATH:/usr/local/go/bin
+
+RUN mkdir -p /heimdall
+
+COPY --from=builder /root/heimdall/ /heimdall/
+
 # Copy required binarires to new container
 COPY --from=builder /root/heimdall/build/* /usr/local/bin/
-
 
 # add volumes
 VOLUME ["/root/.heimdalld", "./logs" ]
