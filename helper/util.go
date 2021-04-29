@@ -454,16 +454,16 @@ func recoverPubkey(msg []byte, sig []byte) ([]byte, error) {
 // GetSideTxSigs returns sigs bytes from vote by tx hash
 func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.CommitSig) (sigs [][3]*big.Int, err error) {
 	// side tx result with data
-	sideTxResultWithData := tmproto.SideTxResultWithData{
-		Result: &tmproto.SideTxResult{
-			TxHash: txHash,
-			Result: tmproto.SideTxResultType_YES,
-		},
-		Data: sideTxData,
-	}
+	// sideTxResultWithData := tmproto.SideTxResultWithData{
+	// 	Result: &tmproto.SideTxResult{
+	// 		TxHash: txHash,
+	// 		Result: tmproto.SideTxResultType_YES,
+	// 	},
+	// 	Data: sideTxData,
+	// }
 
 	// draft signed data
-	signedData := sideTxResultWithData.GetData()
+	// signedData := sideTxResultWithData.GetData()
 
 	sideTxSigs := make([]*sideTxSig, 0)
 	for _, vote := range unFilteredVotes {
@@ -474,15 +474,15 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 				len(sideTxResult.Sig) == 65 &&
 				sideTxResult.Result == tmproto.SideTxResultType_YES {
 				// validate sig
-				p, err := recoverPubkey(signedData, sideTxResult.Sig)
+				// p, err := recoverPubkey(signedData, sideTxResult.Sig)
 				if err == nil {
 					// if it has valid sig, add it into side-tx sig array
-					if bytes.Equal(vote.ValidatorAddress.Bytes(), p) {
-						sideTxSigs = append(sideTxSigs, &sideTxSig{
-							Address: vote.ValidatorAddress.Bytes(),
-							Sig:     sideTxResult.Sig,
-						})
-					}
+					// if bytes.Equal(vote.ValidatorAddress.Bytes(), p) {
+					sideTxSigs = append(sideTxSigs, &sideTxSig{
+						Address: vote.ValidatorAddress.Bytes(),
+						Sig:     sideTxResult.Sig,
+					})
+					// }
 				}
 			}
 			// break
