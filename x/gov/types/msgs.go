@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+
 	"github.com/gogo/protobuf/proto"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -135,7 +136,14 @@ func (m *MsgSubmitProposal) GetProposer() sdk.AccAddress {
 func (m *MsgSubmitProposal) GetContent() Content {
 	content, ok := m.Content.GetCachedValue().(Content)
 	if !ok {
-		return nil
+		// TODO : Update with proper solution, This is just a work around for TextProposal case.
+		x := &TextProposal{}
+		err := proto.Unmarshal(m.Content.Value, x)
+		if err != nil {
+			return nil
+		}
+		var p interface{} = x
+		return p.(Content)
 	}
 	return content
 }
