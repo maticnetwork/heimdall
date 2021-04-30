@@ -88,7 +88,7 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 
 			content := types.ContentFromProposalType(proposal.Title, proposal.Description, proposal.Type)
 
-			validatorID, err := cmd.Flags().GetInt64(FlagValidatorID)
+			validatorID, err := cmd.Flags().GetInt(FlagValidatorID)
 			if err != nil {
 				return err
 			}
@@ -96,7 +96,7 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 				return fmt.Errorf("Valid validator ID required")
 			}
 
-			msg, err := types.NewMsgSubmitProposal(content, amount, clientCtx.GetFromAddress(), hmTypes.ValidatorID(validatorID))
+			msg, err := types.NewMsgSubmitProposal(content, amount, helper.GetFromAddress(clientCtx), hmTypes.ValidatorID(validatorID))
 			if err != nil {
 				return fmt.Errorf("invalid message: %w", err)
 			}
