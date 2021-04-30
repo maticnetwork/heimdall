@@ -138,7 +138,10 @@ func (m *MsgSubmitProposal) GetContent() Content {
 	if !ok {
 		// TODO : Update with proper solution, This is just a work around for TextProposal case.
 		x := &TextProposal{}
-		proto.Unmarshal(m.Content.Value, x)
+		err := proto.Unmarshal(m.Content.Value, x)
+		if err != nil {
+			return nil
+		}
 		var p interface{} = x
 		return p.(Content)
 	}
