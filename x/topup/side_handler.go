@@ -141,7 +141,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 
 	// transfer fees to sender (proposer)
 	fromAddr, _ := sdk.AccAddressFromHex(msg.FromAddress)
-	if err := k.Bk.SendCoins(ctx, userAddr, fromAddr, topupAmount); err != nil {
+	if err := k.Bk.SendCoins(ctx, fromAddr, userAddr, topupAmount); err != nil {
 		return nil, err
 	}
 
