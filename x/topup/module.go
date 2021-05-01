@@ -22,6 +22,7 @@ import (
 	"github.com/maticnetwork/heimdall/x/topup/client/rest"
 	"github.com/maticnetwork/heimdall/x/topup/keeper"
 	"github.com/maticnetwork/heimdall/x/topup/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
@@ -68,6 +69,15 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONMarshaler, config client.TxE
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
 	}
 	return genState.Validate()
+}
+// NewSideTxHandler side tx handler
+func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
+	return NewSideTxHandler(am.keeper, am.contractCaller)
+}
+
+// NewPostTxHandler post tx handler
+func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
+	return NewPostTxHandler(am.keeper, am.contractCaller)
 }
 
 // RegisterRESTRoutes registers the capability module's REST service handlers.

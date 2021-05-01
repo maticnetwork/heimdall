@@ -59,6 +59,8 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
+	fmt.Println("------------- in side handler-")
+	fmt.Println(hmCommonTypes.BytesToHeimdallHash([]byte(msg.TxHash)))
 
 	// chainManager params
 	params := k.ChainKeeper.GetParams(ctx)
@@ -69,6 +71,8 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(common.ErrWaitForConfirmation)
 	}
+	fmt.Println("receipt")
+	fmt.Println(receipt)
 
 	// get event log for topup
 	//var stakingAddress [20]byte
@@ -80,6 +84,9 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 		k.Logger(ctx).Error("Error fetching log from txhash")
 		return hmCommon.ErrorSideTx(common.ErrDecodeEvent)
 	}
+
+	fmt.Println("eventLog")
+	fmt.Println(eventLog)
 
 	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
 		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
@@ -101,6 +108,8 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 		return hmCommon.ErrorSideTx(common.ErrInvalidMsg)
 	}
 
+	fmt.Println("SideHandleMsgTopup")
+
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for topup msg")
 	result.Result = tmprototypes.SideTxResultType_YES
 	return
@@ -108,6 +117,9 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 
 func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, sideTxResult tmprototypes.SideTxResultType) (*sdk.Result, error) {
 
+
+	fmt.Println("------------- in post handler-")
+	fmt.Println(hmCommonTypes.BytesToHeimdallHash([]byte(msg.TxHash)))
 	// Skip handler if topup is not approved
 	if sideTxResult != tmprototypes.SideTxResultType_YES {
 		k.Logger(ctx).Debug("Skipping new topup since side-tx didn't get yes votes")
@@ -126,6 +138,8 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 
 	k.Logger(ctx).Debug("Persisting topup state", "sideTxResult", sideTxResult)
 
+	fmt.Println("sideTxResult")
+	fmt.Println(sideTxResult)
 	// use event log user
 	user := msg.User
 
@@ -138,9 +152,15 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 		k.Logger(ctx).Error("Error while adding coins to user", "user", user, "topupAmount", topupAmount, "error", err)
 		return nil, err
 	}
+	fmt.Println("userAddr")
+	fmt.Println(userAddr)
 
 	// transfer fees to sender (proposer)
 	fromAddr, _ := sdk.AccAddressFromHex(msg.FromAddress)
+	fmt.Println("userAddr")
+	fmt.Println(userAddr)
+	fmt.Println("fromAddr")
+	fmt.Println(fromAddr)
 	if err := k.Bk.SendCoins(ctx, fromAddr, userAddr, topupAmount); err != nil {
 		return nil, err
 	}
@@ -167,6 +187,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 		),
 	})
 
+	fmt.Println("posthandle end")
 	return &sdk.Result{
 		Events: ctx.EventManager().ABCIEvents(),
 	}, nil

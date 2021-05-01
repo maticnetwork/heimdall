@@ -504,6 +504,7 @@ func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock
 
 // EndBlocker application updates every end block
 func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) abci.ResponseEndBlock {
+	fmt.Println("EndBlocker")
 
 	if proposer, ok := app.ChainKeeper.GetBlockProposer(ctx); ok {
 		moduleAccount := app.AccountKeeper.GetModuleAccount(ctx, authtypes.FeeCollectorName)
@@ -531,6 +532,15 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		allValidators,       // All validators
 		ackCount,            // ack count
 	)
+
+	fmt.Println("currentValidatorSet")
+	fmt.Println(currentValidatorSet)
+	fmt.Println("allValidators")
+	fmt.Println(allValidators)
+	fmt.Println("ackCount")
+	fmt.Println(ackCount)
+	fmt.Println("setUpdates")
+	fmt.Println(setUpdates)
 
 	if len(setUpdates) > 0 {
 		// create new validator set
@@ -564,6 +574,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 
 	// end block
 	app.mm.EndBlock(ctx, req)
+	fmt.Println("end endblocker")
 
 	// send validator updates to peppermint
 	return abci.ResponseEndBlock{
