@@ -28,11 +28,39 @@ RUN make build
 # Pull all binaries into a second stage deploy alpine container
 FROM ubuntu:latest
 
-RUN apt update && apt install ca-certificates -y
+RUN apt update -y && apt upgrade -y
+
+RUN apt install ca-certificates -y
+
+# <-------------------- TODO: ONLY FOR TESTING PURPOSE, REMOVE LATER FROM HERE ------------------>
+# <------------------------------------------------------------------------------------------------->
+
+RUN apt install build-essential -y
+
+RUN apt install make
+
+RUN apt install vim -y
+
+RUN apt install -y wget
+
+RUN wget https://golang.org/dl/go1.16.3.linux-amd64.tar.gz
+
+RUN rm -rf /usr/local/go && tar -C /usr/local -xzf go1.16.3.linux-amd64.tar.gz
+
+ENV PATH $PATH:/usr/local/go/bin
+
+RUN rm go1.16.3.linux-amd64.tar.gz
+
+RUN mkdir -p /heimdall
+
+COPY --from=builder /root/heimdall/ /heimdall/
+
+# <------------------------------------------------------------------------------------------------->
+# <------------------------ REMOVE TILL HERE ------------------------------------------------------->
+
 
 # Copy required binarires to new container
 COPY --from=builder /root/heimdall/build/* /usr/local/bin/
-
 
 # add volumes
 VOLUME ["/root/.heimdalld", "./logs" ]

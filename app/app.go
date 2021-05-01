@@ -378,10 +378,6 @@ func NewHeimdallApp(
 		stakingtypes.ModuleName,
 		govtypes.ModuleName,
 	)
-	app.mm.SetOrderEndBlockers(
-		stakingtypes.ModuleName,
-		govtypes.ModuleName,
-	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
 	// properly initialized with tokens from genesis accounts.
