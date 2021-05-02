@@ -63,6 +63,18 @@ func (k Querier) ValidatorSet(c context.Context, req *types.QueryValidatorSetReq
 	return &types.QueryValidatorSetResponse{ValidatorSet: validatorSet}, nil
 }
 
+// Validators queries all validators details
+func (k Querier) Validators(c context.Context, req *types.QueryValidatorsRequest) (*types.QueryValidatorsResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "empty request")
+	}
+
+	ctx := sdk.UnwrapSDKContext(c)
+	validators := k.GetAllValidators(ctx)
+
+	return &types.QueryValidatorsResponse{Validators: validators}, nil
+}
+
 // StakingOldTx returns the tx is old or not with given txhash and logindex
 func (k Querier) StakingOldTx(c context.Context, req *types.QueryStakingOldTxRequest) (*types.QueryStakingOldTxResponse, error) {
 	if req == nil {

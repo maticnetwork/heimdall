@@ -2,7 +2,7 @@ package processor
 
 import (
 	"encoding/json"
-
+	"fmt"
 	hmCommon "github.com/maticnetwork/heimdall/types/common"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -81,6 +81,10 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		if err != nil {
 			return err
 		}
+
+		fmt.Println("bridge log----SendTopup")
+		fmt.Println(userAddr)
+		fmt.Println("***********************************8")
 		// create msg checkpoint ack message
 		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), userAddr, sdk.NewIntFromBigInt(event.Fee), hmCommon.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 

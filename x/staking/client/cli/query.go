@@ -28,6 +28,7 @@ func GetQueryCmd(queryRoute string) *cobra.Command {
 	stakingQueryCmd.AddCommand(
 		GetValidatorInfoCmd(),
 		GetCurrentValSetCmd(),
+		GetAllValidatorsCmd(),
 	)
 
 	return stakingQueryCmd
@@ -77,7 +78,7 @@ func GetCurrentValSetCmd() *cobra.Command {
 		Short: "show current validator set",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx := client.GetClientContextFromCmd(cmd)
-			clientCtx, err := client.ReadTxCommandFlags(clientCtx, cmd.Flags())
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
 			if err != nil {
 				return err
 			}
@@ -91,6 +92,33 @@ func GetCurrentValSetCmd() *cobra.Command {
 			}
 
 			return clientCtx.PrintOutput(res.ValidatorSet)
+		},
+	}
+	flags.AddQueryFlagsToCmd(cmd)
+	return cmd
+}
+
+// GetAllValidatorsCmd Queries all Validators information
+func GetAllValidatorsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "validators",
+		Short: "show all validators",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.ReadQueryCommandFlags(clientCtx, cmd.Flags())
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			params := &types.QueryValidatorsRequest{}
+			res, err := queryClient.Validators(context.Background(), params)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintOutput(res)
 		},
 	}
 	flags.AddQueryFlagsToCmd(cmd)

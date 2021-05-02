@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
+	"runtime"
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -397,6 +399,10 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		// get main tx receipt
 		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
+			_, file, no, ok := runtime.Caller(1)
+			if ok {
+				fmt.Printf("called from %s#%d\n", file, no)
+			}
 			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
 			return nil, err
 		}

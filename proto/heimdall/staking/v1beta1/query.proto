@@ -19,6 +19,11 @@ service Query {
             "/heimdall/staking/v1beta1/validator/{validator_id}";
     }
 
+    rpc Validators(QueryValidatorsRequest) returns (QueryValidatorsResponse) {
+        option (google.api.http).get =
+            "/heimdall/staking/v1beta1/validators";
+    }
+
     // ValidatorSet queries the Current Validator Set
     rpc ValidatorSet(QueryValidatorSetRequest)
         returns (QueryValidatorSetResponse) {
@@ -49,6 +54,15 @@ message QueryValidatorRequest {
 message QueryValidatorResponse {
     // validator defines the the validator info.
     heimdall.types.Validator validator = 1;
+}
+
+// QueryValidatorsRequest is request type for the Query/Validators RPC method
+message QueryValidatorsRequest {}
+
+// QueryValidatorsResponse is response type for the Query/Validators RPC method
+message QueryValidatorsResponse {
+    // validator defines the the validator info.
+    repeated heimdall.types.Validator validators = 1;
 }
 
 // QueryValidatorSetRequest is request type for the Query/ValidatorSet RPC

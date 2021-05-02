@@ -104,8 +104,8 @@ func TopupTxCmd() *cobra.Command {
 				return err
 			}
 
-			stakingManagerAddress, _ := sdk.AccAddressFromHex(chainmanagerParams.ChainParams.StakingManagerAddress)
-
+			stakingInfoAddress, _ := sdk.AccAddressFromHex(chainmanagerParams.ChainParams.StakingInfoAddress)
+			fmt.Println("its coming to tx cli#108 - topup msg########################\n***************")
 			// get main tx receipt
 			receipt, err := contractCallerObj.GetConfirmedTxReceipt(
 				hmTypes.HexToHeimdallHash(txhash).EthHash(),
@@ -114,9 +114,9 @@ func TopupTxCmd() *cobra.Command {
 			if err != nil || receipt == nil {
 				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
 			}
-
+			fmt.Println("its coming to tx cli - topup msg########################\n***************")
 			event, err := contractCallerObj.DecodeValidatorTopupFeesEvent(
-				stakingManagerAddress,
+				stakingInfoAddress,
 				receipt,
 				logIndex,
 			)

@@ -65,6 +65,11 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	chainParams := params.ChainParams
 
 	// get main tx receipt
+	fmt.Println("****************msg.TxHash")
+	fmt.Println(msg.TxHash)
+	fmt.Println("*************EthHash**************")
+	fmt.Println(hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash())
+	fmt.Println("*********************")
 	receipt, err := contractCaller.GetConfirmedTxReceipt(hmCommonTypes.HexToHeimdallHash(msg.TxHash).EthHash(), params.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
 		return hmCommon.ErrorSideTx(common.ErrWaitForConfirmation)
@@ -73,7 +78,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, co
 	// get event log for topup
 	//var stakingAddress [20]byte
 	//copy(stakingAddress[:], chainParams.StakingInfoAddress)
-
+	fmt.Println("Yes, its comming here- Topup SideHandle")
 	accountAddr, _ := sdk.AccAddressFromHex(chainParams.StakingInfoAddress)
 	eventLog, err := contractCaller.DecodeValidatorTopupFeesEvent(accountAddr, receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
@@ -141,9 +146,20 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 
 	// transfer fees to sender (proposer)
 	fromAddr, _ := sdk.AccAddressFromHex(msg.FromAddress)
-	if err := k.Bk.SendCoins(ctx, userAddr, fromAddr, topupAmount); err != nil {
+	fmt.Println("*********************fromAddress-PostSideTxTopup*********************")
+	fmt.Println(fromAddr)
+	fmt.Println("*********************userAddress-PostSideTxTopup*********************")
+	fmt.Println(userAddr)
+	fmt.Println("*********************TopupAmount-PostSideTxTopup*********************")
+	fmt.Println(topupAmount)
+	fmt.Println("*********************f****************************************")
+
+	fmt.Println(k.Bk.GetBalance(ctx,fromAddr,"matic"))
+	if err := k.Bk.SendCoins(ctx, fromAddr, userAddr, topupAmount); err != nil {
 		return nil, err
 	}
+
+	fmt.Println("***********************Comminggg**************************************")
 
 	k.Logger(ctx).Debug("Persisted topup state for", "user", user, "topupAmount", topupAmount.String())
 
@@ -167,6 +183,7 @@ func PostHandleMsgTopup(ctx sdk.Context, k keeper.Keeper, msg types.MsgTopup, si
 		),
 	})
 
+	fmt.Println("Successfully Topup is exectuted for Address:", userAddr)
 	return &sdk.Result{
 		Events: ctx.EventManager().ABCIEvents(),
 	}, nil
