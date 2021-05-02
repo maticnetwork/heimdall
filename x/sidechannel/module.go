@@ -3,6 +3,7 @@ package sidechannel
 import (
 	"encoding/json"
 	"math/rand"
+	"github.com/jinzhu/copier"
 
 	"github.com/gogo/protobuf/grpc"
 	"github.com/gorilla/mux"
@@ -168,7 +169,9 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 		height := ctx.BlockHeader().Height
 		validators := make([]*abci.Validator, len(req.LastCommitInfo.Votes))
 		for i, v := range req.LastCommitInfo.Votes {
-			validators[i] = &v.Validator
+			var v1 abci.Validator
+			copier.Copy(&v1, &v.Validator)
+		   	validators[i] = &v1
 		}
 
 		// set validators for height
