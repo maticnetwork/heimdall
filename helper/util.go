@@ -489,11 +489,11 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 		for _, sideTxResult := range vote.SideTxResults {
 			// find side-tx result by tx-hash
 			i++
-			fmt.Printf("************sideTxResult.TxHash %d ***************\n",i)
+			fmt.Printf("************sideTxResult.TxHash %d ***************\n", i)
 			fmt.Println(sideTxResult.TxHash)
 			fmt.Println("************************************")
 
-			fmt.Printf("************sideTxResult.Result %d ***************\n",i)
+			fmt.Printf("************sideTxResult.Result %d ***************\n", i)
 			fmt.Println(sideTxResult.Result)
 			fmt.Println("************************************")
 			if bytes.Equal(sideTxResult.TxHash, txHash) &&
@@ -513,12 +513,13 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []tmTypes.C
 					fmt.Println("**********ValidatorAddress Bytes**********")
 					fmt.Println(vote.ValidatorAddress.Bytes())
 					fmt.Println("************************************")
+					// TODO - Uncomment this if condition
 					// if it has valid sig, add it into side-tx sig array
 					//if bytes.Equal(vote.ValidatorAddress.Bytes(), p) {
-						sideTxSigs = append(sideTxSigs, &sideTxSig{
-							Address: vote.ValidatorAddress.Bytes(),
-							Sig:     sideTxResult.Sig,
-						})
+					sideTxSigs = append(sideTxSigs, &sideTxSig{
+						Address: vote.ValidatorAddress.Bytes(),
+						Sig:     sideTxResult.Sig,
+					})
 					//}
 				}
 			}
