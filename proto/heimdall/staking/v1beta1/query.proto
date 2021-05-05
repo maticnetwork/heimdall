@@ -20,8 +20,7 @@ service Query {
     }
 
     rpc Validators(QueryValidatorsRequest) returns (QueryValidatorsResponse) {
-        option (google.api.http).get =
-            "/heimdall/staking/v1beta1/validators";
+        option (google.api.http).get = "/heimdall/staking/v1beta1/validators";
     }
 
     // ValidatorSet queries the Current Validator Set

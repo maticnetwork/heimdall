@@ -14,12 +14,12 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/merr"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/x/bor/types"
 	chainManagerKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
+	paramtypes "github.com/maticnetwork/heimdall/x/params/types"
 	stakingKeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 )
 

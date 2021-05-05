@@ -33,10 +33,11 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	"github.com/cosmos/cosmos-sdk/x/params"
-	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	"github.com/gorilla/mux"
+
+	"github.com/maticnetwork/heimdall/x/params"
+	paramskeeper "github.com/maticnetwork/heimdall/x/params/keeper"
+	paramstypes "github.com/maticnetwork/heimdall/x/params/types"
 	"github.com/rakyll/statik/fs"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -359,7 +360,7 @@ func NewHeimdallApp(
 		staking.NewAppModule(appCodec, app.StakingKeeper, &app.caller),
 		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
-		params.NewAppModule(app.ParamsKeeper),
+		params.NewAppModule(appCodec, app.ParamsKeeper),
 		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 		bor.NewAppModule(appCodec, app.BorKeeper, &app.caller),
 		topup.NewAppModule(appCodec, app.TopupKeeper, &app.caller),
@@ -435,7 +436,6 @@ func NewHeimdallApp(
 		sidechannel.NewAppModule(appCodec, app.SidechannelKeeper),
 		// staking.NewAppModule(appCodec),
 		nil,
-		params.NewAppModule(app.ParamsKeeper),
 	)
 
 	// TODO : uncomment later

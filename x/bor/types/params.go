@@ -3,7 +3,7 @@ package types
 import (
 	fmt "fmt"
 
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramtypes "github.com/maticnetwork/heimdall/x/params/types"
 )
 
 // Default parameter values

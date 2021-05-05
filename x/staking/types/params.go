@@ -1,7 +1,7 @@
 package types
 
 import (
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	paramtypes "github.com/maticnetwork/heimdall/x/params/types"
 )
 
 const (

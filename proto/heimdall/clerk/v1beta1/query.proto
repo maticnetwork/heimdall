@@ -4,7 +4,6 @@ package heimdall.clerk.v1beta1;
 import "google/api/annotations.proto";
 import "heimdall/clerk/v1beta1/clerk.proto";
 import "gogoproto/gogo.proto";
-import "heimdall/base/v1beta1/query.proto";
 
 option go_package = "github.com/maticnetwork/heimdall/x/clerk/types";
 

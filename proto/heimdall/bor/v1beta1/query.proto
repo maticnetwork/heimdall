@@ -3,8 +3,6 @@ package heimdall.bor.v1beta1;
 
 import "gogoproto/gogo.proto";
 import "heimdall/base/v1beta1/span.proto";
-import "heimdall/base/v1beta1/query.proto";
-import "heimdall/base/v1beta1/validator.proto";
 import "google/api/annotations.proto";
 
 option go_package            = "github.com/maticnetwork/heimdall/x/bor/types";

@@ -8,8 +8,8 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	// "github.com/maticnetwork/heimdall/params/paramtypes"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	borCommon "github.com/maticnetwork/bor/common"
+	paramtypes "github.com/maticnetwork/heimdall/x/params/types"
 )
 
 // Default parameter values
