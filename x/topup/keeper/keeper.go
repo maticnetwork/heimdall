@@ -11,7 +11,7 @@ import (
 	bankKeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	chainKeeper "github.com/maticnetwork/heimdall/x/chainmanager/keeper"
-	paramtypes "github.com/maticnetwork/heimdall/x/params/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	stakingKeeper "github.com/maticnetwork/heimdall/x/staking/keeper"
 	"github.com/maticnetwork/heimdall/x/topup/types"
 	"github.com/tendermint/tendermint/libs/log"

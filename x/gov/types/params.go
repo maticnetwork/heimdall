@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	paramtypes "github.com/maticnetwork/heimdall/x/params/types"
+	paramtypes "github.com/cosmos/cosmos-sdk/x/params/types"
 )
 
 // Parameter store key
