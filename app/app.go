@@ -35,9 +35,10 @@ import (
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/gorilla/mux"
 
-	"github.com/maticnetwork/heimdall/x/params"
-	paramskeeper "github.com/maticnetwork/heimdall/x/params/keeper"
-	paramstypes "github.com/maticnetwork/heimdall/x/params/types"
+	cosmosparams "github.com/cosmos/cosmos-sdk/x/params"
+	cosmosparamskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
+	cosmosparamstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+
 	"github.com/rakyll/statik/fs"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmjson "github.com/tendermint/tendermint/libs/json"
@@ -80,6 +81,10 @@ import (
 	topupkeeper "github.com/maticnetwork/heimdall/x/topup/keeper"
 	topuptypes "github.com/maticnetwork/heimdall/x/topup/types"
 
+	"github.com/maticnetwork/heimdall/x/params"
+	paramskeeper "github.com/maticnetwork/heimdall/x/params/keeper"
+	paramstypes "github.com/maticnetwork/heimdall/x/params/types"
+
 	borkeeper "github.com/maticnetwork/heimdall/x/bor/keeper"
 	bortypes "github.com/maticnetwork/heimdall/x/bor/types"
 
@@ -104,6 +109,7 @@ var (
 		sidechannel.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		params.AppModuleBasic{},
+		cosmosparams.AppModuleBasic{},
 		gov.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
 		topup.AppModuleBasic{},
@@ -142,17 +148,18 @@ type HeimdallApp struct {
 	tkeys map[string]*sdk.TransientStoreKey
 
 	// keepers
-	AccountKeeper     authkeeper.AccountKeeper
-	BankKeeper        bankkeeper.Keeper
-	ChainKeeper       chainKeeper.Keeper
-	ClerkKeeper       clerkkeeper.Keeper
-	SidechannelKeeper sidechannelkeeper.Keeper
-	StakingKeeper     stakingkeeper.Keeper
-	ParamsKeeper      paramskeeper.Keeper
-	GovKeeper         govkeeper.Keeper
-	CheckpointKeeper  checkpointkeeper.Keeper
-	TopupKeeper       topupkeeper.Keeper
-	BorKeeper         borkeeper.Keeper
+	AccountKeeper      authkeeper.AccountKeeper
+	BankKeeper         bankkeeper.Keeper
+	ChainKeeper        chainKeeper.Keeper
+	ClerkKeeper        clerkkeeper.Keeper
+	SidechannelKeeper  sidechannelkeeper.Keeper
+	StakingKeeper      stakingkeeper.Keeper
+	ParamsKeeper       paramskeeper.Keeper
+	CosmosParamsKeeper cosmosparamskeeper.Keeper
+	GovKeeper          govkeeper.Keeper
+	CheckpointKeeper   checkpointkeeper.Keeper
+	TopupKeeper        topupkeeper.Keeper
+	BorKeeper          borkeeper.Keeper
 
 	// side router
 	sideRouter hmtypes.SideRouter
@@ -217,6 +224,7 @@ func NewHeimdallApp(
 		// slashingtypes.StoreKey,
 		govtypes.StoreKey,
 		paramstypes.StoreKey,
+		cosmosparamstypes.StoreKey,
 		topuptypes.StoreKey,
 		bortypes.StoreKey,
 	)
@@ -245,8 +253,12 @@ func NewHeimdallApp(
 
 	// create params keeper
 	app.ParamsKeeper = initParamsKeeper(appCodec, legacyAmino, keys[paramstypes.StoreKey], tkeys[paramstypes.TStoreKey])
+	// create params keeper
+	app.CosmosParamsKeeper = initCosmosParamsKeeper(appCodec, legacyAmino, keys[cosmosparamstypes.StoreKey], tkeys[cosmosparamstypes.TStoreKey])
 	// set the BaseApp's parameter store
 	bApp.SetParamStore(app.ParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(paramskeeper.ConsensusParamsKeyTable()))
+	// // set the BaseApp's parameter store
+	// bApp.SetParamStore(app.CosmosParamsKeeper.Subspace(baseapp.Paramspace).WithKeyTable(cosmosparamskeeper.ConsensusParamsKeyTable()))
 
 	//chainmanager keeper
 	app.ChainKeeper = chainKeeper.NewKeeper(
@@ -259,7 +271,7 @@ func NewHeimdallApp(
 	app.AccountKeeper = authkeeper.NewAccountKeeper(
 		appCodec,
 		app.keys[authtypes.StoreKey],
-		app.GetSubspace(authtypes.ModuleName),
+		app.GetCosmosSubspace(authtypes.ModuleName),
 		authtypes.ProtoBaseAccount,
 		MacPerms(),
 	)
@@ -268,7 +280,7 @@ func NewHeimdallApp(
 		appCodec,
 		keys[banktypes.StoreKey],
 		app.AccountKeeper,
-		app.GetSubspace(banktypes.ModuleName),
+		app.GetCosmosSubspace(banktypes.ModuleName),
 		app.BlockedAddrs(),
 	)
 
@@ -361,6 +373,7 @@ func NewHeimdallApp(
 		clerk.NewAppModule(appCodec, app.ClerkKeeper, &app.caller),
 		gov.NewAppModule(appCodec, app.GovKeeper, app.AccountKeeper, app.BankKeeper),
 		params.NewAppModule(appCodec, app.ParamsKeeper),
+		cosmosparams.NewAppModule(app.CosmosParamsKeeper),
 		checkpoint.NewAppModule(appCodec, app.CheckpointKeeper, &app.caller),
 		bor.NewAppModule(appCodec, app.BorKeeper, &app.caller),
 		topup.NewAppModule(appCodec, app.TopupKeeper, &app.caller),
@@ -712,6 +725,14 @@ func (app *HeimdallApp) GetSubspace(moduleName string) paramstypes.Subspace {
 	return subspace
 }
 
+// GetCosmosSubspace returns a param subspace for a given module name.
+//
+// NOTE: This is solely to be used for testing purposes.
+func (app *HeimdallApp) GetCosmosSubspace(moduleName string) cosmosparamstypes.Subspace {
+	subspace, _ := app.CosmosParamsKeeper.GetSubspace(moduleName)
+	return subspace
+}
+
 // SimulationManager implements the SimulationApp interface
 func (app *HeimdallApp) SimulationManager() *module.SimulationManager {
 	return app.sm
@@ -773,8 +794,6 @@ func GetMaccPerms() map[string][]string {
 func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) paramskeeper.Keeper {
 	paramsKeeper := paramskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
 
-	paramsKeeper.Subspace(authtypes.ModuleName)
-	paramsKeeper.Subspace(banktypes.ModuleName)
 	paramsKeeper.Subspace(stakingtypes.ModuleName)
 	paramsKeeper.Subspace(chainmanagerTypes.ModuleName)
 	paramsKeeper.Subspace(sidechanneltypes.ModuleName)
@@ -785,4 +804,14 @@ func initParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyA
 	paramsKeeper.Subspace(topuptypes.ModuleName)
 
 	return paramsKeeper
+}
+
+// initCosmosParamsKeeper init params keeper and its subspaces
+func initCosmosParamsKeeper(appCodec codec.BinaryMarshaler, legacyAmino *codec.LegacyAmino, key, tkey sdk.StoreKey) cosmosparamskeeper.Keeper {
+	cosmosparamsKeeper := cosmosparamskeeper.NewKeeper(appCodec, legacyAmino, key, tkey)
+
+	cosmosparamsKeeper.Subspace(authtypes.ModuleName)
+	cosmosparamsKeeper.Subspace(banktypes.ModuleName)
+
+	return cosmosparamsKeeper
 }
