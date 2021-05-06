@@ -220,7 +220,6 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*hmTypes.Valida
 		validators = append(validators, &validator)
 		return nil
 	})
-	fmt.Println("validators", validators)
 	return
 }
 

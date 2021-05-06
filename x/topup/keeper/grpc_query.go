@@ -2,8 +2,6 @@ package keeper
 
 import (
 	"context"
-	"fmt"
-	"runtime"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/x/checkpoint/types"
 
@@ -42,12 +40,6 @@ func (k Querier) Sequence(c context.Context, req *types.QuerySequenceRequest) (*
 	ctx := sdk.UnwrapSDKContext(c)
 
 	chainParams := k.ChainKeeper.GetParams(ctx)
-	fmt.Println("*************************************GRPC Query-Sequence***************")
-	_, file, no, ok := runtime.Caller(1)
-	if ok {
-		fmt.Printf("called from %s#%d\n", file, no)
-	}
-	fmt.Println("***********************************************************************")
 	receipt, err := k.contractCaller.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txHash).EthHash(), chainParams.MainchainTxConfirmations)
 
 	if err != nil || receipt == nil {

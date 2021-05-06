@@ -108,8 +108,6 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 		return
 	}
 
-	fmt.Println("its coming here - SideHandleMsgCheckpointAck")
-
 	// say `yes`
 	result.Result = tmprototypes.SideTxResultType_YES
 
@@ -300,7 +298,6 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k keeper.Keeper, msg types.MsgC
 
 	// Update ack count in staking module
 	k.UpdateACKCount(ctx)
-	fmt.Println("sucessfully ack update---Checkpoint-side-handler#301")
 	logger.Info("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
 	// Increment accum (selects new proposer)

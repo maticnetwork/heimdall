@@ -56,11 +56,6 @@ func GetSequenceCmd() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(cliCtx)
-			fmt.Println("************************txHashStr*********")
-			fmt.Println(txHashStr)
-			fmt.Println("************************logIndex*********")
-			fmt.Println(logIndex)
-			fmt.Println("****************************************")
 
 			params := &types.QuerySequenceRequest{TxHash: txHashStr, LogIndex: logIndex}
 
