@@ -175,16 +175,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
-	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
-		log.Fatalln("Unable to dial via ethClient", "URL=", conf.EthRPCUrl, "chain=eth", "Error", err)
-	}
-
+	InitializeMainRPCClient()
 	mainChainClient = ethclient.NewClient(mainRPCClient)
+
 	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		log.Fatal(err)
 	}
-
 	maticClient = ethclient.NewClient(maticRPCClient)
+
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
 	if err != nil {
@@ -242,6 +240,18 @@ func SetTestConfig(_conf Configuration) {
 //
 // Get main/matic clients
 //
+
+func InitializeMainRPCClient() {
+	var err error
+	ethUrls := strings.Split(conf.EthRPCUrl, ",")
+	for _, ethUrl := range ethUrls {
+		if mainRPCClient, err = rpc.Dial(ethUrl); err != nil {
+			log.Fatalln("Unable to dial via ethClient", "URL=", ethUrl, "chain=eth", "Error", err)
+			continue
+		}
+		break
+	}
+}
 
 // GetMainChainRPCClient returns main chain RPC client
 func GetMainChainRPCClient() *rpc.Client {
