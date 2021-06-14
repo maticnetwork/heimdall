@@ -271,6 +271,8 @@ func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootcha
 	checkpointBigInt := big.NewInt(0).Mul(big.NewInt(0).SetUint64(number), big.NewInt(0).SetUint64(childBlockInterval))
 	headerBlock, err := rootChainInstance.HeaderBlocks(nil, checkpointBigInt)
 	if err != nil {
+		c.ReinitializeMainChainClients()
+		c.GetHeaderInfo(number, rootChainInstance, childBlockInterval)
 		return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
 	}
 
@@ -324,9 +326,12 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 
 // GetBalance get balance of account (returns big.Int balance wont fit in uint64)
 func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
-	balance, err := c.MainChainClient.BalanceAt(context.Background(), address, nil)
+	mainChainClient := GetMainClient()
+	balance, err := mainChainClient.BalanceAt(context.Background(), address, nil)
 	if err != nil {
+		c.ReinitializeMainChainClients()
 		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
+		c.GetBalance(address)
 		return big.NewInt(0), err
 	}
 
@@ -363,7 +368,9 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
 	latestBlock, err := c.MainChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
+		c.ReinitializeMainChainClients()
 		Logger.Error("Unable to connect to main chain", "Error", err)
+		c.GetMainChainBlock(blockNum)
 		return
 	}
 	return latestBlock, nil
@@ -382,7 +389,9 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 // GetBlockNumberFromTxHash gets block number of transaction
 func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, error) {
 	var rpcTx rpcTransaction
-	if err := c.MainChainRPC.CallContext(context.Background(), &rpcTx, "eth_getTransactionByHash", tx); err != nil {
+	mainChainRPCClient := GetMainChainRPCClient()
+	if err := mainChainRPCClient.CallContext(context.Background(), &rpcTx, "eth_getTransactionByHash", tx); err != nil {
+		// check err type and reinitialize
 		return nil, err
 	}
 
@@ -421,7 +430,9 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		// get main tx receipt
 		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
+			c.ReinitializeMainChainClients()
 			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
+			c.GetConfirmedTxReceipt(tx, requiredConfirmations)
 			return nil, err
 		}
 
@@ -725,7 +736,8 @@ func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
 
 // GetMainTxReceipt returns main tx receipt
 func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
-	return c.getTxReceipt(c.MainChainClient, txHash)
+	mainChainClient := GetMainClient()
+	return c.getTxReceipt(mainChainClient, txHash)
 }
 
 // GetMaticTxReceipt returns matic tx receipt
@@ -750,7 +762,9 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	mainChainClient := GetMainClient()
 	transaction, isPending, err := mainChainClient.TransactionByHash(context.Background(), txHash)
 	if err != nil {
+		c.ReinitializeMainChainClients()
 		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
+		c.GetCheckpointSign(txHash)
 		return []byte{}, []byte{}, []byte{}, err
 	} else if isPending {
 		return []byte{}, []byte{}, []byte{}, errors.New("Transaction is still pending")
@@ -759,4 +773,10 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	payload := transaction.Data()
 	abi := c.RootChainABI
 	return UnpackSigAndVotes(payload, abi)
+}
+
+func (c *ContractCaller) ReinitializeMainChainClients() {
+	InitializeMainRPCClient()
+	InitializeMainChainClient()
+	c.ContractInstanceCache = make(map[common.Address]interface{}, 0)
 }

@@ -185,7 +185,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	InitializeMainRPCClient()
-	mainChainClient = ethclient.NewClient(mainRPCClient)
+	InitializeMainChainClient()
 
 	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		log.Fatal(err)
@@ -257,11 +257,15 @@ func InitializeMainRPCClient() {
 	ethUrls := strings.Split(conf.EthRPCUrl, ",")
 	for _, ethUrl := range ethUrls {
 		if mainRPCClient, err = rpc.Dial(ethUrl); err != nil {
-			log.Fatalln("Unable to dial via ethClient", "URL=", ethUrl, "chain=eth", "Error", err)
+			Logger.Error("Unable to dial via ethClient", "URL=", ethUrl, "chain=eth", "Error", err)
 			continue
 		}
 		break
 	}
+}
+
+func InitializeMainChainClient() {
+	mainChainClient = ethclient.NewClient(mainRPCClient)
 }
 
 // GetMainChainRPCClient returns main chain RPC client
