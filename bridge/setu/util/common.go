@@ -382,3 +382,27 @@ func AppendPrefix(signerPubKey []byte) []byte {
 	signerPubKey = append(prefix[:], signerPubKey[:]...)
 	return signerPubKey
 }
+
+// GetValidatorNonce fethes validator nonce and height
+func GetValidatorNonce(cliCtx cliContext.CLIContext, validatorID uint64) (uint64, int64, error) {
+	var validator hmtypes.Validator
+
+	result, err := helper.FetchFromAPI(cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
+	)
+
+	if err != nil {
+		logger.Error("Error fetching validator data", "error", err)
+		return 0, 0, err
+	}
+
+	err = json.Unmarshal(result.Result, &validator)
+	if err != nil {
+		logger.Error("error unmarshalling validator data", "error", err)
+		return 0, 0, err
+	}
+
+	logger.Debug("Validator data recieved ", "validator", validator.String())
+
+	return validator.Nonce, result.Height, nil
+}

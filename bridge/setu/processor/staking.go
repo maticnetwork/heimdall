@@ -2,6 +2,8 @@ package processor
 
 import (
 	"encoding/json"
+	"sync"
+	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -15,10 +17,14 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+const defaultDelayDuration time.Duration = 10 * time.Second
+
 // StakingProcessor - process staking related events
 type StakingProcessor struct {
 	BaseProcessor
-	stakingInfoAbi *abi.ABI
+	stakingInfoAbi          *abi.ABI
+	validatorLastTxnMap     map[uint64]int64
+	validatorLastTxnMapLock sync.Mutex
 }
 
 // NewStakingProcessor - add  abi to staking processor
@@ -211,6 +217,18 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			)
 			return nil
 		}
+
+		validNonce, nonceDelay, err := sp.checkValidNonce(event.ValidatorId.Uint64(), event.Nonce.Uint64())
+		if err != nil {
+			sp.Logger.Error("Error while validating nonce for the validator", "error", err)
+			return err
+		}
+
+		if !validNonce {
+			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
+		}
+
 		sp.Logger.Info(
 			"✅ Received task to send stake-update to heimdall",
 			"event", eventName,
@@ -332,4 +350,53 @@ func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string,
 	}
 
 	return status, nil
+}
+
+func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64) (bool, uint64, error) {
+	currentNonce, currentBlockNumber, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
+	if err != nil {
+		sp.Logger.Error("Failed to fetch validator nonce and height data from API", "validatorId", validatorId)
+		return false, 0, err
+	}
+
+	lastTxnBlockNumber, present := sp.getValidatorLastTxn(validatorId)
+	if !present {
+		sp.updateValidatorLastTxn(validatorId, currentBlockNumber)
+		lastTxnBlockNumber = currentBlockNumber
+	}
+
+	if currentNonce+1 != txnNonce {
+		sp.Logger.Error("Nonce for the given event not in order", "validatorId", validatorId, "currentNonce", currentNonce, "txnNonce", txnNonce)
+		return false, txnNonce - currentNonce, nil
+	}
+
+	if currentBlockNumber-lastTxnBlockNumber < 2 {
+		sp.Logger.Info("Block difference for the given event is less then 2", "validatorId", validatorId, "currentBlockNumber", currentBlockNumber, "lastTxnBlockNumber", lastTxnBlockNumber)
+
+		// If difference is 1, Then it has to wait for 1 more block
+		if currentBlockNumber-lastTxnBlockNumber == 1 {
+			return false, 1, nil
+		}
+		// If difference is 0, Then it has to wait for 2 more blocks
+		return false, 2, nil
+	}
+
+	// Update the validator last txn block by 2 + 1(cover process time).
+	// We are assuming that once the txn is fired from here, It will go through. Hence updating the map.
+	sp.updateValidatorLastTxn(validatorId, currentBlockNumber+3)
+
+	return true, 0, nil
+}
+
+func (sp *StakingProcessor) updateValidatorLastTxn(validatorId uint64, blockNumber int64) {
+	sp.validatorLastTxnMapLock.Lock()
+	sp.validatorLastTxnMap[validatorId] = blockNumber
+	sp.validatorLastTxnMapLock.Unlock()
+}
+
+func (sp *StakingProcessor) getValidatorLastTxn(validatorId uint64) (int64, bool) {
+	sp.validatorLastTxnMapLock.Lock()
+	lastTxnBlockNumber, present := sp.validatorLastTxnMap[validatorId]
+	sp.validatorLastTxnMapLock.Unlock()
+	return lastTxnBlockNumber, present
 }
