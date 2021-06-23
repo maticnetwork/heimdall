@@ -13,14 +13,15 @@ import (
 
 // Validator heimdall validator
 type Validator struct {
-	ID          ValidatorID     `json:"ID"`
-	StartEpoch  uint64          `json:"startEpoch"`
-	EndEpoch    uint64          `json:"endEpoch"`
-	Nonce       uint64          `json:"nonce"`
-	VotingPower int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
-	PubKey      PubKey          `json:"pubKey"`
-	Signer      HeimdallAddress `json:"signer"`
-	LastUpdated string          `json:"last_updated"`
+	ID                ValidatorID     `json:"ID"`
+	StartEpoch        uint64          `json:"startEpoch"`
+	EndEpoch          uint64          `json:"endEpoch"`
+	Nonce             uint64          `json:"nonce"`
+	LastStakeTxnBlock int64           `json:"last_stake_txn_block"`
+	VotingPower       int64           `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
+	PubKey            PubKey          `json:"pubKey"`
+	Signer            HeimdallAddress `json:"signer"`
+	LastUpdated       string          `json:"last_updated"`
 
 	Jailed           bool  `json:"jailed"`
 	ProposerPriority int64 `json:"accum"`
@@ -38,13 +39,14 @@ func NewValidator(
 	signer HeimdallAddress,
 ) *Validator {
 	return &Validator{
-		ID:          id,
-		StartEpoch:  startEpoch,
-		EndEpoch:    endEpoch,
-		Nonce:       nonce,
-		VotingPower: power,
-		PubKey:      pubKey,
-		Signer:      signer,
+		ID:                id,
+		StartEpoch:        startEpoch,
+		EndEpoch:          endEpoch,
+		Nonce:             nonce,
+		VotingPower:       power,
+		PubKey:            pubKey,
+		Signer:            signer,
+		LastStakeTxnBlock: 0,
 	}
 }
 
