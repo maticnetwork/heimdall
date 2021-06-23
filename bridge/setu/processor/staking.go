@@ -2,7 +2,6 @@ package processor
 
 import (
 	"encoding/json"
-	"sync"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
@@ -22,9 +21,7 @@ const defaultDelayDuration time.Duration = 10 * time.Second
 // StakingProcessor - process staking related events
 type StakingProcessor struct {
 	BaseProcessor
-	stakingInfoAbi          *abi.ABI
-	validatorLastTxnMap     map[uint64]int64
-	validatorLastTxnMapLock sync.Mutex
+	stakingInfoAbi *abi.ABI
 }
 
 // NewStakingProcessor - add  abi to staking processor
@@ -353,15 +350,13 @@ func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string,
 }
 
 func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64) (bool, uint64, error) {
-	currentNonce, currentBlockNumber, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
+	currentNonce, lastTxnBlockNumber, currentBlockNumber, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
 	if err != nil {
 		sp.Logger.Error("Failed to fetch validator nonce and height data from API", "validatorId", validatorId)
 		return false, 0, err
 	}
 
-	lastTxnBlockNumber, present := sp.getValidatorLastTxn(validatorId)
-	if !present {
-		sp.updateValidatorLastTxn(validatorId, currentBlockNumber)
+	if lastTxnBlockNumber == 0 {
 		lastTxnBlockNumber = currentBlockNumber
 	}
 
@@ -381,22 +376,5 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 		return false, 2, nil
 	}
 
-	// Update the validator last txn block by 2 + 1(cover process time).
-	// We are assuming that once the txn is fired from here, It will go through. Hence updating the map.
-	sp.updateValidatorLastTxn(validatorId, currentBlockNumber+3)
-
 	return true, 0, nil
-}
-
-func (sp *StakingProcessor) updateValidatorLastTxn(validatorId uint64, blockNumber int64) {
-	sp.validatorLastTxnMapLock.Lock()
-	sp.validatorLastTxnMap[validatorId] = blockNumber
-	sp.validatorLastTxnMapLock.Unlock()
-}
-
-func (sp *StakingProcessor) getValidatorLastTxn(validatorId uint64) (int64, bool) {
-	sp.validatorLastTxnMapLock.Lock()
-	lastTxnBlockNumber, present := sp.validatorLastTxnMap[validatorId]
-	sp.validatorLastTxnMapLock.Unlock()
-	return lastTxnBlockNumber, present
 }
