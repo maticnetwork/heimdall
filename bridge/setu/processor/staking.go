@@ -350,14 +350,14 @@ func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string,
 }
 
 func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64) (bool, uint64, error) {
-	currentNonce, lastTxnBlockNumber, currentBlockNumber, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
+	currentNonce, lastStakingTxnHeight, currentHeight, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
 	if err != nil {
 		sp.Logger.Error("Failed to fetch validator nonce and height data from API", "validatorId", validatorId)
 		return false, 0, err
 	}
 
-	if lastTxnBlockNumber == 0 {
-		lastTxnBlockNumber = currentBlockNumber
+	if lastStakingTxnHeight == 0 {
+		lastStakingTxnHeight = currentHeight
 	}
 
 	if currentNonce+1 != txnNonce {
@@ -365,11 +365,11 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 		return false, txnNonce - currentNonce, nil
 	}
 
-	if currentBlockNumber-lastTxnBlockNumber < 2 {
-		sp.Logger.Info("Block difference for the given event is less then 2", "validatorId", validatorId, "currentBlockNumber", currentBlockNumber, "lastTxnBlockNumber", lastTxnBlockNumber)
+	if currentHeight-lastStakingTxnHeight < 2 {
+		sp.Logger.Info("Block difference for the given event is less then 2", "validatorId", validatorId, "currentHeight", currentHeight, "lastStakingTxnHeight", lastStakingTxnHeight)
 
 		// If difference is 1, Then it has to wait for 1 more block
-		if currentBlockNumber-lastTxnBlockNumber == 1 {
+		if currentHeight-lastStakingTxnHeight == 1 {
 			return false, 1, nil
 		}
 		// If difference is 0, Then it has to wait for 2 more blocks
