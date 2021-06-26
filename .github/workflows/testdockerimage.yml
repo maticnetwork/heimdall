@@ -19,7 +19,7 @@ jobs:
         echo "Docker login"
         docker login -u $DOCKERHUB -p $DOCKERHUB_KEY
         echo "running build"
-        docker build -f docker/Dockerfile -t maticnetwork/heimdall:alchemy-test .
+        docker build -f docker/Dockerfile -t maticnetwork/heimdall:mumbai-alchemy .
         echo "pushing image"
-        docker push maticnetwork/heimdall:alchemy-test
+        docker push maticnetwork/heimdall:mumbai-alchemy
         echo "DONE!"
