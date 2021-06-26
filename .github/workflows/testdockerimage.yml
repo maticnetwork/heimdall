@@ -3,7 +3,7 @@ name: Docker Image CI
 on:
   push:
     branch:
-      - 'arpit/alchemy-test'
+      - 'mumbai-alchemy'
   
 jobs:
   build:
