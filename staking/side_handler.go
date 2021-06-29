@@ -434,9 +434,6 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 	// update nonce
 	validator.Nonce = msg.Nonce
 
-	//update last staking txn height
-	validator.LastStakingTxnHeight = ctx.BlockHeight()
-
 	// set validator amount
 	p, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
 	if err != nil {
@@ -512,9 +509,6 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 	// update nonce
 	validator.Nonce = msg.Nonce
 
-	//update last staking txn height
-	validator.LastStakingTxnHeight = ctx.BlockHeight()
-
 	// check if we are actually updating signer
 	if !bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
 		// Update signer in prev Validator
@@ -538,9 +532,6 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 
 	// updated nonce
 	oldValidator.Nonce = msg.Nonce
-
-	//update last staking txn height
-	validator.LastStakingTxnHeight = ctx.BlockHeight()
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
@@ -633,9 +624,6 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 
 	// update nonce
 	validator.Nonce = msg.Nonce
-
-	//update last staking txn height
-	validator.LastStakingTxnHeight = ctx.BlockHeight()
 
 	// Add deactivation time for validator
 	if err := k.AddValidator(ctx, validator); err != nil {

@@ -2,11 +2,13 @@ package processor
 
 import (
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -16,7 +18,12 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-const defaultDelayDuration time.Duration = 10 * time.Second
+const (
+	defaultDelayDuration time.Duration = 10 * time.Second
+	stakeUpdateMsgType                 = "validator-stake-update"
+	defaultPage                        = 1
+	defaultLimit                       = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+)
 
 // StakingProcessor - process staking related events
 type StakingProcessor struct {
@@ -350,14 +357,10 @@ func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string,
 }
 
 func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64) (bool, uint64, error) {
-	currentNonce, lastStakingTxnHeight, currentHeight, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
+	currentNonce, currentHeight, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
 	if err != nil {
 		sp.Logger.Error("Failed to fetch validator nonce and height data from API", "validatorId", validatorId)
 		return false, 0, err
-	}
-
-	if lastStakingTxnHeight == 0 {
-		lastStakingTxnHeight = currentHeight
 	}
 
 	if currentNonce+1 != txnNonce {
@@ -365,16 +368,31 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 		return false, txnNonce - currentNonce, nil
 	}
 
-	if currentHeight-lastStakingTxnHeight < 2 {
-		sp.Logger.Info("Block difference for the given event is less then 2", "validatorId", validatorId, "currentHeight", currentHeight, "lastStakingTxnHeight", lastStakingTxnHeight)
+	stakingTxnCount, err := queryStakeUpdateByTxQuery(sp.cliCtx, validatorId, currentHeight)
+	if err != nil {
+		sp.Logger.Error("Failed to query stake update txns by txquery for the given validator", "validatorId", validatorId)
+		return false, 0, err
+	}
 
-		// If difference is 1, Then it has to wait for 1 more block
-		if currentHeight-lastStakingTxnHeight == 1 {
-			return false, 1, nil
-		}
-		// If difference is 0, Then it has to wait for 2 more blocks
-		return false, 2, nil
+	if stakingTxnCount != 0 {
+		sp.Logger.Info("Recent staking txn count for the given validator is not zero", "validatorId", validatorId, "currentHeight", currentHeight)
+		return false, 1, nil
 	}
 
 	return true, 0, nil
+}
+
+func queryStakeUpdateByTxQuery(cliCtx cliContext.CLIContext, validatorId uint64, currentHeight int64) (int, error) {
+	events := []string{
+		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, stakeUpdateMsgType),
+		fmt.Sprintf("%s.%s=%d", "stake-update", "validator-id", validatorId),
+		fmt.Sprintf("%s.%s>%d", "tx", "height", currentHeight-3),
+	}
+
+	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	if err != nil {
+		return 0, err
+	}
+
+	return searchResult.TotalCount, nil
 }
