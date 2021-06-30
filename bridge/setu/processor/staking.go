@@ -8,7 +8,6 @@ import (
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -389,7 +388,7 @@ func queryStakeUpdateByTxQuery(cliCtx cliContext.CLIContext, validatorId uint64,
 		fmt.Sprintf("%s.%s>%d", "tx", "height", currentHeight-3),
 	}
 
-	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
 	if err != nil {
 		return 0, err
 	}
