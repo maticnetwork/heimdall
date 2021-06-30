@@ -34,7 +34,7 @@ require (
 	github.com/tendermint/tm-db v0.6.4
 	golang.org/x/sys v0.0.0-20210124154548-22da62e12c0c // indirect
 	google.golang.org/genproto v0.0.0-20201119123407-9b1e624d6bc4
-	google.golang.org/grpc v1.37.0
+	google.golang.org/grpc v1.39.0
 	google.golang.org/protobuf v1.25.0
 	gopkg.in/yaml.v2 v2.4.0
 )
