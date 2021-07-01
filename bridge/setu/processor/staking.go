@@ -19,9 +19,6 @@ import (
 
 const (
 	defaultDelayDuration time.Duration = 10 * time.Second
-	stakeUpdateMsgType                 = "validator-stake-update"
-	defaultPage                        = 1
-	defaultLimit                       = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
 )
 
 // StakingProcessor - process staking related events
@@ -102,6 +99,17 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			return tasks.NewErrRetryTaskLater("account doesn't exist", util.RetryTaskDelay)
 		}
 
+		validNonce, nonceDelay, err := sp.checkValidNonce(event.ValidatorId.Uint64(), event.Nonce.Uint64())
+		if err != nil {
+			sp.Logger.Error("Error while validating nonce for the validator", "error", err)
+			return err
+		}
+
+		if !validNonce {
+			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
+		}
+
 		sp.Logger.Info(
 			"✅ Received task to send validatorjoin to heimdall",
 			"event", eventName,
@@ -162,6 +170,17 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 				"blockNumber", vLog.BlockNumber,
 			)
 			return nil
+		}
+
+		validNonce, nonceDelay, err := sp.checkValidNonce(event.ValidatorId.Uint64(), event.Nonce.Uint64())
+		if err != nil {
+			sp.Logger.Error("Error while validating nonce for the validator", "error", err)
+			return err
+		}
+
+		if !validNonce {
+			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
 		}
 
 		sp.Logger.Info(
@@ -293,6 +312,18 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			)
 			return nil
 		}
+
+		validNonce, nonceDelay, err := sp.checkValidNonce(event.ValidatorId.Uint64(), event.Nonce.Uint64())
+		if err != nil {
+			sp.Logger.Error("Error while validating nonce for the validator", "error", err)
+			return err
+		}
+
+		if !validNonce {
+			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
+		}
+
 		sp.Logger.Info(
 			"✅ Received task to send signer-change to heimdall",
 			"event", eventName,
@@ -367,9 +398,9 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 		return false, txnNonce - currentNonce, nil
 	}
 
-	stakingTxnCount, err := queryStakeUpdateByTxQuery(sp.cliCtx, validatorId, currentHeight)
+	stakingTxnCount, err := queryTxCount(sp.cliCtx, validatorId, currentHeight)
 	if err != nil {
-		sp.Logger.Error("Failed to query stake update txns by txquery for the given validator", "validatorId", validatorId)
+		sp.Logger.Error("Failed to query stake txns by txquery for the given validator", "validatorId", validatorId)
 		return false, 0, err
 	}
 
@@ -381,17 +412,34 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 	return true, 0, nil
 }
 
-func queryStakeUpdateByTxQuery(cliCtx cliContext.CLIContext, validatorId uint64, currentHeight int64) (int, error) {
-	events := []string{
-		fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, stakeUpdateMsgType),
-		fmt.Sprintf("%s.%s=%d", "stake-update", "validator-id", validatorId),
-		fmt.Sprintf("%s.%s>%d", "tx", "height", currentHeight-3),
+func queryTxCount(cliCtx cliContext.CLIContext, validatorId uint64, currentHeight int64) (int, error) {
+	const (
+		defaultPage  = 1
+		defaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	)
+
+	stakingTxnMsgMap := map[string]string{
+		"validator-stake-update": "stake-update",
+		"validator-join":         "validator-join",
+		"signer-update":          "signer-update",
+		"validator-exit":         "validator-exit",
 	}
 
-	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
-	if err != nil {
-		return 0, err
-	}
+	for msg, action := range stakingTxnMsgMap {
+		events := []string{
+			fmt.Sprintf("%s.%s='%s'", sdk.EventTypeMessage, sdk.AttributeKeyAction, msg),
+			fmt.Sprintf("%s.%s=%d", action, "validator-id", validatorId),
+			fmt.Sprintf("%s.%s>%d", "tx", "height", currentHeight-3),
+		}
 
-	return searchResult.TotalCount, nil
+		searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+		if err != nil {
+			return 0, err
+		}
+
+		if searchResult.TotalCount != 0 {
+			return searchResult.TotalCount, nil
+		}
+	}
+	return 0, nil
 }
