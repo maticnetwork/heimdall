@@ -106,7 +106,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		}
 
 		if !validNonce {
-			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			sp.Logger.Info("Ignoring task to send validator-join to heimdall as nonce is out of order")
 			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
 		}
 
@@ -179,7 +179,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 		}
 
 		if !validNonce {
-			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			sp.Logger.Info("Ignoring task to send unstake-init to heimdall as nonce is out of order")
 			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
 		}
 
@@ -320,7 +320,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 		}
 
 		if !validNonce {
-			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			sp.Logger.Info("Ignoring task to send signer-change to heimdall as nonce is out of order")
 			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
 		}
 
