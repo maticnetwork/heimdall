@@ -374,7 +374,7 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 	}
 
 	if stakingTxnCount != 0 {
-		sp.Logger.Info("Recent staking txn count for the given validator is not zero", "validatorId", validatorId, "currentHeight", currentHeight)
+		sp.Logger.Info("Recent staking txn count for the given validator is not zero", "validatorId", validatorId, "currentNonce", currentNonce, "txnNonce", txnNonce, "currentHeight", currentHeight)
 		return false, 1, nil
 	}
 
