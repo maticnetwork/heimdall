@@ -18,7 +18,7 @@ require (
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/go-kit/kit v0.9.0
-	github.com/gogo/protobuf v1.3.0
+	github.com/gogo/protobuf v1.3.2
 	github.com/gorilla/mux v1.7.3
 	github.com/graph-gophers/graphql-go v0.0.0-20200207002730-8334863f2c8b // indirect
 	github.com/hashicorp/golang-lru v0.5.3
@@ -35,22 +35,19 @@ require (
 	github.com/rakyll/statik v0.1.6
 	github.com/rcrowley/go-metrics v0.0.0-20190706150252-9beb055b7962 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
-	github.com/spf13/afero v1.2.2 // indirect
 	github.com/spf13/cobra v0.0.5
-	github.com/spf13/viper v1.4.0
+	github.com/spf13/viper v1.8.1
 	github.com/status-im/keycard-go v0.0.0-20191119114148-6dd40a46baa0 // indirect
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.0
 	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/go-amino v0.15.0
 	github.com/tendermint/tendermint v0.32.7
 	github.com/tendermint/tm-db v0.2.0
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
-	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79 // indirect
-	golang.org/x/sync v0.0.0-20190911185100-cd5d95a43a6e
-	golang.org/x/sys v0.0.0-20200501145240-bc7a7d42d5c3 // indirect
-	gopkg.in/yaml.v2 v2.2.8
+	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
+	gopkg.in/yaml.v2 v2.4.0
 )
 
 replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20200429080413-edc079e7d4c9
