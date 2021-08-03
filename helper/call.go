@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"fmt"
 	"math/big"
 	"strings"
 
@@ -705,21 +706,17 @@ func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.St
 	return result
 }
 
-// CheckIfBlocksExist - check if latest block number is greater than end block
+// CheckIfBlocksExist - check if the given block exists on local chain
 func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
-	// Get Latest block number.
-	var latestBlock *ethTypes.Header
+	// Get block by number.
+	var block *ethTypes.Header
 
-	err := c.MaticChainRPC.Call(&latestBlock, "eth_getBlockByNumber", "latest", false)
+	err := c.MaticChainRPC.Call(&block, "eth_getBlockByNumber", fmt.Sprintf("0x%x", end), false)
 	if err != nil {
 		return false
 	}
 
-	if end > latestBlock.Number.Uint64() {
-		return false
-	}
-
-	return true
+	return end == block.Number.Uint64()
 }
 
 //
