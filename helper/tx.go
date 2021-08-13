@@ -41,6 +41,14 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	if err != nil {
 		return
 	}
+
+	mainChainMaxGasPrice := GetConfig().MainchainMaxGasPrice
+	if gasprice.Cmp(big.NewInt(mainChainMaxGasPrice)) == 1 {
+		Logger.Error("Gas price is more than max gas price", "gasprice", gasprice)
+		err = fmt.Errorf("gas price is more than max_gas_price, gasprice = %v, maxGasPrice = %d", gasprice, mainChainMaxGasPrice)
+		return
+	}
+
 	// fetch nonce
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
@@ -72,8 +80,7 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs [][3]*big.Int, r
 	auth, err := GenerateAuthObj(GetMainClient(), rootChainAddress, data)
 	if err != nil {
 		Logger.Error("Unable to create auth object", "error", err)
-		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
-		auth.GasLimit = GetConfig().MainchainGasLimit
+		return err
 	}
 
 	s := make([]string, 0)
@@ -106,8 +113,7 @@ func (c *ContractCaller) SendTick(signedData []byte, sigs []byte, slashManagerAd
 	auth, err := GenerateAuthObj(GetMainClient(), slashManagerAddress, data)
 	if err != nil {
 		Logger.Error("Unable to create auth object", "error", err)
-		Logger.Info("Setting custom gaslimit", "gaslimit", GetConfig().MainchainGasLimit)
-		auth.GasLimit = GetConfig().MainchainGasLimit
+		return err
 	}
 
 	Logger.Info("Sending new tick",

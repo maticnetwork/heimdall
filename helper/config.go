@@ -64,6 +64,8 @@ const (
 
 	DefaultMainchainGasLimit = uint64(5000000)
 
+	DefaultMainchainMaxGasPrice = 400000000000 // 400 Gwei
+
 	DefaultBorChainID string = "15001"
 
 	secretFilePerm = 0600
@@ -93,6 +95,8 @@ type Configuration struct {
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
 	MainchainGasLimit uint64 `mapstructure:"main_chain_gas_limit"` // gas limit to mainchain transaction. eg....submit checkpoint.
+
+	MainchainMaxGasPrice int64 `mapstructure:"main_chain_max_gas_price"` // max gas price to mainchain transaction. eg....submit checkpoint.
 
 	// config related to bridge
 	CheckpointerPollInterval time.Duration `mapstructure:"checkpoint_poll_interval"` // Poll interval for checkpointer service to send new checkpoints or missing ACK
@@ -213,6 +217,8 @@ func GetDefaultHeimdallConfig() Configuration {
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
 		MainchainGasLimit: DefaultMainchainGasLimit,
+
+		MainchainMaxGasPrice: DefaultMainchainMaxGasPrice,
 
 		CheckpointerPollInterval: DefaultCheckpointerPollInterval,
 		SyncerPollInterval:       DefaultSyncerPollInterval,
