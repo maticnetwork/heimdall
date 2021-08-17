@@ -15,9 +15,9 @@ import (
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not
-func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64, contractCaller helper.IContractCaller) (bool, error) {
+func ValidateCheckpoint(start uint64, end uint64, rootHash hmTypes.HeimdallHash, checkpointLength uint64, contractCaller helper.IContractCaller, confirmations uint64) (bool, error) {
 	// Check if blocks exist locally
-	if !contractCaller.CheckIfBlocksExist(end) {
+	if !contractCaller.CheckIfBlocksExist(end + confirmations) {
 		return false, errors.New("blocks not found locally")
 	}
 
