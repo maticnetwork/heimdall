@@ -36,13 +36,13 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	// get params
 	params := k.GetParams(ctx)
-	maticTxConfirmation := k.GetParams(ctx).MaticchainTxConfirmations
+	maticTxConfirmations := k.ck.GetParams(ctx).MaticchainTxConfirmations
 
 	// logger
 	logger := k.Logger(ctx)
 
 	// validate checkpoint
-	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller, confirmations)
+	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller, maticTxConfirmations)
 	if err != nil {
 		logger.Error("Error validating checkpoint",
 			"error", err,
