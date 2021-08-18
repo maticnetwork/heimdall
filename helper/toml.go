@@ -42,6 +42,9 @@ span_poll_interval = "{{ .SpanPollInterval }}"
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"
 
+#### gas price ####
+main_chain_max_gas_price = "{{ .MainchainMaxGasPrice }}"
+
 ##### Timeout Config #####
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
 
