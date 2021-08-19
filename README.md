@@ -15,10 +15,11 @@ Make sure your have go1.11+ already installed
 $ make process-template
 ```
 ```
-make process-template							Will generate for mainnet by default, Use for devnet as well
+make process-template							Will generate for mainnet by default
 make process-template network=mainnet			Will generate for mainnet
 make process-template network=mumbai			Will generate for mumbai
-make process-template network=anythingElse	    Will generate for mainnet, Ignore anything apart from mainnet and mumbai
+make process-template network=local             Will generate for local with NewSelectionAlgoHeight = 0
+make process-template network=anythingElse      Will generate for mainnet by default
 ```
 
 ```bash 

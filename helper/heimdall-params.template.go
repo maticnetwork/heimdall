@@ -27,6 +27,7 @@ var tomlConfig struct {
 var networks = []string{
 	"mainnet",
 	"mumbai",
+	"local",
 }
 
 func main() {
