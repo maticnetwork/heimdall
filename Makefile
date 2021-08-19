@@ -91,6 +91,14 @@ start-all:
 	mkdir -p ./logs
 	bash docker/start-heimdall.sh
 
+
+# make process-template							Will generate for mainnet by default
+# make process-template network=mainnet			Will generate for mainnet
+# make process-template network=mumbai			Will generate for mumbai
+# make process-template network=anythingElse	Will generate for mainnet, Ignore anything apart from mainnet and mumbai
+process-template:
+	go run helper/heimdall-params.template.go $(network)
+
 #
 # Code quality
 #
