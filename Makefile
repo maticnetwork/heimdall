@@ -18,21 +18,33 @@ BUILD_FLAGS := -ldflags '$(ldflags)'
 
 clean:
 	rm -rf build
+	rm -f helper/heimdall-params.go
 
 tests:
 	# go test  -v ./...
 
 	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
-	
 
+# make build						Will generate for mainnet by default
+# make build network=mainnet		Will generate for mainnet
+# make build network=mumbai			Will generate for mumbai
+# make build network=local			Will generate for local with NewSelectionAlgoHeight = 0
+# make build network=anythingElse	Will generate for mainnet by default
 build: clean
+	go run helper/heimdall-params.template.go $(network)
 	mkdir -p build
 	go build -o build/heimdalld ./cmd/heimdalld
 	go build -o build/heimdallcli ./cmd/heimdallcli
 	go build -o build/bridge bridge/bridge.go
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
-
+	
+# make install							Will generate for mainnet by default
+# make install network=mainnet			Will generate for mainnet
+# make install network=mumbai			Will generate for mumbai
+# make install network=local			Will generate for local with NewSelectionAlgoHeight = 0
+# make install network=anythingElse		Will generate for mainnet by default
 install:
+	go run helper/heimdall-params.template.go $(network)
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
 	go install $(BUILD_FLAGS) bridge/bridge.go
@@ -92,12 +104,7 @@ start-all:
 	bash docker/start-heimdall.sh
 
 
-# make process-template							Will generate for mainnet by default
-# make process-template network=mainnet			Will generate for mainnet
-# make process-template network=mumbai			Will generate for mumbai
-# make process-template network=anythingElse	Will generate for mainnet, Ignore anything apart from mainnet and mumbai
-process-template:
-	go run helper/heimdall-params.template.go $(network)
+
 
 #
 # Code quality

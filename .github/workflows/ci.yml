@@ -10,8 +10,6 @@ jobs:
         uses: actions/setup-go@v1
         with:
           go-version: 1.13
-      - name: "Process-template"
-        run: make process-template
       - name: "Build binaries"
         run: make build
       - name: "Run tests"
