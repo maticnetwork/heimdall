@@ -103,9 +103,6 @@ start-all:
 	mkdir -p ./logs
 	bash docker/start-heimdall.sh
 
-
-
-
 #
 # Code quality
 #

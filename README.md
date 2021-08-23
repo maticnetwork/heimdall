@@ -9,7 +9,7 @@ Validator node for Matic Network. It uses peppermint, customized [Tendermint](ht
 
 Make sure your have go1.11+ already installed
 
-### Install
+### Install 
 ```bash 
 $ make install 
 ```  
