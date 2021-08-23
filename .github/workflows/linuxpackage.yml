@@ -21,7 +21,7 @@ jobs:
           ruby-version: 2.6
 
       - name: Retrieve release version
-        run: echo "::set-env name=RELEASE_VERSION::${GITHUB_REF/refs\/tags\/v/}"
+        run: echo "RELEASE_VERSION=${GITHUB_REF/refs\/tags\/v/}" >> $GITHUB_ENV
 
       - name: Build package
         run: |
