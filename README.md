@@ -11,9 +11,16 @@ Make sure your have go1.11+ already installed
 
 ### Install 
 ```bash 
-$ make install 
-```  
-
+$ make install network=mainnet
+```
+#### Usage 
+```
+# make install							Will generate for mainnet by default
+# make install network=mainnet			Will generate for mainnet
+# make install network=mumbai			Will generate for mumbai
+# make install network=local			Will generate for local with NewSelectionAlgoHeight = 0
+# make install network=anythingElse		Will generate for mainnet by default
+```
 ### Run-heimdall 
 ```bash 
 $ heimdalld start
