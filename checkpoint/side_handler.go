@@ -40,6 +40,12 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 	chainParams := k.ck.GetParams(ctx).ChainParams
 	params := k.GetParams(ctx)
 
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if checkpointBuffer != nil {
+		logger.Error("checkpoint buffer", "error", err)
+		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointBuffer)
+	}
+
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
 	if err != nil {
 		logger.Error("Unable to get checkpoint from db", "error", err)
@@ -171,6 +177,12 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 	if sideTxResult != abci.SideTxResultType_Yes {
 		logger.Debug("Skipping new checkpoint-adjust since side-tx didn't get yes votes", "checkpointNumber", msg.HeaderIndex)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if checkpointBuffer != nil {
+		logger.Error("checkpoint buffer", "error", err)
+		return common.ErrNoCheckpointFound(k.Codespace()).Result()
 	}
 
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)

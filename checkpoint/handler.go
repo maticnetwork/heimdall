@@ -38,6 +38,12 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 	chainParams := k.ck.GetParams(ctx).ChainParams
 	params := k.GetParams(ctx)
 
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if checkpointBuffer != nil {
+		logger.Error("checkpoint buffer", "error", err)
+		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+	}
+
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
 	if err != nil {
 		logger.Error("Unable to get checkpoint from db", "error", err)

@@ -30,6 +30,7 @@ const (
 	CodeOldCheckpoint            CodeType = 1509
 	CodeDisCountinuousCheckpoint CodeType = 1510
 	CodeNoCheckpointBuffer       CodeType = 1511
+	CodeCheckpointBuffer         CodeType = 1512
 
 	CodeOldValidator        CodeType = 2500
 	CodeNoValidator         CodeType = 2501
@@ -127,6 +128,10 @@ func ErrNoCheckpointFound(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrNoCheckpointBufferFound(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoCheckpointBuffer, "Checkpoint buffer not found")
+}
+
+func ErrCheckpointBufferFound(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeCheckpointBuffer, "Checkpoint buffer found")
 }
 
 func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
