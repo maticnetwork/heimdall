@@ -20,6 +20,8 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
+		case types.MsgCheckpointAdjust:
+			return SideHandleMsgCheckpointAdjust(ctx, k, msg, contractCaller)
 		case types.MsgCheckpoint:
 			return SideHandleMsgCheckpoint(ctx, k, msg, contractCaller)
 		case types.MsgCheckpointAck:
@@ -30,6 +32,39 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 			}
 		}
 	}
+}
+
+// SideHandleMsgCheckpointAdjust handles MsgCheckpointAdjust message for external call
+func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAdjust, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+	logger := k.Logger(ctx)
+	chainParams := k.ck.GetParams(ctx).ChainParams
+	params := k.GetParams(ctx)
+
+	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
+	if err != nil {
+		logger.Error("Unable to get checkpoint from db", "error", err)
+		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
+	}
+
+	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		logger.Error("Unable to fetch rootchain contract instance", "error", err)
+		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
+	}
+
+	root, start, end, _, _, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
+	if err != nil {
+		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.HeaderIndex)
+		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
+	}
+
+	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
+		logger.Error("Same Checkpoint in DB")
+		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
+	}
+
+	result.Result = abci.SideTxResultType_Yes
+	return
 }
 
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
@@ -114,6 +149,8 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
+		case types.MsgCheckpointAdjust:
+			return PostHandleMsgCheckpointAdjust(ctx, k, msg, sideTxResult, contractCaller)
 		case types.MsgCheckpoint:
 			return PostHandleMsgCheckpoint(ctx, k, msg, sideTxResult)
 		case types.MsgCheckpointAck:
@@ -121,6 +158,72 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		default:
 			return sdk.ErrUnknownRequest("Unrecognized checkpoint Msg type").Result()
 		}
+	}
+}
+
+// PostHandleMsgCheckpointAdjust handles msg checkpoint adjust
+func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAdjust, sideTxResult abci.SideTxResultType, contractCaller helper.IContractCaller) sdk.Result {
+	logger := k.Logger(ctx)
+	chainParams := k.ck.GetParams(ctx).ChainParams
+	params := k.GetParams(ctx)
+
+	// Skip handler if checkpoint-adjust is not approved
+	if sideTxResult != abci.SideTxResultType_Yes {
+		logger.Debug("Skipping new checkpoint-adjust since side-tx didn't get yes votes", "checkpointNumber", msg.HeaderIndex)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
+	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
+	if err != nil {
+		logger.Error("Unable to get checkpoint from db", "error", err)
+		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+	}
+
+	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		logger.Error("Unable to fetch rootchain contract instance", "error", err)
+		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+	}
+
+	root, start, end, _, _, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
+	if err != nil {
+		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.HeaderIndex)
+		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+	}
+
+	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
+		logger.Error("Same Checkpoint in DB")
+		return common.ErrOldCheckpoint(k.Codespace()).Result()
+	}
+
+	checkpointObj.EndBlock = end
+	checkpointObj.StartBlock = start
+	checkpointObj.RootHash = hmTypes.BytesToHeimdallHash(root.Bytes())
+
+	//
+	// Update checkpoint state
+	//
+
+	// Add checkpoint to store
+	if err := k.AddCheckpoint(ctx, msg.HeaderIndex, checkpointObj); err != nil {
+		logger.Error("Error while adding checkpoint into store", "checkpointNumber", msg.HeaderIndex)
+		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
+	}
+	logger.Debug("Checkpoint added to store", "checkpointNumber", msg.HeaderIndex)
+
+	// Emit event for checkpoints
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointAck,
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                      // action
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),    // module name
+			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()), // result
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.HeaderIndex, 10)),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
 	}
 }
 
