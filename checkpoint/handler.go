@@ -56,7 +56,7 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 		return common.ErrNoCheckpointFound(k.Codespace()).Result()
 	}
 
-	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
+	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(checkpointObj.RootHash.Bytes(), root.Bytes()) {
 		logger.Error("Same Checkpoint in DB")
 		return common.ErrOldCheckpoint(k.Codespace()).Result()
 	}
@@ -65,12 +65,7 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 		sdk.NewEvent(
 			types.EventTypeCheckpointAdjust,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
-			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
-			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.HeaderIndex, 10)),
-			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
-			sdk.NewAttribute(types.AttributeKeyAccountHash, msg.AccountRootHash.String()),
 		),
 	})
 

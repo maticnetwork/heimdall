@@ -58,7 +58,7 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
 	}
 
-	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
+	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(checkpointObj.RootHash.Bytes(), root.Bytes()) {
 		logger.Error("Same Checkpoint in DB")
 		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
 	}
@@ -191,7 +191,7 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrNoCheckpointFound(k.Codespace()).Result()
 	}
 
-	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
+	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(checkpointObj.RootHash.Bytes(), root.Bytes()) {
 		logger.Error("Same Checkpoint in DB")
 		return common.ErrOldCheckpoint(k.Codespace()).Result()
 	}

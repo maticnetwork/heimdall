@@ -20,30 +20,15 @@ var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpointAdjust represents checkpoint adjust
 type MsgCheckpointAdjust struct {
-	Proposer        types.HeimdallAddress `json:"proposer"`
-	StartBlock      uint64                `json:"start_block"`
-	EndBlock        uint64                `json:"end_block"`
-	HeaderIndex     uint64                `json:"header_index"`
-	RootHash        types.HeimdallHash    `json:"root_hash"`
-	AccountRootHash types.HeimdallHash    `json:"account_root_hash"`
+	HeaderIndex uint64 `json:"header_index"`
 }
 
 // NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
 func NewMsgCheckpointAdjust(
-	startBlock uint64,
-	endBlock uint64,
 	headerIndex uint64,
-	roothash types.HeimdallHash,
-	accountRootHash types.HeimdallHash,
-	proposer types.HeimdallAddress,
 ) MsgCheckpointAdjust {
 	return MsgCheckpointAdjust{
-		StartBlock:      startBlock,
-		EndBlock:        endBlock,
-		HeaderIndex:     headerIndex,
-		RootHash:        roothash,
-		AccountRootHash: accountRootHash,
-		Proposer:        proposer,
+		HeaderIndex: headerIndex,
 	}
 }
 
@@ -57,7 +42,7 @@ func (msg MsgCheckpointAdjust) GetSignBytes() []byte {
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpointAdjust) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
+	return []sdk.AccAddress{}
 }
 
 func (msg MsgCheckpointAdjust) Route() string {
@@ -70,22 +55,6 @@ func (msg MsgCheckpointAdjust) Type() string {
 }
 
 func (msg MsgCheckpointAdjust) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.RootHash.Bytes(), helper.ZeroHash.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.RootHash.String())
-	}
-
-	if bytes.Equal(msg.AccountRootHash.Bytes(), helper.ZeroHash.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid accountRootHash %v", msg.RootHash.String())
-	}
-
-	if msg.Proposer.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
-	}
-
-	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid startBlock %v or/and endBlock %v", msg.StartBlock, msg.EndBlock)
-	}
-
 	return nil
 }
 
