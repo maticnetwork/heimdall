@@ -20,15 +20,27 @@ var _ sdk.Msg = &MsgCheckpoint{}
 
 // MsgCheckpointAdjust represents checkpoint adjust
 type MsgCheckpointAdjust struct {
-	HeaderIndex uint64 `json:"header_index"`
+	HeaderIndex uint64                `json:"header_index"`
+	Proposer    types.HeimdallAddress `json:"proposer"`
+	StartBlock  uint64                `json:"start_block"`
+	EndBlock    uint64                `json:"end_block"`
+	RootHash    types.HeimdallHash    `json:"root_hash"`
 }
 
-// NewMsgCheckpointBlock creates new checkpoint message using mentioned arguments
+// NewMsgCheckpointAdjust adjust previous checkpoint
 func NewMsgCheckpointAdjust(
 	headerIndex uint64,
+	startBlock uint64,
+	endBlock uint64,
+	proposer types.HeimdallAddress,
+	rootHash types.HeimdallHash,
 ) MsgCheckpointAdjust {
 	return MsgCheckpointAdjust{
 		HeaderIndex: headerIndex,
+		StartBlock:  startBlock,
+		EndBlock:    endBlock,
+		Proposer:    proposer,
+		RootHash:    rootHash,
 	}
 }
 
@@ -42,7 +54,7 @@ func (msg MsgCheckpointAdjust) GetSignBytes() []byte {
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpointAdjust) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{}
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
 }
 
 func (msg MsgCheckpointAdjust) Route() string {
@@ -55,6 +67,17 @@ func (msg MsgCheckpointAdjust) Type() string {
 }
 
 func (msg MsgCheckpointAdjust) ValidateBasic() sdk.Error {
+	if bytes.Equal(msg.RootHash.Bytes(), helper.ZeroHash.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.RootHash.String())
+	}
+
+	if msg.Proposer.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
+	}
+
+	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid startBlock %v or/and endBlock %v", msg.StartBlock, msg.EndBlock)
+	}
 	return nil
 }
 

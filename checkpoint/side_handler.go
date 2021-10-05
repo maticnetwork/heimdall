@@ -58,15 +58,15 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
 	}
 
-	root, start, end, _, _, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
+	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
 	if err != nil {
 		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.HeaderIndex)
-		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
+		return common.ErrorSideTx(k.Codespace(), common.CodeNoCheckpoint)
 	}
 
-	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(checkpointObj.RootHash.Bytes(), root.Bytes()) {
+	if msg.EndBlock == end && msg.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) && bytes.Equal(msg.Proposer.Bytes(), msg.Proposer.Bytes()) {
 		logger.Error("Same Checkpoint in DB")
-		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
+		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointAlreadyExists)
 	}
 
 	result.Result = abci.SideTxResultType_Yes
@@ -170,8 +170,6 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 // PostHandleMsgCheckpointAdjust handles msg checkpoint adjust
 func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAdjust, sideTxResult abci.SideTxResultType, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
-	chainParams := k.ck.GetParams(ctx).ChainParams
-	params := k.GetParams(ctx)
 
 	// Skip handler if checkpoint-adjust is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
@@ -181,8 +179,8 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if checkpointBuffer != nil {
-		logger.Error("checkpoint buffer", "error", err)
-		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+		logger.Error("checkpoint buffer exists", "error", err)
+		return common.ErrCheckpointBufferFound(k.Codespace()).Result()
 	}
 
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
@@ -191,26 +189,18 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrNoCheckpointFound(k.Codespace()).Result()
 	}
 
-	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
-	if err != nil {
-		logger.Error("Unable to fetch rootchain contract instance", "error", err)
-		return common.ErrNoCheckpointFound(k.Codespace()).Result()
-	}
-
-	root, start, end, _, _, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
-	if err != nil {
-		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.HeaderIndex)
-		return common.ErrNoCheckpointFound(k.Codespace()).Result()
-	}
-
-	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(checkpointObj.RootHash.Bytes(), root.Bytes()) {
+	if checkpointObj.EndBlock == msg.EndBlock && checkpointObj.StartBlock == msg.StartBlock && bytes.Equal(checkpointObj.RootHash.Bytes(), msg.RootHash.Bytes()) && bytes.Equal(checkpointObj.Proposer.Bytes(), msg.Proposer.Bytes()) {
 		logger.Error("Same Checkpoint in DB")
-		return common.ErrOldCheckpoint(k.Codespace()).Result()
+		return common.ErrCheckpointAlreadyExists(k.Codespace()).Result()
 	}
 
-	checkpointObj.EndBlock = end
-	checkpointObj.StartBlock = start
-	checkpointObj.RootHash = hmTypes.BytesToHeimdallHash(root.Bytes())
+	logger.Info("Previous checkpoint details: EndBlock -", checkpointObj.EndBlock, ", RootHash -", msg.RootHash, " Proposer -", checkpointObj.Proposer)
+
+	checkpointObj.EndBlock = msg.EndBlock
+	checkpointObj.RootHash = hmTypes.BytesToHeimdallHash(msg.RootHash.Bytes())
+	checkpointObj.Proposer = msg.Proposer
+
+	logger.Info("New checkpoint details: EndBlock -", checkpointObj.EndBlock, ", RootHash -", msg.RootHash, " Proposer -", checkpointObj.Proposer)
 
 	//
 	// Update checkpoint state

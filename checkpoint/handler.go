@@ -35,13 +35,11 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 // handleMsgCheckpointAdjust adjusts checkpoint
 func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
-	chainParams := k.ck.GetParams(ctx).ChainParams
-	params := k.GetParams(ctx)
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if checkpointBuffer != nil {
-		logger.Error("checkpoint buffer", "error", err)
-		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+		logger.Error("checkpoint buffer exists", "error", err)
+		return common.ErrCheckpointBufferFound(k.Codespace()).Result()
 	}
 
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
@@ -50,21 +48,9 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 		return common.ErrNoCheckpointFound(k.Codespace()).Result()
 	}
 
-	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
-	if err != nil {
-		logger.Error("Unable to fetch rootchain contract instance", "error", err)
-		return common.ErrNoCheckpointFound(k.Codespace()).Result()
-	}
-
-	root, start, end, _, _, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
-	if err != nil {
-		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.HeaderIndex)
-		return common.ErrNoCheckpointFound(k.Codespace()).Result()
-	}
-
-	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(checkpointObj.RootHash.Bytes(), root.Bytes()) {
+	if checkpointObj.EndBlock == msg.EndBlock && checkpointObj.StartBlock == msg.StartBlock && bytes.Equal(checkpointObj.RootHash.Bytes(), msg.RootHash.Bytes()) && bytes.Equal(checkpointObj.Proposer.Bytes(), msg.Proposer.Bytes()) {
 		logger.Error("Same Checkpoint in DB")
-		return common.ErrOldCheckpoint(k.Codespace()).Result()
+		return common.ErrCheckpointAlreadyExists(k.Codespace()).Result()
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -72,6 +58,10 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 			types.EventTypeCheckpointAdjust,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.HeaderIndex, 10)),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
 		),
 	})
 

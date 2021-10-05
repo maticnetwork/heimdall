@@ -54,26 +54,69 @@ func SendCheckpointAdjust(cdc *codec.Codec) *cobra.Command {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			// header index
-			headerBlockStr := viper.GetString(FlagHeaderNumber)
-			if headerBlockStr == "" {
+			headerIndexStr := viper.GetString(FlagHeaderNumber)
+			if headerIndexStr == "" {
 				return fmt.Errorf("header number cannot be empty")
 			}
-
-			headerBlock, err := strconv.ParseUint(headerBlockStr, 10, 64)
+			headerIndex, err := strconv.ParseUint(headerIndexStr, 10, 64)
 			if err != nil {
 				return err
 			}
 
+			// get proposer
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				proposer = helper.GetFromAddress(cliCtx)
+			}
+
+			//	start block
+			startBlockStr := viper.GetString(FlagStartBlock)
+			if startBlockStr == "" {
+				return fmt.Errorf("start block cannot be empty")
+			}
+			startBlock, err := strconv.ParseUint(startBlockStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			//	end block
+			endBlockStr := viper.GetString(FlagEndBlock)
+			if endBlockStr == "" {
+				return fmt.Errorf("end block cannot be empty")
+			}
+			endBlock, err := strconv.ParseUint(endBlockStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			// root hash
+			rootHashStr := viper.GetString(FlagRootHash)
+			if rootHashStr == "" {
+				return fmt.Errorf("root hash cannot be empty")
+			}
+
 			msg := types.NewMsgCheckpointAdjust(
-				headerBlock,
+				headerIndex,
+				startBlock,
+				endBlock,
+				proposer,
+				hmTypes.HexToHeimdallHash(rootHashStr),
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
 	}
 	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
+	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
+	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
 
 	cmd.MarkFlagRequired(FlagHeaderNumber)
+	cmd.MarkFlagRequired(FlagRootHash)
+	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.MarkFlagRequired(FlagStartBlock)
+	cmd.MarkFlagRequired(FlagEndBlock)
 
 	return cmd
 }
@@ -137,31 +180,26 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			//	start block
-
 			startBlockStr := viper.GetString(FlagStartBlock)
 			if startBlockStr == "" {
 				return fmt.Errorf("start block cannot be empty")
 			}
-
 			startBlock, err := strconv.ParseUint(startBlockStr, 10, 64)
 			if err != nil {
 				return err
 			}
 
 			//	end block
-
 			endBlockStr := viper.GetString(FlagEndBlock)
 			if endBlockStr == "" {
 				return fmt.Errorf("end block cannot be empty")
 			}
-
 			endBlock, err := strconv.ParseUint(endBlockStr, 10, 64)
 			if err != nil {
 				return err
 			}
 
 			// root hash
-
 			rootHashStr := viper.GetString(FlagRootHash)
 			if rootHashStr == "" {
 				return fmt.Errorf("root hash cannot be empty")
