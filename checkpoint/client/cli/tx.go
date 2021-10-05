@@ -63,10 +63,13 @@ func SendCheckpointAdjust(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			// get from
+			from := helper.GetFromAddress(cliCtx)
+
 			// get proposer
 			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
 			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
+				return fmt.Errorf("proposer cannot be empty")
 			}
 
 			//	start block
@@ -100,6 +103,7 @@ func SendCheckpointAdjust(cdc *codec.Codec) *cobra.Command {
 				startBlock,
 				endBlock,
 				proposer,
+				from,
 				hmTypes.HexToHeimdallHash(rootHashStr),
 			)
 

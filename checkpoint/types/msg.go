@@ -22,6 +22,7 @@ var _ sdk.Msg = &MsgCheckpoint{}
 type MsgCheckpointAdjust struct {
 	HeaderIndex uint64                `json:"header_index"`
 	Proposer    types.HeimdallAddress `json:"proposer"`
+	From        types.HeimdallAddress `json:"from"`
 	StartBlock  uint64                `json:"start_block"`
 	EndBlock    uint64                `json:"end_block"`
 	RootHash    types.HeimdallHash    `json:"root_hash"`
@@ -33,6 +34,7 @@ func NewMsgCheckpointAdjust(
 	startBlock uint64,
 	endBlock uint64,
 	proposer types.HeimdallAddress,
+	from types.HeimdallAddress,
 	rootHash types.HeimdallHash,
 ) MsgCheckpointAdjust {
 	return MsgCheckpointAdjust{
@@ -40,6 +42,7 @@ func NewMsgCheckpointAdjust(
 		StartBlock:  startBlock,
 		EndBlock:    endBlock,
 		Proposer:    proposer,
+		From:        from,
 		RootHash:    rootHash,
 	}
 }
@@ -54,7 +57,7 @@ func (msg MsgCheckpointAdjust) GetSignBytes() []byte {
 
 // GetSigners returns address of the signer
 func (msg MsgCheckpointAdjust) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.Proposer)}
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
 }
 
 func (msg MsgCheckpointAdjust) Route() string {
@@ -78,6 +81,11 @@ func (msg MsgCheckpointAdjust) ValidateBasic() sdk.Error {
 	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid startBlock %v or/and endBlock %v", msg.StartBlock, msg.EndBlock)
 	}
+	return nil
+}
+
+// GetSideSignBytes returns side sign bytes
+func (msg MsgCheckpointAdjust) GetSideSignBytes() []byte {
 	return nil
 }
 
