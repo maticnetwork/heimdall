@@ -46,12 +46,6 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointBuffer)
 	}
 
-	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
-	if err != nil {
-		logger.Error("Unable to get checkpoint from db", "error", err)
-		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
-	}
-
 	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
 	if err != nil {
 		logger.Error("Unable to fetch rootchain contract instance", "error", err)
@@ -64,7 +58,7 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrorSideTx(k.Codespace(), common.CodeNoCheckpoint)
 	}
 
-	if msg.EndBlock == end && msg.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) && bytes.Equal(msg.Proposer.Bytes(), msg.Proposer.Bytes()) {
+	if msg.EndBlock == end && msg.StartBlock == start && bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) && bytes.Equal(msg.Proposer.Bytes(), proposer.Bytes()) {
 		logger.Error("Same Checkpoint in DB")
 		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointAlreadyExists)
 	}
