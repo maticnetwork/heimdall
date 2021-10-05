@@ -69,7 +69,7 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointAlreadyExists)
 	}
 
-	if msg.EndBlock != end || msg.StartBlock != start || !bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) && bytes.Equal(msg.Proposer.Bytes(), proposer.Bytes()) {
+	if msg.EndBlock != end || msg.StartBlock != start || !bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) || !bytes.Equal(msg.Proposer.Bytes(), proposer.Bytes()) {
 		logger.Error("Checkpoint on Rootchain is not same as msg")
 		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointAlreadyExists)
 	}
