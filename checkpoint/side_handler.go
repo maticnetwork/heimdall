@@ -205,7 +205,7 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		logger.Error("Error while adding checkpoint into store", "checkpointNumber", msg.HeaderIndex)
 		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
 	}
-	logger.Debug("Checkpoint added to store", "checkpointNumber", msg.HeaderIndex)
+	logger.Debug("Checkpoint updated to store", "checkpointNumber", msg.HeaderIndex)
 
 	// Emit event for checkpoints
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -215,6 +215,10 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),    // module name
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()), // result
 			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.HeaderIndex, 10)),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
 		),
 	})
 
