@@ -128,10 +128,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsRoot
 
 	suite.handler(ctx, checkpointAdjust)
 	sideResult := suite.sideHandler(ctx, checkpointAdjust)
-	require.Equal(t, sideResult.Code, uint32(0x5e9))
+	require.Equal(t, sideResult.Code, uint32(common.CodeCheckpointAlreadyExists))
 }
 
-func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsMsgSideHandler() {
+func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustNotSameCheckpointAsRootChain() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper
 
@@ -152,6 +152,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsMsgS
 		EndBlock:    256,
 		RootHash:    hmTypes.HexToHeimdallHash("123"),
 	}
+
+	rootchainInstance := &rootchain.Rootchain{}
+	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
+	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("222"), uint64(0), uint64(256), uint64(1), hmTypes.HexToHeimdallAddress("123"), nil)
 
 	result := suite.sideHandler(ctx, checkpointAdjust)
 	require.Equal(t, result.Code, uint32(common.CodeCheckpointAlreadyExists))
