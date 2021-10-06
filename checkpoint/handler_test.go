@@ -149,6 +149,58 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	})
 }
 
+func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustCheckpointBuffer() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	checkpoint := hmTypes.Checkpoint{
+		Proposer:   hmTypes.HexToHeimdallAddress("123"),
+		StartBlock: 0,
+		EndBlock:   256,
+		RootHash:   hmTypes.HexToHeimdallHash("123"),
+		BorChainID: "testchainid",
+		TimeStamp:  1,
+	}
+	keeper.SetCheckpointBuffer(ctx, checkpoint)
+
+	checkpointAdjust := types.MsgCheckpointAdjust{
+		HeaderIndex: 1,
+		Proposer:    hmTypes.HexToHeimdallAddress("456"),
+		StartBlock:  0,
+		EndBlock:    512,
+		RootHash:    hmTypes.HexToHeimdallHash("456"),
+	}
+
+	result := suite.handler(ctx, checkpointAdjust)
+	require.False(t, result.IsOK())
+}
+
+func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsMsg() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	checkpoint := hmTypes.Checkpoint{
+		Proposer:   hmTypes.HexToHeimdallAddress("123"),
+		StartBlock: 0,
+		EndBlock:   256,
+		RootHash:   hmTypes.HexToHeimdallHash("123"),
+		BorChainID: "testchainid",
+		TimeStamp:  1,
+	}
+	keeper.AddCheckpoint(ctx, 1, checkpoint)
+
+	checkpointAdjust := types.MsgCheckpointAdjust{
+		HeaderIndex: 1,
+		Proposer:    hmTypes.HexToHeimdallAddress("123"),
+		StartBlock:  0,
+		EndBlock:    256,
+		RootHash:    hmTypes.HexToHeimdallHash("123"),
+	}
+
+	result := suite.handler(ctx, checkpointAdjust)
+	require.False(t, result.IsOK())
+}
+
 func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper

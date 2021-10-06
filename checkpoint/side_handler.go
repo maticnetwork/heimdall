@@ -20,6 +20,8 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
+		case types.MsgCheckpointAdjust:
+			return SideHandleMsgCheckpointAdjust(ctx, k, msg, contractCaller)
 		case types.MsgCheckpoint:
 			return SideHandleMsgCheckpoint(ctx, k, msg, contractCaller)
 		case types.MsgCheckpointAck:
@@ -30,6 +32,50 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 			}
 		}
 	}
+}
+
+// SideHandleMsgCheckpointAdjust handles MsgCheckpointAdjust message for external call
+func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAdjust, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+	logger := k.Logger(ctx)
+	chainParams := k.ck.GetParams(ctx).ChainParams
+	params := k.GetParams(ctx)
+
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if checkpointBuffer != nil {
+		logger.Error("checkpoint buffer", "error", err)
+		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointBuffer)
+	}
+
+	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
+	if err != nil {
+		logger.Error("Unable to get checkpoint from db", "error", err)
+		return common.ErrorSideTx(k.Codespace(), common.CodeNoCheckpoint)
+	}
+
+	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
+	if err != nil {
+		logger.Error("Unable to fetch rootchain contract instance", "error", err)
+		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
+	}
+
+	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
+	if err != nil {
+		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.HeaderIndex)
+		return common.ErrorSideTx(k.Codespace(), common.CodeNoCheckpoint)
+	}
+
+	if checkpointObj.EndBlock == end && checkpointObj.StartBlock == start && bytes.Equal(checkpointObj.RootHash.Bytes(), root.Bytes()) && bytes.Equal(checkpointObj.Proposer.Bytes(), proposer.Bytes()) {
+		logger.Error("Same Checkpoint in DB")
+		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointAlreadyExists)
+	}
+
+	if msg.EndBlock != end || msg.StartBlock != start || !bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) || !bytes.Equal(msg.Proposer.Bytes(), proposer.Bytes()) {
+		logger.Error("Checkpoint on Rootchain is not same as msg")
+		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointAlreadyExists)
+	}
+
+	result.Result = abci.SideTxResultType_Yes
+	return
 }
 
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
@@ -114,6 +160,8 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
+		case types.MsgCheckpointAdjust:
+			return PostHandleMsgCheckpointAdjust(ctx, k, msg, sideTxResult, contractCaller)
 		case types.MsgCheckpoint:
 			return PostHandleMsgCheckpoint(ctx, k, msg, sideTxResult)
 		case types.MsgCheckpointAck:
@@ -121,6 +169,72 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		default:
 			return sdk.ErrUnknownRequest("Unrecognized checkpoint Msg type").Result()
 		}
+	}
+}
+
+// PostHandleMsgCheckpointAdjust handles msg checkpoint adjust
+func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAdjust, sideTxResult abci.SideTxResultType, contractCaller helper.IContractCaller) sdk.Result {
+	logger := k.Logger(ctx)
+
+	// Skip handler if checkpoint-adjust is not approved
+	if sideTxResult != abci.SideTxResultType_Yes {
+		logger.Debug("Skipping new checkpoint-adjust since side-tx didn't get yes votes", "checkpointNumber", msg.HeaderIndex)
+		return common.ErrBadBlockDetails(k.Codespace()).Result()
+	}
+
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if checkpointBuffer != nil {
+		logger.Error("checkpoint buffer exists", "error", err)
+		return common.ErrCheckpointBufferFound(k.Codespace()).Result()
+	}
+
+	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
+	if err != nil {
+		logger.Error("Unable to get checkpoint from db", "error", err)
+		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+	}
+
+	if checkpointObj.EndBlock == msg.EndBlock && checkpointObj.StartBlock == msg.StartBlock && bytes.Equal(checkpointObj.RootHash.Bytes(), msg.RootHash.Bytes()) && bytes.Equal(checkpointObj.Proposer.Bytes(), msg.Proposer.Bytes()) {
+		logger.Error("Same Checkpoint in DB")
+		return common.ErrCheckpointAlreadyExists(k.Codespace()).Result()
+	}
+
+	logger.Info("Previous checkpoint details: EndBlock -", checkpointObj.EndBlock, ", RootHash -", msg.RootHash, " Proposer -", checkpointObj.Proposer)
+
+	checkpointObj.EndBlock = msg.EndBlock
+	checkpointObj.RootHash = hmTypes.BytesToHeimdallHash(msg.RootHash.Bytes())
+	checkpointObj.Proposer = msg.Proposer
+
+	logger.Info("New checkpoint details: EndBlock -", checkpointObj.EndBlock, ", RootHash -", msg.RootHash, " Proposer -", checkpointObj.Proposer)
+
+	//
+	// Update checkpoint state
+	//
+
+	// Add checkpoint to store
+	if err := k.AddCheckpoint(ctx, msg.HeaderIndex, checkpointObj); err != nil {
+		logger.Error("Error while adding checkpoint into store", "checkpointNumber", msg.HeaderIndex)
+		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
+	}
+	logger.Debug("Checkpoint updated to store", "checkpointNumber", msg.HeaderIndex)
+
+	// Emit event for checkpoints
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointAck,
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                      // action
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),    // module name
+			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()), // result
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.HeaderIndex, 10)),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
 	}
 }
 

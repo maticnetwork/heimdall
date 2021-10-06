@@ -39,9 +39,90 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			SendCheckpointTx(cdc),
 			SendCheckpointACKTx(cdc),
 			SendCheckpointNoACKTx(cdc),
+			SendCheckpointAdjust(cdc),
 		)...,
 	)
 	return txCmd
+}
+
+// SendCheckpointAdjust adjusts previous checkpoint transaction
+func SendCheckpointAdjust(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "checkpoint-adjust",
+		Short: "adjusts previous checkpoint transaction according to ethereum chain (details to be provided for checkpoint on ethereum chain)",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			// header index
+			headerIndexStr := viper.GetString(FlagHeaderNumber)
+			if headerIndexStr == "" {
+				return fmt.Errorf("header number cannot be empty")
+			}
+			headerIndex, err := strconv.ParseUint(headerIndexStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			// get from
+			from := helper.GetFromAddress(cliCtx)
+
+			// get proposer
+			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
+			if proposer.Empty() {
+				return fmt.Errorf("proposer cannot be empty")
+			}
+
+			//	start block
+			startBlockStr := viper.GetString(FlagStartBlock)
+			if startBlockStr == "" {
+				return fmt.Errorf("start block cannot be empty")
+			}
+			startBlock, err := strconv.ParseUint(startBlockStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			//	end block
+			endBlockStr := viper.GetString(FlagEndBlock)
+			if endBlockStr == "" {
+				return fmt.Errorf("end block cannot be empty")
+			}
+			endBlock, err := strconv.ParseUint(endBlockStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			// root hash
+			rootHashStr := viper.GetString(FlagRootHash)
+			if rootHashStr == "" {
+				return fmt.Errorf("root hash cannot be empty")
+			}
+
+			msg := types.NewMsgCheckpointAdjust(
+				headerIndex,
+				startBlock,
+				endBlock,
+				proposer,
+				from,
+				hmTypes.HexToHeimdallHash(rootHashStr),
+			)
+
+			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+		},
+	}
+	cmd.Flags().String(FlagHeaderNumber, "", "--header=<header-index>")
+	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
+	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
+	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
+
+	cmd.MarkFlagRequired(FlagHeaderNumber)
+	cmd.MarkFlagRequired(FlagRootHash)
+	cmd.MarkFlagRequired(FlagProposerAddress)
+	cmd.MarkFlagRequired(FlagStartBlock)
+	cmd.MarkFlagRequired(FlagEndBlock)
+
+	return cmd
 }
 
 // SendCheckpointTx send checkpoint transaction
@@ -103,31 +184,26 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			//	start block
-
 			startBlockStr := viper.GetString(FlagStartBlock)
 			if startBlockStr == "" {
 				return fmt.Errorf("start block cannot be empty")
 			}
-
 			startBlock, err := strconv.ParseUint(startBlockStr, 10, 64)
 			if err != nil {
 				return err
 			}
 
 			//	end block
-
 			endBlockStr := viper.GetString(FlagEndBlock)
 			if endBlockStr == "" {
 				return fmt.Errorf("end block cannot be empty")
 			}
-
 			endBlock, err := strconv.ParseUint(endBlockStr, 10, 64)
 			if err != nil {
 				return err
 			}
 
 			// root hash
-
 			rootHashStr := viper.GetString(FlagRootHash)
 			if rootHashStr == "" {
 				return fmt.Errorf("root hash cannot be empty")

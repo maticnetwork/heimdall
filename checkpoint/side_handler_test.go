@@ -7,6 +7,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	borCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/app"
 	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -65,6 +66,97 @@ func (suite *SideHandlerTestSuite) TestSideHandler() {
 }
 
 // test handler for message
+func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSuccess() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	checkpoint := hmTypes.Checkpoint{
+		Proposer:   hmTypes.HexToHeimdallAddress("123"),
+		StartBlock: 0,
+		EndBlock:   256,
+		RootHash:   hmTypes.HexToHeimdallHash("123"),
+		BorChainID: "testchainid",
+		TimeStamp:  1,
+	}
+	keeper.AddCheckpoint(ctx, 1, checkpoint)
+
+	checkpointAdjust := types.MsgCheckpointAdjust{
+		HeaderIndex: 1,
+		Proposer:    hmTypes.HexToHeimdallAddress("456"),
+		StartBlock:  0,
+		EndBlock:    512,
+		RootHash:    hmTypes.HexToHeimdallHash("456"),
+	}
+	rootchainInstance := &rootchain.Rootchain{}
+	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
+	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("456"), uint64(0), uint64(512), uint64(1), hmTypes.HexToHeimdallAddress("456"), nil)
+
+	suite.handler(ctx, checkpointAdjust)
+	sideResult := suite.sideHandler(ctx, checkpointAdjust)
+	suite.postHandler(ctx, checkpointAdjust, sideResult.Result)
+
+	responseCheckpoint, _ := keeper.GetCheckpointByNumber(ctx, 1)
+	require.Equal(t, responseCheckpoint.EndBlock, uint64(512))
+	require.Equal(t, responseCheckpoint.Proposer, hmTypes.HexToHeimdallAddress("456"))
+	require.Equal(t, responseCheckpoint.RootHash, hmTypes.HexToHeimdallHash("456"))
+}
+
+func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsRootChain() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	checkpoint := hmTypes.Checkpoint{
+		Proposer:   hmTypes.HexToHeimdallAddress("123"),
+		StartBlock: 0,
+		EndBlock:   256,
+		RootHash:   hmTypes.HexToHeimdallHash("123"),
+		BorChainID: "testchainid",
+		TimeStamp:  1,
+	}
+	keeper.AddCheckpoint(ctx, 1, checkpoint)
+
+	checkpointAdjust := types.MsgCheckpointAdjust{
+		HeaderIndex: 1,
+		Proposer:    hmTypes.HexToHeimdallAddress("123"),
+		StartBlock:  0,
+		EndBlock:    256,
+		RootHash:    hmTypes.HexToHeimdallHash("456"),
+	}
+	rootchainInstance := &rootchain.Rootchain{}
+	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
+	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("123"), uint64(0), uint64(256), uint64(1), hmTypes.HexToHeimdallAddress("123"), nil)
+
+	suite.handler(ctx, checkpointAdjust)
+	sideResult := suite.sideHandler(ctx, checkpointAdjust)
+	require.Equal(t, sideResult.Code, uint32(0x5e9))
+}
+
+func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsMsgSideHandler() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	checkpoint := hmTypes.Checkpoint{
+		Proposer:   hmTypes.HexToHeimdallAddress("123"),
+		StartBlock: 0,
+		EndBlock:   256,
+		RootHash:   hmTypes.HexToHeimdallHash("123"),
+		BorChainID: "testchainid",
+		TimeStamp:  1,
+	}
+	keeper.AddCheckpoint(ctx, 1, checkpoint)
+
+	checkpointAdjust := types.MsgCheckpointAdjust{
+		HeaderIndex: 1,
+		Proposer:    hmTypes.HexToHeimdallAddress("123"),
+		StartBlock:  0,
+		EndBlock:    256,
+		RootHash:    hmTypes.HexToHeimdallHash("123"),
+	}
+
+	result := suite.sideHandler(ctx, checkpointAdjust)
+	require.Equal(t, result.Code, uint32(common.CodeCheckpointAlreadyExists))
+}
+
 func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper

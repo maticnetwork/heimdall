@@ -18,6 +18,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 		switch msg := msg.(type) {
+		case types.MsgCheckpointAdjust:
+			return handleMsgCheckpointAdjust(ctx, msg, k, contractCaller)
 		case types.MsgCheckpoint:
 			return handleMsgCheckpoint(ctx, msg, k, contractCaller)
 		case types.MsgCheckpointAck:
@@ -27,6 +29,44 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
+	}
+}
+
+// handleMsgCheckpointAdjust adjusts checkpoint
+func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	logger := k.Logger(ctx)
+
+	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
+	if checkpointBuffer != nil {
+		logger.Error("checkpoint buffer exists", "error", err)
+		return common.ErrCheckpointBufferFound(k.Codespace()).Result()
+	}
+
+	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
+	if err != nil {
+		logger.Error("Unable to get checkpoint from db", "error", err)
+		return common.ErrNoCheckpointFound(k.Codespace()).Result()
+	}
+
+	if checkpointObj.EndBlock == msg.EndBlock && checkpointObj.StartBlock == msg.StartBlock && bytes.Equal(checkpointObj.RootHash.Bytes(), msg.RootHash.Bytes()) && bytes.Equal(checkpointObj.Proposer.Bytes(), msg.Proposer.Bytes()) {
+		logger.Error("Same Checkpoint in DB")
+		return common.ErrCheckpointAlreadyExists(k.Codespace()).Result()
+	}
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointAdjust,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyHeaderIndex, strconv.FormatUint(msg.HeaderIndex, 10)),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
 	}
 }
 
