@@ -43,6 +43,10 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	}
 
 	mainChainMaxGasPrice := GetConfig().MainchainMaxGasPrice
+	// Check if configured or not, Use default in case of invalid value
+	if mainChainMaxGasPrice <= 0 {
+		mainChainMaxGasPrice = DefaultMainchainMaxGasPrice
+	}
 	if gasprice.Cmp(big.NewInt(mainChainMaxGasPrice)) == 1 {
 		Logger.Error("Gas price is more than max gas price", "gasprice", gasprice)
 		err = fmt.Errorf("gas price is more than max_gas_price, gasprice = %v, maxGasPrice = %d", gasprice, mainChainMaxGasPrice)
