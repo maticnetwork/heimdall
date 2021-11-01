@@ -2,8 +2,8 @@ name: Docker Image CI
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
+    branch:
+      - mat-3270
   
 jobs:
   build:
