@@ -19,6 +19,6 @@ FROM alpine:latest
 COPY --from=builder /root/heimdall/build/* /usr/local/bin/
 
 # add volumes
-VOLUME [ "/root/heimdall" ]
+VOLUME [ "/root/.heimdalld" ]
 
 EXPOSE 1317 26656 26657
