@@ -28,6 +28,7 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+	NetworkChainFlag       = "chain"
 
 	// ---
 	// TODO Move these to common client flags
@@ -68,6 +69,8 @@ const (
 
 	DefaultBorChainID string = "15001"
 
+	DefaultNetworkChain string = "mainnet"
+
 	secretFilePerm = 0600
 )
 
@@ -107,6 +110,9 @@ type Configuration struct {
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
+
+	// current network chain
+	NetworkChain string `mapstructure:"network_chain"`
 }
 
 var conf Configuration
@@ -131,6 +137,9 @@ var Logger logger.Logger
 
 // GenesisDoc contains the genesis file
 var GenesisDoc tmTypes.GenesisDoc
+
+// keeps newSelectionAlgoHeight from network chain toml file
+var newSelectionAlgoHeight int64 = 0
 
 // Contracts
 // var RootChain types.Contract
@@ -204,6 +213,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+
+	// get network chain form viper/cobra flag and set newSelectionAlgoHeight
+	networkChain := viper.GetString(NetworkChainFlag)
+	if networkChain != "" && isValidNetworkChain(networkChain) {
+		newSelectionAlgoHeight = readNetworkChainToml(configDir, networkChain)
+	} else {
+		newSelectionAlgoHeight = readNetworkChainToml(configDir, GetConfig().NetworkChain)
+	}
 }
 
 // GetDefaultHeimdallConfig returns configration with default params
@@ -227,6 +244,8 @@ func GetDefaultHeimdallConfig() Configuration {
 		SpanPollInterval:         DefaultSpanPollInterval,
 
 		NoACKWaitTime: NoACKWaitTime,
+
+		NetworkChain: DefaultNetworkChain,
 	}
 }
 
@@ -297,4 +316,23 @@ func GetPubKey() secp256k1.PubKeySecp256k1 {
 // GetAddress returns address object
 func GetAddress() []byte {
 	return GetPubKey().Address().Bytes()
+}
+
+// get all valid networks
+func GetValidNetworkChains() []string {
+	return []string{"mainnet", "mumbai", "local"}
+}
+
+// Gets NewSelectionAlgoHeight
+func GetNewSelectionAlgoHeight() int64 {
+	return newSelectionAlgoHeight
+}
+
+func isValidNetworkChain(network string) bool {
+	for _, validNetwork := range GetValidNetworkChains() {
+		if strings.Compare(validNetwork, network) == 0 {
+			return true
+		}
+	}
+	return false
 }

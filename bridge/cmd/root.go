@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -33,6 +34,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
 	borChainIDValue, _ := cmd.Flags().GetString(borChainIDFlag)
+	networkChain, _ := cmd.Flags().GetString(helper.NetworkChainFlag)
 
 	// bridge-db directory (default storage)
 	if bridgeDBValue == "" {
@@ -45,6 +47,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 	viper.Set(bridgeDBFlag, bridgeDBValue)
 	viper.Set(borChainIDFlag, borChainIDValue)
+	viper.Set(helper.NetworkChainFlag, networkChain)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
@@ -67,6 +70,11 @@ func init() {
 		helper.WithHeimdallConfigFlag,
 		"",
 		"Heimdall config file path (default <home>/config/heimdall-config.json)",
+	)
+	rootCmd.PersistentFlags().String(
+		helper.NetworkChainFlag,
+		"",
+		fmt.Sprintf("Set one of the chains: [%s]", strings.Join(helper.GetValidNetworkChains(), ",")),
 	)
 	// bridge storage db
 	rootCmd.PersistentFlags().String(

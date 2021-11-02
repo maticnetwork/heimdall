@@ -50,6 +50,12 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
 
+			// copy toml files for each network chain into config folder
+			err = helper.CopyNetworkChainTomlsToConfigDir(filepath.Join(config.RootDir, "config"), helper.GetValidNetworkChains())
+			if err != nil {
+				return err
+			}
+
 			// get pubkey
 			newPubkey := CryptoKeyToPubkey(valPubKey)
 

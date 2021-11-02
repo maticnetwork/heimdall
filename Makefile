@@ -25,26 +25,16 @@ tests:
 
 	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
 
-# make build						Will generate for mainnet by default
-# make build network=mainnet		Will generate for mainnet
-# make build network=mumbai			Will generate for mumbai
-# make build network=local			Will generate for local with NewSelectionAlgoHeight = 0
-# make build network=anythingElse	Will generate for mainnet by default
+# make build
 build: clean
-	go run helper/heimdall-params.template.go $(network)
 	mkdir -p build
 	go build -o build/heimdalld ./cmd/heimdalld
 	go build -o build/heimdallcli ./cmd/heimdallcli
 	go build -o build/bridge bridge/bridge.go
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
 	
-# make install							Will generate for mainnet by default
-# make install network=mainnet			Will generate for mainnet
-# make install network=mumbai			Will generate for mumbai
-# make install network=local			Will generate for local with NewSelectionAlgoHeight = 0
-# make install network=anythingElse		Will generate for mainnet by default
+# make install
 install:
-	go run helper/heimdall-params.template.go $(network)
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
 	go install $(BUILD_FLAGS) bridge/bridge.go
@@ -61,6 +51,7 @@ contracts:
 
 
 init-heimdall:
+	cp mainnet.toml mumbai.toml build
 	./build/heimdalld init
 
 show-account-heimdall:

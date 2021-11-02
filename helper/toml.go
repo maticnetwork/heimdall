@@ -2,6 +2,10 @@ package helper
 
 import (
 	"bytes"
+	"io/ioutil"
+	"log"
+	"path/filepath"
+	"strings"
 	"text/template"
 
 	"github.com/spf13/viper"
@@ -48,6 +52,8 @@ main_chain_max_gas_price = "{{ .MainchainMaxGasPrice }}"
 ##### Timeout Config #####
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
 
+##### current network chain - newSelectionAlgoHeight depends on this #####
+network_chain = "{{ .NetworkChain }}"
 `
 
 var configTemplate *template.Template
@@ -78,4 +84,40 @@ func WriteConfigFile(configFilePath string, config *Configuration) {
 	}
 
 	cmn.MustWriteFile(configFilePath, buffer.Bytes(), 0644)
+}
+
+func readNetworkChainToml(configDir string, network string) int64 {
+	if strings.Compare(network, "local") == 0 {
+		return 0
+	}
+	v := viper.New()
+	v.SetConfigType("toml")
+	v.SetConfigName(network)
+	v.AddConfigPath(configDir)
+	if err := v.ReadInConfig(); err != nil {
+		log.Fatal(err)
+	}
+
+	result := v.GetInt64("new_selection_algo_height")
+	return result
+}
+
+func CopyNetworkChainTomlsToConfigDir(configDir string, networkChains []string) (err error) {
+	var input []byte
+	for _, chain := range networkChains {
+		if strings.Compare(chain, "local") == 0 {
+			continue
+		}
+
+		fileName := chain + ".toml"
+		sourceDir := filepath.Join(".", fileName)
+		destDir := filepath.Join(configDir, fileName)
+		if input, err = ioutil.ReadFile(sourceDir); err != nil {
+			return
+		}
+		if err = ioutil.WriteFile(destDir, input, 0644); err != nil {
+			return
+		}
+	}
+	return
 }

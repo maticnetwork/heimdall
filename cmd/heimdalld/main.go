@@ -93,10 +93,20 @@ func main() {
 		"Heimdall config file path (default <home>/config/heimdall-config.json)",
 	)
 
-	// bind with-heimdall-config config with root cmd
-	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
+	rootCmd.PersistentFlags().String(
+		helper.NetworkChainFlag,
+		"",
+		fmt.Sprintf("Set one of the chains: [%s]", strings.Join(helper.GetValidNetworkChains(), ",")),
+	)
+
+	// bind with-heimdall-config config and chain flag with root cmd
+	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.PersistentFlags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
 		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
 	}
+	if err := viper.BindPFlag(helper.NetworkChainFlag, rootCmd.PersistentFlags().Lookup(helper.NetworkChainFlag)); err != nil {
+		logger.Error("main | BindPFlag | helper.NetworkChainFlag", "Error", err)
+	}
+
 	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
 	rootCmd.AddCommand(showAccountCmd())
 	rootCmd.AddCommand(showPrivateKeyCmd())

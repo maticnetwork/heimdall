@@ -60,11 +60,13 @@ func initTendermintViperConfig(cmd *cobra.Command) {
 	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
+	networkChain, _ := cmd.Flags().GetString(helper.NetworkChainFlag)
 
 	// set to viper
 	viper.Set(helper.NodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
+	viper.Set(helper.NetworkChainFlag, networkChain)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
@@ -111,9 +113,12 @@ func main() {
 		ApproveCmd(cliCtx),
 	)
 
-	// bind with-heimdall-config config with root cmd
+	// bind with-heimdall-config config and chain flag with root cmd
 	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
 		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
+	}
+	if err := viper.BindPFlag(helper.NetworkChainFlag, rootCmd.Flags().Lookup(helper.NetworkChainFlag)); err != nil {
+		logger.Error("main | BindPFlag | helper.NetworkChainFlag", "Error", err)
 	}
 
 	// prepare and add flags
