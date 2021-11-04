@@ -60,13 +60,11 @@ func initTendermintViperConfig(cmd *cobra.Command) {
 	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
-	chain, _ := cmd.Flags().GetString(helper.ChainFlag)
 
 	// set to viper
 	viper.Set(helper.NodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
-	viper.Set(helper.ChainFlag, chain)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
@@ -116,9 +114,6 @@ func main() {
 	// bind with-heimdall-config config and chain flag with root cmd
 	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
 		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
-	}
-	if err := viper.BindPFlag(helper.ChainFlag, rootCmd.Flags().Lookup(helper.ChainFlag)); err != nil {
-		logger.Error("main | BindPFlag | helper.ChainFlag", "Error", err)
 	}
 
 	// prepare and add flags
