@@ -60,13 +60,13 @@ func initTendermintViperConfig(cmd *cobra.Command) {
 	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
-	networkChain, _ := cmd.Flags().GetString(helper.NetworkChainFlag)
+	chain, _ := cmd.Flags().GetString(helper.ChainFlag)
 
 	// set to viper
 	viper.Set(helper.NodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
-	viper.Set(helper.NetworkChainFlag, networkChain)
+	viper.Set(helper.ChainFlag, chain)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
@@ -117,7 +117,7 @@ func main() {
 	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
 		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
 	}
-	if err := viper.BindPFlag(helper.NetworkChainFlag, rootCmd.Flags().Lookup(helper.NetworkChainFlag)); err != nil {
+	if err := viper.BindPFlag(helper.ChainFlag, rootCmd.Flags().Lookup(helper.ChainFlag)); err != nil {
 		logger.Error("main | BindPFlag | helper.NetworkChainFlag", "Error", err)
 	}
 

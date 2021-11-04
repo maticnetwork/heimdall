@@ -51,7 +51,6 @@ contracts:
 
 
 init-heimdall:
-	cp mainnet.toml mumbai.toml build
 	./build/heimdalld init
 
 show-account-heimdall:

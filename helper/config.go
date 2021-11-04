@@ -28,7 +28,7 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
-	NetworkChainFlag       = "chain"
+	ChainFlag              = "chain"
 
 	// ---
 	// TODO Move these to common client flags
@@ -69,7 +69,7 @@ const (
 
 	DefaultBorChainID string = "15001"
 
-	DefaultNetworkChain string = "mainnet"
+	DefaultChain string = "mainnet"
 
 	secretFilePerm = 0600
 )
@@ -111,8 +111,8 @@ type Configuration struct {
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
 
-	// current network chain
-	NetworkChain string `mapstructure:"network_chain"`
+	// current chain - newSelectionAlgoHeight depends on this
+	Chain string `mapstructure:"chain"`
 }
 
 var conf Configuration
@@ -215,12 +215,11 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
 	// get network chain form viper/cobra flag and set newSelectionAlgoHeight
-	networkChain := viper.GetString(NetworkChainFlag)
-	if networkChain != "" && isValidNetworkChain(networkChain) {
-		newSelectionAlgoHeight = readNetworkChainToml(configDir, networkChain)
-	} else {
-		newSelectionAlgoHeight = readNetworkChainToml(configDir, GetConfig().NetworkChain)
+	chain := viper.GetString(ChainFlag)
+	if chain == "" {
+		chain = GetConfig().Chain
 	}
+	setNewSelectionAlgoHeight(chain)
 }
 
 // GetDefaultHeimdallConfig returns configration with default params
@@ -245,7 +244,7 @@ func GetDefaultHeimdallConfig() Configuration {
 
 		NoACKWaitTime: NoACKWaitTime,
 
-		NetworkChain: DefaultNetworkChain,
+		Chain: DefaultChain,
 	}
 }
 
@@ -319,7 +318,7 @@ func GetAddress() []byte {
 }
 
 // get all valid networks
-func GetValidNetworkChains() []string {
+func GetValidChains() []string {
 	return []string{"mainnet", "mumbai", "local"}
 }
 
@@ -328,11 +327,13 @@ func GetNewSelectionAlgoHeight() int64 {
 	return newSelectionAlgoHeight
 }
 
-func isValidNetworkChain(network string) bool {
-	for _, validNetwork := range GetValidNetworkChains() {
-		if strings.Compare(validNetwork, network) == 0 {
-			return true
-		}
+func setNewSelectionAlgoHeight(chain string) {
+	switch chain {
+	case "mainnet":
+		newSelectionAlgoHeight = 375300
+	case "mumbai":
+		newSelectionAlgoHeight = 282500
+	default:
+		newSelectionAlgoHeight = 0
 	}
-	return false
 }
