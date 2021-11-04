@@ -118,7 +118,7 @@ func main() {
 		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
 	}
 	if err := viper.BindPFlag(helper.ChainFlag, rootCmd.Flags().Lookup(helper.ChainFlag)); err != nil {
-		logger.Error("main | BindPFlag | helper.NetworkChainFlag", "Error", err)
+		logger.Error("main | BindPFlag | helper.ChainFlag", "Error", err)
 	}
 
 	// prepare and add flags
