@@ -45,6 +45,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 	viper.Set(bridgeDBFlag, bridgeDBValue)
 	viper.Set(borChainIDFlag, borChainIDValue)
+
 	// start heimdall config
 	helper.InitHeimdallConfig("")
 }
@@ -67,7 +68,6 @@ func init() {
 		"",
 		"Heimdall config file path (default <home>/config/heimdall-config.json)",
 	)
-
 	// bridge storage db
 	rootCmd.PersistentFlags().String(
 		bridgeDBFlag,

@@ -111,7 +111,7 @@ func main() {
 		ApproveCmd(cliCtx),
 	)
 
-	// bind with-heimdall-config config and chain flag with root cmd
+	// bind with-heimdall-config config with root cmd
 	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
 		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
 	}
