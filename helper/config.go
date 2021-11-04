@@ -138,7 +138,6 @@ var Logger logger.Logger
 // GenesisDoc contains the genesis file
 var GenesisDoc tmTypes.GenesisDoc
 
-// keeps newSelectionAlgoHeight from network chain toml file
 var newSelectionAlgoHeight int64 = 0
 
 // Contracts
@@ -214,7 +213,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
-	// get network chain form viper/cobra flag and set newSelectionAlgoHeight
+	// get chain from viper/cobra flag and set newSelectionAlgoHeight
 	chain := viper.GetString(ChainFlag)
 	if chain == "" {
 		chain = GetConfig().Chain
@@ -317,12 +316,12 @@ func GetAddress() []byte {
 	return GetPubKey().Address().Bytes()
 }
 
-// get all valid networks
+// GetValidChains returns all the valid chains
 func GetValidChains() []string {
 	return []string{"mainnet", "mumbai", "local"}
 }
 
-// Gets NewSelectionAlgoHeight
+// GetNewSelectionAlgoHeight returns newSelectionAlgoHeight
 func GetNewSelectionAlgoHeight() int64 {
 	return newSelectionAlgoHeight
 }
