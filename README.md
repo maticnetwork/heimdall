@@ -32,6 +32,14 @@ $ heimdalld start
 $ heimdalld rest-server 
 ```
 
+### Develop using Docker
+
+You can build and run Heimdall using the included Dockerfile in the root directory:
+
+```bash
+docker build -t heimdall .
+docker run heimdall
+```
 
 ### Documentation 
 
