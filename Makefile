@@ -18,7 +18,6 @@ BUILD_FLAGS := -ldflags '$(ldflags)'
 
 clean:
 	rm -rf build
-	rm -f helper/heimdall-params.go
 
 tests:
 	# go test  -v ./...
