@@ -25,3 +25,16 @@ func TestHeimdallConfig(t *testing.T) {
 	fmt.Println("PublicKey", pubKey.String())
 	// fmt.Println("CryptoPublicKey", pubKey.CryptoPubKey().String())
 }
+
+func TestHeimdallConfigNewSelectionAlgoHeight(t *testing.T) {
+	var data map[string]bool = map[string]bool{"mumbai": false, "mainnet": false, "local": true}
+	for chain, shouldBeZero := range data {
+		conf.BorRPCUrl = "" // allow config to be loaded again
+		viper.Set("chain", chain)
+		InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+		nsah := GetNewSelectionAlgoHeight()
+		if nsah == 0 && !shouldBeZero || nsah != 0 && shouldBeZero {
+			t.Errorf("Invalid GetNewSelectionAlgoHeight = %d for chain %s", nsah, chain)
+		}
+	}
+}

@@ -28,6 +28,7 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+	ChainFlag              = "chain"
 
 	// ---
 	// TODO Move these to common client flags
@@ -68,6 +69,8 @@ const (
 
 	DefaultBorChainID string = "15001"
 
+	DefaultChain string = "mainnet"
+
 	secretFilePerm = 0600
 )
 
@@ -107,6 +110,9 @@ type Configuration struct {
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
+
+	// current chain - newSelectionAlgoHeight depends on this
+	Chain string `mapstructure:"chain"`
 }
 
 var conf Configuration
@@ -131,6 +137,8 @@ var Logger logger.Logger
 
 // GenesisDoc contains the genesis file
 var GenesisDoc tmTypes.GenesisDoc
+
+var newSelectionAlgoHeight int64 = 0
 
 // Contracts
 // var RootChain types.Contract
@@ -204,6 +212,13 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
+
+	// get chain from viper/cobra flag and set newSelectionAlgoHeight
+	chain := viper.GetString(ChainFlag)
+	if chain == "" {
+		chain = GetConfig().Chain
+	}
+	setNewSelectionAlgoHeight(chain)
 }
 
 // GetDefaultHeimdallConfig returns configration with default params
@@ -227,6 +242,8 @@ func GetDefaultHeimdallConfig() Configuration {
 		SpanPollInterval:         DefaultSpanPollInterval,
 
 		NoACKWaitTime: NoACKWaitTime,
+
+		Chain: DefaultChain,
 	}
 }
 
@@ -297,4 +314,25 @@ func GetPubKey() secp256k1.PubKeySecp256k1 {
 // GetAddress returns address object
 func GetAddress() []byte {
 	return GetPubKey().Address().Bytes()
+}
+
+// GetValidChains returns all the valid chains
+func GetValidChains() []string {
+	return []string{"mainnet", "mumbai", "local"}
+}
+
+// GetNewSelectionAlgoHeight returns newSelectionAlgoHeight
+func GetNewSelectionAlgoHeight() int64 {
+	return newSelectionAlgoHeight
+}
+
+func setNewSelectionAlgoHeight(chain string) {
+	switch chain {
+	case "mainnet":
+		newSelectionAlgoHeight = 375300
+	case "mumbai":
+		newSelectionAlgoHeight = 282500
+	default:
+		newSelectionAlgoHeight = 0
+	}
 }
