@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
+	hmbridge "github.com/maticnetwork/heimdall/bridge/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -111,6 +112,7 @@ func main() {
 	rootCmd.AddCommand(showAccountCmd())
 	rootCmd.AddCommand(showPrivateKeyCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
+	rootCmd.AddCommand(hmbridge.BridgeCommands())
 	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
 	rootCmd.AddCommand(initCmd(ctx, cdc))
 	rootCmd.AddCommand(testnetCmd(ctx, cdc))

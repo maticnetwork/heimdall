@@ -71,6 +71,8 @@ const (
 
 	DefaultChain string = "mainnet"
 
+	DefaultNode = "tcp://localhost:26657"
+
 	secretFilePerm = 0600
 )
 
