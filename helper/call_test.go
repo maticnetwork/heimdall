@@ -14,8 +14,8 @@ import (
 
 //  Test - to decode signers from checkpoint sigs data
 func TestCheckpointsigs(t *testing.T) {
-	tendermintNode := "tcp://localhost:26657"
-	viper.Set(NodeFlag, tendermintNode)
+	heimdallNode := "tcp://localhost:26657"
+	viper.Set(HeimdallNodeFlag, heimdallNode)
 	viper.Set("log_level", "info")
 	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 

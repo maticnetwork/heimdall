@@ -57,12 +57,12 @@ var (
 )
 
 func initTendermintViperConfig(cmd *cobra.Command) {
-	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
+	heimdallNode, _ := cmd.Flags().GetString(helper.HeimdallNodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 
 	// set to viper
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.HeimdallNodeFlag, heimdallNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 

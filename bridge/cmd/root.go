@@ -32,7 +32,7 @@ func BridgeCommands() *cobra.Command {
 
 // initTendermintViperConfig sets global viper configuration needed to heimdall
 func initTendermintViperConfig(cmd *cobra.Command) {
-	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
+	heimdallNode, _ := cmd.Flags().GetString(helper.HeimdallNodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
@@ -44,7 +44,7 @@ func initTendermintViperConfig(cmd *cobra.Command) {
 	}
 
 	// set to viper
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.HeimdallNodeFlag, heimdallNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 	viper.Set(bridgeDBFlag, bridgeDBValue)
@@ -56,7 +56,7 @@ func initTendermintViperConfig(cmd *cobra.Command) {
 
 func init() {
 	var logger = helper.Logger.With("module", "bridge/cmd/")
-	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", helper.DefaultNode, "Node to connect to")
+	rootCmd.PersistentFlags().StringP(helper.HeimdallNodeFlag, "n", helper.DefaultHeimdallNode, "Node to connect to")
 	rootCmd.PersistentFlags().String(helper.HomeFlag, helper.DefaultNodeHome, "directory for config and data")
 	rootCmd.PersistentFlags().String(
 		helper.WithHeimdallConfigFlag,

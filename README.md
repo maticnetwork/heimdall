@@ -34,6 +34,10 @@ $ heimdalld start --chain=local         Will start for local with NewSelectionAl
 $ heimdalld rest-server 
 ```
 
+### Run bridge
+```bash 
+$ heimdalld bridge 
+```
 
 ### Documentation 
 
