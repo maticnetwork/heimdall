@@ -24,7 +24,7 @@ import (
 )
 
 const (
-	HeimdallNodeFlag       = "node"
+	TendermintNodeFlag     = "node"
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
@@ -71,7 +71,7 @@ const (
 
 	DefaultChain string = "mainnet"
 
-	DefaultHeimdallNode = "tcp://localhost:26657"
+	DefaultTendermintNode = "tcp://localhost:26657"
 
 	secretFilePerm = 0600
 )

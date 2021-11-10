@@ -11,8 +11,8 @@ import (
 //  Test - to check heimdall config
 func TestHeimdallConfig(t *testing.T) {
 	// cli context
-	heimdallNode := "tcp://localhost:26657"
-	viper.Set(HeimdallNodeFlag, heimdallNode)
+	tendermintNode := "tcp://localhost:26657"
+	viper.Set(TendermintNodeFlag, tendermintNode)
 	viper.Set("log_level", "info")
 	// cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	// cliCtx.BroadcastMode = client.BroadcastSync

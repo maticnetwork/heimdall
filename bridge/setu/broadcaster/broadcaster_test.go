@@ -19,7 +19,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	cdc := app.MakeCodec()
 	// cli context
 	tendermintNode := "tcp://localhost:26657"
-	viper.Set(helper.HeimdallNodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
 	viper.Set("log_level", "info")
 	// cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	// cliCtx.BroadcastMode = client.BroadcastSync
