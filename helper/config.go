@@ -9,6 +9,8 @@ import (
 	"strings"
 	"time"
 
+	httpClient "github.com/tendermint/tendermint/rpc/client"
+
 	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
@@ -110,6 +112,8 @@ type Configuration struct {
 }
 
 var conf Configuration
+
+var tmClient *httpClient.HTTP
 
 // MainChainClient stores eth clie nt for Main chain Network
 var mainChainClient *ethclient.Client
@@ -297,4 +301,11 @@ func GetPubKey() secp256k1.PubKeySecp256k1 {
 // GetAddress returns address object
 func GetAddress() []byte {
 	return GetPubKey().Address().Bytes()
+}
+
+func GetTendermintURL() *httpClient.HTTP {
+	if tmClient == nil {
+		tmClient = httpClient.NewHTTP(GetConfig().TendermintRPCUrl, "/websocket")
+	}
+	return tmClient
 }

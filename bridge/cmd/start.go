@@ -13,7 +13,6 @@ import (
 
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/app"
@@ -45,7 +44,7 @@ func GetStartCmd() *cobra.Command {
 			_queueConnector.StartWorker()
 
 			_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
-			_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
+			_httpClient := helper.GetTendermintURL()
 
 			// selected services to start
 			services := []common.Service{}
