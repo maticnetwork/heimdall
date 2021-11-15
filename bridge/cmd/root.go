@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/spf13/cobra"
@@ -18,17 +16,23 @@ const (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "heimdall-bridge",
-	Short: "Heimdall bridge deamon",
+	Use:     "heimdall-bridge",
+	Aliases: []string{"bridge"},
+	Short:   "Heimdall bridge deamon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		// initialize tendermint viper config
-		InitTendermintViperConfig(cmd)
+		initTendermintViperConfig(cmd)
 	},
 }
 
-// InitTendermintViperConfig sets global viper configuration needed to heimdall
-func InitTendermintViperConfig(cmd *cobra.Command) {
-	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
+// BridgeCommands returns command for bridge service
+func BridgeCommands() *cobra.Command {
+	return rootCmd
+}
+
+// initTendermintViperConfig sets global viper configuration needed to heimdall
+func initTendermintViperConfig(cmd *cobra.Command) {
+	tendermintNode, _ := cmd.Flags().GetString(helper.TendermintNodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
@@ -40,7 +44,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	}
 
 	// set to viper
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 	viper.Set(bridgeDBFlag, bridgeDBValue)
@@ -50,19 +54,10 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	helper.InitHeimdallConfig("")
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
-}
-
 func init() {
 	var logger = helper.Logger.With("module", "bridge/cmd/")
-	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", "tcp://localhost:26657", "Node to connect to")
-	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
+	rootCmd.PersistentFlags().StringP(helper.TendermintNodeFlag, "n", helper.DefaultTendermintNode, "Node to connect to")
+	rootCmd.PersistentFlags().String(helper.HomeFlag, helper.DefaultNodeHome, "directory for config and data")
 	rootCmd.PersistentFlags().String(
 		helper.WithHeimdallConfigFlag,
 		"",

@@ -12,7 +12,7 @@ import (
 func TestHeimdallConfig(t *testing.T) {
 	// cli context
 	tendermintNode := "tcp://localhost:26657"
-	viper.Set(NodeFlag, tendermintNode)
+	viper.Set(TendermintNodeFlag, tendermintNode)
 	viper.Set("log_level", "info")
 	// cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	// cliCtx.BroadcastMode = client.BroadcastSync
