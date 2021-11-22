@@ -131,3 +131,41 @@ build-docker-develop:
 	docker build -t "maticnetwork/heimdall:develop" -f docker/Dockerfile.develop .
 
 .PHONY: contracts build
+
+PACKAGE_NAME          := github.com/maticnetwork/heimdall
+GOLANG_CROSS_VERSION  ?= v1.17.3
+
+.PHONY: release-dry-run
+release-dry-run:
+	go run helper/heimdall-params.template.go $(network)
+	@docker run \
+		--platform linux/amd64 \
+		--rm \
+		--privileged \
+		-e CGO_ENABLED=1 \
+		-e CGO_CFLAGS=-Wno-unused-function \
+		-e GITHUB_TOKEN \
+		-e DOCKER_USERNAME \
+		-e DOCKER_PASSWORD \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/$(PACKAGE_NAME) \
+		-w /go/src/$(PACKAGE_NAME) \
+		ghcr.io/troian/golang-cross:${GOLANG_CROSS_VERSION} \
+		--rm-dist --skip-validate --skip-publish
+
+.PHONY: release
+release:
+	go run helper/heimdall-params.template.go $(network)
+	@docker run \
+		--rm \
+		--privileged \
+		-e CGO_ENABLED=1 \
+		-e GITHUB_TOKEN \
+		-e DOCKER_USERNAME \
+		-e DOCKER_PASSWORD \
+		-e SLACK_WEBHOOK \
+		-v /var/run/docker.sock:/var/run/docker.sock \
+		-v `pwd`:/go/src/$(PACKAGE_NAME) \
+		-w /go/src/$(PACKAGE_NAME) \
+		ghcr.io/troian/golang-cross:${GOLANG_CROSS_VERSION} \
+		--rm-dist --skip-validate
