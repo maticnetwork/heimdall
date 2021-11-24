@@ -233,7 +233,7 @@ dockers:
       - bridge-linux-amd64
     build_flag_templates:
       - --platform=linux/amd64
-    skip_push: true
+    skip_push: false
     extra_files:
       - docker/entrypoint.sh
   
@@ -248,7 +248,7 @@ dockers:
       - bridge-linux-arm64
     build_flag_templates:
       - --platform=linux/arm64
-    skip_push: true
+    skip_push: false
     extra_files:
       - docker/entrypoint.sh
 
