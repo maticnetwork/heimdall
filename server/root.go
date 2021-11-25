@@ -1,8 +1,10 @@
 package server
 
 import (
+	"net"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
@@ -22,6 +24,24 @@ import (
 	_ "github.com/maticnetwork/heimdall/server/statik"
 )
 
+func StartRestServer(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer), restCh chan struct{}) error {
+	rs := lcd.NewRestServer(cdc)
+	registerRoutesFn(rs)
+	logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+	go restServerHealthCheck(restCh)
+	err := rs.Start(
+		viper.GetString(client.FlagListenAddr),
+		viper.GetInt(client.FlagMaxOpenConnections),
+		0,
+		0,
+	)
+	if err != nil {
+		logger.Error("Cannot start REST server.", "Error", err)
+	}
+
+	return err
+}
+
 // ServeCommands will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
 // to the cli, but over rest
@@ -31,18 +51,8 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			helper.InitHeimdallConfig("")
-
-			rs := lcd.NewRestServer(cdc)
-			registerRoutesFn(rs)
-			logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
-			err := rs.Start(
-				viper.GetString(client.FlagListenAddr),
-				viper.GetInt(client.FlagMaxOpenConnections),
-				0,
-				0,
-			)
-
-			logger.Info("REST server started")
+			restCh := make(chan struct{}, 1)
+			err := StartRestServer(cdc, registerRoutesFn, restCh)
 			return err
 		},
 	}
@@ -95,4 +105,22 @@ func registerSwaggerUI(rs *lcd.RestServer) {
 	}
 	staticServer := http.FileServer(statikFS)
 	rs.Mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
+}
+
+// Check locally if rest server port has been opened
+func restServerHealthCheck(restCh chan struct{}) {
+	address := viper.GetString(client.FlagListenAddr)
+	for {
+		conn, err := net.Dial("tcp", address[6:])
+		if err != nil {
+			time.Sleep(10 * time.Millisecond)
+			continue
+		}
+		if conn != nil {
+			defer conn.Close()
+		}
+
+		close(restCh)
+		break
+	}
 }

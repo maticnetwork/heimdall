@@ -29,7 +29,9 @@ const (
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
 	ChainFlag              = "chain"
-
+	RestServerFlag         = "rest-server"
+	BridgeFlag             = "bridge"
+	LogLevel               = "log_level"
 	// ---
 	// TODO Move these to common client flags
 	// BroadcastBlock defines a tx broadcasting mode where the client waits for
