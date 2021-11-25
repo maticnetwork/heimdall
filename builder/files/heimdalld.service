@@ -5,9 +5,9 @@
 [Service]
   Restart=on-failure
   RestartSec=5s
-  WorkingDirectory=/var/lib/heimdalld
-  ExecStart=/usr/local/bin/heimdalld start
+  WorkingDirectory=/usr/local/bin
+  ExecStart=/usr/local/bin/heimdalld start --home /var/lib/heimdall
   Type=simple
-  User=$USER
+  User=root
 [Install]
   WantedBy=multi-user.target

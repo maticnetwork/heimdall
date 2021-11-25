@@ -1,9 +1,9 @@
 [Unit]
   Description=heimdalld-bridge
 [Service]
-  WorkingDirectory=/var/lib/heimdalld
-  ExecStart=/usr/local/bin/bridge start --all
+  WorkingDirectory=/usr/local/bin/
+  ExecStart=/usr/local/bin/bridge start --all --home /var/lib/heimdall
   Type=simple
-  User=$USER
+  User=root
 [Install]
   WantedBy=multi-user.target
