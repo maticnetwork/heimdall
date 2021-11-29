@@ -3,19 +3,17 @@ FROM alpine:3.14
 ARG HEIMDALL_DIR=/heimdall
 ENV HEIMDALL_DIR=$HEIMDALL_DIR
 
-RUN set -x \
-    && apk add --update --no-cache \
+RUN apk add --no-cache \
        ca-certificates \
-       tini \
-    && rm -rf /var/cache/apk/*
+       tini
 
+WORKDIR ${HEIMDALL_DIR}
 COPY heimdalld /usr/local/bin/
 COPY heimdallcli /usr/local/bin/
 COPY bridge /usr/local/bin/
+
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-WORKDIR ${HEIMDALL_DIR}
 
 EXPOSE 1317 26656 26657
 
-ENTRYPOINT ["tini", "--"]
-CMD ["/usr/local/bin/entrypoint.sh"]
+ENTRYPOINT ["entrypoint.sh"]
