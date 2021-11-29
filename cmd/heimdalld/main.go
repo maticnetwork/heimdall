@@ -19,13 +19,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
 
-	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
-	restServer "github.com/maticnetwork/heimdall/server"
-	tserver "github.com/tendermint/tendermint/abci/server"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
+	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
 	hmbridge "github.com/maticnetwork/heimdall/bridge/cmd"
+	restServer "github.com/maticnetwork/heimdall/server"
 	"github.com/maticnetwork/heimdall/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -69,14 +67,13 @@ var (
 
 // Tendermint full-node start flags
 const (
-	flagWithTendermint = "with-tendermint"
-	flagAddress        = "address"
-	flagTraceStore     = "trace-store"
-	flagPruning        = "pruning"
-	flagCPUProfile     = "cpu-profile"
-	FlagMinGasPrices   = "minimum-gas-prices"
-	FlagHaltHeight     = "halt-height"
-	FlagHaltTime       = "halt-time"
+	flagAddress      = "address"
+	flagTraceStore   = "trace-store"
+	flagPruning      = "pruning"
+	flagCPUProfile   = "cpu-profile"
+	FlagMinGasPrices = "minimum-gas-prices"
+	FlagHaltHeight   = "halt-height"
+	FlagHaltTime     = "halt-time"
 )
 const (
 	nodeDirPerm = 0755
@@ -184,12 +181,11 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 	return bapp.ExportAppStateAndValidators()
 }
 
-func heimdallStart(ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec) *cobra.Command { // cmd *cobra.Command
+func heimdallStart(ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Run the full node",
-		Long: `Run the full node application with Tendermint in or out of process. By
-default, the application will run with Tendermint in process.
+		Long: `Run the full node application with Tendermint in process.
 Starting rest server is provided with the flag --rest-server and starting bridge with 
 the flag --bridge when starting Tendermint in process.
 Pruning options can be provided via the '--pruning' flag. The options are as follows:
@@ -208,11 +204,6 @@ For profiling and benchmarking purposes, CPU profiling can be enabled via the '-
 which accepts a path for the resulting pprof file.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !viper.GetBool(flagWithTendermint) {
-				ctx.Logger.Info("starting ABCI without Tendermint")
-				return startStandAlone(ctx, appCreator)
-			}
-
 			ctx.Logger.Info("starting ABCI with Tendermint")
 
 			startRestServer, _ := cmd.Flags().GetBool(helper.RestServerFlag)
@@ -259,7 +250,6 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
 
 	// core flags for the ABCI application
-	cmd.Flags().Bool(flagWithTendermint, true, "Run abci app embedded in-process with tendermint")
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
 	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
 	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
@@ -278,46 +268,6 @@ which accepts a path for the resulting pprof file.
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
 	return cmd
-}
-
-func startStandAlone(ctx *server.Context, appCreator server.AppCreator) error {
-	addr := viper.GetString(flagAddress)
-	home := viper.GetString("home")
-	traceWriterFile := viper.GetString(flagTraceStore)
-
-	db, err := openDB(home)
-	if err != nil {
-		return err
-	}
-	traceWriter, err := openTraceWriter(traceWriterFile)
-	if err != nil {
-		return err
-	}
-
-	app := appCreator(ctx.Logger, db, traceWriter)
-
-	svr, err := tserver.NewServer(addr, "socket", app)
-	if err != nil {
-		return fmt.Errorf("error creating listener: %v", err)
-	}
-
-	svr.SetLogger(ctx.Logger.With("module", "abci-server"))
-
-	err = svr.Start()
-	if err != nil {
-		common.Exit(err.Error())
-	}
-
-	common.TrapSignal(ctx.Logger, func() {
-		// cleanup
-		err = svr.Stop()
-		if err != nil {
-			common.Exit(err.Error())
-		}
-	})
-
-	// run forever (the node will not be returned)
-	select {}
 }
 
 func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) (*node.Node, error) {
