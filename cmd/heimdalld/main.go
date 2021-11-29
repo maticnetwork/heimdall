@@ -256,8 +256,6 @@ which accepts a path for the resulting pprof file.
 	// rest server flags
 	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
 	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
-	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
-	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
 	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
 
 	// core flags for the ABCI application
@@ -272,6 +270,10 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().Uint64(FlagHaltHeight, 0, "Height at which to gracefully halt the chain and shutdown the node")
 	cmd.Flags().Uint64(FlagHaltTime, 0, "Minimum block time (in Unix seconds) at which to gracefully halt the chain and shutdown the node")
 	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
+
+	// Heimdall flags
+	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
+	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
 
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
@@ -409,8 +411,7 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 
 		ctx.Logger.Info("exiting...")
 	})
-
-	// run forever (the node will not be returned)
+	// TODO add gracefully shut down of the services rest server, bridge and daemon
 	select {}
 }
 
