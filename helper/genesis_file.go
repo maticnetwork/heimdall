@@ -1,10 +1,11 @@
 package helper
 
 import (
+	"bytes"
 	"embed"
-	"encoding/json"
 	"fmt"
 
+	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/pkg/errors"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -12,11 +13,11 @@ import (
 //go:embed allocs
 var allocs embed.FS
 
-func WriteGenesisFile(chain string, filePath string) (bool, error) {
+func WriteGenesisFile(chain string, filePath string, cdc *codec.Codec) (bool, error) {
 	switch chain {
 	case "mumbai", "mainnet":
 		fn := fmt.Sprintf("allocs/%s.json", chain)
-		genDoc, err := readPrealloc(fn)
+		genDoc, err := readPrealloc(fn, cdc)
 		if err == nil {
 			err = genDoc.SaveAs(filePath)
 		}
@@ -26,17 +27,17 @@ func WriteGenesisFile(chain string, filePath string) (bool, error) {
 	}
 }
 
-func readPrealloc(filename string) (result tmTypes.GenesisDoc, err error) {
+func readPrealloc(filename string, cdc *codec.Codec) (result tmTypes.GenesisDoc, err error) {
 	f, err := allocs.Open(filename)
 	if err != nil {
 		err = errors.Errorf("Could not open genesis preallocation for %s: %v", filename, err)
 		return
 	}
 	defer f.Close()
-	decoder := json.NewDecoder(f)
-	err = decoder.Decode(&result)
-	if err != nil {
-		err = errors.Errorf("Could not parse genesis preallocation for %s: %v", filename, err)
+	buf := bytes.NewBuffer(nil)
+	_, err = buf.ReadFrom(f)
+	if err == nil {
+		err = cdc.UnmarshalJSON(buf.Bytes(), &result)
 	}
 	return
 }

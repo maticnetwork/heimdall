@@ -52,7 +52,7 @@ func heimdallInit(ctx *server.Context, cdc *codec.Codec, initConfig *initHeimdal
 		return err
 	}
 
-	genesisCreated, err := helper.WriteGenesisFile(initConfig.chain, config.GenesisFile())
+	genesisCreated, err := helper.WriteGenesisFile(initConfig.chain, config.GenesisFile(), cdc)
 	if err != nil {
 		return err
 	} else if genesisCreated {
