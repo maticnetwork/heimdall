@@ -8,27 +8,39 @@ import (
 	"math/big"
 	"os"
 	"path/filepath"
+	"runtime/pprof"
 	"strings"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
+	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
 	hmbridge "github.com/maticnetwork/heimdall/bridge/cmd"
+	restServer "github.com/maticnetwork/heimdall/server"
+	"github.com/maticnetwork/heimdall/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
+	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
+
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
+	"github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
+	pvm "github.com/tendermint/tendermint/privval"
+	"github.com/tendermint/tendermint/proxy"
 	tmTypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
@@ -53,6 +65,16 @@ var (
 	flagNodeHostPrefix   = "node-host-prefix"
 )
 
+// Tendermint full-node start flags
+const (
+	flagAddress      = "address"
+	flagTraceStore   = "trace-store"
+	flagPruning      = "pruning"
+	flagCPUProfile   = "cpu-profile"
+	FlagMinGasPrices = "minimum-gas-prices"
+	FlagHaltHeight   = "halt-height"
+	FlagHaltTime     = "halt-time"
+)
 const (
 	nodeDirPerm = 0755
 )
@@ -87,6 +109,11 @@ func main() {
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
+	tendermintCmd := &cobra.Command{
+		Use:   "tendermint",
+		Short: "Tendermint subcommands",
+	}
+
 	// add new persistent flag for heimdall-config
 	rootCmd.PersistentFlags().String(
 		helper.WithHeimdallConfigFlag,
@@ -108,7 +135,23 @@ func main() {
 		logger.Error("main | BindPFlag | helper.ChainFlag", "Error", err)
 	}
 
-	server.AddCommands(ctx, cdc, rootCmd, newApp, exportAppStateAndTMValidators)
+	rootCmd.AddCommand(heimdallStart(ctx, newApp, cdc)) // New Heimdall start command
+
+	tendermintCmd.AddCommand(
+		server.ShowNodeIDCmd(ctx),
+		server.ShowValidatorCmd(ctx),
+		server.ShowAddressCmd(ctx),
+		server.VersionCmd(ctx),
+	)
+
+	rootCmd.AddCommand(server.UnsafeResetAllCmd(ctx))
+	rootCmd.AddCommand(flags.LineBreak)
+	rootCmd.AddCommand(tendermintCmd)
+	rootCmd.AddCommand(server.ExportCmd(ctx, cdc, exportAppStateAndTMValidators))
+	rootCmd.AddCommand(flags.LineBreak)
+	rootCmd.AddCommand(version.Cmd) // Using heimdall version, not Cosmos SDK version
+	// End of block
+
 	rootCmd.AddCommand(showAccountCmd())
 	rootCmd.AddCommand(showPrivateKeyCmd())
 	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
@@ -136,6 +179,208 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {
 	bapp := app.NewHeimdallApp(logger, db)
 	return bapp.ExportAppStateAndValidators()
+}
+
+func heimdallStart(ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "start",
+		Short: "Run the full node",
+		Long: `Run the full node application with Tendermint in process.
+Starting rest server is provided with the flag --rest-server and starting bridge with 
+the flag --bridge when starting Tendermint in process.
+Pruning options can be provided via the '--pruning' flag. The options are as follows:
+
+syncable: only those states not needed for state syncing will be deleted (keeps last 100 + every 10000th)
+nothing: all historic states will be saved, nothing will be deleted (i.e. archiving node)
+everything: all saved states will be deleted, storing only the current state
+
+Node halting configurations exist in the form of two flags: '--halt-height' and '--halt-time'. During
+the ABCI Commit phase, the node will check if the current block height is greater than or equal to
+the halt-height or if the current block time is greater than or equal to the halt-time. If so, the
+node will attempt to gracefully shutdown and the block will not be committed. In addition, the node
+will not be able to commit subsequent blocks.
+
+For profiling and benchmarking purposes, CPU profiling can be enabled via the '--cpu-profile' flag
+which accepts a path for the resulting pprof file.
+`,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			ctx.Logger.Info("starting ABCI with Tendermint")
+
+			startRestServer, _ := cmd.Flags().GetBool(helper.RestServerFlag)
+			startBridge, _ := cmd.Flags().GetBool(helper.BridgeFlag)
+
+			_, err := startInProcess(ctx, appCreator, cdc, startRestServer, startBridge)
+			return err
+		},
+		PreRun: func(cmd *cobra.Command, args []string) {
+			// bridge binding
+			if err := viper.BindPFlag("all", cmd.Flags().Lookup("all")); err != nil {
+				logger.Error("GetStartCmd | BindPFlag | all", "Error", err)
+			}
+
+			if err := viper.BindPFlag("only", cmd.Flags().Lookup("only")); err != nil {
+				logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
+			}
+		},
+	}
+
+	cmd.Flags().Bool(
+		helper.RestServerFlag,
+		false,
+		"Start rest server",
+	)
+
+	cmd.Flags().Bool(
+		helper.BridgeFlag,
+		false,
+		"Start bridge service",
+	)
+
+	cmd.PersistentFlags().String(helper.LogLevel, ctx.Config.LogLevel, "Log level")
+	if err := viper.BindPFlag(helper.LogLevel, cmd.PersistentFlags().Lookup(helper.LogLevel)); err != nil {
+		logger.Error("main | BindPFlag | helper.LogLevel", "Error", err)
+	}
+	// bridge flags
+	cmd.Flags().Bool("all", false, "start all bridge services")
+	cmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
+
+	// rest server flags
+	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
+	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
+	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+
+	// core flags for the ABCI application
+	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
+	cmd.Flags().String(flagTraceStore, "", "Enable KVStore tracing to an output file")
+	cmd.Flags().String(flagPruning, "syncable", "Pruning strategy: syncable, nothing, everything")
+	cmd.Flags().String(
+		FlagMinGasPrices, "",
+		"Minimum gas prices to accept for transactions; Any fee in a tx must meet this minimum (e.g. 0.01photino;0.0001stake)",
+	)
+	cmd.Flags().Uint64(FlagHaltHeight, 0, "Height at which to gracefully halt the chain and shutdown the node")
+	cmd.Flags().Uint64(FlagHaltTime, 0, "Minimum block time (in Unix seconds) at which to gracefully halt the chain and shutdown the node")
+	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
+
+	// Heimdall flags
+	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
+	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
+
+	// add support for all Tendermint-specific command line options
+	tcmd.AddNodeFlags(cmd)
+	return cmd
+}
+
+func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) (*node.Node, error) {
+	cfg := ctx.Config
+	home := cfg.RootDir
+	traceWriterFile := viper.GetString(flagTraceStore)
+
+	db, err := openDB(home)
+	if err != nil {
+		return nil, err
+	}
+	traceWriter, err := openTraceWriter(traceWriterFile)
+	if err != nil {
+		return nil, err
+	}
+
+	app := appCreator(ctx.Logger, db, traceWriter)
+
+	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
+	if err != nil {
+		return nil, err
+	}
+
+	server.UpgradeOldPrivValFile(cfg)
+
+	// create & start tendermint node
+	tmNode, err := node.NewNode(
+		cfg,
+		pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile()),
+		nodeKey,
+		proxy.NewLocalClientCreator(app),
+		node.DefaultGenesisDocProviderFunc(cfg),
+		node.DefaultDBProvider,
+		node.DefaultMetricsProvider(cfg.Instrumentation),
+		ctx.Logger.With("module", "node"),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := tmNode.Start(); err != nil {
+		return nil, err
+	}
+
+	var cpuProfileCleanup func()
+
+	if cpuProfile := viper.GetString(flagCPUProfile); cpuProfile != "" {
+		f, err := os.Create(cpuProfile)
+		if err != nil {
+			return nil, err
+		}
+
+		ctx.Logger.Info("starting CPU profiler", "profile", cpuProfile)
+		if err := pprof.StartCPUProfile(f); err != nil {
+			return nil, err
+		}
+
+		cpuProfileCleanup = func() {
+			ctx.Logger.Info("stopping CPU profiler", "profile", cpuProfile)
+			pprof.StopCPUProfile()
+			f.Close()
+		}
+	}
+
+	// start rest
+	if startRestServer {
+		restCh := make(chan struct{})
+		go func() {
+			_ = restServer.StartRestServer(cdc, hmserver.RegisterRoutes, restCh)
+		}()
+		<-restCh
+	}
+
+	// start bridge
+	if startBridge {
+		go func() {
+			bridgeCmd.StartBridge(false)
+		}()
+	}
+
+	server.TrapSignal(func() {
+		ctx.Logger.Info("trap signal")
+
+		if tmNode.IsRunning() {
+			_ = tmNode.Stop()
+		}
+
+		if cpuProfileCleanup != nil {
+			cpuProfileCleanup()
+		}
+
+		ctx.Logger.Info("exiting...")
+	})
+	// TODO add gracefully shut down of the services rest server, bridge and daemon
+	select {}
+}
+
+func openDB(rootDir string) (dbm.DB, error) {
+	dataDir := filepath.Join(rootDir, "data")
+	db, err := sdk.NewLevelDB("application", dataDir)
+	return db, err
+}
+
+func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
+	if traceWriterFile != "" {
+		w, err = os.OpenFile(
+			traceWriterFile,
+			os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+			0666,
+		)
+		return
+	}
+	return
 }
 
 func showAccountCmd() *cobra.Command {
