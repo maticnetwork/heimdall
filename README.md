@@ -16,6 +16,8 @@ $ make install
 ### Init-heimdall 
 ```bash 
 $ heimdalld init
+$ heimdalld init --chain=mainnet        Will init with genesis.json for mainnet
+$ heimdalld init --chain=mumbai         Will init with genesis.json for mumbai
 ```
 ### Run-heimdall 
 ```bash 

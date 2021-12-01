@@ -2,6 +2,7 @@ package sidechannel_test
 
 import (
 	"errors"
+	"strconv"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -148,7 +149,7 @@ func (suite *KeeperTestSuite) TestValidators() {
 	validators := make([]abci.Validator, 10)
 	for i := 0; i < 10; i++ {
 		validators[i] = abci.Validator{
-			Address: []byte("address" + string(i)),
+			Address: []byte("address" + strconv.Itoa(i)),
 			Power:   int64(i+1) * 1000,
 		}
 	}

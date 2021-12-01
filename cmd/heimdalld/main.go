@@ -22,7 +22,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
 	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
-	hmbridge "github.com/maticnetwork/heimdall/bridge/cmd"
 	restServer "github.com/maticnetwork/heimdall/server"
 	"github.com/maticnetwork/heimdall/version"
 	"github.com/spf13/cobra"
@@ -39,7 +38,6 @@ import (
 	"github.com/tendermint/tendermint/node"
 	"github.com/tendermint/tendermint/p2p"
 	"github.com/tendermint/tendermint/privval"
-	pvm "github.com/tendermint/tendermint/privval"
 	"github.com/tendermint/tendermint/proxy"
 	tmTypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
@@ -48,7 +46,6 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/helper"
-	hmserver "github.com/maticnetwork/heimdall/server"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 )
@@ -154,8 +151,8 @@ func main() {
 
 	rootCmd.AddCommand(showAccountCmd())
 	rootCmd.AddCommand(showPrivateKeyCmd())
-	rootCmd.AddCommand(hmserver.ServeCommands(cdc, hmserver.RegisterRoutes))
-	rootCmd.AddCommand(hmbridge.BridgeCommands())
+	rootCmd.AddCommand(restServer.ServeCommands(cdc, restServer.RegisterRoutes))
+	rootCmd.AddCommand(bridgeCmd.BridgeCommands())
 	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
 	rootCmd.AddCommand(initCmd(ctx, cdc))
 	rootCmd.AddCommand(testnetCmd(ctx, cdc))
@@ -260,6 +257,7 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().Uint64(FlagHaltHeight, 0, "Height at which to gracefully halt the chain and shutdown the node")
 	cmd.Flags().Uint64(FlagHaltTime, 0, "Minimum block time (in Unix seconds) at which to gracefully halt the chain and shutdown the node")
 	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
+	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 
 	// Heimdall flags
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
@@ -274,6 +272,19 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 	cfg := ctx.Config
 	home := cfg.RootDir
 	traceWriterFile := viper.GetString(flagTraceStore)
+
+	// initialize heimdall if needed (do not force!)
+	initConfig := &initHeimdallConfig{
+		chainID:     "", // chain id should be auto generated if chain flag is not set to mumbai or mainnet
+		chain:       viper.GetString(helper.ChainFlag),
+		validatorID: 1, // default id for validator
+		clientHome:  viper.GetString(helper.FlagClientHome),
+		forceInit:   false,
+	}
+	err := heimdallInit(ctx, cdc, initConfig, cfg)
+	if err != nil {
+		return nil, err
+	}
 
 	db, err := openDB(home)
 	if err != nil {
@@ -296,7 +307,7 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 	// create & start tendermint node
 	tmNode, err := node.NewNode(
 		cfg,
-		pvm.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile()),
+		privval.LoadOrGenFilePV(cfg.PrivValidatorKeyFile(), cfg.PrivValidatorStateFile()),
 		nodeKey,
 		proxy.NewLocalClientCreator(app),
 		node.DefaultGenesisDocProviderFunc(cfg),
@@ -336,7 +347,7 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 	if startRestServer {
 		restCh := make(chan struct{})
 		go func() {
-			_ = restServer.StartRestServer(cdc, hmserver.RegisterRoutes, restCh)
+			_ = restServer.StartRestServer(cdc, restServer.RegisterRoutes, restCh)
 		}()
 		<-restCh
 	}

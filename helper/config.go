@@ -217,12 +217,12 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
-	// get chain from viper/cobra flag and set newSelectionAlgoHeight
+	// get chain from viper/cobra flag or config and set newSelectionAlgoHeight
 	chain := viper.GetString(ChainFlag)
-	if chain == "" {
-		chain = GetConfig().Chain
+	if chain != "" {
+		conf.Chain = chain
 	}
-	setNewSelectionAlgoHeight(chain)
+	setNewSelectionAlgoHeight(conf.Chain)
 }
 
 // GetDefaultHeimdallConfig returns configration with default params
