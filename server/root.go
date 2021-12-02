@@ -87,6 +87,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	})
 	// wait here
 	if err := g.Wait(); err != nil {
+		// TODO: cast server errors
 		logger.Error("Cannot start REST server.", "Error", err)
 		return err
 	}
@@ -156,15 +157,13 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
 
-			for {
-				select {
-				case <-ctx.Done():
-					fmt.Println("gracefull handler exit")
-					rw.WriteHeader(http.StatusOK)
-					return
-				default:
-					recoverHandler(rw, r)
-				}
+			select {
+			case <-ctx.Done():
+				fmt.Println("gracefull handler exit")
+				rw.WriteHeader(http.StatusOK)
+				return
+			default:
+				recoverHandler(rw, r)
 			}
 		}),
 		ReadTimeout:    cfg.ReadTimeout,
