@@ -175,7 +175,7 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 		},
 	}
 
-	g, gCtx := errgroup.WithContext(shutdownCtx)
+	g := new(errgroup.Group)
 	g.Go(func() error {
 		return s.Serve(listener)
 	})
@@ -183,7 +183,7 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 	g.Go(func() error {
 		// wait for interrupt signal comming from mainCtx
 		// and then go to server shutdown
-		<-gCtx.Done()
+		<-shutdownCtx.Done()
 		ctx, cancel := ctx.WithTimeout(ctx.Background(), shutdownTimeout)
 		defer cancel()
 
