@@ -62,25 +62,23 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 	cliCtx.BroadcastMode = client.BroadcastAsync
 	cliCtx.TrustNode = true
 
+	g := new(errgroup.Group)
 	// start bridge services only when node fully synced
-
 	loop := true
 	for loop {
-
 		select {
 		case <-shutdownCtx.Done():
-			loop = false
+			return nil
 		case <-time.After(waitDuration):
 			if !util.IsCatchingUp(cliCtx) {
 				logger.Info("Node up to date, starting bridge services")
-				loop = true
+				loop = false
 			} else {
 				logger.Info("Waiting for heimdall to be synced")
 			}
 		}
 	}
 
-	g := new(errgroup.Group)
 	// start services
 	for _, service := range services {
 		// loop variable must be captured
@@ -204,7 +202,7 @@ func StartBridge(isStandAlone bool) {
 		time.Sleep(waitDuration)
 	}
 
-	// strt all processes
+	// start all processes
 	for _, service := range services {
 		go func(serv common.Service) {
 			defer wg.Done()
