@@ -32,7 +32,7 @@ const (
 
 // StartBridgeWithCtx starts bridge service and is able to shutdow gracefully
 // returns service errors, if any
-func StartBridgeWithCtx(shutdownCtx context.Context, bridgeCh chan struct{}) error {
+func StartBridgeWithCtx(shutdownCtx context.Context) error {
 	var logger = helper.Logger.With("module", "bridge/cmd/")
 
 	// create codec
@@ -57,10 +57,6 @@ func StartBridgeWithCtx(shutdownCtx context.Context, bridgeCh chan struct{}) err
 		panic(fmt.Sprintf("Error connecting to server %v", err))
 	}
 
-	// socket here is ready and started
-	// signal back that we are able to continue
-	close(bridgeCh)
-
 	// cli context
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
@@ -77,25 +73,26 @@ func StartBridgeWithCtx(shutdownCtx context.Context, bridgeCh chan struct{}) err
 		time.Sleep(waitDuration)
 	}
 
-	g := new(errgroup.Group)
+	g, gCtx := errgroup.WithContext(shutdownCtx)
 	// start services
 	for _, service := range services {
 		// loop variable must be captured
-		srv := service
-		g.Go(func() error {
-			if err := srv.Start(); err != nil {
-				logger.Error("GetStartCmd | serv.Start", "Error", err)
-				return err
-			}
-			<-srv.Quit()
-			return nil
-		})
+		func(srv common.Service) {
+			g.Go(func() error {
+				if err := srv.Start(); err != nil {
+					logger.Error("GetStartCmd | serv.Start", "Error", err)
+					return err
+				}
+				<-srv.Quit()
+				return nil
+			})
+		}(service)
 	}
 
 	// shutdown phase
 	g.Go(func() error {
 		// wait for interrupt and start shut down
-		<-shutdownCtx.Done()
+		<-gCtx.Done()
 
 		logger.Info("Received stop signal - Stopping all services")
 		for _, service := range services {
@@ -115,7 +112,6 @@ func StartBridgeWithCtx(shutdownCtx context.Context, bridgeCh chan struct{}) err
 		return nil
 	})
 
-	// wait for all routines to finish and log error
 	if err := g.Wait(); err != nil {
 		logger.Error("Bridge stopped", "err", err)
 		return err
