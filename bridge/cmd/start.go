@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/signal"
@@ -19,6 +20,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
+	"golang.org/x/sync/errgroup"
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/viper"
@@ -27,6 +29,96 @@ import (
 const (
 	waitDuration = 1 * time.Minute
 )
+
+// StartBridgeWithCtx starts bridge service and is able to shutdow gracefully
+// returns service errors, if any
+func StartBridgeWithCtx(shutdownCtx context.Context) error {
+	var logger = helper.Logger.With("module", "bridge/cmd/")
+
+	// create codec
+	cdc := app.MakeCodec()
+	// queue connector & http client
+	_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
+	_queueConnector.StartWorker()
+
+	_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
+	_httpClient := httpClient.NewHTTP(helper.GetConfig().TendermintRPCUrl, "/websocket")
+
+	// selected services to start
+	services := []common.Service{}
+	services = append(services,
+		listener.NewListenerService(cdc, _queueConnector, _httpClient),
+		processor.NewProcessorService(cdc, _queueConnector, _httpClient, _txBroadcaster),
+	)
+
+	// Start http client
+	err := _httpClient.Start()
+	if err != nil {
+		panic(fmt.Sprintf("Error connecting to server %v", err))
+	}
+
+	// cli context
+	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
+	cliCtx.BroadcastMode = client.BroadcastAsync
+	cliCtx.TrustNode = true
+
+	// start bridge services only when node fully synced
+	for {
+		if !util.IsCatchingUp(cliCtx) {
+			logger.Info("Node up to date, starting bridge services")
+			break
+		} else {
+			logger.Info("Waiting for heimdall to be synced")
+		}
+		time.Sleep(waitDuration)
+	}
+
+	g, gCtx := errgroup.WithContext(shutdownCtx)
+	// start services
+	for _, service := range services {
+		// loop variable must be captured
+		func(srv common.Service) {
+			g.Go(func() error {
+				if err := srv.Start(); err != nil {
+					logger.Error("GetStartCmd | serv.Start", "Error", err)
+					return err
+				}
+				<-srv.Quit()
+				return nil
+			})
+		}(service)
+	}
+
+	// shutdown phase
+	g.Go(func() error {
+		// wait for interrupt and start shut down
+		<-gCtx.Done()
+
+		logger.Info("Received stop signal - Stopping all services")
+		for _, service := range services {
+			if err := service.Stop(); err != nil {
+				logger.Error("GetStartCmd | service.Stop", "Error", err)
+				return err
+			}
+		}
+		// stop http client
+		if err := _httpClient.Stop(); err != nil {
+			logger.Error("GetStartCmd | _httpClient.Stop", "Error", err)
+			return err
+		}
+		// stop db instance
+		util.CloseBridgeDBInstance()
+
+		return nil
+	})
+
+	if err := g.Wait(); err != nil {
+		logger.Error("Bridge stopped", "err", err)
+		return err
+	}
+
+	return nil
+}
 
 // StartBridge starts bridge service, isStandAlone prevents os.Exit if the bridge started as side service
 func StartBridge(isStandAlone bool) {
