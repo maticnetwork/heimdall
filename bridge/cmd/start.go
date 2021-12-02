@@ -62,7 +62,6 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 	cliCtx.BroadcastMode = client.BroadcastAsync
 	cliCtx.TrustNode = true
 
-	g := new(errgroup.Group)
 	// start bridge services only when node fully synced
 	loop := true
 	for loop {
