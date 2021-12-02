@@ -80,6 +80,7 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 	}
 
 	// start services
+	g := new(errgroup.Group)
 	for _, service := range services {
 		// loop variable must be captured
 		srv := service
