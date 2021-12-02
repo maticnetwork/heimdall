@@ -32,7 +32,7 @@ const (
 
 // StartBridgeWithCtx starts bridge service and is able to shutdow gracefully
 // returns service errors, if any
-func StartBridgeWithCtx(shutdownCtx context.Context, bridgeCh chan struct{}) error {
+func StartBridgeWithCtx(shutdownCtx context.Context) error {
 	var logger = helper.Logger.With("module", "bridge/cmd/")
 
 	// create codec
@@ -57,24 +57,27 @@ func StartBridgeWithCtx(shutdownCtx context.Context, bridgeCh chan struct{}) err
 		panic(fmt.Sprintf("Error connecting to server %v", err))
 	}
 
-	// socket here is ready and started
-	// signal back that we are able to continue
-	close(bridgeCh)
-
 	// cli context
 	cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	cliCtx.BroadcastMode = client.BroadcastAsync
 	cliCtx.TrustNode = true
 
 	// start bridge services only when node fully synced
-	for {
-		if !util.IsCatchingUp(cliCtx) {
-			logger.Info("Node up to date, starting bridge services")
-			break
-		} else {
-			logger.Info("Waiting for heimdall to be synced")
+
+	loop := true
+	for loop {
+
+		select {
+		case <-shutdownCtx.Done():
+			loop = false
+		case <-time.After(waitDuration):
+			if !util.IsCatchingUp(cliCtx) {
+				logger.Info("Node up to date, starting bridge services")
+				loop = true
+			} else {
+				logger.Info("Waiting for heimdall to be synced")
+			}
 		}
-		time.Sleep(waitDuration)
 	}
 
 	g := new(errgroup.Group)
@@ -99,9 +102,12 @@ func StartBridgeWithCtx(shutdownCtx context.Context, bridgeCh chan struct{}) err
 
 		logger.Info("Received stop signal - Stopping all services")
 		for _, service := range services {
-			if err := service.Stop(); err != nil {
-				logger.Error("GetStartCmd | service.Stop", "Error", err)
-				return err
+			srv := service
+			if srv.IsRunning() {
+				if err := srv.Stop(); err != nil {
+					logger.Error("GetStartCmd | service.Stop", "Error", err)
+					return err
+				}
 			}
 		}
 		// stop http client
