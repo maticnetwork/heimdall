@@ -54,7 +54,8 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 	// Start http client
 	err := _httpClient.Start()
 	if err != nil {
-		panic(fmt.Sprintf("Error connecting to server %v", err))
+		logger.Error("Error connecting to server: %v", err)
+		return err
 	}
 
 	// cli context

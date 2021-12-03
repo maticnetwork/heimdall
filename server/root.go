@@ -34,13 +34,6 @@ import (
 
 const shutdownTimeout = 10 * time.Second
 
-type options struct {
-	listenAddr   string
-	maxOpen      int
-	readTimeout  uint
-	writeTimeout uint
-}
-
 func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router), restCh chan struct{}) error {
 	// init vars for the Light Client Rest server
 	cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -61,7 +54,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	// and returns with the details we use to proxy orders to that socket
 	listener, err := rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
-		// TODO: log here
+		logger.Error("RPC could not listen: %v", err)
 		return err
 	}
 	// no err? -> signal here that server is open for business
@@ -110,7 +103,10 @@ func (h maxBytesHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 func recoverAndLog(handler http.Handler, logger tmLog.Logger) func(w http.ResponseWriter, r *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// Wrap the ResponseWriter to remember the status
-		rww := &rpcserver.ResponseWriterWrapper{-1, w}
+		rww := &rpcserver.ResponseWriterWrapper{
+			Status:         -1,
+			ResponseWriter: w,
+		}
 		begin := time.Now()
 
 		rww.Header().Set("X-Server-Time", fmt.Sprintf("%v", begin.Unix()))
