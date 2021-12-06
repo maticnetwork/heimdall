@@ -1,7 +1,7 @@
 package server
 
 import (
-	ctx "context"
+	"context"
 	"fmt"
 	"net"
 	"net/http"
@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/cosmos/cosmos-sdk/client/context"
+	cliCtx "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -34,9 +34,9 @@ import (
 
 const shutdownTimeout = 10 * time.Second
 
-func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router), restCh chan struct{}) error {
+func StartRestServer(ctx context.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router), restCh chan struct{}) error {
 	// init vars for the Light Client Rest server
-	cliCtx := context.NewCLIContext().WithCodec(cdc)
+	cliCtx := cliCtx.NewCLIContext().WithCodec(cdc)
 	router := mux.NewRouter()
 	logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 	registerRoutesFn(cliCtx, router)
@@ -67,10 +67,10 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 		),
 	)
 
-	g, gCtx := errgroup.WithContext(mainCtx)
+	g, gCtx := errgroup.WithContext(ctx)
 	// start serving
 	g.Go(func() error {
-		return startRPCServer(mainCtx, listener, router, logger, cfg)
+		return startRPCServer(ctx, listener, router, logger, cfg)
 	})
 
 	g.Go(func() error {
@@ -146,7 +146,7 @@ func recoverAndLog(handler http.Handler, logger tmLog.Logger) func(w http.Respon
 	}
 }
 
-func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http.Handler, logger tmLog.Logger, cfg *rpcserver.Config) error {
+func startRPCServer(shutdownCtx context.Context, listener net.Listener, handler http.Handler, logger tmLog.Logger, cfg *rpcserver.Config) error {
 	logger.Info(fmt.Sprintf("Starting RPC HTTP server on %s", listener.Addr()))
 	recoverHandler := recoverAndLog(maxBytesHandler{h: handler, n: cfg.MaxBodyBytes}, logger)
 
@@ -167,7 +167,7 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 		ReadTimeout:    cfg.ReadTimeout,
 		WriteTimeout:   cfg.WriteTimeout,
 		MaxHeaderBytes: cfg.MaxHeaderBytes,
-		BaseContext: func(_ net.Listener) ctx.Context {
+		BaseContext: func(_ net.Listener) context.Context {
 			return shutdownCtx
 		},
 	}
@@ -181,7 +181,7 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 		// wait for interrupt signal coming from mainCtx
 		// and then go to server shutdown
 		<-shutdownCtx.Done()
-		ctx, cancel := ctx.WithTimeout(ctx.Background(), shutdownTimeout)
+		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 
 		return s.Shutdown(ctx)
@@ -198,14 +198,14 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 // ServeCommands will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
 // to the cli, but over rest
-func ServeCommands(shutdownCtx ctx.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router)) *cobra.Command {
+func ServeCommands(ctx context.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router)) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rest-server",
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			helper.InitHeimdallConfig("")
 			restCh := make(chan struct{}, 1)
-			err := StartRestServer(shutdownCtx, cdc, registerRoutesFn, restCh)
+			err := StartRestServer(ctx, cdc, registerRoutesFn, restCh)
 			return err
 		},
 	}
