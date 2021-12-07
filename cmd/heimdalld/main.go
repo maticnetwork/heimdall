@@ -102,14 +102,14 @@ func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAc
 
 func main() {
 	cdc := app.MakeCodec()
-	serverCtx := server.NewDefaultContext()
+	ctx := server.NewDefaultContext()
 	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	rootCmd := &cobra.Command{
 		Use:               "heimdalld",
 		Short:             "Heimdall Daemon (server)",
-		PersistentPreRunE: server.PersistentPreRunEFn(serverCtx),
+		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
 	tendermintCmd := &cobra.Command{
@@ -138,19 +138,19 @@ func main() {
 		logger.Error("main | BindPFlag | helper.ChainFlag", "Error", err)
 	}
 
-	rootCmd.AddCommand(heimdallStart(shutdownCtx, serverCtx, newApp, cdc)) // New Heimdall start command
+	rootCmd.AddCommand(heimdallStart(shutdownCtx, ctx, newApp, cdc)) // New Heimdall start command
 
 	tendermintCmd.AddCommand(
-		server.ShowNodeIDCmd(serverCtx),
-		server.ShowValidatorCmd(serverCtx),
-		server.ShowAddressCmd(serverCtx),
-		server.VersionCmd(serverCtx),
+		server.ShowNodeIDCmd(ctx),
+		server.ShowValidatorCmd(ctx),
+		server.ShowAddressCmd(ctx),
+		server.VersionCmd(ctx),
 	)
 
-	rootCmd.AddCommand(server.UnsafeResetAllCmd(serverCtx))
+	rootCmd.AddCommand(server.UnsafeResetAllCmd(ctx))
 	rootCmd.AddCommand(flags.LineBreak)
 	rootCmd.AddCommand(tendermintCmd)
-	rootCmd.AddCommand(server.ExportCmd(serverCtx, cdc, exportAppStateAndTMValidators))
+	rootCmd.AddCommand(server.ExportCmd(ctx, cdc, exportAppStateAndTMValidators))
 	rootCmd.AddCommand(flags.LineBreak)
 	rootCmd.AddCommand(version.Cmd) // Using heimdall version, not Cosmos SDK version
 	// End of block
@@ -159,9 +159,9 @@ func main() {
 	rootCmd.AddCommand(showPrivateKeyCmd())
 	rootCmd.AddCommand(restServer.ServeCommands(shutdownCtx, cdc, restServer.RegisterRoutes))
 	rootCmd.AddCommand(bridgeCmd.BridgeCommands())
-	rootCmd.AddCommand(VerifyGenesis(serverCtx, cdc))
-	rootCmd.AddCommand(initCmd(serverCtx, cdc))
-	rootCmd.AddCommand(testnetCmd(serverCtx, cdc))
+	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
+	rootCmd.AddCommand(initCmd(ctx, cdc))
+	rootCmd.AddCommand(testnetCmd(ctx, cdc))
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
@@ -184,7 +184,7 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 	return bapp.ExportAppStateAndValidators()
 }
 
-func heimdallStart(shutdownCtx context.Context, serverCtx *server.Context, appCreator server.AppCreator, cdc *codec.Codec) *cobra.Command {
+func heimdallStart(shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Run the full node",
@@ -207,12 +207,12 @@ For profiling and benchmarking purposes, CPU profiling can be enabled via the '-
 which accepts a path for the resulting pprof file.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			serverCtx.Logger.Info("starting ABCI with Tendermint")
+			ctx.Logger.Info("starting ABCI with Tendermint")
 
 			startRestServer, _ := cmd.Flags().GetBool(helper.RestServerFlag)
 			startBridge, _ := cmd.Flags().GetBool(helper.BridgeFlag)
 
-			err := startInProcess(shutdownCtx, serverCtx, appCreator, cdc, startRestServer, startBridge)
+			err := startInProcess(shutdownCtx, ctx, appCreator, cdc, startRestServer, startBridge)
 			return err
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
@@ -239,7 +239,7 @@ which accepts a path for the resulting pprof file.
 		"Start bridge service",
 	)
 
-	cmd.PersistentFlags().String(helper.LogLevel, serverCtx.Config.LogLevel, "Log level")
+	cmd.PersistentFlags().String(helper.LogLevel, ctx.Config.LogLevel, "Log level")
 	if err := viper.BindPFlag(helper.LogLevel, cmd.PersistentFlags().Lookup(helper.LogLevel)); err != nil {
 		logger.Error("main | BindPFlag | helper.LogLevel", "Error", err)
 	}
@@ -274,8 +274,8 @@ which accepts a path for the resulting pprof file.
 	return cmd
 }
 
-func startInProcess(shutdownCtx context.Context, serverCtx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) error {
-	cfg := serverCtx.Config
+func startInProcess(shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) error {
+	cfg := ctx.Config
 	home := cfg.RootDir
 	traceWriterFile := viper.GetString(flagTraceStore)
 
@@ -287,7 +287,7 @@ func startInProcess(shutdownCtx context.Context, serverCtx *server.Context, appC
 		clientHome:  viper.GetString(helper.FlagClientHome),
 		forceInit:   false,
 	}
-	err := heimdallInit(serverCtx, cdc, initConfig, cfg)
+	err := heimdallInit(ctx, cdc, initConfig, cfg)
 	if err != nil {
 		return err
 	}
@@ -301,7 +301,7 @@ func startInProcess(shutdownCtx context.Context, serverCtx *server.Context, appC
 		return err
 	}
 
-	app := appCreator(serverCtx.Logger, db, traceWriter)
+	app := appCreator(ctx.Logger, db, traceWriter)
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
 	if err != nil {
@@ -319,7 +319,7 @@ func startInProcess(shutdownCtx context.Context, serverCtx *server.Context, appC
 		node.DefaultGenesisDocProviderFunc(cfg),
 		node.DefaultDBProvider,
 		node.DefaultMetricsProvider(cfg.Instrumentation),
-		serverCtx.Logger.With("module", "node"),
+		ctx.Logger.With("module", "node"),
 	)
 	if err != nil {
 		return err
@@ -338,19 +338,19 @@ func startInProcess(shutdownCtx context.Context, serverCtx *server.Context, appC
 			return err
 		}
 
-		serverCtx.Logger.Info("starting CPU profiler", "profile", cpuProfile)
+		ctx.Logger.Info("starting CPU profiler", "profile", cpuProfile)
 		if err := pprof.StartCPUProfile(f); err != nil {
 			return err
 		}
 
 		cpuProfileCleanup = func() {
-			serverCtx.Logger.Info("stopping CPU profiler", "profile", cpuProfile)
+			ctx.Logger.Info("stopping CPU profiler", "profile", cpuProfile)
 			pprof.StopCPUProfile()
 			f.Close()
 		}
 	}
 
-	// using group ctx makes sense in case that one of
+	// using group context makes sense in case that if one of
 	// the processes produces error the rest will go and shutdown
 	g, gCtx := errgroup.WithContext(shutdownCtx)
 	// start rest
@@ -372,9 +372,10 @@ func startInProcess(shutdownCtx context.Context, serverCtx *server.Context, appC
 
 	// stop phase for Tendermint node
 	g.Go(func() error {
-		// wait here for interrup
+		// wait here for interrupt signal or
+		// until something in the group returns non-nil error
 		<-gCtx.Done()
-		serverCtx.Logger.Info("exiting...")
+		ctx.Logger.Info("exiting...")
 
 		if cpuProfileCleanup != nil {
 			cpuProfileCleanup()
@@ -391,7 +392,7 @@ func startInProcess(shutdownCtx context.Context, serverCtx *server.Context, appC
 	// wait here for all go routines to finish,
 	// or something to break
 	if err := g.Wait(); err != nil {
-		serverCtx.Logger.Error("Error shutting down services", "Error", err)
+		ctx.Logger.Error("Error shutting down services", "Error", err)
 		return err
 	}
 

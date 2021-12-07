@@ -34,7 +34,7 @@ import (
 
 const shutdownTimeout = 10 * time.Second
 
-func StartRestServer(ctx context.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router), restCh chan struct{}) error {
+func StartRestServer(shutdownCtx context.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router), restCh chan struct{}) error {
 	// init vars for the Light Client Rest server
 	cliCtx := cliCtx.NewCLIContext().WithCodec(cdc)
 	router := mux.NewRouter()
@@ -67,18 +67,19 @@ func StartRestServer(ctx context.Context, cdc *codec.Codec, registerRoutesFn fun
 		),
 	)
 
-	g, gCtx := errgroup.WithContext(ctx)
+	g := new(errgroup.Group)
 	// start serving
 	g.Go(func() error {
-		return startRPCServer(ctx, listener, router, logger, cfg)
+		return startRPCServer(shutdownCtx, listener, router, logger, cfg)
 	})
 
+	// wait for os interrupt, then close Listener
 	g.Go(func() error {
-		// wait for os interrupt, then close Listener
-		<-gCtx.Done()
+		<-shutdownCtx.Done()
 		return listener.Close()
 	})
-	// wait here
+
+	// wait here, blockingly
 	if err := g.Wait(); err != nil {
 		if err != http.ErrServerClosed {
 			logger.Error("Cannot start REST server.", "Error", err)
@@ -173,20 +174,22 @@ func startRPCServer(shutdownCtx context.Context, listener net.Listener, handler 
 	}
 
 	g := new(errgroup.Group)
+	// start serving
 	g.Go(func() error {
 		return s.Serve(listener)
 	})
 
+	// wait for interrupt signal
 	g.Go(func() error {
-		// wait for interrupt signal coming from mainCtx
-		// and then go to server shutdown
 		<-shutdownCtx.Done()
 		ctx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
 		defer cancel()
 
+		// and then go to server shutdown
 		return s.Shutdown(ctx)
 	})
 
+	// wait here and block
 	if err := g.Wait(); err != nil {
 		logger.Info("RPC HTTP server stopped", "err", err)
 		return err
@@ -198,14 +201,14 @@ func startRPCServer(shutdownCtx context.Context, listener net.Listener, handler 
 // ServeCommands will generate a long-running rest server
 // (aka Light Client Daemon) that exposes functionality similar
 // to the cli, but over rest
-func ServeCommands(ctx context.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router)) *cobra.Command {
+func ServeCommands(shutdownCtx context.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router)) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "rest-server",
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			helper.InitHeimdallConfig("")
 			restCh := make(chan struct{}, 1)
-			err := StartRestServer(ctx, cdc, registerRoutesFn, restCh)
+			err := StartRestServer(shutdownCtx, cdc, registerRoutesFn, restCh)
 			return err
 		},
 	}
