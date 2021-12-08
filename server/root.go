@@ -219,9 +219,10 @@ func ServeCommands(shutdownCtx ctx.Context, cdc *codec.Codec, registerRoutesFn f
 func DecorateWithRestFlags(cmd *cobra.Command) {
 	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
 	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
+	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+	// heimdall specific flags for rest server start
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
-	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
 }
 
 // RegisterRoutes register routes of all modules

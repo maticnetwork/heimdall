@@ -264,10 +264,6 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 
-	// Heimdall flags - ADDED WITH REST SERVER
-	//cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
-	//cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
-
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
 	return cmd
