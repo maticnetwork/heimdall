@@ -212,13 +212,19 @@ func ServeCommands(shutdownCtx context.Context, cdc *codec.Codec, registerRoutes
 			return err
 		},
 	}
+
+	DecorateWithRestFlags(cmd)
+
+	return cmd
+}
+
+// function is called whenever is the reste server flags has to be added to command
+func DecorateWithRestFlags(cmd *cobra.Command) {
 	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
 	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
 	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
-
-	return cmd
 }
 
 // RegisterRoutes register routes of all modules

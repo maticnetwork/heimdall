@@ -16,7 +16,6 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
@@ -158,7 +157,7 @@ func main() {
 	rootCmd.AddCommand(showAccountCmd())
 	rootCmd.AddCommand(showPrivateKeyCmd())
 	rootCmd.AddCommand(restServer.ServeCommands(shutdownCtx, cdc, restServer.RegisterRoutes))
-	rootCmd.AddCommand(bridgeCmd.BridgeCommands())
+	rootCmd.AddCommand(bridgeCmd.BridgeCommands(viper.GetViper(), logger, "main"))
 	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
 	rootCmd.AddCommand(initCmd(ctx, cdc))
 	rootCmd.AddCommand(testnetCmd(ctx, cdc))
@@ -212,7 +211,7 @@ which accepts a path for the resulting pprof file.
 			startRestServer, _ := cmd.Flags().GetBool(helper.RestServerFlag)
 			startBridge, _ := cmd.Flags().GetBool(helper.BridgeFlag)
 
-			err := startInProcess(shutdownCtx, ctx, appCreator, cdc, startRestServer, startBridge)
+			err := startInProcess(cmd, shutdownCtx, ctx, appCreator, cdc, startRestServer, startBridge)
 			return err
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
@@ -243,14 +242,14 @@ which accepts a path for the resulting pprof file.
 	if err := viper.BindPFlag(helper.LogLevel, cmd.PersistentFlags().Lookup(helper.LogLevel)); err != nil {
 		logger.Error("main | BindPFlag | helper.LogLevel", "Error", err)
 	}
-	// bridge flags
+
+	// bridge flags =  start flags (all, only) + root bridge cmd flags
 	cmd.Flags().Bool("all", false, "start all bridge services")
 	cmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
+	bridgeCmd.DecorateWithBridgeRootFlags(cmd, viper.GetViper(), logger, "main")
 
 	// rest server flags
-	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
-	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
-	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+	restServer.DecorateWithRestFlags(cmd)
 
 	// core flags for the ABCI application
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
@@ -265,16 +264,16 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 
-	// Heimdall flags
-	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
-	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
+	// Heimdall flags - ADDED WITH REST SERVER
+	//cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
+	//cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
 
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
 	return cmd
 }
 
-func startInProcess(shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) error {
+func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) error {
 	cfg := ctx.Config
 	home := cfg.RootDir
 	traceWriterFile := viper.GetString(flagTraceStore)
@@ -365,6 +364,7 @@ func startInProcess(shutdownCtx context.Context, ctx *server.Context, appCreator
 
 	// start bridge
 	if startBridge {
+		bridgeCmd.AdjustBridgeDBValue(cmd, viper.GetViper())
 		g.Go(func() error {
 			return bridgeCmd.StartBridgeWithCtx(gCtx)
 		})
