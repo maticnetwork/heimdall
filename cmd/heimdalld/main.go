@@ -1,23 +1,26 @@
 package main
 
 import (
+	"context"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"math/big"
 	"os"
+	"os/signal"
 	"path/filepath"
 	"runtime/pprof"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
+	"golang.org/x/sync/errgroup"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
@@ -99,6 +102,8 @@ func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAc
 func main() {
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
+	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
 
 	rootCmd := &cobra.Command{
 		Use:               "heimdalld",
@@ -132,7 +137,7 @@ func main() {
 		logger.Error("main | BindPFlag | helper.ChainFlag", "Error", err)
 	}
 
-	rootCmd.AddCommand(heimdallStart(ctx, newApp, cdc)) // New Heimdall start command
+	rootCmd.AddCommand(heimdallStart(shutdownCtx, ctx, newApp, cdc)) // New Heimdall start command
 
 	tendermintCmd.AddCommand(
 		server.ShowNodeIDCmd(ctx),
@@ -151,8 +156,8 @@ func main() {
 
 	rootCmd.AddCommand(showAccountCmd())
 	rootCmd.AddCommand(showPrivateKeyCmd())
-	rootCmd.AddCommand(restServer.ServeCommands(cdc, restServer.RegisterRoutes))
-	rootCmd.AddCommand(bridgeCmd.BridgeCommands())
+	rootCmd.AddCommand(restServer.ServeCommands(shutdownCtx, cdc, restServer.RegisterRoutes))
+	rootCmd.AddCommand(bridgeCmd.BridgeCommands(viper.GetViper(), logger, "main"))
 	rootCmd.AddCommand(VerifyGenesis(ctx, cdc))
 	rootCmd.AddCommand(initCmd(ctx, cdc))
 	rootCmd.AddCommand(testnetCmd(ctx, cdc))
@@ -178,7 +183,7 @@ func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.
 	return bapp.ExportAppStateAndValidators()
 }
 
-func heimdallStart(ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec) *cobra.Command {
+func heimdallStart(shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "start",
 		Short: "Run the full node",
@@ -206,7 +211,7 @@ which accepts a path for the resulting pprof file.
 			startRestServer, _ := cmd.Flags().GetBool(helper.RestServerFlag)
 			startBridge, _ := cmd.Flags().GetBool(helper.BridgeFlag)
 
-			_, err := startInProcess(ctx, appCreator, cdc, startRestServer, startBridge)
+			err := startInProcess(cmd, shutdownCtx, ctx, appCreator, cdc, startRestServer, startBridge)
 			return err
 		},
 		PreRun: func(cmd *cobra.Command, args []string) {
@@ -237,14 +242,14 @@ which accepts a path for the resulting pprof file.
 	if err := viper.BindPFlag(helper.LogLevel, cmd.PersistentFlags().Lookup(helper.LogLevel)); err != nil {
 		logger.Error("main | BindPFlag | helper.LogLevel", "Error", err)
 	}
-	// bridge flags
+
+	// bridge flags =  start flags (all, only) + root bridge cmd flags
 	cmd.Flags().Bool("all", false, "start all bridge services")
 	cmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
+	bridgeCmd.DecorateWithBridgeRootFlags(cmd, viper.GetViper(), logger, "main")
 
 	// rest server flags
-	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
-	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
-	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+	restServer.DecorateWithRestFlags(cmd)
 
 	// core flags for the ABCI application
 	cmd.Flags().String(flagAddress, "tcp://0.0.0.0:26658", "Listen address")
@@ -259,16 +264,12 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 
-	// Heimdall flags
-	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
-	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
-
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
 	return cmd
 }
 
-func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) (*node.Node, error) {
+func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) error {
 	cfg := ctx.Config
 	home := cfg.RootDir
 	traceWriterFile := viper.GetString(flagTraceStore)
@@ -283,23 +284,23 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 	}
 	err := heimdallInit(ctx, cdc, initConfig, cfg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	db, err := openDB(home)
 	if err != nil {
-		return nil, err
+		return err
 	}
 	traceWriter, err := openTraceWriter(traceWriterFile)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	app := appCreator(ctx.Logger, db, traceWriter)
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	server.UpgradeOldPrivValFile(cfg)
@@ -316,11 +317,12 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 		ctx.Logger.With("module", "node"),
 	)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
+	// start Tendermint node here
 	if err := tmNode.Start(); err != nil {
-		return nil, err
+		return nil
 	}
 
 	var cpuProfileCleanup func()
@@ -328,12 +330,12 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 	if cpuProfile := viper.GetString(flagCPUProfile); cpuProfile != "" {
 		f, err := os.Create(cpuProfile)
 		if err != nil {
-			return nil, err
+			return err
 		}
 
 		ctx.Logger.Info("starting CPU profiler", "profile", cpuProfile)
 		if err := pprof.StartCPUProfile(f); err != nil {
-			return nil, err
+			return err
 		}
 
 		cpuProfileCleanup = func() {
@@ -343,37 +345,54 @@ func startInProcess(ctx *server.Context, appCreator server.AppCreator, cdc *code
 		}
 	}
 
+	// using group context makes sense in case that if one of
+	// the processes produces error the rest will go and shutdown
+	g, gCtx := errgroup.WithContext(shutdownCtx)
 	// start rest
 	if startRestServer {
-		restCh := make(chan struct{})
-		go func() {
-			_ = restServer.StartRestServer(cdc, restServer.RegisterRoutes, restCh)
-		}()
-		<-restCh
+		waitForREST := make(chan struct{})
+		g.Go(func() error {
+			return restServer.StartRestServer(gCtx, cdc, restServer.RegisterRoutes, waitForREST)
+		})
+		// hang here for a while, and wait for REST server to start
+		<-waitForREST
 	}
 
 	// start bridge
 	if startBridge {
-		go func() {
-			bridgeCmd.StartBridge(false)
-		}()
+		bridgeCmd.AdjustBridgeDBValue(cmd, viper.GetViper())
+		g.Go(func() error {
+			return bridgeCmd.StartBridgeWithCtx(gCtx)
+		})
 	}
 
-	server.TrapSignal(func() {
-		ctx.Logger.Info("trap signal")
-
-		if tmNode.IsRunning() {
-			_ = tmNode.Stop()
-		}
+	// stop phase for Tendermint node
+	g.Go(func() error {
+		// wait here for interrupt signal or
+		// until something in the group returns non-nil error
+		<-gCtx.Done()
+		ctx.Logger.Info("exiting...")
 
 		if cpuProfileCleanup != nil {
 			cpuProfileCleanup()
 		}
+		if tmNode.IsRunning() {
+			return tmNode.Stop()
+		}
 
-		ctx.Logger.Info("exiting...")
+		db.Close()
+
+		return nil
 	})
-	// TODO add gracefully shut down of the services rest server, bridge and daemon
-	select {}
+
+	// wait here for all go routines to finish,
+	// or something to break
+	if err := g.Wait(); err != nil {
+		ctx.Logger.Error("Error shutting down services", "Error", err)
+		return err
+	}
+
+	return nil
 }
 
 func openDB(rootDir string) (dbm.DB, error) {
