@@ -45,15 +45,6 @@ func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInsta
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, helper.HomeFlag), "Error", err)
 	}
 
-	cmd.PersistentFlags().String(
-		helper.WithHeimdallConfigFlag,
-		"",
-		"Heimdall config file path (default <home>/config/heimdall-config.json)",
-	)
-	if err := v.BindPFlag(helper.WithHeimdallConfigFlag, cmd.PersistentFlags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
-		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, helper.WithHeimdallConfigFlag), "Error", err)
-	}
-
 	// bridge storage db
 	cmd.PersistentFlags().String(
 		bridgeDBFlag,

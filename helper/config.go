@@ -2,6 +2,7 @@ package helper
 
 import (
 	"crypto/ecdsa"
+	"fmt"
 	"log"
 	"math/big"
 	"os"
@@ -14,6 +15,7 @@ import (
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
 	"github.com/maticnetwork/heimdall/file"
+	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -25,13 +27,29 @@ import (
 
 const (
 	TendermintNodeFlag     = "node"
-	WithHeimdallConfigFlag = "with-heimdall-config"
+	WithHeimdallConfigFlag = "heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
-	ChainFlag              = "chain"
 	RestServerFlag         = "rest-server"
 	BridgeFlag             = "bridge"
 	LogLevel               = "log_level"
+
+	// heimdall-config flags
+	MainRPCUrlFlag               = "eth_rpc_url"
+	BorRPCUrlFlag                = "bor_rpc_url"
+	TendermintNodeURLFlag        = "tendermint_rpc_url"
+	HeimdallServerURLFlag        = "heimdall_rest_server"
+	AmqpURLFlag                  = "amqp_url"
+	CheckpointerPollIntervalFlag = "checkpoint_poll_interval"
+	SyncerPollIntervalFlag       = "syncer_poll_interval"
+	NoACKPollIntervalFlag        = "noack_poll_interval"
+	ClerkPollIntervalFlag        = "clerk_poll_interval"
+	SpanPollIntervalFlag         = "span_poll_interval"
+	MainchainGasLimitFlag        = "main_chain_gas_limit"
+	MainchainMaxGasPriceFlag     = "main_chain_max_gas_price"
+	NoACKWaitTimeFlag            = "no_ack_wait_time"
+	ChainFlag                    = "chain"
+
 	// ---
 	// TODO Move these to common client flags
 	// BroadcastBlock defines a tx broadcasting mode where the client waits for
@@ -156,14 +174,14 @@ func InitHeimdallConfig(homeDir string) {
 	}
 
 	// get heimdall config filepath from viper/cobra flag
-	heimdallConfigFilePath := viper.GetString(WithHeimdallConfigFlag)
+	heimdallConfigFileFromFlag := viper.GetString(WithHeimdallConfigFlag)
 
 	// init heimdall with changed config files
-	InitHeimdallConfigWith(homeDir, heimdallConfigFilePath)
+	InitHeimdallConfigWith(homeDir, heimdallConfigFileFromFlag)
 }
 
 // InitHeimdallConfigWith initializes passed heimdall/tendermint config files
-func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
+func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	if strings.Compare(homeDir, "") == 0 {
 		return
 	}
@@ -172,23 +190,44 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		return
 	}
 
+	// read configuration from the standard configuratin file
 	configDir := filepath.Join(homeDir, "config")
-
 	heimdallViper := viper.New()
-	if heimdallConfigFilePath == "" {
-		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
-		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
-	} else {
-		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
-	}
+	heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
+	heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
 
 	err := heimdallViper.ReadInConfig()
 	if err != nil { // Handle errors reading the config file
 		log.Fatal(err)
 	}
 
+	// unmarshal configuration from the standard configuration file
 	if err = heimdallViper.UnmarshalExact(&conf); err != nil {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
+	}
+
+	//  if there is a file with overrides submitted via flags => read it an merge it with the alreadey read standard configuration
+	if heimdallConfigFileFromFLag != "" {
+		heimdallViperFromFlag := viper.New()
+		heimdallViperFromFlag.SetConfigFile(heimdallConfigFileFromFLag) // set flag config file explicitly
+
+		err := heimdallViperFromFlag.ReadInConfig()
+		if err != nil { // Handle errors reading the config file sybmitted as a flag
+			log.Fatalln("Unable to read config file submitted via flag", "Error", err)
+		}
+
+		var confFromFlag Configuration
+		// unmarshal configuration from the configuration file submited as a flag
+		if err = heimdallViperFromFlag.UnmarshalExact(&confFromFlag); err != nil {
+			log.Fatalln("Unable to unmarshall config file submitted via flag", "Error", err)
+		}
+
+		conf.Merge(&confFromFlag)
+	}
+
+	// update configuration data with submitted flags
+	if err := conf.UpdateWithFlags(viper.GetViper(), Logger); err != nil {
+		log.Fatalln("Unable to read flag values. Check log for details.", "Error", err)
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
@@ -217,11 +256,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
-	// get chain from viper/cobra flag or config and set newSelectionAlgoHeight
-	chain := viper.GetString(ChainFlag)
-	if chain != "" {
-		conf.Chain = chain
-	}
 	setNewSelectionAlgoHeight(conf.Chain)
 }
 
@@ -338,5 +372,342 @@ func setNewSelectionAlgoHeight(chain string) {
 		newSelectionAlgoHeight = 282500
 	default:
 		newSelectionAlgoHeight = 0
+	}
+}
+
+// add persistent flags for heimdall-config and bind flags with command
+func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstance logger.Logger, caller string) {
+
+	// add with-heimdall-config flag
+	cmd.PersistentFlags().String(
+		WithHeimdallConfigFlag,
+		"",
+		"Override of Heimdall config file (default <home>/config/heimdall-config.json)",
+	)
+
+	if err := v.BindPFlag(WithHeimdallConfigFlag, cmd.PersistentFlags().Lookup(WithHeimdallConfigFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, WithHeimdallConfigFlag), "Error", err)
+	}
+
+	// add MainRPCUrlFlag flag
+	cmd.PersistentFlags().String(
+		MainRPCUrlFlag,
+		"",
+		"Set RPC endpoint for ethereum chain",
+	)
+
+	if err := v.BindPFlag(MainRPCUrlFlag, cmd.PersistentFlags().Lookup(MainRPCUrlFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MainRPCUrlFlag), "Error", err)
+	}
+
+	// add BorRPCUrlFlag flag
+	cmd.PersistentFlags().String(
+		BorRPCUrlFlag,
+		"",
+		"Set RPC endpoint for bor chain",
+	)
+
+	if err := v.BindPFlag(BorRPCUrlFlag, cmd.PersistentFlags().Lookup(BorRPCUrlFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorRPCUrlFlag), "Error", err)
+	}
+
+	// add TendermintNodeURLFlag flag
+	cmd.PersistentFlags().String(
+		TendermintNodeURLFlag,
+		"",
+		"Set RPC endpoint for tendermint",
+	)
+
+	if err := v.BindPFlag(TendermintNodeURLFlag, cmd.PersistentFlags().Lookup(TendermintNodeURLFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, TendermintNodeURLFlag), "Error", err)
+	}
+
+	// add HeimdallServerURLFlag flag
+	cmd.PersistentFlags().String(
+		HeimdallServerURLFlag,
+		"",
+		"Set Heimdall REST server endpoint",
+	)
+
+	if err := v.BindPFlag(HeimdallServerURLFlag, cmd.PersistentFlags().Lookup(HeimdallServerURLFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, HeimdallServerURLFlag), "Error", err)
+	}
+
+	// add AmqpURLFlag flag
+	cmd.PersistentFlags().String(
+		AmqpURLFlag,
+		"",
+		"Set AMQP endpoint",
+	)
+
+	if err := v.BindPFlag(AmqpURLFlag, cmd.PersistentFlags().Lookup(AmqpURLFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, AmqpURLFlag), "Error", err)
+	}
+
+	// add CheckpointerPollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		CheckpointerPollIntervalFlag,
+		"",
+		"Set check point pull interval",
+	)
+
+	if err := v.BindPFlag(CheckpointerPollIntervalFlag, cmd.PersistentFlags().Lookup(CheckpointerPollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, CheckpointerPollIntervalFlag), "Error", err)
+	}
+
+	// add SyncerPollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		SyncerPollIntervalFlag,
+		"",
+		"Set syncer pull interval",
+	)
+
+	if err := v.BindPFlag(SyncerPollIntervalFlag, cmd.PersistentFlags().Lookup(SyncerPollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, SyncerPollIntervalFlag), "Error", err)
+	}
+
+	// add NoACKPollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		NoACKPollIntervalFlag,
+		"",
+		"Set no acknowledge pull interval",
+	)
+
+	if err := v.BindPFlag(NoACKPollIntervalFlag, cmd.PersistentFlags().Lookup(NoACKPollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, NoACKPollIntervalFlag), "Error", err)
+	}
+
+	// add ClerkPollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		ClerkPollIntervalFlag,
+		"",
+		"Set clerk pull interval",
+	)
+
+	if err := v.BindPFlag(ClerkPollIntervalFlag, cmd.PersistentFlags().Lookup(ClerkPollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, ClerkPollIntervalFlag), "Error", err)
+	}
+
+	// add SpanPollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		SpanPollIntervalFlag,
+		"",
+		"Set span pull interval",
+	)
+
+	if err := v.BindPFlag(SpanPollIntervalFlag, cmd.PersistentFlags().Lookup(SpanPollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, SpanPollIntervalFlag), "Error", err)
+	}
+
+	// add MainchainGasLimitFlag flag
+	cmd.PersistentFlags().Uint64(
+		MainchainGasLimitFlag,
+		0,
+		"Set main chain gas limti",
+	)
+
+	if err := v.BindPFlag(MainchainGasLimitFlag, cmd.PersistentFlags().Lookup(MainchainGasLimitFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MainchainGasLimitFlag), "Error", err)
+	}
+
+	// add MainchainMaxGasPriceFlag flag
+	cmd.PersistentFlags().Int64(
+		MainchainMaxGasPriceFlag,
+		0,
+		"Set main chain max gas limti",
+	)
+
+	if err := v.BindPFlag(MainchainMaxGasPriceFlag, cmd.PersistentFlags().Lookup(MainchainMaxGasPriceFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MainchainMaxGasPriceFlag), "Error", err)
+	}
+
+	// add NoACKWaitTimeFlag flag
+	cmd.PersistentFlags().String(
+		NoACKWaitTimeFlag,
+		"",
+		"Set time ack service waits to clear buffer and elect new proposer",
+	)
+
+	if err := v.BindPFlag(NoACKWaitTimeFlag, cmd.PersistentFlags().Lookup(NoACKWaitTimeFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, NoACKWaitTimeFlag), "Error", err)
+	}
+
+	// add chain flag
+	cmd.PersistentFlags().String(
+		ChainFlag,
+		"",
+		fmt.Sprintf("Set one of the chains: [%s]", strings.Join(GetValidChains(), ",")),
+	)
+
+	if err := v.BindPFlag(ChainFlag, cmd.PersistentFlags().Lookup(ChainFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, ChainFlag), "Error", err)
+	}
+}
+
+func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Logger) error {
+	// get endpoint for ethereum chain from viper/cobra
+	stringConfgValue := v.GetString(MainRPCUrlFlag)
+	if stringConfgValue != "" {
+		c.EthRPCUrl = stringConfgValue
+	}
+
+	// get endpoint for bor chain from viper/cobra
+	stringConfgValue = v.GetString(BorRPCUrlFlag)
+	if stringConfgValue != "" {
+		c.BorRPCUrl = stringConfgValue
+	}
+
+	// get endpoint for tendermint from viper/cobra
+	stringConfgValue = v.GetString(TendermintNodeURLFlag)
+	if stringConfgValue != "" {
+		c.TendermintRPCUrl = stringConfgValue
+	}
+
+	// get endpoint for tendermint from viper/cobra
+	stringConfgValue = v.GetString(AmqpURLFlag)
+	if stringConfgValue != "" {
+		c.AmqpURL = stringConfgValue
+	}
+
+	// get Heimdall REST server endpoint from viper/cobra
+	stringConfgValue = v.GetString(HeimdallServerURLFlag)
+	if stringConfgValue != "" {
+		c.HeimdallServerURL = stringConfgValue
+	}
+
+	// need this error for parsing Duration values
+	var err error = nil
+	var logErrMsg string = "Unable to read flag."
+
+	// get check point pull interval from viper/cobra
+	stringConfgValue = v.GetString(CheckpointerPollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.CheckpointerPollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", CheckpointerPollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
+	// get syncer pull interval from viper/cobra
+	stringConfgValue = v.GetString(SyncerPollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.SyncerPollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", SyncerPollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
+	// get poll interval for ack service to send no-ack in case of no checkpoints from viper/cobra
+	stringConfgValue = v.GetString(NoACKPollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.NoACKPollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", NoACKPollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
+	// get clerk poll interval from viper/cobra
+	stringConfgValue = v.GetString(ClerkPollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.ClerkPollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", ClerkPollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
+	// get span poll interval from viper/cobra
+	stringConfgValue = v.GetString(SpanPollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.SpanPollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", SpanPollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
+	// get time that ack service waits to clear buffer and elect new proposer from viper/cobra
+	stringConfgValue = v.GetString(NoACKWaitTimeFlag)
+	if stringConfgValue != "" {
+		if c.NoACKWaitTime, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", NoACKWaitTimeFlag, "Error", err)
+			return err
+		}
+	}
+
+	// get mainchain gas limit from viper/cobra
+	uint64ConfgValue := v.GetUint64(MainchainGasLimitFlag)
+	if uint64ConfgValue != 0 {
+		c.MainchainGasLimit = uint64ConfgValue
+	}
+
+	// get mainchain max gas price from viper/cobra. if it is greater then  zero => set it as configuration parameter
+	int64ConfgValue := v.GetInt64(MainchainMaxGasPriceFlag)
+	if int64ConfgValue > 0 {
+		c.MainchainMaxGasPrice = int64ConfgValue
+	}
+
+	// get chain from viper/cobra flag
+	stringConfgValue = v.GetString(ChainFlag)
+	if stringConfgValue != "" {
+		c.Chain = stringConfgValue
+	}
+
+	return nil
+}
+
+func (c *Configuration) Merge(cc *Configuration) {
+	if cc.EthRPCUrl != "" {
+		c.EthRPCUrl = cc.EthRPCUrl
+	}
+
+	if cc.BorRPCUrl != "" {
+		c.BorRPCUrl = cc.BorRPCUrl
+	}
+
+	if cc.TendermintRPCUrl != "" {
+		c.TendermintRPCUrl = cc.TendermintRPCUrl
+	}
+
+	if cc.AmqpURL != "" {
+		c.AmqpURL = cc.AmqpURL
+	}
+
+	if cc.HeimdallServerURL != "" {
+		c.HeimdallServerURL = cc.HeimdallServerURL
+	}
+
+	if cc.MainchainGasLimit != 0 {
+		c.MainchainGasLimit = cc.MainchainGasLimit
+	}
+
+	if cc.MainchainMaxGasPrice != 0 {
+		c.MainchainMaxGasPrice = cc.MainchainMaxGasPrice
+	}
+
+	if cc.CheckpointerPollInterval != 0 {
+		c.CheckpointerPollInterval = cc.CheckpointerPollInterval
+	}
+
+	if cc.SyncerPollInterval != 0 {
+		c.SyncerPollInterval = cc.SyncerPollInterval
+	}
+
+	if cc.NoACKPollInterval != 0 {
+		c.NoACKPollInterval = cc.NoACKPollInterval
+	}
+
+	if cc.ClerkPollInterval != 0 {
+		c.ClerkPollInterval = cc.ClerkPollInterval
+	}
+
+	if cc.SpanPollInterval != 0 {
+		c.SpanPollInterval = cc.SpanPollInterval
+	}
+
+	if cc.NoACKWaitTime != 0 {
+		c.NoACKWaitTime = cc.NoACKWaitTime
+	}
+
+	if cc.Chain != "" {
+		c.Chain = cc.Chain
 	}
 }

@@ -111,30 +111,12 @@ func main() {
 		PersistentPreRunE: server.PersistentPreRunEFn(ctx),
 	}
 
+	// adding heimdall configuration flags to root command
+	helper.DecorateWithHeimdallFlags(rootCmd, viper.GetViper(), logger, "main")
+
 	tendermintCmd := &cobra.Command{
 		Use:   "tendermint",
 		Short: "Tendermint subcommands",
-	}
-
-	// add new persistent flag for heimdall-config
-	rootCmd.PersistentFlags().String(
-		helper.WithHeimdallConfigFlag,
-		"",
-		"Heimdall config file path (default <home>/config/heimdall-config.json)",
-	)
-
-	rootCmd.PersistentFlags().String(
-		helper.ChainFlag,
-		"",
-		fmt.Sprintf("Set one of the chains: [%s]", strings.Join(helper.GetValidChains(), ",")),
-	)
-
-	// bind with-heimdall-config config and chain flag with root cmd
-	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.PersistentFlags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
-		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
-	}
-	if err := viper.BindPFlag(helper.ChainFlag, rootCmd.PersistentFlags().Lookup(helper.ChainFlag)); err != nil {
-		logger.Error("main | BindPFlag | helper.ChainFlag", "Error", err)
 	}
 
 	rootCmd.AddCommand(heimdallStart(shutdownCtx, ctx, newApp, cdc)) // New Heimdall start command
