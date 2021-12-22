@@ -97,7 +97,7 @@ func GetCurrentValSet(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Println(res)
+			fmt.Println(string(res))
 			return nil
 		},
 	}
