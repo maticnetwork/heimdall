@@ -22,6 +22,7 @@ import (
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 
+	cfg "github.com/tendermint/tendermint/config"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
 
@@ -33,6 +34,7 @@ const (
 	RestServerFlag         = "rest-server"
 	BridgeFlag             = "bridge"
 	LogLevel               = "log_level"
+	SeedsFlag              = "seeds"
 
 	// heimdall-config flags
 	MainRPCUrlFlag               = "eth_rpc_url"
@@ -92,6 +94,8 @@ const (
 	DefaultChain string = "mainnet"
 
 	DefaultTendermintNode = "tcp://localhost:26657"
+
+	DefaultMainnetSeeds string = "f4f605d60b8ffaaf15240564e58a81103510631c@159.203.9.164:26656,4fb1bc820088764a564d4f66bba1963d47d82329@44.232.55.71:26656,2eadba4be3ce47ac8db0a3538cb923b57b41c927@35.199.4.13:26656,3b23b20017a6f348d329c102ddc0088f0a10a444@35.221.13.28:26656,25f5f65a09c56e9f1d2d90618aa70cd358aa68da@35.230.116.151:26656"
 
 	secretFilePerm = 0600
 )
@@ -709,5 +713,31 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.Chain != "" {
 		c.Chain = cc.Chain
+	}
+}
+
+// DecorateWithTendermintFlags creates tendermint flags for desired command and bind them to viper
+func DecorateWithTendermintFlags(cmd *cobra.Command, v *viper.Viper, loggerInstance logger.Logger, message string) {
+	// add seeds flag
+	cmd.PersistentFlags().String(
+		SeedsFlag,
+		"",
+		"Override seeds",
+	)
+	if err := v.BindPFlag(SeedsFlag, cmd.PersistentFlags().Lookup(SeedsFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", message, SeedsFlag), "Error", err)
+	}
+}
+
+// UpdateTendermintConfig updates tenedermint config with flags and default values if needed
+func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
+	// update tendermintConfig.P2P.Seeds
+	seedsFlagValue := v.GetString(SeedsFlag)
+	if seedsFlagValue != "" {
+		tendermintConfig.P2P.Seeds = seedsFlagValue
+	}
+
+	if tendermintConfig.P2P.Seeds == "" && conf.Chain == "mainnet" {
+		tendermintConfig.P2P.Seeds = DefaultMainnetSeeds
 	}
 }

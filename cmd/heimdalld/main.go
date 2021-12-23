@@ -113,13 +113,14 @@ func main() {
 
 	// adding heimdall configuration flags to root command
 	helper.DecorateWithHeimdallFlags(rootCmd, viper.GetViper(), logger, "main")
+	helper.DecorateWithTendermintFlags(rootCmd, viper.GetViper(), logger, "main")
 
 	tendermintCmd := &cobra.Command{
 		Use:   "tendermint",
 		Short: "Tendermint subcommands",
 	}
 
-	rootCmd.AddCommand(heimdallStart(shutdownCtx, ctx, newApp, cdc)) // New Heimdall start command
+	rootCmd.AddCommand(heimdallStart(shutdownCtx, ctx, getNewApp(ctx), cdc)) // New Heimdall start command
 
 	tendermintCmd.AddCommand(
 		server.ShowNodeIDCmd(ctx),
@@ -153,11 +154,14 @@ func main() {
 	}
 }
 
-func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
-	// init heimdall config
-	helper.InitHeimdallConfig("")
-	// create new heimdall app
-	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
+	return func(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
+		// init heimdall config
+		helper.InitHeimdallConfig("")
+		helper.UpdateTendermintConfig(serverCtx.Config, viper.GetViper())
+		// create new heimdall app
+		return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+	}
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {
@@ -304,7 +308,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 
 	// start Tendermint node here
 	if err := tmNode.Start(); err != nil {
-		return nil
+		return err
 	}
 
 	var cpuProfileCleanup func()
