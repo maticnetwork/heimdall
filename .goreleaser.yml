@@ -14,6 +14,8 @@ builds:
       - darwin
     goarch:
       - amd64
+    tags:
+      - netgo
     env:
       - CC=o64-clang
       - CXX=o64-clang++
@@ -51,7 +53,7 @@ builds:
       - CXX=g++
     ldflags:
       # We need to build a static binary because we are building in a glibc based system and running in a musl container
-      - -linkmode external -extldflags "-static"
+      - -s -w -extldflags "-static"
 
   - <<: *xbuildd
     id: heimdalld-linux-arm64
@@ -64,7 +66,7 @@ builds:
       - CXX=aarch64-linux-gnu-g++
     ldflags:
       # We need to build a static binary because we are building in a glibc based system and running in a musl container
-      - -linkmode external -extldflags "-static"
+      - -s -w -extldflags "-static"
 
   # heimdallcli
 
