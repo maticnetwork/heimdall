@@ -214,6 +214,12 @@ nfpms:
       - src: builder/files/heimdalld-bridge.service
         dst: /lib/systemd/system/heimdalld-bridge.service
         type: config
+      - src: builder/files/genesis-mainnet-v1.json
+        dst: /etc/heimdall/genesis-mainnet-v1.json
+        type: config
+      - src: builder/files/genesis-testnet-v4.json
+        dst: /etc/heimdall/genesis-testnet-v4.json
+        type: config
 
     overrides:
       rpm:
@@ -235,9 +241,10 @@ dockers:
       - bridge-linux-amd64
     build_flag_templates:
       - --platform=linux/amd64
-    skip_push: false
     extra_files:
       - docker/entrypoint.sh
+      - builder/files/genesis-mainnet-v1.json
+      - builder/files/genesis-testnet-v4.json
   
   - image_templates:
       - 0xpolygon/{{ .ProjectName }}:{{ .Version }}-arm64
@@ -249,10 +256,11 @@ dockers:
       - heimdallcli-linux-arm64
       - bridge-linux-arm64
     build_flag_templates:
-      - --platform=linux/arm64
-    skip_push: false
+      - --platform=linux/arm64/v8
     extra_files:
       - docker/entrypoint.sh
+      - builder/files/genesis-mainnet-v1.json
+      - builder/files/genesis-testnet-v4.json
 
 docker_manifests:
   - name_template: 0xpolygon/{{ .ProjectName }}:{{ .Version }}
