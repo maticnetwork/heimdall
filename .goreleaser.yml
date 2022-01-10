@@ -78,6 +78,8 @@ builds:
       - darwin
     goarch:
       - amd64
+    tags:
+      - netgo
     env:
       - CC=o64-clang
       - CXX=o64-clang++
@@ -140,6 +142,8 @@ builds:
       - darwin
     goarch:
       - amd64
+    tags:
+      - netgo
     env:
       - CC=o64-clang
       - CXX=o64-clang++
