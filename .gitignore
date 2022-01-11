@@ -16,3 +16,4 @@ logs
 helper/heimdall-params.go
 
 data/
+dist/

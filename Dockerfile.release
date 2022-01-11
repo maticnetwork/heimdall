@@ -1,0 +1,22 @@
+FROM alpine:3.14
+
+ARG HEIMDALL_DIR=/heimdall
+ENV HEIMDALL_DIR=$HEIMDALL_DIR
+
+RUN apk add --no-cache \
+       ca-certificates \
+       tini && \
+       mkdir -p ${HEIMDALL_DIR}
+
+WORKDIR ${HEIMDALL_DIR}
+COPY heimdalld /usr/local/bin/
+COPY heimdallcli /usr/local/bin/
+COPY bridge /usr/local/bin/
+COPY builder/files/genesis-mainnet-v1.json ${HEIMDALL_DIR}/
+COPY builder/files/genesis-testnet-v4.json ${HEIMDALL_DIR}/
+
+COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
+
+EXPOSE 1317 26656 26657
+
+ENTRYPOINT ["entrypoint.sh"]
