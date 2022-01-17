@@ -97,6 +97,8 @@ const (
 
 	DefaultMainnetSeeds string = "f4f605d60b8ffaaf15240564e58a81103510631c@159.203.9.164:26656,4fb1bc820088764a564d4f66bba1963d47d82329@44.232.55.71:26656,2eadba4be3ce47ac8db0a3538cb923b57b41c927@35.199.4.13:26656,3b23b20017a6f348d329c102ddc0088f0a10a444@35.221.13.28:26656,25f5f65a09c56e9f1d2d90618aa70cd358aa68da@35.230.116.151:26656"
 
+	DefaultTestnetSeeds string = "4cd60c1d76e44b05f7dfd8bab3f447b119e87042@54.147.31.250:26656,b18bbe1f3d8576f4b73d9b18976e71c65e839149@34.226.134.117:26656"
+
 	secretFilePerm = 0600
 )
 
@@ -737,7 +739,12 @@ func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 		tendermintConfig.P2P.Seeds = seedsFlagValue
 	}
 
-	if tendermintConfig.P2P.Seeds == "" && conf.Chain == "mainnet" {
-		tendermintConfig.P2P.Seeds = DefaultMainnetSeeds
+	if tendermintConfig.P2P.Seeds == "" {
+		switch conf.Chain {
+		case "mainnet":
+			tendermintConfig.P2P.Seeds = DefaultMainnetSeeds
+		case "mumbai":
+			tendermintConfig.P2P.Seeds = DefaultTestnetSeeds
+		}
 	}
 }

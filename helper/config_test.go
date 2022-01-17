@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	"github.com/spf13/viper"
+	cfg "github.com/tendermint/tendermint/config"
 )
 
 //  Test - to check heimdall config
@@ -37,4 +38,41 @@ func TestHeimdallConfigNewSelectionAlgoHeight(t *testing.T) {
 			t.Errorf("Invalid GetNewSelectionAlgoHeight = %d for chain %s", nsah, chain)
 		}
 	}
+}
+
+func TestHeimdallConfigUpdateTendermintConfig(t *testing.T) {
+	type teststruct struct {
+		chain string
+		viper string
+		def   string
+		value string
+	}
+
+	data := []teststruct{
+		{chain: "mumbai", viper: "viper", def: "default", value: "viper"},
+		{chain: "mumbai", viper: "viper", def: "", value: "viper"},
+		{chain: "mumbai", viper: "", def: "default", value: "default"},
+		{chain: "mumbai", viper: "", def: "", value: DefaultTestnetSeeds},
+		{chain: "mainnet", viper: "viper", def: "default", value: "viper"},
+		{chain: "mainnet", viper: "viper", def: "", value: "viper"},
+		{chain: "mainnet", viper: "", def: "default", value: "default"},
+		{chain: "mainnet", viper: "", def: "", value: DefaultMainnetSeeds},
+		{chain: "local", viper: "viper", def: "default", value: "viper"},
+		{chain: "local", viper: "viper", def: "", value: "viper"},
+		{chain: "local", viper: "", def: "default", value: "default"},
+		{chain: "local", viper: "", def: "", value: ""},
+	}
+	oldConf := conf.Chain
+	viperObj := viper.New()
+	tendermintConfig := cfg.DefaultConfig()
+	for _, ts := range data {
+		conf.Chain = ts.chain
+		tendermintConfig.P2P.Seeds = ts.def
+		viperObj.Set(SeedsFlag, ts.viper)
+		UpdateTendermintConfig(tendermintConfig, viperObj)
+		if tendermintConfig.P2P.Seeds != ts.value {
+			t.Errorf("Invalid UpdateTendermintConfig, tendermintConfig.P2P.Seeds not set correctly")
+		}
+	}
+	conf.Chain = oldConf
 }
