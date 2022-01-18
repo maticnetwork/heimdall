@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -48,6 +49,11 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// get ContractAddress
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
+
+		if len(types.HexToHexBytes(req.Data)) > 50000 {
+			fmt.Println("Data is too large", req.ID)
+			req.Data = "0x0"
+		}
 
 		// create new msg
 		msg := clerkTypes.NewMsgEventRecord(

@@ -89,7 +89,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.Data, msg.Data) {
+	if !bytes.Equal(eventLog.Data, msg.Data) && len(eventLog.Data) <= 50000 {
 		k.Logger(ctx).Error(
 			"Data from event does not match with Msg Data",
 			"EventData", hmTypes.BytesToHexBytes(eventLog.Data),

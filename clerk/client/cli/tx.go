@@ -100,6 +100,11 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("data should be hex string")
 			}
 
+			if len(data) > 50000 {
+				fmt.Println("Data is too large", recordIDStr)
+				data = []byte("0x0")
+			}
+
 			// create new state record
 			msg := clerkTypes.NewMsgEventRecord(
 				proposer,
