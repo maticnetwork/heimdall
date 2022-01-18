@@ -266,21 +266,3 @@ func registerSwaggerUI(mux *mux.Router) {
 	staticServer := http.FileServer(statikFS)
 	mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
 }
-
-// Check locally if rest server port has been opened
-func restServerHealthCheck(restCh chan struct{}) {
-	address := viper.GetString(client.FlagListenAddr)
-	for {
-		conn, err := net.Dial("tcp", address[6:])
-		if err != nil {
-			time.Sleep(10 * time.Millisecond)
-			continue
-		}
-		if conn != nil {
-			defer conn.Close()
-		}
-
-		close(restCh)
-		break
-	}
-}
