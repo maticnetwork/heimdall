@@ -50,7 +50,7 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// get ContractAddress
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
 
-		if len(types.HexToHexBytes(req.Data)) > 50000 {
+		if len(types.HexToHexBytes(req.Data)) > 10 {
 			fmt.Println("Data is too large", req.ID)
 			req.Data = "0x0"
 		}
