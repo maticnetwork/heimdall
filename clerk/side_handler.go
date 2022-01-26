@@ -89,13 +89,17 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.Data, msg.Data) && len(eventLog.Data) <= 10 {
-		k.Logger(ctx).Error(
-			"Data from event does not match with Msg Data",
-			"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
-			"MsgData", hmTypes.BytesToHexBytes(msg.Data),
-		)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	if !bytes.Equal(eventLog.Data, msg.Data) {
+		if len(eventLog.Data) > 10 && bytes.Equal(msg.Data, hmTypes.HexToHexBytes("")) {
+		} else {
+			k.Logger(ctx).Error(
+				"Data from event does not match with Msg Data",
+				"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
+				"MsgData", hmTypes.BytesToHexBytes(msg.Data),
+			)
+			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		}
+
 	}
 
 	result.Result = abci.SideTxResultType_Yes
