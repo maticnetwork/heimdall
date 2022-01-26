@@ -59,6 +59,11 @@ func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 	if msg.TxHash.Empty() {
 		return sdk.ErrInvalidAddress("missing tx hash")
 	}
+
+	if len(msg.Data) > 10 {
+		return sdk.ErrInvalidAddress("length is larger than 10")
+	}
+
 	return nil
 }
 
