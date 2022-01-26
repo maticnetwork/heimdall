@@ -52,7 +52,7 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		if len(types.HexToHexBytes(req.Data)) > 10 {
 			fmt.Println("Data is too large", req.ID)
-			req.Data = "0x0"
+			req.Data = ""
 		}
 
 		// create new msg

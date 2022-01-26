@@ -97,7 +97,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 
 		if len(event.Data) > 10 {
 			cp.Logger.Info("Data is too large", "data", hex.EncodeToString(event.Data))
-			event.Data = []byte("0x0")
+			event.Data = hmTypes.HexToHexBytes("")
 		}
 
 		msg := clerkTypes.NewMsgEventRecord(

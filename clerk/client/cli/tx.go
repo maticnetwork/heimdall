@@ -15,6 +15,7 @@ import (
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // GetTxCmd returns the transaction commands for this module
@@ -102,7 +103,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 
 			if len(data) > 10 {
 				fmt.Println("Data is too large", recordIDStr)
-				data = []byte("0x0")
+				data = hmTypes.HexToHexBytes("")
 			}
 
 			// create new state record
