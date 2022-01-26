@@ -90,7 +90,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 	}
 
 	if !bytes.Equal(eventLog.Data, msg.Data) {
-		if len(eventLog.Data) > 10 && bytes.Equal(msg.Data, hmTypes.HexToHexBytes("")) {
+		if len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes("")) {
 		} else {
 			k.Logger(ctx).Error(
 				"Data from event does not match with Msg Data",

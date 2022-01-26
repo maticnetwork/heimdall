@@ -69,6 +69,8 @@ const (
 	DefaultBorChainID string = "15001"
 
 	secretFilePerm = 0600
+
+	MaxStateSyncSize = 100000
 )
 
 var (

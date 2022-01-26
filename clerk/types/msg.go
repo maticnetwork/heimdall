@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -60,8 +61,8 @@ func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("missing tx hash")
 	}
 
-	if len(msg.Data) > 10 {
-		return sdk.ErrInvalidAddress("length is larger than 10")
+	if len(msg.Data) > helper.MaxStateSyncSize {
+		return ErrSizeExceed("length is larger than 100000")
 	}
 
 	return nil
