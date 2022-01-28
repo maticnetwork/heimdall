@@ -62,7 +62,7 @@ func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 	}
 
 	if len(msg.Data) > helper.MaxStateSyncSize {
-		return ErrSizeExceed("length is larger than 100000")
+		return ErrSizeExceed("length is larger than 100000 bytes")
 	}
 
 	return nil
