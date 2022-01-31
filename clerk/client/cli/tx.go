@@ -102,7 +102,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 			}
 
 			if len(data) > helper.MaxStateSyncSize {
-				fmt.Println("Data is too large", recordIDStr)
+				logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
 				data = hmTypes.HexToHexBytes("")
 			}
 

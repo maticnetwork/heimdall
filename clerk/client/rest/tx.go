@@ -1,7 +1,6 @@
 package rest
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -52,7 +51,7 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
 
 		if len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
-			fmt.Println("Data is too large", req.ID)
+			RestLogger.Info(`Data is too large to process, Resetting to ""`, "id", req.ID)
 			req.Data = ""
 		}
 
