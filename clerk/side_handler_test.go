@@ -18,6 +18,7 @@ import (
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -177,6 +178,54 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecord() {
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
 		require.Equal(t, abci.SideTxResultType_Skip, result.Result, "Result should be `skip`")
 	})
+
+	t.Run("EventDataExceed", func(t *testing.T) {
+		suite.contractCaller = mocks.IContractCaller{}
+		id := uint64(111)
+		logIndex := uint64(1)
+		blockNumber := uint64(1000)
+		txReceipt := &ethTypes.Receipt{
+			BlockNumber: new(big.Int).SetUint64(blockNumber),
+		}
+		txHash := hmTypes.HexToHeimdallHash("success hash")
+
+		const letterBytes = "abcdefABCDEF"
+		b := make([]byte, helper.MaxStateSyncSize+3)
+		for i := range b {
+			b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		}
+
+		// data created after trimming
+		msg := types.NewMsgEventRecord(
+			hmTypes.BytesToHeimdallAddress(addr1.Bytes()),
+			txHash,
+			logIndex,
+			blockNumber,
+			id,
+			hmTypes.BytesToHeimdallAddress(addr1.Bytes()),
+			hmTypes.HexToHexBytes(""),
+			suite.chainID,
+		)
+
+		// mock external calls
+		suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txReceipt, nil)
+		event := &statesender.StatesenderStateSynced{
+			Id:              new(big.Int).SetUint64(msg.ID),
+			ContractAddress: msg.ContractAddress.EthAddress(),
+			Data:            b,
+		}
+		suite.contractCaller.On("DecodeStateSyncedEvent", chainParams.ChainParams.StateSenderAddress.EthAddress(), txReceipt, logIndex).Return(event, nil)
+
+		// execute handler
+		result := suite.sideHandler(ctx, msg)
+		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should pass")
+
+		// there should be no stored event record
+		storedEventRecord, err := app.ClerkKeeper.GetEventRecord(ctx, id)
+		require.Nil(t, storedEventRecord)
+		require.Error(t, err)
+	})
+
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandler() {

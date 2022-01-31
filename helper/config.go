@@ -69,6 +69,9 @@ const (
 	DefaultBorChainID string = "15001"
 
 	secretFilePerm = 0600
+
+	// Maximum allowed event record data size
+	MaxStateSyncSize = 100000
 )
 
 var (
