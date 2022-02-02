@@ -204,11 +204,11 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	heimdallViper := viper.New()
 	heimdallViper.SetEnvPrefix("HEIMDALL")
 	heimdallViper.AutomaticEnv()
-	if heimdallConfigFilePath == "" {
+	if heimdallConfigFileFromFLag == "" {
 		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
 		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
 	} else {
-		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
+		heimdallViper.SetConfigFile(heimdallConfigFileFromFLag) // set config file explicitly
 	}
 
 	err := heimdallViper.ReadInConfig()
