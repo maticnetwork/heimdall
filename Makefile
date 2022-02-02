@@ -126,7 +126,6 @@ GOLANG_CROSS_VERSION  ?= v1.17.3
 
 .PHONY: release-dry-run
 release-dry-run:
-	go run helper/heimdall-params.template.go $(network)
 	@docker run \
 		--platform linux/amd64 \
 		--rm \
@@ -144,7 +143,6 @@ release-dry-run:
 
 .PHONY: release
 release:
-	go run helper/heimdall-params.template.go $(network)
 	@docker run \
 		--rm \
 		--privileged \
