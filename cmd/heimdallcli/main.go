@@ -57,14 +57,12 @@ var (
 )
 
 func initTendermintViperConfig(cmd *cobra.Command) {
-	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
+	tendermintNode, _ := cmd.Flags().GetString(helper.TendermintNodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
-	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 
 	// set to viper
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
-	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
@@ -89,6 +87,8 @@ func main() {
 	// chain id
 	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
 
+	helper.DecorateWithHeimdallFlags(rootCmd, viper.GetViper(), logger, "main")
+
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
@@ -110,11 +110,6 @@ func main() {
 		StakeCmd(cliCtx),
 		ApproveCmd(cliCtx),
 	)
-
-	// bind with-heimdall-config config with root cmd
-	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
-		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
-	}
 
 	// prepare and add flags
 	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))

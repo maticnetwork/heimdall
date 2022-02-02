@@ -48,6 +48,8 @@ main_chain_max_gas_price = "{{ .MainchainMaxGasPrice }}"
 ##### Timeout Config #####
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
 
+##### chain - newSelectionAlgoHeight depends on this #####
+chain = "{{ .Chain }}"
 `
 
 var configTemplate *template.Template
