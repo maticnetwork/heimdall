@@ -95,6 +95,11 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"blockNumber", vLog.BlockNumber,
 		)
 
+		if len(event.Data) > helper.MaxStateSyncSize {
+			cp.Logger.Info(`Data is too large to process, Resetting to ""`, "data", hex.EncodeToString(event.Data))
+			event.Data = hmTypes.HexToHexBytes("")
+		}
+
 		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()),

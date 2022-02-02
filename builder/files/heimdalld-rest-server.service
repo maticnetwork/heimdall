@@ -1,0 +1,13 @@
+[Unit]
+  Description=heimdalld-rest-server
+  StartLimitIntervalSec=500
+  StartLimitBurst=5
+[Service]
+  Restart=on-failure
+  RestartSec=5s
+  WorkingDirectory=/usr/local/bin
+  ExecStart=/usr/local/bin/heimdalld rest-server --home /var/lib/heimdall
+  Type=simple
+  User=root
+[Install]
+  WantedBy=multi-user.target

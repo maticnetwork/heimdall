@@ -13,3 +13,5 @@ logs
 .idea
 .vscode
 
+data/
+dist/

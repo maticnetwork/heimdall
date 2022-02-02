@@ -9,11 +9,17 @@ const (
 	CodeEventRecordAlreadySynced sdk.CodeType = 5400
 	CodeEventRecordInvalid       sdk.CodeType = 5401
 	CodeEventRecordUpdate        sdk.CodeType = 5402
+	CodeSizeExceed               sdk.CodeType = 5403
 )
 
 // ErrEventRecordAlreadySynced represents event sync error
 func ErrEventRecordAlreadySynced(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeEventRecordAlreadySynced, "Event record already synced")
+}
+
+// ErrSizeExceed represents event data size exceed error
+func ErrSizeExceed(codespace sdk.CodespaceType) sdk.Error {
+	return sdk.NewError(codespace, CodeSizeExceed, "Data size exceed")
 }
 
 // ErrEventRecordInvalid represents event error

@@ -16,6 +16,7 @@ import (
 	"github.com/maticnetwork/heimdall/clerk"
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -107,6 +108,22 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 		require.False(t, result.IsOK(), "should fail due to existent event record but succeeded")
 		require.Equal(t, types.CodeEventRecordAlreadySynced, result.Code)
 	})
+
+	t.Run("EventSizeExceed", func(t *testing.T) {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		const letterBytes = "abcdefABCDEF"
+		b := make([]byte, helper.MaxStateSyncSize+3)
+		for i := range b {
+			b[i] = letterBytes[rand.Intn(len(letterBytes))]
+		}
+
+		msg.Data = b
+
+		err := msg.ValidateBasic()
+		require.Error(t, err)
+	})
+
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {

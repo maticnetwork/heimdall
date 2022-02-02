@@ -1,8 +1,11 @@
 package types
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -59,6 +62,11 @@ func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 	if msg.TxHash.Empty() {
 		return sdk.ErrInvalidAddress("missing tx hash")
 	}
+
+	if len(msg.Data) > helper.MaxStateSyncSize {
+		return ErrSizeExceed(sdk.CodespaceType(fmt.Sprintf("length is larger than %d bytes", helper.MaxStateSyncSize)))
+	}
+
 	return nil
 }
 

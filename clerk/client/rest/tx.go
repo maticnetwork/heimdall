@@ -9,6 +9,7 @@ import (
 
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
@@ -48,6 +49,11 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// get ContractAddress
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
+
+		if len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
+			RestLogger.Info(`Data is too large to process, Resetting to ""`, "id", req.ID)
+			req.Data = ""
+		}
 
 		// create new msg
 		msg := clerkTypes.NewMsgEventRecord(

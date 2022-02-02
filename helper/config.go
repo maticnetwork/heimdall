@@ -100,6 +100,9 @@ const (
 	DefaultTestnetSeeds string = "4cd60c1d76e44b05f7dfd8bab3f447b119e87042@54.147.31.250:26656,b18bbe1f3d8576f4b73d9b18976e71c65e839149@34.226.134.117:26656"
 
 	secretFilePerm = 0600
+
+	// Maximum allowed event record data size
+	MaxStateSyncSize = 100000
 )
 
 var (
@@ -199,8 +202,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	// read configuration from the standard configuratin file
 	configDir := filepath.Join(homeDir, "config")
 	heimdallViper := viper.New()
-	heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
-	heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
+	heimdallViper.SetEnvPrefix("HEIMDALL")
+	heimdallViper.AutomaticEnv()
+	if heimdallConfigFilePath == "" {
+		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
+		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
+	} else {
+		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
+	}
 
 	err := heimdallViper.ReadInConfig()
 	if err != nil { // Handle errors reading the config file
