@@ -132,70 +132,6 @@ builds:
       # We need to build a static binary because we are building in a glibc based system and running in a musl container
       - -linkmode external -extldflags "-static"
 
-  # bridge
-
-  - &xbuildbridge
-    id: bridge-darwin-amd64
-    main: ./bridge/bridge.go
-    binary: bridge
-    goos:
-      - darwin
-    goarch:
-      - amd64
-    tags:
-      - netgo
-    env:
-      - CC=o64-clang
-      - CXX=o64-clang++
-    ldflags:
-      - -s -w
-      - -X github.com/maticnetwork/heimdall/version.Name=heimdall
-      - -X github.com/maticnetwork/heimdall/version.ServerName=heimdalld
-      - -X github.com/maticnetwork/heimdall/version.ClientName=heimdallcli
-      - -X github.com/maticnetwork/heimdall/version.Version={{.Version}}
-      - -X github.com/maticnetwork/heimdall/version.Commit={{.Commit}}
-      - -X github.com/cosmos/cosmos-sdk/version.Name=heimdall
-      - -X github.com/cosmos/cosmos-sdk/version.ServerName=heimdalld
-      - -X github.com/cosmos/cosmos-sdk/version.ClientName=heimdallcli
-      - -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}}
-      - -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  
-  - <<: *xbuildbridge
-    id: bridge-darwin-arm64
-    goos:
-      - darwin
-    goarch:
-      - arm64
-    env:
-      - CC=oa64-clang
-      - CXX=oa64-clang++
-  
-  - <<: *xbuildbridge
-    id: bridge-linux-amd64
-    goos:
-      - linux
-    goarch:
-      - amd64
-    env:
-      - CC=gcc
-      - CXX=g++
-    ldflags:
-      # We need to build a static binary because we are building in a glibc based system and running in a musl container
-      - -linkmode external -extldflags "-static"
-
-  - <<: *xbuildbridge
-    id: bridge-linux-arm64
-    goos:
-      - linux
-    goarch:
-      - arm64
-    env:
-      - CC=aarch64-linux-gnu-gcc
-      - CXX=aarch64-linux-gnu-g++
-    ldflags:
-      # We need to build a static binary because we are building in a glibc based system and running in a musl container
-      - -linkmode external -extldflags "-static"
-
 nfpms:
   - vendor: 0xPolygon
     homepage: https://polygon.technology
@@ -211,12 +147,6 @@ nfpms:
     contents:
       - src: builder/files/heimdalld.service
         dst: /lib/systemd/system/heimdalld.service
-        type: config
-      - src: builder/files/heimdalld-rest-server.service
-        dst: /lib/systemd/system/heimdalld-rest-server.service
-        type: config
-      - src: builder/files/heimdalld-bridge.service
-        dst: /lib/systemd/system/heimdalld-bridge.service
         type: config
       - src: builder/files/genesis-mainnet-v1.json
         dst: /etc/heimdall/genesis-mainnet-v1.json
