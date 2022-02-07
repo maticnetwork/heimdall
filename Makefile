@@ -29,14 +29,12 @@ build: clean
 	mkdir -p build
 	go build -o build/heimdalld ./cmd/heimdalld
 	go build -o build/heimdallcli ./cmd/heimdallcli
-	go build -o build/bridge bridge/bridge.go
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
 	
 # make install
 install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
-	go install $(BUILD_FLAGS) bridge/bridge.go
 
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
@@ -47,50 +45,6 @@ contracts:
 	abigen --abi=contracts/stakinginfo/stakinginfo.abi --pkg=stakinginfo --out=contracts/stakinginfo/stakinginfo.go
 	abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
 	abigen --abi=contracts/erc20/erc20.abi --pkg=erc20 --out=contracts/erc20/erc20.go
-
-
-init-heimdall:
-	./build/heimdalld init
-
-show-account-heimdall:
-	./build/heimdalld show-account
-
-show-node-id:
-	./build/heimdalld tendermint show-node-id
-
-run-heimdall:
-	./build/heimdalld start
-
-start-heimdall:
-	mkdir -p ./logs &
-	./build/heimdalld start > ./logs/heimdalld.log &
-
-reset-heimdall:
-	./build/heimdalld unsafe-reset-all
-	./build/bridge purge-queue
-	rm -rf ~/.heimdalld/bridge
-
-run-server:
-	./build/heimdalld rest-server
-
-start-server:
-	mkdir -p ./logs &
-	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
-
-start:
-	mkdir -p ./logs
-	bash docker/start.sh
-
-run-bridge:
-	./build/bridge start --all
-
-start-bridge:
-	mkdir -p logs &
-	./build/bridge start --all > ./logs/bridge.log &
-
-start-all:
-	mkdir -p ./logs
-	bash docker/start-heimdall.sh
 
 #
 # Code quality
