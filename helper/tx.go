@@ -92,6 +92,11 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs [][3]*big.Int, r
 		s = append(s, fmt.Sprintf("[%s,%s,%s]", sigs[i][0].String(), sigs[i][1].String(), sigs[i][2].String()))
 	}
 
+	s := make([]string, 0)
+	for i := 0; i < len(sigs); i++ {
+		s = append(s, fmt.Sprintf("[%s,%s,%s]", sigs[i][0].String(), sigs[i][1].String(), sigs[i][2].String()))
+	}
+
 	Logger.Debug("Sending new checkpoint",
 		"sigs", strings.Join(s, ","),
 		"data", hex.EncodeToString(signedData),
