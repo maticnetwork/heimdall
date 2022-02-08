@@ -223,7 +223,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	rootChainInstance, _ := contractCaller.GetRootChainInstance(rootChainAddress)
 
 	// check header count
-	currentCheckpointNumber, err := contractCaller.CurrentHeaderBlock(rootChainInstance, childBlockInterval)
+	currentCheckpointNumber, err := contractCaller.CurrentHeaderBlock(rootChainInstance, childBlockInterval, rootChainAddress)
 	if err != nil {
 		return nil
 	}

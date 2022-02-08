@@ -58,7 +58,7 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
 	}
 
-	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval)
+	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.HeaderIndex, rootChainInstance, params.ChildBlockInterval, chainParams.RootChainAddress.EthAddress())
 	if err != nil {
 		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.HeaderIndex)
 		return common.ErrorSideTx(k.Codespace(), common.CodeNoCheckpoint)
@@ -128,7 +128,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
-	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.Number, rootChainInstance, params.ChildBlockInterval)
+	root, start, end, _, proposer, err := contractCaller.GetHeaderInfo(msg.Number, rootChainInstance, params.ChildBlockInterval, chainParams.RootChainAddress.EthAddress())
 	if err != nil {
 		logger.Error("Unable to fetch checkpoint from rootchain", "error", err, "checkpointNumber", msg.Number)
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)

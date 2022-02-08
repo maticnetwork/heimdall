@@ -28,11 +28,11 @@ import (
 
 // IContractCaller represents contract caller
 type IContractCaller interface {
-	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
+	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64, rootchainAddress common.Address) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
-	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
-	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
-	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
+	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo, stakingInfoAddress common.Address) (validator types.Validator, err error)
+	GetLastChildBlock(rootChainInstance *rootchain.Rootchain, rootchainAddress common.Address) (uint64, error)
+	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64, rootchainAddress common.Address) (uint64, error)
 	GetBalance(address common.Address) (*big.Int, error)
 	SendCheckpoint(sigedData []byte, sigs [][3]*big.Int, rootchainAddress common.Address, rootChainInstance *rootchain.Rootchain) (err error)
 	SendTick(sigedData []byte, sigs []byte, slashManagerAddress common.Address, slashManagerInstance *slashmanager.Slashmanager) (err error)
@@ -62,7 +62,7 @@ type IContractCaller interface {
 	GetMaticTxReceipt(common.Hash) (*ethTypes.Receipt, error)
 	ApproveTokens(*big.Int, common.Address, common.Address, *erc20.Erc20) error
 	StakeFor(common.Address, *big.Int, *big.Int, bool, common.Address, *stakemanager.Stakemanager) error
-	CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error)
+	CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo, stakingInfoAddress common.Address) ([32]byte, error)
 
 	// bor related contracts
 	CurrentSpanNumber(validatorset *validatorset.Validatorset) (Number *big.Int)
@@ -259,7 +259,7 @@ func NewLru(size int) (*lru.Cache, error) {
 }
 
 // GetHeaderInfo get header info from checkpoint number
-func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (
+func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64, rootchainAddress common.Address) (
 	root common.Hash,
 	start uint64,
 	end uint64,
@@ -272,7 +272,7 @@ func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootcha
 	headerBlock, err := rootChainInstance.HeaderBlocks(nil, checkpointBigInt)
 	if err != nil {
 		c.ReinitializeMainChainClients()
-		c.GetHeaderInfo(number, rootChainInstance, childBlockInterval)
+		c.GetHeaderInfo(number, rootChainInstance, childBlockInterval, rootchainAddress)
 		return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
 	}
 
@@ -305,21 +305,37 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 }
 
 // GetLastChildBlock fetch current child block
-func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
+func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchain, rootchainAddress common.Address) (uint64, error) {
 	GetLastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
-		return 0, err
+		if err.Error() == "no contract code at given address" {
+			rootChainInstance, err = c.GetRootChainInstance(rootchainAddress)
+			if err != nil {
+				return 0, err
+			}
+			return c.GetLastChildBlock(rootChainInstance, rootchainAddress)
+		} else {
+			return 0, err
+		}
 	}
 	return GetLastChildBlock.Uint64(), nil
 }
 
 // CurrentHeaderBlock fetches current header block
-func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error) {
+func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64, rootchainAddress common.Address) (uint64, error) {
 	currentHeaderBlock, err := rootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
-		return 0, err
+		if err.Error() == "no contract code at given address" {
+			rootChainInstance, err = c.GetRootChainInstance(rootchainAddress)
+			if err != nil {
+				return 0, err
+			}
+			return c.CurrentHeaderBlock(rootChainInstance, childBlockInterval, rootchainAddress)
+		} else {
+			return 0, err
+		}
 	}
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
@@ -668,7 +684,7 @@ func (c *ContractCaller) DecodeUnJailedEvent(contractAddress common.Address, rec
 //
 
 // CurrentAccountStateRoot get current account root from on chain
-func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error) {
+func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo, stakingInfoAddress common.Address) ([32]byte, error) {
 	accountStateRoot, err := stakingInfoInstance.GetAccountStateRoot(nil)
 
 	if err != nil {
