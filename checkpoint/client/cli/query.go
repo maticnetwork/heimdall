@@ -183,11 +183,11 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var ackCount uint64
-			if err := cliCtx.Codec.UnmarshalJSON(res, &ackCount); err != nil {
+			if err := json.Unmarshal(res, &ackCount); err != nil {
 				return err
 			}
 
-			fmt.Printf("Total number of checkpoint so far : %v", ackCount)
+			fmt.Printf("Total number of checkpoint so far : %d\n", ackCount)
 			return nil
 		},
 	}
