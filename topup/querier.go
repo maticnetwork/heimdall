@@ -114,7 +114,7 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	stakingInfoAddress := chainParams.ChainParams.StakingInfoAddress.EthAddress()
 	stakingInfoInstance, _ := contractCallerObj.GetStakingInfoInstance(stakingInfoAddress)
 
-	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot(stakingInfoInstance)
+	accountRootOnChain, err := contractCallerObj.CurrentAccountStateRoot(stakingInfoInstance, stakingInfoAddress)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch account root from onchain ", err.Error()))
 	}

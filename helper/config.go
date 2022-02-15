@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+	"net"
 
 	ethCrypto "github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/eth"
@@ -255,11 +256,25 @@ func SetTestConfig(_conf Configuration) {
 func InitializeMainRPCClient() {
 	var err error
 	ethUrls := strings.Split(conf.EthRPCUrl, ",")
+
 	for _, ethUrl := range ethUrls {
+		var s string
+		if strings.HasPrefix(ethUrl, "http://") {
+			s = strings.TrimPrefix(ethUrl, "http://")
+		}
+		if strings.HasPrefix(ethUrl, "https://") {
+			s = strings.TrimPrefix(ethUrl, "https://")
+		}
+		_, e := net.Dial("tcp", s)
+		if e != nil {
+			Logger.Error(ethUrl, " unreachable")
+			continue
+		}
 		if mainRPCClient, err = rpc.Dial(ethUrl); err != nil {
 			Logger.Error("Unable to dial via ethClient", "URL=", ethUrl, "chain=eth", "Error", err)
 			continue
 		}
+		Logger.Info("ethUrl", ethUrl, "connected")
 		break
 	}
 }

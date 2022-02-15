@@ -89,7 +89,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSuccess() {
 	}
 	rootchainInstance := &rootchain.Rootchain{}
 	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("456"), uint64(0), uint64(512), uint64(1), hmTypes.HexToHeimdallAddress("456"), nil)
+	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("456"), uint64(0), uint64(512), uint64(1), hmTypes.HexToHeimdallAddress("456"), nil)
 
 	suite.handler(ctx, checkpointAdjust)
 	sideResult := suite.sideHandler(ctx, checkpointAdjust)
@@ -124,7 +124,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsRoot
 	}
 	rootchainInstance := &rootchain.Rootchain{}
 	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("123"), uint64(0), uint64(256), uint64(1), hmTypes.HexToHeimdallAddress("123"), nil)
+	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("123"), uint64(0), uint64(256), uint64(1), hmTypes.HexToHeimdallAddress("123"), nil)
 
 	suite.handler(ctx, checkpointAdjust)
 	sideResult := suite.sideHandler(ctx, checkpointAdjust)
@@ -155,7 +155,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustNotSameCheckpointAsR
 
 	rootchainInstance := &rootchain.Rootchain{}
 	suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("222"), uint64(0), uint64(256), uint64(1), hmTypes.HexToHeimdallAddress("123"), nil)
+	suite.contractCaller.On("GetHeaderInfo", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(borCommon.HexToHash("222"), uint64(0), uint64(256), uint64(1), hmTypes.HexToHeimdallAddress("123"), nil)
 
 	result := suite.sideHandler(ctx, checkpointAdjust)
 	require.Equal(t, result.Code, uint32(common.CodeCheckpointAlreadyExists))
@@ -269,7 +269,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 		rootchainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval, mock.Anything).Return(header.RootHash.EthHash(), header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
 		result := suite.sideHandler(ctx, msgCheckpointAck)
 		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
@@ -293,7 +293,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 		rootchainInstance := &rootchain.Rootchain{}
 
 		suite.contractCaller.On("GetRootChainInstance", mock.Anything).Return(rootchainInstance, nil)
-		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval).Return(nil, header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
+		suite.contractCaller.On("GetHeaderInfo", headerId, rootchainInstance, params.ChildBlockInterval, mock.Anything).Return(nil, header.StartBlock, header.EndBlock, header.TimeStamp, header.Proposer, nil)
 
 		result := suite.sideHandler(ctx, msgCheckpointAck)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
