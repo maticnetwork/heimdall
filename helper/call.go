@@ -270,13 +270,17 @@ func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootcha
 	// get header from rootchain
 	checkpointBigInt := big.NewInt(0).Mul(big.NewInt(0).SetUint64(number), big.NewInt(0).SetUint64(childBlockInterval))
 	headerBlock, err := rootChainInstance.HeaderBlocks(nil, checkpointBigInt)
-	if err != nil && strings.Contains(err.Error(), "connection refused") {
-		c.ReinitializeMainChainClients()
-		rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
-		if err != nil {
+	if err != nil {
+		if strings.Contains(err.Error(), "connection refused") {
+			c.ReinitializeMainChainClients()
+			rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
+			if err != nil {
+				return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
+			}
+			return c.GetHeaderInfo(number, rootChainInstance, childBlockInterval, rootChainAddress)
+		} else {
 			return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
 		}
-		return c.GetHeaderInfo(number, rootChainInstance, childBlockInterval, rootChainAddress)
 	}
 
 	return headerBlock.Root,
@@ -310,14 +314,18 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 // GetLastChildBlock fetch current child block
 func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchain, rootChainAddress common.Address) (uint64, error) {
 	GetLastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
-	if err != nil && strings.Contains(err.Error(), "connection refused") {
+	if err != nil {
 		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
-		c.ReinitializeMainChainClients()
-		rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
-		if err != nil {
+		if strings.Contains(err.Error(), "connection refused") {
+			c.ReinitializeMainChainClients()
+			rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
+			if err != nil {
+				return 0, err
+			}
+			return c.GetLastChildBlock(rootChainInstance, rootChainAddress)
+		} else {
 			return 0, err
 		}
-		return c.GetLastChildBlock(rootChainInstance, rootChainAddress)
 	}
 	return GetLastChildBlock.Uint64(), nil
 }
@@ -325,14 +333,18 @@ func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchai
 // CurrentHeaderBlock fetches current header block
 func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64, rootChainAddress common.Address) (uint64, error) {
 	currentHeaderBlock, err := rootChainInstance.CurrentHeaderBlock(nil)
-	if err != nil && strings.Contains(err.Error(), "connection refused") {
+	if err != nil {
 		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
-		c.ReinitializeMainChainClients()
-		rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
-		if err != nil {
+		if strings.Contains(err.Error(), "connection refused") {
+			c.ReinitializeMainChainClients()
+			rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
+			if err != nil {
+				return 0, err
+			}
+			return c.CurrentHeaderBlock(rootChainInstance, childBlockInterval, rootChainAddress)
+		} else {
 			return 0, err
 		}
-		return c.CurrentHeaderBlock(rootChainInstance, childBlockInterval, rootChainAddress)
 	}
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
@@ -341,11 +353,14 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 	mainChainClient := GetMainClient()
 	balance, err := mainChainClient.BalanceAt(context.Background(), address, nil)
-	if err != nil && strings.Contains(err.Error(), "connection refused") {
-		c.ReinitializeMainChainClients()
+	if err != nil {
 		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
-		c.GetBalance(address)
-		return big.NewInt(0), err
+		if strings.Contains(err.Error(), "connection refused") {
+			c.ReinitializeMainChainClients()
+			c.GetBalance(address)
+		} else {
+			return big.NewInt(0), err
+		}
 	}
 
 	return balance, nil
@@ -355,7 +370,7 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo, stakingInfoAddress common.Address) (validator types.Validator, err error) {
 	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
-	if err != nil &&  {
+	if err != nil {
 		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", stakerDetails.Status)
 		if strings.Contains(err.Error(), "connection refused") {
 			c.ReinitializeMainChainClients()
@@ -456,9 +471,9 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		// get main tx receipt
 		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
+			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
 			if strings.Contains(err.Error(), "connection refused") {
 				c.ReinitializeMainChainClients()
-				Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
 				return c.GetConfirmedTxReceipt(tx, requiredConfirmations)
 			} else {
 				return nil, err
@@ -726,7 +741,7 @@ func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginf
 // CurrentSpanNumber get current span
 func (c *ContractCaller) CurrentSpanNumber(validatorSetInstance *validatorset.Validatorset, validatorSetAddress common.Address) (Number *big.Int) {
 	result, err := validatorSetInstance.CurrentSpanNumber(nil)
-	if err != nil && strings.Contains(err.Error(), "connection refused") {
+	if err != nil {
 		Logger.Error("Unable to get current span number", "Error", err)
 		if strings.Contains(err.Error(), "connection refused") {
 			c.ReinitializeMainChainClients()
@@ -753,16 +768,12 @@ func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *valid
 	d, err := validatorSetInstance.GetSpan(nil, id)
 	if err != nil && strings.Contains(err.Error(), "connection refused") {
 		Logger.Error("Unable to get span details", "Error", err)
-		if strings.Contains(err.Error(), "connection refused") {
-			c.ReinitializeMainChainClients()
-			validatorSetInstance, err = c.GetValidatorSetInstance(validatorSetAddress)
-			if err != nil {
-				return d.Number, d.StartBlock, d.EndBlock, err
-			}
-			return c.GetSpanDetails(id, validatorSetInstance, validatorSetAddress)
-		} else {
-			return d.Number, d.StartBlock, d.EndBlock, err
+		c.ReinitializeMainChainClients()
+		validatorSetInstance, err = c.GetValidatorSetInstance(validatorSetAddress)
+		if err != nil {
+			return big.NewInt(0), big.NewInt(0), big.NewInt(0), err
 		}
+		return c.GetSpanDetails(id, validatorSetInstance, validatorSetAddress)
 	}
 	return d.Number, d.StartBlock, d.EndBlock, err
 }
