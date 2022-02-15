@@ -94,13 +94,13 @@ func (_m *IContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootc
 	return r0, r1
 }
 
-// CurrentSpanNumber provides a mock function with given fields: _a0
-func (_m *IContractCaller) CurrentSpanNumber(_a0 *validatorset.Validatorset) *big.Int {
-	ret := _m.Called(_a0)
+// CurrentSpanNumber provides a mock function with given fields: _a0, validatorSetAddress
+func (_m *IContractCaller) CurrentSpanNumber(_a0 *validatorset.Validatorset, validatorSetAddress common.Address) *big.Int {
+	ret := _m.Called(_a0, validatorSetAddress)
 
 	var r0 *big.Int
-	if rf, ok := ret.Get(0).(func(*validatorset.Validatorset) *big.Int); ok {
-		r0 = rf(_a0)
+	if rf, ok := ret.Get(0).(func(*validatorset.Validatorset, common.Address) *big.Int); ok {
+		r0 = rf(_a0, validatorSetAddress)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*big.Int)
@@ -110,13 +110,13 @@ func (_m *IContractCaller) CurrentSpanNumber(_a0 *validatorset.Validatorset) *bi
 	return r0
 }
 
-// CurrentStateCounter provides a mock function with given fields: stateSenderInstance
-func (_m *IContractCaller) CurrentStateCounter(stateSenderInstance *statesender.Statesender) *big.Int {
-	ret := _m.Called(stateSenderInstance)
+// CurrentStateCounter provides a mock function with given fields: stateSenderInstance, stateSenderAddress
+func (_m *IContractCaller) CurrentStateCounter(stateSenderInstance *statesender.Statesender, stateSenderAddress common.Address) *big.Int {
+	ret := _m.Called(stateSenderInstance, stateSenderAddress)
 
 	var r0 *big.Int
-	if rf, ok := ret.Get(0).(func(*statesender.Statesender) *big.Int); ok {
-		r0 = rf(stateSenderInstance)
+	if rf, ok := ret.Get(0).(func(*statesender.Statesender, common.Address) *big.Int); ok {
+		r0 = rf(stateSenderInstance, stateSenderAddress)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*big.Int)
@@ -701,13 +701,13 @@ func (_m *IContractCaller) GetSlashManagerInstance(slashManagerAddress common.Ad
 	return r0, r1
 }
 
-// GetSpanDetails provides a mock function with given fields: id, _a1
-func (_m *IContractCaller) GetSpanDetails(id *big.Int, _a1 *validatorset.Validatorset) (*big.Int, *big.Int, *big.Int, error) {
-	ret := _m.Called(id, _a1)
+// GetSpanDetails provides a mock function with given fields: id, _a1, validatorSetAddress
+func (_m *IContractCaller) GetSpanDetails(id *big.Int, _a1 *validatorset.Validatorset, validatorSetAddress common.Address) (*big.Int, *big.Int, *big.Int, error) {
+	ret := _m.Called(id, _a1, validatorSetAddress)
 
 	var r0 *big.Int
-	if rf, ok := ret.Get(0).(func(*big.Int, *validatorset.Validatorset) *big.Int); ok {
-		r0 = rf(id, _a1)
+	if rf, ok := ret.Get(0).(func(*big.Int, *validatorset.Validatorset, common.Address) *big.Int); ok {
+		r0 = rf(id, _a1, validatorSetAddress)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(*big.Int)
@@ -715,8 +715,8 @@ func (_m *IContractCaller) GetSpanDetails(id *big.Int, _a1 *validatorset.Validat
 	}
 
 	var r1 *big.Int
-	if rf, ok := ret.Get(1).(func(*big.Int, *validatorset.Validatorset) *big.Int); ok {
-		r1 = rf(id, _a1)
+	if rf, ok := ret.Get(1).(func(*big.Int, *validatorset.Validatorset, common.Address) *big.Int); ok {
+		r1 = rf(id, _a1, validatorSetAddress)
 	} else {
 		if ret.Get(1) != nil {
 			r1 = ret.Get(1).(*big.Int)
@@ -724,8 +724,8 @@ func (_m *IContractCaller) GetSpanDetails(id *big.Int, _a1 *validatorset.Validat
 	}
 
 	var r2 *big.Int
-	if rf, ok := ret.Get(2).(func(*big.Int, *validatorset.Validatorset) *big.Int); ok {
-		r2 = rf(id, _a1)
+	if rf, ok := ret.Get(2).(func(*big.Int, *validatorset.Validatorset, common.Address) *big.Int); ok {
+		r2 = rf(id, _a1, validatorSetAddress)
 	} else {
 		if ret.Get(2) != nil {
 			r2 = ret.Get(2).(*big.Int)
@@ -733,8 +733,8 @@ func (_m *IContractCaller) GetSpanDetails(id *big.Int, _a1 *validatorset.Validat
 	}
 
 	var r3 error
-	if rf, ok := ret.Get(3).(func(*big.Int, *validatorset.Validatorset) error); ok {
-		r3 = rf(id, _a1)
+	if rf, ok := ret.Get(3).(func(*big.Int, *validatorset.Validatorset, common.Address) error); ok {
+		r3 = rf(id, _a1, validatorSetAddress)
 	} else {
 		r3 = ret.Error(3)
 	}

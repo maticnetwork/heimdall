@@ -65,9 +65,9 @@ type IContractCaller interface {
 	CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo, stakingInfoAddress common.Address) ([32]byte, error)
 
 	// bor related contracts
-	CurrentSpanNumber(validatorset *validatorset.Validatorset) (Number *big.Int)
-	GetSpanDetails(id *big.Int, validatorset *validatorset.Validatorset) (*big.Int, *big.Int, *big.Int, error)
-	CurrentStateCounter(stateSenderInstance *statesender.Statesender) (Number *big.Int)
+	CurrentSpanNumber(validatorset *validatorset.Validatorset, validatorSetAddress common.Address) (Number *big.Int)
+	GetSpanDetails(id *big.Int, validatorset *validatorset.Validatorset, validatorSetAddress common.Address) (*big.Int, *big.Int, *big.Int, error)
+	CurrentStateCounter(stateSenderInstance *statesender.Statesender, stateSenderAddress common.Address) (Number *big.Int)
 	CheckIfBlocksExist(end uint64) bool
 
 	GetRootChainInstance(rootchainAddress common.Address) (*rootchain.Rootchain, error)
@@ -384,8 +384,9 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 
 // GetMainChainBlock returns main chain block header
 func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
-	latestBlock, err := c.MainChainClient.HeaderByNumber(context.Background(), blockNum)
-	if err != nil  && strings.Contains(err.Error(), "connection refused") {
+	mainChainClient := GetMainClient()
+	latestBlock, err := mainChainClient.HeaderByNumber(context.Background(), blockNum)
+	if err != nil && strings.Contains(err.Error(), "connection refused") {
 		c.ReinitializeMainChainClients()
 		Logger.Error("Unable to connect to main chain", "Error", err)
 		return c.GetMainChainBlock(blockNum)
@@ -687,10 +688,15 @@ func (c *ContractCaller) DecodeUnJailedEvent(contractAddress common.Address, rec
 func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo, stakingInfoAddress common.Address) ([32]byte, error) {
 	accountStateRoot, err := stakingInfoInstance.GetAccountStateRoot(nil)
 
-	if err != nil {
-		Logger.Error("Unable to get current account state roor", "Error", err)
-		var emptyArr [32]byte
-		return emptyArr, err
+	if err != nil && strings.Contains(err.Error(), "connection refused") {
+		Logger.Error("Unable to get current account state root", "Error", err)
+		c.ReinitializeMainChainClients()
+		stakingInfoInstance, err = c.GetStakingInfoInstance(stakingInfoAddress)
+		if err != nil {
+			var emptyArr [32]byte
+			return emptyArr, err
+		}
+		return c.CurrentAccountStateRoot(stakingInfoInstance, stakingInfoAddress)
 	}
 
 	return accountStateRoot, nil
@@ -701,29 +707,42 @@ func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginf
 //
 
 // CurrentSpanNumber get current span
-func (c *ContractCaller) CurrentSpanNumber(validatorSetInstance *validatorset.Validatorset) (Number *big.Int) {
+func (c *ContractCaller) CurrentSpanNumber(validatorSetInstance *validatorset.Validatorset, validatorSetAddress common.Address) (Number *big.Int) {
 	result, err := validatorSetInstance.CurrentSpanNumber(nil)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "connection refused") {
 		Logger.Error("Unable to get current span number", "Error", err)
-		return nil
+		c.ReinitializeMainChainClients()
+		validatorSetInstance, err = c.GetValidatorSetInstance(validatorSetAddress)
+		if err != nil {
+			return nil
+		}
+		return c.CurrentSpanNumber(validatorSetInstance, validatorSetAddress)
 	}
-
 	return result
 }
 
 // GetSpanDetails get span details
-func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *validatorset.Validatorset) (
+func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *validatorset.Validatorset, validatorSetAddress common.Address) (
 	*big.Int,
 	*big.Int,
 	*big.Int,
 	error,
 ) {
 	d, err := validatorSetInstance.GetSpan(nil, id)
+	if err != nil && strings.Contains(err.Error(), "connection refused") {
+		Logger.Error("Unable to get span details", "Error", err)
+		c.ReinitializeMainChainClients()
+		validatorSetInstance, err = c.GetValidatorSetInstance(validatorSetAddress)
+		if err != nil {
+			return d.Number, d.StartBlock, d.EndBlock, err
+		}
+		return c.GetSpanDetails(id, validatorSetInstance, validatorSetAddress)
+	}
 	return d.Number, d.StartBlock, d.EndBlock, err
 }
 
 // CurrentStateCounter get state counter
-func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.Statesender) (Number *big.Int) {
+func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.Statesender, stateSenderAddress common.Address) (Number *big.Int) {
 	result, err := stateSenderInstance.Counter(nil)
 	if err != nil {
 		Logger.Error("Unable to get current counter number", "Error", err)
@@ -777,7 +796,7 @@ func getABI(data string) (abi.ABI, error) {
 func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error) {
 	mainChainClient := GetMainClient()
 	transaction, isPending, err := mainChainClient.TransactionByHash(context.Background(), txHash)
-	if err != nil {
+	if err != nil && strings.Contains(err.Error(), "connection refused") {
 		c.ReinitializeMainChainClients()
 		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
 		c.GetCheckpointSign(txHash)
