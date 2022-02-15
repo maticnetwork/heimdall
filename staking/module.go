@@ -84,7 +84,7 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 	// validate validators
 	validators := data.Validators
 	for _, v := range validators {
-		val, err := contractCaller.GetValidatorInfo(v.ID, stakingInfoInstance)
+		val, err := contractCaller.GetValidatorInfo(v.ID, stakingInfoInstance, stakingInfoAddress)
 		if err != nil {
 			return err
 		}

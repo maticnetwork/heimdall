@@ -834,20 +834,20 @@ func (_m *IContractCaller) GetStateSenderInstance(stateSenderAddress common.Addr
 	return r0, r1
 }
 
-// GetValidatorInfo provides a mock function with given fields: valID, stakingInfoInstance
-func (_m *IContractCaller) GetValidatorInfo(valID heimdalltypes.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (heimdalltypes.Validator, error) {
-	ret := _m.Called(valID, stakingInfoInstance)
+// GetValidatorInfo provides a mock function with given fields: valID, stakingInfoInstance, stakingInfoAddress
+func (_m *IContractCaller) GetValidatorInfo(valID heimdalltypes.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo, stakingInfoAddress common.Address) (heimdalltypes.Validator, error) {
+	ret := _m.Called(valID, stakingInfoInstance, stakingInfoAddress)
 
 	var r0 heimdalltypes.Validator
-	if rf, ok := ret.Get(0).(func(heimdalltypes.ValidatorID, *stakinginfo.Stakinginfo) heimdalltypes.Validator); ok {
-		r0 = rf(valID, stakingInfoInstance)
+	if rf, ok := ret.Get(0).(func(heimdalltypes.ValidatorID, *stakinginfo.Stakinginfo, common.Address) heimdalltypes.Validator); ok {
+		r0 = rf(valID, stakingInfoInstance, stakingInfoAddress)
 	} else {
 		r0 = ret.Get(0).(heimdalltypes.Validator)
 	}
 
 	var r1 error
-	if rf, ok := ret.Get(1).(func(heimdalltypes.ValidatorID, *stakinginfo.Stakinginfo) error); ok {
-		r1 = rf(valID, stakingInfoInstance)
+	if rf, ok := ret.Get(1).(func(heimdalltypes.ValidatorID, *stakinginfo.Stakinginfo, common.Address) error); ok {
+		r1 = rf(valID, stakingInfoInstance, stakingInfoAddress)
 	} else {
 		r1 = ret.Error(1)
 	}
