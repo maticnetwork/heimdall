@@ -242,7 +242,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	// check all headers
 	for i, header := range state.Checkpoints {
 		ackCount := uint64(i + 1)
-		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount, rootChainInstance, childBlockInterval)
+		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount, rootChainInstance, childBlockInterval, rootChainAddress)
 		if err != nil {
 			return err
 		}

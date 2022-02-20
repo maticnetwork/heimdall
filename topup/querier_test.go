@@ -170,7 +170,7 @@ func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 
 	// mock contracts
 	suite.contractCaller.On("GetStakingInfoInstance", mock.Anything).Return(stakingInfo, nil)
-	suite.contractCaller.On("CurrentAccountStateRoot", stakingInfo).Return(accountRoot, nil)
+	suite.contractCaller.On("CurrentAccountStateRoot", stakingInfo, mock.Anything).Return(accountRoot, nil)
 
 	req := abci.RequestQuery{
 		Path: route,

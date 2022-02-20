@@ -12,6 +12,7 @@ logs
 
 .idea
 .vscode
+*.out
 
 helper/heimdall-params.go
 
