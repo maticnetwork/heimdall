@@ -278,6 +278,12 @@ func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootcha
 				return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
 			}
 			return c.GetHeaderInfo(number, rootChainInstance, childBlockInterval, rootChainAddress)
+		} else if strings.Contains(err.Error(), "no contract code at given address") {
+			rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
+			if err != nil {
+				return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
+			}
+			return c.GetHeaderInfo(number, rootChainInstance, childBlockInterval, rootChainAddress)
 		} else {
 			return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
 		}
@@ -323,6 +329,12 @@ func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchai
 				return 0, err
 			}
 			return c.GetLastChildBlock(rootChainInstance, rootChainAddress)
+		} else if strings.Contains(err.Error(), "no contract code at given address") {
+			rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
+			if err != nil {
+				return 0, err
+			}
+			return c.GetLastChildBlock(rootChainInstance, rootChainAddress)
 		} else {
 			return 0, err
 		}
@@ -337,6 +349,12 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
 		if strings.Contains(err.Error(), "connection refused") {
 			c.ReinitializeMainChainClients()
+			rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
+			if err != nil {
+				return 0, err
+			}
+			return c.CurrentHeaderBlock(rootChainInstance, childBlockInterval, rootChainAddress)
+		} else if strings.Contains(err.Error(), "no contract code at given address") {
 			rootChainInstance, err = c.GetRootChainInstance(rootChainAddress)
 			if err != nil {
 				return 0, err
@@ -357,7 +375,7 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
 		if strings.Contains(err.Error(), "connection refused") {
 			c.ReinitializeMainChainClients()
-			c.GetBalance(address)
+			return c.GetBalance(address)
 		} else {
 			return big.NewInt(0), err
 		}
