@@ -33,9 +33,9 @@ tests:
 build: clean
 	go run helper/heimdall-params.template.go $(network)
 	mkdir -p build
-	go build -o build/heimdalld ./cmd/heimdalld
-	go build -o build/heimdallcli ./cmd/heimdallcli
-	go build -o build/bridge bridge/bridge.go
+	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
+	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
+	go build $(BUILD_FLAGS) -o build/bridge bridge/bridge.go
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
 	
 # make install							Will generate for mainnet by default
