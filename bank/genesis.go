@@ -1,6 +1,8 @@
 package bank
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	bankTypes "github.com/maticnetwork/heimdall/bank/types"
@@ -8,6 +10,8 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data bankTypes.GenesisState) {
+	fmt.Println("Bank : Init Genesis")
+
 	keeper.SetSendEnabled(ctx, data.SendEnabled)
 }
 

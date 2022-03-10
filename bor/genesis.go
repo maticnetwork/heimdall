@@ -1,6 +1,8 @@
 package bor
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
@@ -9,6 +11,7 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	fmt.Println("Bor : Init Genesis")
 	keeper.SetParams(ctx, data.Params)
 
 	if len(data.Spans) > 0 {

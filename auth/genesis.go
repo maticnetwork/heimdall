@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -8,6 +10,8 @@ import (
 
 // InitGenesis - Init store state from genesis data
 func InitGenesis(ctx sdk.Context, ak AccountKeeper, processors []authTypes.AccountProcessor, data authTypes.GenesisState) {
+	fmt.Println("Auth : Init Genesis")
+
 	ak.SetParams(ctx, data.Params)
 	data.Accounts = authTypes.SanitizeGenesisAccounts(data.Accounts)
 

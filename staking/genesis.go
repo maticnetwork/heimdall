@@ -1,6 +1,8 @@
 package staking
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -8,6 +10,8 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	fmt.Println("Staking : Init Genesis")
+
 	// get current val set
 	var vals []*hmTypes.Validator
 	if len(data.CurrentValSet.Validators) == 0 {

@@ -96,6 +96,7 @@ func ValidateGenesis(data GenesisState) error {
 
 // InitGenesis - store genesis parameters
 func InitGenesis(ctx sdk.Context, k Keeper, supplyKeeper SupplyKeeper, data GenesisState) {
+	fmt.Println("Gov : Init Genesis")
 
 	k.setProposalID(ctx, data.StartingProposalID)
 	k.setDepositParams(ctx, data.DepositParams)

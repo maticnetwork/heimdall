@@ -1,6 +1,8 @@
 package supply
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	auth "github.com/maticnetwork/heimdall/auth"
@@ -12,6 +14,9 @@ import (
 //
 // CONTRACT: all types of accounts must have been already initialized/created
 func InitGenesis(ctx sdk.Context, keeper Keeper, ak auth.AccountKeeper, data types.GenesisState) {
+
+	fmt.Println("Supply : Init Genesis")
+
 	// manually set the total supply based on accounts if not provided
 	if data.Supply.Total.Empty() {
 		var totalSupply sdk.Coins

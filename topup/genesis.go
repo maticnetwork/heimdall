@@ -1,12 +1,16 @@
 package topup
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/topup/types"
 )
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	fmt.Println("Topup : Init Genesis")
+
 	for _, sequence := range data.TopupSequences {
 		keeper.SetTopupSequence(ctx, sequence)
 	}

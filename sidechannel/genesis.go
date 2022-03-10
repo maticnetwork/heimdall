@@ -1,6 +1,7 @@
 package sidechannel
 
 import (
+	"fmt"
 	"sort"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,6 +12,8 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	fmt.Println("SideChannel : Init Genesis")
+
 	for _, pastCommit := range data.PastCommits {
 		// set all txs
 		if len(pastCommit.Txs) > 0 {

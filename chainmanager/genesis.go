@@ -1,6 +1,8 @@
 package chainmanager
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/chainmanager/types"
@@ -8,6 +10,8 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	fmt.Println("ChainManager : Init Genesis")
+
 	keeper.SetParams(ctx, data.Params)
 }
 

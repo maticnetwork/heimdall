@@ -1,6 +1,7 @@
 package slashing
 
 import (
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,6 +12,8 @@ import (
 // InitGenesis initialize default parameters
 // and the keeper's address to pubkey map
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	fmt.Println("Slashing : Init Genesis")
+
 	// stakingKeeper.IterateValidators(ctx,
 	// 	func(index int64, validator exported.ValidatorI) bool {
 	// 		keeper.AddPubkey(ctx, validator.GetConsPubKey())
