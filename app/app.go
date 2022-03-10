@@ -523,6 +523,8 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// init genesis
 	app.mm.InitGenesis(ctx, genesisState)
 
+	fmt.Println("Genesis imported successfully")
+
 	stakingState := stakingTypes.GetGenesisStateFromAppState(genesisState)
 	checkpointState := checkpointTypes.GetGenesisStateFromAppState(genesisState)
 

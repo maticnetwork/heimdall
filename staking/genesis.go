@@ -1,6 +1,8 @@
 package staking
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -39,6 +41,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	}
 
 	for _, sequence := range data.StakingSequences {
+		fmt.Println("Staking sequence", sequence)
 		keeper.SetStakingSequence(ctx, sequence)
 	}
 }

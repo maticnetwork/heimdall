@@ -1,8 +1,9 @@
 package bor
 
 import (
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"fmt"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -18,6 +19,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		for _, span := range data.Spans {
 			if err := keeper.AddNewRawSpan(ctx, *span); err != nil {
 				keeper.Logger(ctx).Error("Error AddNewRawSpan", "error", err)
+				panic(err)
+			} else {
+				fmt.Println("Imported span", "span", span.ID, "startBlock", span.StartBlock, "endBlock", span.EndBlock)
 			}
 		}
 

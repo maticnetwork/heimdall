@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"errors"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -31,6 +32,10 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 			checkpointIndex := uint64(i) + 1
 			if err := keeper.AddCheckpoint(ctx, checkpointIndex, checkpoint); err != nil {
 				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint", "error", err)
+				panic(err)
+			} else {
+				fmt.Println("New checkpoint",
+					"checkpointIndex", checkpointIndex, "startBlock", checkpoint.StartBlock, "endBlock", checkpoint.EndBlock)
 			}
 		}
 	}

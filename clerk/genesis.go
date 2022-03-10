@@ -1,6 +1,8 @@
 package clerk
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
@@ -13,11 +15,15 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		for _, record := range data.EventRecords {
 			if err := keeper.SetEventRecord(ctx, *record); err != nil {
 				keeper.Logger(ctx).Error("InitGenesis | SetEventRecord", "error", err)
+				panic(err)
+			} else {
+				fmt.Println("Imported record", "record", record.ID, "recordTime", record.RecordTime)
 			}
 		}
 	}
 
 	for _, sequence := range data.RecordSequences {
+		keeper.Logger(ctx).Info("Imported record sequence", "sequence", sequence)
 		keeper.SetRecordSequence(ctx, sequence)
 	}
 

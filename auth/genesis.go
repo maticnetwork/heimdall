@@ -1,6 +1,8 @@
 package auth
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -24,6 +26,7 @@ func InitGenesis(ctx sdk.Context, ak AccountKeeper, processors []authTypes.Accou
 
 		acc = ak.NewAccount(ctx, acc)
 		ak.SetAccount(ctx, acc)
+		fmt.Println("Imported  the account", acc.GetAddress(), acc.GetCoins().AmountOf(authTypes.FeeToken))
 	}
 }
 
