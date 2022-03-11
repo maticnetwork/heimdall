@@ -1,6 +1,8 @@
 package topup
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/topup/types"
 )
@@ -15,6 +17,8 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	for _, dividendAccount := range data.DividentAccounts {
 		if err := keeper.AddDividendAccount(ctx, dividendAccount); err != nil {
 			panic((err))
+		} else {
+			fmt.Println("Imported topup", "account", dividendAccount.User.EthAddress().String())
 		}
 	}
 

@@ -540,6 +540,8 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 			}
 			// Add validator to validator updated to be processed below
 			valUpdates = append(valUpdates, updateVal)
+
+			fmt.Println("Genesis validator", "id", validator.ID, "address", validator.PubKey.Address().String(), "power", int64(validator.VotingPower))
 		}
 	}
 
