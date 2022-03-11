@@ -105,6 +105,9 @@ func main() {
 	rootCmd.AddCommand(initCmd(ctx, cdc))
 	rootCmd.AddCommand(testnetCmd(ctx, cdc))
 
+	// rollback cmd
+	rootCmd.AddCommand(rollbackCmd(ctx))
+
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
