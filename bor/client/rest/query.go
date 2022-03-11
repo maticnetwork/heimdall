@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/maticnetwork/bor/consensus/bor"
 	"net/http"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
@@ -117,17 +119,47 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
-		if err != nil {
+		var spanArray []*bor.ResponseWithHeight
+		var res []byte
+		var height int64
+		spanInJSON := false
+
+		// Temp fix for matic_bor-v0.2.14-tmp-span-hotfix
+		if err := json.Unmarshal([]byte(MAINNET_SPANS), &spanArray); err != nil {
 			return
 		}
 
-		// fetch span
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySpan), queryParams)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
+		for _, val := range spanArray {
+			var tempHeimdallSpan bor.HeimdallSpan
+
+			if err := json.Unmarshal(val.Result, &tempHeimdallSpan); err != nil {
+				continue
+			}
+
+			if tempHeimdallSpan.ID == spanID {
+				res = val.Result
+				var err error
+				if height, err = strconv.ParseInt(val.Height, 10, 64); err != nil {
+					continue
+				}
+				spanInJSON = true
+				break
+			}
+		}
+
+		if !spanInJSON {
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+			if err != nil {
+				return
+			}
+
+			// fetch span
+			res, height, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QuerySpan), queryParams)
+			if err != nil {
+				hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+				return
+			}
 		}
 
 		// check content
