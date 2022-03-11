@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/maticnetwork/bor/consensus/bor"
 	"net/http"
 	"strconv"
 
@@ -12,12 +11,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
 
+	"github.com/maticnetwork/bor/consensus/bor"
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
+
+type HeimdallSpanResultWithHeight struct {
+	Height int64
+	Result []byte
+}
+
+var spanOverrides map[uint64]*HeimdallSpanResultWithHeight = nil
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bor/span/list", spanListHandlerFn(cliCtx)).Methods("GET")
@@ -32,7 +40,6 @@ func fetchNextSpanSeedHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -119,35 +126,23 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var spanArray []*bor.ResponseWithHeight
-		var res []byte
-		var height int64
-		spanInJSON := false
+		var (
+			res            []byte
+			height         int64
+			spanOverridden bool
+		)
 
-		// Temp fix for matic_bor-v0.2.14-tmp-span-hotfix
-		if err := json.Unmarshal([]byte(MAINNET_SPANS), &spanArray); err != nil {
-			return
+		if spanOverrides == nil {
+			loadSpanOverrides()
 		}
 
-		for _, val := range spanArray {
-			var tempHeimdallSpan bor.HeimdallSpan
-
-			if err := json.Unmarshal(val.Result, &tempHeimdallSpan); err != nil {
-				continue
-			}
-
-			if tempHeimdallSpan.ID == spanID {
-				res = val.Result
-				var err error
-				if height, err = strconv.ParseInt(val.Height, 10, 64); err != nil {
-					continue
-				}
-				spanInJSON = true
-				break
-			}
+		if span, ok := spanOverrides[spanID]; ok {
+			res = span.Result
+			height = span.Height
+			spanOverridden = true
 		}
 
-		if !spanInJSON {
+		if !spanOverridden {
 			// get query params
 			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
 			if err != nil {
@@ -343,5 +338,36 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func loadSpanOverrides() {
+	spanOverrides = map[uint64]*HeimdallSpanResultWithHeight{}
+
+	j, ok := SPAN_OVERRIDES[helper.GenesisDoc.ChainID]
+	if !ok {
+		return
+	}
+
+	var spans []*bor.ResponseWithHeight
+	if err := json.Unmarshal(j, &spans); err != nil {
+		return
+	}
+
+	for _, span := range spans {
+		var heimdallSpan bor.HeimdallSpan
+		if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
+			continue
+		}
+
+		height, err := strconv.ParseInt(span.Height, 10, 64)
+		if err != nil {
+			continue
+		}
+
+		spanOverrides[heimdallSpan.ID] = &HeimdallSpanResultWithHeight{
+			Height: height,
+			Result: span.Result,
+		}
 	}
 }
