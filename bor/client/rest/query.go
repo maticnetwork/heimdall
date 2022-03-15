@@ -136,11 +136,18 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			loadSpanOverrides()
 		}
 
+		fmt.Println("------ here 1")
+		fmt.Println("---- spanID", spanID)
+		fmt.Println("---- spanOverrides", spanOverrides)
+
 		if span, ok := spanOverrides[spanID]; ok {
 			res = span.Result
 			height = span.Height
 			spanOverridden = true
 		}
+
+		fmt.Println("------ here 2")
+		fmt.Println("---- spanOverridden", spanOverridden)
 
 		if !spanOverridden {
 			// get query params
@@ -156,6 +163,8 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				return
 			}
 		}
+
+		fmt.Println("------ here 3")
 
 		// check content
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No span found"); !ok {
@@ -344,24 +353,35 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func loadSpanOverrides() {
 	spanOverrides = map[uint64]*HeimdallSpanResultWithHeight{}
 
+	fmt.Println("----- helper.GenesisDoc.ChainID", helper.GenesisDoc.ChainID)
+	fmt.Println("----- SPAN_OVERRIDES", SPAN_OVERRIDES)
 	j, ok := SPAN_OVERRIDES[helper.GenesisDoc.ChainID]
 	if !ok {
+		fmt.Println("----- span not found")
 		return
 	}
+
+	fmt.Println("----- span found")
 
 	var spans []*bor.ResponseWithHeight
 	if err := json.Unmarshal(j, &spans); err != nil {
+		fmt.Println("----- Unmarshal error")
 		return
 	}
 
+	fmt.Println("----- no error")
+
 	for _, span := range spans {
+		fmt.Println("------ in span")
 		var heimdallSpan bor.HeimdallSpan
 		if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
+			fmt.Println("------ Unmarshal span error", err)
 			continue
 		}
 
 		height, err := strconv.ParseInt(span.Height, 10, 64)
 		if err != nil {
+			fmt.Println("------ height error")
 			continue
 		}
 
@@ -369,5 +389,6 @@ func loadSpanOverrides() {
 			Height: height,
 			Result: span.Result,
 		}
+		fmt.Println("----- span override", span)
 	}
 }
