@@ -50,10 +50,10 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// get ContractAddress
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
 
-		if cliCtx.Height > helper.SpanOverrideBlockHeight && len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncDataLength {
+		if cliCtx.Height > helper.SpanOverrideBlockHeight && len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
 			RestLogger.Info(`Data is too large to process, Resetting to ""`, "id", req.ID)
 			req.Data = ""
-		} else if len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
+		} else if len(types.HexToHexBytes(req.Data)) > helper.LegacyMaxStateSyncSize {
 			RestLogger.Info(`Data is too large to process, Resetting to ""`, "id", req.ID)
 			req.Data = ""
 		}
