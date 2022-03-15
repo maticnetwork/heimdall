@@ -72,6 +72,8 @@ const (
 
 	// Maximum allowed event record data size
 	MaxStateSyncSize = 100000
+
+	MaxStateSyncDataLength = 30000
 )
 
 var (
