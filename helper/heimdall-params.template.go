@@ -1,5 +1,6 @@
 // The following directive is necessary to make the package coherent:
 
+//go:build ignore
 // +build ignore
 
 // This program generate heimdall-params.go, It must be invoked from make file that purpose only.
@@ -18,10 +19,12 @@ import (
 var packageTemplate = template.Must(template.New("").Parse(`package helper
 
 const NewSelectionAlgoHeight = {{ .BlockHeight }}
+const SpanOverrideBlockHeight = {{ .SpanOverrideBlockHeight }}
 `))
 
 var tomlConfig struct {
-	NewSelectionAlgoHeight int `toml:"new_selection_algo_height"`
+	NewSelectionAlgoHeight  int `toml:"new_selection_algo_height"`
+	SpanOverrideBlockHeight int `toml:"span_override_height"`
 }
 
 var networks = []string{
@@ -49,9 +52,11 @@ func main() {
 	defer f.Close()
 
 	packageTemplate.Execute(f, struct {
-		BlockHeight int
+		BlockHeight             int
+		SpanOverrideBlockHeight int
 	}{
-		BlockHeight: tomlConfig.NewSelectionAlgoHeight,
+		BlockHeight:             tomlConfig.NewSelectionAlgoHeight,
+		SpanOverrideBlockHeight: tomlConfig.SpanOverrideBlockHeight,
 	})
 }
 

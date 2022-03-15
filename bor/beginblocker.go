@@ -14,23 +14,22 @@ import (
 
 func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 
-	// TODO - Enter height
-	if ctx.BlockHeight() == 1 {
-
+	if ctx.BlockHeight() == int64(helper.SpanOverrideBlockHeight) {
+		k.Logger(ctx).Info("overriding span BeginBlocker", "height", ctx.BlockHeight())
 		j, ok := rest.SPAN_OVERRIDES[helper.GenesisDoc.ChainID]
 		if !ok {
-			// TODO - Log error
+			k.Logger(ctx).Error("Error in fetching span overrides")
 		}
 
 		var spans []*bor.ResponseWithHeight
 		if err := json.Unmarshal(j, &spans); err != nil {
-			return
+			k.Logger(ctx).Error("Error Unmarshal spans", "error", err)
 		}
 
 		for _, span := range spans {
 			var heimdallSpan hmTypes.Span
 			if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
-				continue
+				k.Logger(ctx).Error("Error Unmarshal heimdallSpan", "error", err)
 			}
 
 			if err := k.AddNewRawSpan(ctx, heimdallSpan); err != nil {
