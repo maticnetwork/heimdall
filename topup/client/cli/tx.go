@@ -53,11 +53,6 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 				proposer = helper.GetFromAddress(cliCtx)
 			}
 
-			validatorID := viper.GetUint64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("Validator ID cannot be zero")
-			}
-
 			// get user
 			user := types.HexToHeimdallAddress(viper.GetString(FlagUserAddress))
 			if user.Empty() {
