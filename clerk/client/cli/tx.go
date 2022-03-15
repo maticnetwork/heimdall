@@ -101,16 +101,12 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("data should be hex string")
 			}
 
-			if cliCtx.Height > helper.SpanOverrideBlockHeight {
-				if len(data) > helper.MaxStateSyncDataLength {
-					logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
-					data = hmTypes.HexToHexBytes("")
-				}
-			} else {
-				if len(data) > helper.MaxStateSyncSize {
-					logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
-					data = hmTypes.HexToHexBytes("")
-				}
+			if cliCtx.Height > helper.SpanOverrideBlockHeight && len(data) > helper.MaxStateSyncDataLength {
+				logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
+				data = hmTypes.HexToHexBytes("")
+			} else if len(data) > helper.MaxStateSyncSize {
+				logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
+				data = hmTypes.HexToHexBytes("")
 			}
 
 			// create new state record
