@@ -1,6 +1,7 @@
 package bor
 
 import (
+	"fmt"
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -27,6 +28,7 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 		}
 
 		for _, span := range spans {
+			fmt.Println("----- span", span)
 			var heimdallSpan hmTypes.Span
 			if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
 				k.Logger(ctx).Error("Error Unmarshal heimdallSpan", "error", err)
