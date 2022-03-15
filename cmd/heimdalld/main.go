@@ -17,6 +17,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethCommon "github.com/maticnetwork/bor/common"
+	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -105,6 +106,9 @@ func main() {
 	rootCmd.AddCommand(initCmd(ctx, cdc))
 	rootCmd.AddCommand(testnetCmd(ctx, cdc))
 
+	// rollback cmd
+	rootCmd.AddCommand(rollbackCmd(ctx))
+
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
 	err := executor.Execute()
@@ -118,7 +122,7 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 	// init heimdall config
 	helper.InitHeimdallConfig("")
 	// create new heimdall app
-	return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+	return app.NewHeimdallApp(logger, db, baseapp.SetHaltHeight(cast.ToUint64(viper.GetString("halt-height"))), baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {
