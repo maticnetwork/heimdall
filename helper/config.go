@@ -71,7 +71,7 @@ const (
 	secretFilePerm = 0600
 
 	// Maximum allowed event record data size
-	MaxStateSyncSize = 50000
+	MaxStateSyncSize = 100000
 )
 
 var (
