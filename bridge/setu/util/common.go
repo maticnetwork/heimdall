@@ -36,6 +36,7 @@ const (
 	ProposersURL            = "/staking/proposer/%v"
 	BufferedCheckpointURL   = "/checkpoints/buffer"
 	LatestCheckpointURL     = "/checkpoints/latest"
+	CountCheckpointURL      = "/checkpoints/count"
 	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/bor/latest-span"
 	NextSpanInfoURL         = "/bor/prepare-next-span"
@@ -405,4 +406,19 @@ func GetValidatorNonce(cliCtx cliContext.CLIContext, validatorID uint64) (uint64
 	logger.Debug("Validator data recieved ", "validator", validator.String())
 
 	return validator.Nonce, result.Height, nil
+}
+
+// GetlastestCheckpoint return last successful checkpoint
+func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(CountCheckpointURL),
+	)
+
+	if err != nil {
+		logger.Debug("Error fetching latest block height", "err", err)
+		return 0
+	}
+
+	return response.Height
 }
