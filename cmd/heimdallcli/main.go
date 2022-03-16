@@ -49,8 +49,10 @@ var (
 		Use:   "heimdallcli",
 		Short: "Heimdall light-client",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
-			// initialise config
-			initTendermintViperConfig(cmd)
+			if cmd.Use != version.Cmd.Use {
+				// initialise config
+				initTendermintViperConfig(cmd)
+			}
 			return nil
 		},
 	}
