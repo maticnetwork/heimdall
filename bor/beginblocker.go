@@ -19,21 +19,26 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 		j, ok := rest.SPAN_OVERRIDES[helper.GenesisDoc.ChainID]
 		if !ok {
 			k.Logger(ctx).Error("Error in fetching span overrides")
+			panic("Error in fetching span overrides")
 		}
 
 		var spans []*bor.ResponseWithHeight
 		if err := json.Unmarshal(j, &spans); err != nil {
 			k.Logger(ctx).Error("Error Unmarshal spans", "error", err)
+			panic(err)
 		}
 
 		for _, span := range spans {
+			k.Logger(ctx).Info("overriding span", "height", span.Height, "span", span)
 			var heimdallSpan hmTypes.Span
 			if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
 				k.Logger(ctx).Error("Error Unmarshal heimdallSpan", "error", err)
+				panic(err)
 			}
 
 			if err := k.AddNewRawSpan(ctx, heimdallSpan); err != nil {
 				k.Logger(ctx).Error("Error AddNewRawSpan", "error", err)
+				panic(err)
 			}
 			k.UpdateLastSpan(ctx, heimdallSpan.ID)
 		}
