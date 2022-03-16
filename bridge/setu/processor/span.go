@@ -89,7 +89,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		return
 	}
 
-	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
+	if lastSpan.StartBlock <= currentBlock {
 		// log new span
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
