@@ -18,8 +18,8 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 		k.Logger(ctx).Info("overriding span BeginBlocker", "height", ctx.BlockHeight())
 		j, ok := rest.SPAN_OVERRIDES[helper.GenesisDoc.ChainID]
 		if !ok {
-			k.Logger(ctx).Error("Error in fetching span overrides")
-			panic("Error in fetching span overrides")
+			k.Logger(ctx).Info("No Override span found")
+			return
 		}
 
 		var spans []*bor.ResponseWithHeight
