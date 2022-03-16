@@ -63,8 +63,9 @@ func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 		return sdk.ErrInvalidAddress("missing tx hash")
 	}
 
-	if len(msg.Data) > helper.MaxStateSyncSize {
-		return ErrSizeExceed(sdk.CodespaceType(fmt.Sprintf("length is larger than %d bytes", helper.MaxStateSyncSize)))
+	// DO NOT REMOVE THIS CHANGE
+	if len(msg.Data) > helper.LegacyMaxStateSyncSize {
+		return ErrSizeExceed(sdk.CodespaceType(fmt.Sprintf("length is larger than %d bytes", helper.LegacyMaxStateSyncSize)))
 	}
 
 	return nil
