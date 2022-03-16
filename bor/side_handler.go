@@ -83,7 +83,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 
 	currentBlock := childBlock.Number.Uint64()
 	// check if span proposed is in-turn or not
-	if !(lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock) {
+	if !(lastSpan.StartBlock <= currentBlock) {
 		k.Logger(ctx).Error(
 			"Span proposed is not in-turn",
 			"currentChildBlock", currentBlock,
