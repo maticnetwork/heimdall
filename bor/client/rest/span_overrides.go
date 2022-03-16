@@ -1,7 +1,7 @@
 package rest
 
 var SPAN_OVERRIDES = map[string][]byte{
-	"heimdall-bbbbbb": mainnetSpanJSON,
+	"heimdall-kBBIIu": mainnetSpanJSON,
 }
 
 var mainnetSpanJSON = []byte(`[
@@ -53,7 +53,7 @@ var mainnetSpanJSON = []byte(`[
 				  "accum": 0
 				}
 			],
-			"bor_chain_id": "81"
+			"bor_chain_id": "80001"
 		}
 	}
 ]`)

@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"math/big"
 	"strconv"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -91,6 +92,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 	if !bytes.Equal(eventLog.Data, msg.Data) {
 		if ctx.BlockHeight() > helper.SpanOverrideBlockHeight {
+			fmt.Println("-------- in if")
 			if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
 				k.Logger(ctx).Error(
 					"Data from event does not match with Msg Data",
@@ -100,6 +102,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 				return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 			}
 		} else {
+			fmt.Println("-------- in else")
 			if !(len(eventLog.Data) > helper.LegacyMaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
 				k.Logger(ctx).Error(
 					"Data from event does not match with Msg Data",

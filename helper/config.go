@@ -75,7 +75,7 @@ const (
 	LegacyMaxStateSyncSize = 100000
 
 	// New max state sync size after hardfork
-	MaxStateSyncSize = 30000
+	MaxStateSyncSize = 3
 )
 
 var (
