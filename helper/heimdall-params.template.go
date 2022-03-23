@@ -20,11 +20,13 @@ var packageTemplate = template.Must(template.New("").Parse(`package helper
 
 const NewSelectionAlgoHeight = {{ .BlockHeight }}
 const SpanOverrideBlockHeight = {{ .SpanOverrideBlockHeight }}
+const BlockGasIncreaseHeight = {{ .BlockGasIncreaseHeight }}
 `))
 
 var tomlConfig struct {
 	NewSelectionAlgoHeight  int `toml:"new_selection_algo_height"`
 	SpanOverrideBlockHeight int `toml:"span_override_height"`
+	BlockGasIncreaseHeight int `toml:"block_gas_increase_height"`
 }
 
 var networks = []string{
@@ -54,9 +56,11 @@ func main() {
 	packageTemplate.Execute(f, struct {
 		BlockHeight             int
 		SpanOverrideBlockHeight int
+		BlockGasIncreaseHeight int
 	}{
 		BlockHeight:             tomlConfig.NewSelectionAlgoHeight,
 		SpanOverrideBlockHeight: tomlConfig.SpanOverrideBlockHeight,
+		BlockGasIncreaseHeight: tomlConfig.BlockGasIncreaseHeight,
 	})
 }
 

@@ -623,7 +623,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	app.mm.EndBlock(ctx, req)
 
 	// send validator updates to peppermint
-	if req.Height < 100 {
+	if req.Height < int64(helper.BlockGasIncreaseHeight) {
 		return abci.ResponseEndBlock{
 			ValidatorUpdates: tmValUpdates,
 		}
@@ -632,8 +632,8 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 			ValidatorUpdates: tmValUpdates,
 			ConsensusParamUpdates: &abci.ConsensusParams{
 				Block: &abci.BlockParams{
-					MaxGas:   11111111,
-					MaxBytes: 22020096,
+					MaxGas:   helper.NewMaxBlockGasLimit,
+					MaxBytes: helper.MaxBlockBytes,
 				},
 			},
 		}

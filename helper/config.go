@@ -76,6 +76,11 @@ const (
 
 	// New max state sync size after hardfork
 	MaxStateSyncSize = 30000
+
+	// DO NOT CHANGE AFTER HARD FORK
+	// New block gas limit after hardfork
+	NewMaxBlockGasLimit = 30000000
+	MaxBlockBytes       = 22020096
 )
 
 var (
