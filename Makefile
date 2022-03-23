@@ -33,11 +33,11 @@ tests:
 build: clean
 	go run helper/heimdall-params.template.go $(network)
 	mkdir -p build
-	go build -o build/heimdalld ./cmd/heimdalld
-	go build -o build/heimdallcli ./cmd/heimdallcli
-	go build -o build/bridge bridge/bridge.go
+	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
+	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
+	go build $(BUILD_FLAGS) -o build/bridge bridge/bridge.go
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
-	
+
 # make install							Will generate for mainnet by default
 # make install network=mainnet			Will generate for mainnet
 # make install network=mumbai			Will generate for mumbai
@@ -48,6 +48,7 @@ install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
 	go install $(BUILD_FLAGS) bridge/bridge.go
+	@echo "====================================================\n==================Build For Overriding Spans Successful==================\n===================================================="
 
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go

@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/version"
 )
 
 const (
@@ -21,8 +22,10 @@ var rootCmd = &cobra.Command{
 	Use:   "heimdall-bridge",
 	Short: "Heimdall bridge deamon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// initialize tendermint viper config
-		InitTendermintViperConfig(cmd)
+		if cmd.Use != version.Cmd.Use {
+			// initialize tendermint viper config
+			InitTendermintViperConfig(cmd)
+		}
 	},
 }
 
@@ -61,6 +64,7 @@ func Execute() {
 
 func init() {
 	var logger = helper.Logger.With("module", "bridge/cmd/")
+	rootCmd.AddCommand(version.Cmd)
 	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", "tcp://localhost:26657", "Node to connect to")
 	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
 	rootCmd.PersistentFlags().String(

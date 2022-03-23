@@ -70,8 +70,12 @@ const (
 
 	secretFilePerm = 0600
 
+	// Legacy value - DO NOT CHANGE
 	// Maximum allowed event record data size
-	MaxStateSyncSize = 100000
+	LegacyMaxStateSyncSize = 100000
+
+	// New max state sync size after hardfork
+	MaxStateSyncSize = 30000
 )
 
 var (
