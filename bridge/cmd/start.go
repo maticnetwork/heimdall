@@ -137,6 +137,13 @@ func GetStartCmd() *cobra.Command {
 	if err := viper.BindPFlag("only", startCmd.Flags().Lookup("only")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
 	}
+
+	// add a flag to run state-sync processor (clerk module) explicitly
+	startCmd.Flags().Bool("state-sync", false, "start state sync")
+	if err := viper.BindPFlag("state-sync", startCmd.Flags().Lookup("state-sync")); err != nil {
+		logger.Error("GetStartCmd | BindPFlag | state-sync", "Error", err)
+	}
+
 	return startCmd
 }
 

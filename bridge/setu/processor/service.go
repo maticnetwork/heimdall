@@ -82,12 +82,12 @@ func NewProcessorService(
 	// add into processor list
 	startAll := viper.GetBool("all")
 	onlyServices := viper.GetStringSlice("only")
+	stateSync := viper.GetBool("state-sync")
 
 	if startAll {
 		processorService.processors = append(processorService.processors,
 			checkpointProcessor,
 			stakingProcessor,
-			clerkProcessor,
 			feeProcessor,
 			spanProcessor,
 			slashingProcessor,
@@ -99,8 +99,6 @@ func NewProcessorService(
 				processorService.processors = append(processorService.processors, checkpointProcessor)
 			case "staking":
 				processorService.processors = append(processorService.processors, stakingProcessor)
-			case "clerk":
-				processorService.processors = append(processorService.processors, clerkProcessor)
 			case "fee":
 				processorService.processors = append(processorService.processors, feeProcessor)
 			case "span":
@@ -111,8 +109,13 @@ func NewProcessorService(
 		}
 	}
 
+	// Check for state-sync flag
+	if stateSync {
+		processorService.processors = append(processorService.processors, clerkProcessor)
+	}
+
 	if len(processorService.processors) == 0 {
-		panic("No processors selected. Use --all or --only <coma-seprated processors>")
+		panic("No processors selected. Use --all or --only <coma-seprated processors> or --state-sync")
 	}
 
 	return processorService
