@@ -79,7 +79,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	nodeAddress := helper.GetPubKey()
 	isSelectedProducer := false
 	for _, producer := range lastSpan.SelectedProducers {
-		if (producer.PubKey).String() == (nodeAddress).String() {
+		if producer.PubKey.Address().String() == nodeAddress.Address().String() {
 			isSelectedProducer = true
 			break
 		}
