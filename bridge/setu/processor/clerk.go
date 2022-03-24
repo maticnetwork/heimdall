@@ -63,6 +63,33 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		return err
 	}
 
+	// getting latest span to get selected producers
+	result, err := helper.FetchFromAPI(cp.cliCtx, helper.GetHeimdallServerEndpoint(util.LatestSpanURL))
+	if err != nil {
+		cp.Logger.Error("Error while fetching latest span")
+		return err
+	}
+	var lastSpan hmTypes.Span
+	err = json.Unmarshal(result.Result, &lastSpan)
+	if err != nil {
+		cp.Logger.Error("Error unmarshalling span", "error", err)
+		return err
+	}
+	// return if node is not part of current selected producers
+	nodeAddress := helper.GetPubKey()
+	isSelectedProducer := false
+	for _, producer := range lastSpan.SelectedProducers {
+		if (producer.PubKey).String() == (nodeAddress).String() {
+			isSelectedProducer = true
+			break
+		}
+	}
+
+	if !isSelectedProducer {
+		cp.Logger.Info("Node is not part of selected producers")
+		return nil
+	}
+
 	chainParams := clerkContext.ChainmanagerParams.ChainParams
 
 	event := new(statesender.StatesenderStateSynced)
