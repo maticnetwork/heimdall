@@ -48,6 +48,32 @@ func (cp *ClerkProcessor) RegisterTasks() {
 	}
 }
 
+func (cp *ClerkProcessor) isSelectedProducer() bool {
+	// getting latest span to get selected producers
+	result, err := helper.FetchFromAPI(cp.cliCtx, helper.GetHeimdallServerEndpoint(util.LatestSpanURL))
+	if err != nil {
+		cp.Logger.Error("Error while fetching latest span")
+		return false
+	}
+	var lastSpan hmTypes.Span
+	err = json.Unmarshal(result.Result, &lastSpan)
+	if err != nil {
+		cp.Logger.Error("Error unmarshalling span", "error", err)
+		return false
+	}
+	// return if node is not part of current selected producers
+	nodeAddress := helper.GetPubKey()
+	isSelectedProducer := false
+	for _, producer := range lastSpan.SelectedProducers {
+		if producer.PubKey.Address().String() == nodeAddress.Address().String() {
+			isSelectedProducer = true
+			break
+		}
+	}
+
+	return isSelectedProducer
+}
+
 // HandleStateSyncEvent - handle state sync event from rootchain
 // 1. check if this deposit event has to be broadcasted to heimdall
 // 2. create and broadcast  record transaction to heimdall
@@ -63,30 +89,8 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		return err
 	}
 
-	// getting latest span to get selected producers
-	result, err := helper.FetchFromAPI(cp.cliCtx, helper.GetHeimdallServerEndpoint(util.LatestSpanURL))
-	if err != nil {
-		cp.Logger.Error("Error while fetching latest span")
-		return err
-	}
-	var lastSpan hmTypes.Span
-	err = json.Unmarshal(result.Result, &lastSpan)
-	if err != nil {
-		cp.Logger.Error("Error unmarshalling span", "error", err)
-		return err
-	}
-	// return if node is not part of current selected producers
-	nodeAddress := helper.GetPubKey()
-	isSelectedProducer := false
-	for _, producer := range lastSpan.SelectedProducers {
-		if producer.PubKey.Address().String() == nodeAddress.Address().String() {
-			isSelectedProducer = true
-			break
-		}
-	}
-
-	if !isSelectedProducer {
-		cp.Logger.Info("Node is not part of selected producers")
+	if !cp.isSelectedProducer() {
+		cp.Logger.Debug("Node is not part of selected producers")
 		return nil
 	}
 
