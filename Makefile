@@ -48,7 +48,7 @@ install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
 	go install $(BUILD_FLAGS) bridge/bridge.go
-	@echo "====================================================\n==================Build For Overriding Spans Successful==================\n===================================================="
+	@echo "====================================================\n==================Build Successful==================\n===================================================="
 
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
