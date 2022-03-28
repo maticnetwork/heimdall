@@ -59,7 +59,7 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 
 	// get validator by signer
 	checkVal, err := k.GetValidatorInfo(ctx, signer.Bytes())
-	if err == nil || bytes.Equal(checkVal.Signer.Bytes(), signer.Bytes()) {
+	if err == nil && bytes.Equal(checkVal.Signer.Bytes(), signer.Bytes()) {
 		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace()).Result()
 	}
 
