@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -114,6 +114,16 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			chainParams.BorChainID,
 		)
 
+		// Check if we have the same transaction in mempool or not
+		// Don't drop the transaction. Keep retrying in 12 seconds, until the transaction
+		// in mempool is processed or cancelled.
+		if inMempool, _ := cp.checkTxAgainstMempool(msg); inMempool {
+			cp.Logger.Info("Similar transaction already in mempool. Retrying after 12 seconds", "event", eventName)
+			return tasks.NewErrRetryTaskLater("transaction already in mempool", util.RetryTaskDelay)
+		} else {
+			cp.Logger.Info("Transaction not in mempool. Proceeding to broadcast", "event", eventName)
+		}
+
 		// return broadcast to heimdall
 		if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
 			cp.Logger.Error("Error while broadcasting clerk Record to heimdall", "error", err)
@@ -121,35 +131,6 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		}
 	}
 	return nil
-}
-
-// isOldTx  checks if tx is already processed or not
-func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
-	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
-	}
-
-	endpoint := helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
-	url, err := util.CreateURLWithQuery(endpoint, queryParam)
-	if err != nil {
-		cp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
-		return false, err
-	}
-
-	res, err := helper.FetchFromAPI(cp.cliCtx, url)
-	if err != nil {
-		cp.Logger.Error("Error fetching tx status", "url", url, "error", err)
-		return false, err
-	}
-
-	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
-		cp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
-		return false, err
-	}
-
-	return status, nil
 }
 
 //

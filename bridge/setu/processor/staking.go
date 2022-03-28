@@ -346,35 +346,6 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 	return nil
 }
 
-// isOldTx  checks if tx is already processed or not
-func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
-	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
-	}
-
-	endpoint := helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
-	url, err := util.CreateURLWithQuery(endpoint, queryParam)
-	if err != nil {
-		sp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
-		return false, err
-	}
-
-	res, err := helper.FetchFromAPI(sp.cliCtx, url)
-	if err != nil {
-		sp.Logger.Error("Error fetching tx status", "url", url, "error", err)
-		return false, err
-	}
-
-	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
-		sp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
-		return false, err
-	}
-
-	return status, nil
-}
-
 func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64) (bool, uint64, error) {
 	currentNonce, currentHeight, err := util.GetValidatorNonce(sp.cliCtx, validatorId)
 	if err != nil {

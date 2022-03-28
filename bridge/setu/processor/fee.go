@@ -3,10 +3,8 @@ package processor
 import (
 	"encoding/json"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
@@ -86,33 +84,4 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		}
 	}
 	return nil
-}
-
-// isOldTx  checks if tx is already processed or not
-func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
-	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
-	}
-
-	endpoint := helper.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
-	url, err := util.CreateURLWithQuery(endpoint, queryParam)
-	if err != nil {
-		fp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
-		return false, err
-	}
-
-	res, err := helper.FetchFromAPI(fp.cliCtx, url)
-	if err != nil {
-		fp.Logger.Error("Error fetching tx status", "url", url, "error", err)
-		return false, err
-	}
-
-	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
-		fp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
-		return false, err
-	}
-
-	return status, nil
 }
