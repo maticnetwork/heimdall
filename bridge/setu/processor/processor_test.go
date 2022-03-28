@@ -14,7 +14,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-func TestBroadcaseWhenTxInMempool(t *testing.T) {
+func TestBroadcastWhenTxInMempool(t *testing.T) {
 	t.Parallel()
 	cdc := app.MakeCodec()
 
