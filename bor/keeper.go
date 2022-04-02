@@ -13,6 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/bor/types"
 	chainmanager "github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/merr"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -40,7 +41,7 @@ type Keeper struct {
 	// param space
 	paramSpace subspace.Subspace
 	// contract caller
-	contractCaller helper.ContractCaller
+	ContractCaller helper.ContractCaller
 	// chain manager keeper
 	chainKeeper chainmanager.Keeper
 }
@@ -63,7 +64,7 @@ func NewKeeper(
 		codespace:      codespace,
 		chainKeeper:    chainKeeper,
 		sk:             stakingKeeper,
-		contractCaller: caller,
+		ContractCaller: caller,
 	}
 	return keeper
 }
@@ -92,8 +93,14 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span hmTypes.Span) error {
 		return err
 	}
 
+	spanKey := GetSpanKey(span.ID)
+	if spanKey == nil {
+		k.Logger(ctx).Error("Error invalid span key")
+		return merr.ValErr{Field: "span key", Module: types.ModuleName}
+
+	}
 	// store set span id
-	store.Set(GetSpanKey(span.ID), out)
+	store.Set(spanKey, out)
 
 	// update last span
 	k.UpdateLastSpan(ctx, span.ID)
@@ -193,6 +200,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
+
 	// select next producers
 	newProducers, err := k.SelectNextProducers(ctx, seed)
 	if err != nil {
@@ -243,7 +251,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 
 	IDToPower := make(map[uint64]uint64)
 	for _, ID := range newProducersIds {
-		IDToPower[ID] = IDToPower[ID] + 1
+		IDToPower[ID] += 1
 	}
 
 	for key, value := range IDToPower {
@@ -289,7 +297,7 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
-func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
+func (k Keeper) GetNextSpanSeed(ctx sdk.Context, contractCaller helper.IContractCaller) (common.Hash, error) {
 	lastEthBlock := k.GetLastEthBlock(ctx)
 
 	// increment last processed header block number
@@ -297,7 +305,8 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
 	k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
 
 	// fetch block header from mainchain
-	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
+	blockHeader, err := contractCaller.GetMainChainBlock(newEthBlock)
+
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
 		return common.Hash{}, err

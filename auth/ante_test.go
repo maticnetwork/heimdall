@@ -67,12 +67,14 @@ func (suite *AnteTestSuite) TestAnteValidation() {
 	// keys and addresses
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
 	msg1 := sdkAuth.NewTestMsg(addr1)
-	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0)) // use sdk's auth module for msg
+	fee := authTypes.NewTestStdFee()
+	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0), fee) // use sdk's auth module for msg
 
 	_, result1, _ := checkInvalidTx(t, anteHandler, ctx, tx1, false, sdk.CodeInternal)
 	require.Contains(t, result1.Log, "fee_collector module account has not been set")
 }
 
+/*
 func (suite *AnteTestSuite) TestGasLimit() {
 	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
 	ctx = ctx.WithBlockHeight(1)
@@ -101,12 +103,14 @@ func (suite *AnteTestSuite) TestGasLimit() {
 	params.MaxTxGas = params.SigVerifyCostSecp256k1 - 1
 	happ.AccountKeeper.SetParams(ctx, params)
 
-	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0))
-	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeOutOfGas)
-}
+	fee := authTypes.NewTestStdFee()
 
-func (suite *AnteTestSuite) TestCheckpointGasLimit() {
+	// test good tx from one signer
+	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0), fee)
+	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeOutOfGas)
+} */
+
+func (suite *AnteTestSuite) TestGasLimit() {
 	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
 	ctx = ctx.WithBlockHeight(1)
 
@@ -114,16 +118,16 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
 	priv2, _, addr2 := sdkAuth.KeyTestPubAddr()
 
+	fee := authTypes.NewTestStdFee()
+
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	amt1, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	acc1.SetCoins(sdk.NewCoins(fee.Amount...))
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress()) // get stored account
 
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	amt2, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc2.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt2)))
+	acc2.SetCoins(sdk.NewCoins(fee.Amount...))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 	acc2 = happ.AccountKeeper.GetAccount(ctx, acc2.GetAddress()) // get stored account
 
@@ -132,21 +136,17 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0))
+	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0), fee)
 	_, result, _ := checkValidTx(t, anteHandler, ctx, tx, false)
-
-	// get params
-	params := happ.AccountKeeper.GetParams(ctx)
-	require.Equal(t, params.MaxTxGas, result.GasWanted)
+	require.Equal(t, fee.Gas, result.GasWanted)
 
 	// checkpoint msg
 
 	cmsg := TestCheckpointMsg{*sdkAuth.NewTestMsg(addr2)}
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0))
+
+	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0), fee)
 	_, result, _ = checkValidTx(t, anteHandler, ctx, tx, false)
-	// check gas wanted for checkpoint msg
-	// require.Equal(t, uint64(10000000), uint64(result.GasWanted))
 }
 
 func (suite *AnteTestSuite) TestStdTx() {
@@ -175,17 +175,9 @@ func (suite *AnteTestSuite) TestStdTx() {
 
 	msg2 := sdkAuth.NewTestMsg(addr1)
 	memo := "more than 5 length memo"
-	tx2 := types.NewTestTxWithMemo(ctx, msg2, priv1, uint64(0), uint64(0), memo) // use sdk's auth module for msg
+	tx2 := types.NewTestTxWithMemo(ctx, msg2, priv1, uint64(0), uint64(0), memo, authTypes.NewTestStdFee()) // use sdk's auth module for msg
 
 	checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeMemoTooLarge)
-
-	// test tx fees
-	params.TxFees = "non integer" // setting non integer
-	happ.AccountKeeper.SetParams(ctx, params)
-	tx2 = types.NewTestTx(ctx, msg2, priv1, uint64(0), uint64(0)) // use sdk's auth module for msg
-
-	_, result2, _ := checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeInternal)
-	require.Contains(t, result2.Log, "Invalid param tx fees")
 }
 
 func (suite *AnteTestSuite) TestSigErrors() {
@@ -197,7 +189,8 @@ func (suite *AnteTestSuite) TestSigErrors() {
 
 	// test no signers
 	msg1 := sdkAuth.NewTestMsg()
-	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0)) // use sdk's auth module for msg
+	fee := authTypes.NewTestStdFee()
+	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0), fee) // use sdk's auth module for msg
 
 	// Check no signatures fails
 	require.Equal(t, 0, len(msg1.GetSigners()))
@@ -205,14 +198,14 @@ func (suite *AnteTestSuite) TestSigErrors() {
 
 	// unknown address error
 	msg2 := sdkAuth.NewTestMsg(addr1) // using first address
-	tx2 := types.NewTestTx(ctx, msg2, priv2, uint64(0), uint64(0))
+	tx2 := types.NewTestTx(ctx, msg2, priv2, uint64(0), uint64(0), fee)
 
 	// Check no signatures fails
 	checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeUnknownAddress)
 
 	// multi signers
 	msg3 := sdkAuth.NewTestMsg(addr1, addr2) // using first address
-	tx3 := types.NewTestTx(ctx, msg3, priv1, uint64(0), uint64(0))
+	tx3 := types.NewTestTx(ctx, msg3, priv1, uint64(0), uint64(0), fee)
 
 	// Check no signatures fails
 	checkInvalidTx(t, anteHandler, ctx, tx3, false, sdk.CodeUnauthorized)
@@ -240,15 +233,16 @@ func (suite *AnteTestSuite) TestAccountNumbers() {
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg, priv1, uint64(0), uint64(0))
+	fee := authTypes.NewTestStdFee()
+	tx = types.NewTestTx(ctx, msg, priv1, uint64(0), uint64(0), fee)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
 	// new tx from wrong account number
-	tx = types.NewTestTx(ctx, msg, priv1, uint64(1), uint64(0))
+	tx = types.NewTestTx(ctx, msg, priv1, uint64(1), uint64(0), fee)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeUnauthorized)
 
 	// from correct account number
-	tx = types.NewTestTx(ctx, msg, priv1, uint64(0), uint64(1))
+	tx = types.NewTestTx(ctx, msg, priv1, uint64(0), uint64(1), fee)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 }
 
@@ -259,6 +253,7 @@ func (suite *AnteTestSuite) TestAccountNumbersAtBlockHeightZero() {
 	// keys and addresses
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
 	priv2, _, addr2 := sdkAuth.KeyTestPubAddr()
+	fee := authTypes.NewTestStdFee()
 
 	// set the accounts, we don't need the acc numbers as it is in the genesis block
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
@@ -280,23 +275,23 @@ func (suite *AnteTestSuite) TestAccountNumbersAtBlockHeightZero() {
 	// accNumber2 := acc2.GetAccountNumber()
 
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0))
+	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0), fee)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(1))
+	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(1), fee)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
 	// // new tx from wrong account number
-	tx = types.NewTestTx(ctx, msg2, priv2, uint64(1), uint64(1))
+	tx = types.NewTestTx(ctx, msg2, priv2, uint64(1), uint64(1), fee)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeUnauthorized)
 
 	// from correct account number but wrong private key
-	tx = types.NewTestTx(ctx, msg2, priv1, uint64(1), uint64(0)) // with private key 1
+	tx = types.NewTestTx(ctx, msg2, priv1, uint64(1), uint64(0), fee) // with private key 1
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeUnauthorized)
 
 	// from correct account number but wrong private key
-	tx = types.NewTestTx(ctx, msg2, priv2, uint64(0), uint64(0)) // with private key 2 (account 2)
+	tx = types.NewTestTx(ctx, msg2, priv2, uint64(0), uint64(0), fee) // with private key 2 (account 2)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 }
 
@@ -307,6 +302,7 @@ func (suite *AnteTestSuite) TestSequences() {
 	// keys and addresses
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
 	priv2, _, addr2 := sdkAuth.KeyTestPubAddr()
+	fee := authTypes.NewTestStdFee()
 
 	// set the accounts, we don't need the acc numbers as it is in the genesis block
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
@@ -328,23 +324,23 @@ func (suite *AnteTestSuite) TestSequences() {
 	accNumber2 := acc2.GetAccountNumber()
 
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg1, priv1, accNumber1, uint64(0))
+	tx = types.NewTestTx(ctx, msg1, priv1, accNumber1, uint64(0), fee)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg1, priv1, accNumber1, uint64(1))
+	tx = types.NewTestTx(ctx, msg1, priv1, accNumber1, uint64(1), fee)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
 	// // new tx from wrong account number
-	tx = types.NewTestTx(ctx, msg2, priv2, accNumber2, uint64(1))
+	tx = types.NewTestTx(ctx, msg2, priv2, accNumber2, uint64(1), fee)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeUnauthorized)
 
 	// from correct account number but wrong private key
-	tx = types.NewTestTx(ctx, msg2, priv1, accNumber2, uint64(0)) // with private key 1
+	tx = types.NewTestTx(ctx, msg2, priv1, accNumber2, uint64(0), fee) // with private key 1
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeUnauthorized)
 
 	// from correct account number but wrong private key
-	tx = types.NewTestTx(ctx, msg2, priv2, accNumber2, uint64(0)) // with private key 2 (account 2)
+	tx = types.NewTestTx(ctx, msg2, priv2, accNumber2, uint64(0), fee) // with private key 2 (account 2)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 }
 
@@ -354,7 +350,7 @@ func (suite *AnteTestSuite) TestFees() {
 
 	// keys and addresses
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
-
+	fee := authTypes.NewTestStdFee()
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
 	happ.AccountKeeper.SetAccount(ctx, acc1)
@@ -363,7 +359,7 @@ func (suite *AnteTestSuite) TestFees() {
 	var tx sdk.Tx
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	acc1 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0))
+	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0), fee)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 
 	// set some coins
@@ -374,16 +370,43 @@ func (suite *AnteTestSuite) TestFees() {
 	require.True(t, happ.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName).GetCoins().Empty())
 	require.True(sdk.IntEq(t, happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1)).GetCoins().AmountOf(authTypes.FeeToken), sdk.NewInt(149)))
 
-	amt, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	acc1.SetCoins(sdk.NewCoins(fee.Amount...))
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
-	require.True(sdk.IntEq(t, happ.SupplyKeeper.GetModuleAccount(ctx, types.FeeCollectorName).GetCoins().AmountOf(authTypes.FeeToken), amt))
+	require.True(t, happ.SupplyKeeper.GetModuleAccount(ctx, types.FeeCollectorName).GetCoins().IsEqual(fee.Amount))
 	require.True(sdk.IntEq(t, happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1)).GetCoins().AmountOf(authTypes.FeeToken), sdk.NewInt(0)))
 
 	// try to send tx again
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
+}
+
+func (suite *AnteTestSuite) TestEnsureSufficientMempoolMaticFees() {
+	// setup
+	t, _, ctx, _ := suite.T(), suite.app, suite.ctx, suite.anteHandler
+
+	ctx = ctx.WithMinGasPrices(
+		sdk.DecCoins{
+			sdk.NewDecCoinFromDec("matic", sdk.NewDecWithPrec(1300000000000000000, sdk.Precision)), // 1.3matic
+		},
+	)
+
+	testCases := []struct {
+		input      authTypes.StdFee
+		expectedOK bool
+	}{
+		{authTypes.NewStdFee(200000, sdk.Coins{}), false},
+		{authTypes.NewStdFee(200000, sdk.NewCoins(sdk.NewInt64Coin("matic", 5))), false},
+		{authTypes.NewStdFee(200000, sdk.NewCoins(sdk.NewInt64Coin("matic", 260000))), true},
+	}
+
+	for i, tc := range testCases {
+		res := auth.EnsureSufficientMempoolFees(ctx, tc.input)
+		require.Equal(
+			t, tc.expectedOK, res.IsOK(),
+			"unexpected result; tc #%d, input: %v, log: %v", i, tc.input, res.Log,
+		)
+	}
 }
 
 //

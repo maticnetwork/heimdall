@@ -357,6 +357,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 	t.Run("YesResult", func(t *testing.T) {
 		// set coins
 		coins := simulation.RandomFeeCoins()
+		txFee := authTypes.NewStdFee(200000, sdk.NewCoins(sdk.NewInt64Coin(authTypes.FeeToken, 300000)))
 
 		// topup msg
 		msg := types.NewMsgTopup(
@@ -372,6 +373,11 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
 		sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
 		sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+		// create txBytes with fee
+		stdTx := authTypes.NewStdTx(msg, txFee, nil, "")
+		txBytes := app.Codec().MustMarshalBinaryLengthPrefixed(stdTx)
+		ctx = ctx.WithTxBytes(txBytes)
 
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "Post handler should succeed")
@@ -395,6 +401,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 
 		// set coins
 		coins := simulation.RandomFeeCoins()
+		txFee := authTypes.NewStdFee(200000, sdk.NewCoins(sdk.NewInt64Coin(authTypes.FeeToken, 300000)))
 
 		// topup msg
 		msg := types.NewMsgTopup(
@@ -411,6 +418,11 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		sequence := new(big.Int).Mul(bn, big.NewInt(hmTypes.DefaultLogIndexUnit))
 		sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
+		// create txBytes with fee
+		stdTx := authTypes.NewStdTx(msg, txFee, nil, "")
+		txBytes := app.Codec().MustMarshalBinaryLengthPrefixed(stdTx)
+		ctx = ctx.WithTxBytes(txBytes)
+
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "Post handler should succeed")
 		require.Greater(t, len(result.Events), 0, "Appropriate error should be emitted for successful post-tx")
@@ -423,8 +435,9 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		acc2 := app.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
 		require.NotNil(t, acc2)
 		require.False(t, acc2.GetCoins().Empty())
+		require.Equal(t, acc2.GetCoins(), txFee.Amount)
 
-		// account coins should be empty
+		// account coins should not be empty
 		acc3 := app.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr3))
 		require.NotNil(t, acc3)
 		require.False(t, acc3.GetCoins().Empty())
@@ -455,6 +468,12 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgTopup() {
 		bn := new(big.Int).SetUint64(msg.BlockNumber)
 		sequence := new(big.Int).Mul(bn, big.NewInt(hmTypes.DefaultLogIndexUnit))
 		sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+
+		// create txBytes with fee
+		fee := authTypes.NewStdFee(uint64(50000), coins)
+		stdTx := authTypes.NewStdTx(msg, fee, nil, "")
+		txBytes := app.Codec().MustMarshalBinaryLengthPrefixed(stdTx)
+		ctx = ctx.WithTxBytes(txBytes)
 
 		result := suite.postHandler(ctx, msg, abci.SideTxResultType_Yes)
 		require.True(t, result.IsOK(), "Post handler should succeed")

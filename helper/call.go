@@ -22,6 +22,7 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
+	"github.com/maticnetwork/heimdall/merr"
 
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -361,6 +362,9 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 
 // GetMainChainBlock returns main chain block header
 func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
+	if c.MainChainClient == nil {
+		return nil, merr.ValErr{Field: "MainChainClient"}
+	}
 	latestBlock, err := c.MainChainClient.HeaderByNumber(context.Background(), blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to main chain", "Error", err)

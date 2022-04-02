@@ -50,6 +50,15 @@ var ZeroAddress = common.Address{}
 // ZeroPubKey represents empty pub key
 var ZeroPubKey = hmTypes.PubKey{}
 
+// GasEstimateResponse defines a response definition for tx gas estimation.
+type GasEstimateResponse struct {
+	GasEstimate uint64 `json:"gas_estimate" yaml:"gas_estimate"`
+}
+
+func (gr GasEstimateResponse) String() string {
+	return fmt.Sprintf("gas estimate: %d", gr.GasEstimate)
+}
+
 // GetFromAddress get from address
 func GetFromAddress(cliCtx context.CLIContext) types.HeimdallAddress {
 	fromAddress := cliCtx.GetFromAddress()
@@ -350,6 +359,16 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 		return nil, err
 	}
 
+	if txBldr.SimulateAndExecute() || cliCtx.Simulate {
+		txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
+		if err != nil {
+			return nil, err
+		}
+
+		gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
+	}
+
 	fromName := cliCtx.GetFromName()
 	if fromName == "" {
 		return txBldr.BuildAndSign(GetPrivKey(), msgs)
@@ -398,6 +417,17 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
 		return nil, err
+	}
+
+	if txBldr.SimulateAndExecute() || cliCtx.Simulate {
+		txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
+		if err != nil {
+			return nil, err
+		}
+
+		gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
+
+		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
 	}
 
 	fromName := cliCtx.GetFromName()
@@ -662,7 +692,7 @@ func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLICon
 		return stdTx, err
 	}
 
-	return authTypes.NewStdTx(stdSignMsg.Msg, nil, stdSignMsg.Memo), nil
+	return authTypes.NewStdTx(stdSignMsg.Msg, stdSignMsg.Fee, nil, stdSignMsg.Memo), nil
 }
 
 // getSplitPoint returns the largest power of 2 less than length
@@ -797,4 +827,63 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
 	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
+}
+
+// EnrichWithGas calculates the gas estimate that would be consumed by the
+// transaction and set the transaction's respective value accordingly.
+func EnrichWithGas(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (authTypes.TxBuilder, error) {
+	_, adjusted, err := simulateMsgs(txBldr, cliCtx, msgs)
+	if err != nil {
+		return txBldr, err
+	}
+
+	return txBldr.WithGas(adjusted), nil
+}
+
+// nolint
+// SimulateMsgs simulates the transaction and returns the gas estimate and the adjusted value.
+func simulateMsgs(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (estimated, adjusted uint64, err error) {
+	txBytes, err := txBldr.BuildTxForSim(msgs)
+	if err != nil {
+		return
+	}
+
+	estimated, adjusted, err = CalculateGas(cliCtx.QueryWithData, cliCtx.Codec, txBytes, txBldr.GasAdjustment())
+	return
+}
+
+// CalculateGas simulates the execution of a transaction and returns
+// both the estimate obtained by the query and the adjusted amount.
+func CalculateGas(
+	queryFunc func(string, []byte) ([]byte, int64, error), cdc *codec.Codec,
+	txBytes []byte, adjustment float64,
+) (estimate, adjusted uint64, err error) {
+
+	// run a simulation (via /app/simulate query) to
+	// estimate gas and update TxBuilder accordingly
+	rawRes, _, err := queryFunc("/app/simulate", txBytes)
+	if err != nil {
+		return estimate, adjusted, err
+	}
+
+	estimate, err = parseQueryResponse(cdc, rawRes)
+	if err != nil {
+		return
+	}
+
+	adjusted = adjustGasEstimate(estimate, adjustment)
+	return estimate, adjusted, nil
+}
+
+func adjustGasEstimate(estimate uint64, adjustment float64) uint64 {
+	return uint64(adjustment * float64(estimate))
+}
+
+func parseQueryResponse(cdc *codec.Codec, rawRes []byte) (uint64, error) {
+	var simulationResult sdk.Result
+	if err := cdc.UnmarshalBinaryLengthPrefixed(rawRes, &simulationResult); err != nil {
+		return 0, err
+	}
+
+	return simulationResult.GasUsed, nil
 }

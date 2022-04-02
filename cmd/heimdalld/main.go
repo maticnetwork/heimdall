@@ -122,7 +122,7 @@ func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Applicatio
 	// init heimdall config
 	helper.InitHeimdallConfig("")
 	// create new heimdall app
-	return app.NewHeimdallApp(logger, db, baseapp.SetHaltHeight(cast.ToUint64(viper.GetString("halt-height"))), baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+	return app.NewHeimdallApp(logger, db, baseapp.SetHaltHeight(cast.ToUint64(viper.GetString("halt-height"))), baseapp.SetMinGasPrices(viper.GetString("minimum-gas-prices")), baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {

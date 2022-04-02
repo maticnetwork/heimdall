@@ -20,10 +20,10 @@ const (
 
 // GenTx generates a signed mock transaction.
 func GenTx(msgs []sdk.Msg, feeAmt sdk.Coins, gas uint64, chainID string, accnums []uint64, seq []uint64, priv ...crypto.PrivKey) authTypes.StdTx {
-	// fee := authTypes.StdFee{
-	// 	Amount: feeAmt,
-	// 	Gas:    gas,
-	// }
+	fee := authTypes.StdFee{
+		Amount: feeAmt,
+		Gas:    gas,
+	}
 
 	if len(msgs) == 0 {
 		panic(errors.New("Msgs cannot be empty"))
@@ -38,7 +38,7 @@ func GenTx(msgs []sdk.Msg, feeAmt sdk.Coins, gas uint64, chainID string, accnums
 
 	for i, p := range priv {
 		// use a empty chainID for ease of testing
-		sig, err := p.Sign(authTypes.StdSignBytes(chainID, accnums[i], seq[i], msgs[0], memo))
+		sig, err := p.Sign(authTypes.StdSignBytes(chainID, accnums[i], seq[i], fee, msgs[0], memo))
 		if err != nil {
 			panic(err)
 		}
@@ -46,5 +46,5 @@ func GenTx(msgs []sdk.Msg, feeAmt sdk.Coins, gas uint64, chainID string, accnums
 		sigs[i] = sig
 	}
 
-	return authTypes.NewStdTx(msgs[0], sigs[0], memo)
+	return authTypes.NewStdTx(msgs[0], fee, sigs[0], memo)
 }

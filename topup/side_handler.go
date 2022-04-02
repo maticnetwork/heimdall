@@ -7,7 +7,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -127,8 +126,26 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 		return err.Result()
 	}
 
-	// transfer fees to sender (proposer)
-	if err := k.bk.SendCoins(ctx, user, msg.FromAddress, auth.DefaultFeeWantedPerTx); err != nil {
+	// Find the fee to be transfered to sender.
+	txBytes := ctx.TxBytes()
+
+	// fetch side txs sigs
+	decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
+	tx, err := decoder(txBytes)
+	if err != nil {
+		k.Logger(ctx).Error("Error while decoding topup tx", "error", err)
+		return err.Result()
+	}
+
+	// topup must be of type auth.StdTx
+	stdTx, ok := tx.(authTypes.StdTx)
+	if !ok {
+		k.Logger(ctx).Error("topup tx must be StdTx", "error", err)
+		return err.Result()
+	}
+
+	// Transfer fee to sender (proposer)
+	if err := k.bk.SendCoins(ctx, user, msg.FromAddress, stdTx.Fee.Amount); err != nil {
 		return err.Result()
 	}
 
@@ -138,7 +155,6 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 	k.SetTopupSequence(ctx, sequence.String())
 
 	// TX bytes
-	txBytes := ctx.TxBytes()
 	hash := tmTypes.Tx(txBytes).Hash()
 
 	ctx.EventManager().EmitEvents(sdk.Events{

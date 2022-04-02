@@ -20,9 +20,11 @@ func XXXSelectNextProducers(blkHash common.Hash, spanEligibleVals []hmTypes.Vali
 		return
 	}
 
+	vals := make([]hmTypes.Validator, len(spanEligibleVals))
+	copy(vals, spanEligibleVals)
 	// extract seed from hash
 	seed := helper.ToBytes32(blkHash.Bytes()[:32])
-	validatorIndices := convertToSlots(spanEligibleVals)
+	validatorIndices := convertToSlots(vals)
 	selectedIDs, err = ShuffleList(validatorIndices, seed)
 	if err != nil {
 		return

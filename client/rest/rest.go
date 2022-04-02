@@ -66,7 +66,7 @@ func WriteGenerateStdTxResponse(
 		return
 	}
 
-	output, err := cliCtx.Codec.MarshalJSON(authTypes.NewStdTx(stdMsg.Msg, nil, stdMsg.Memo))
+	output, err := cliCtx.Codec.MarshalJSON(authTypes.NewStdTx(stdMsg.Msg, stdMsg.Fee, nil, stdMsg.Memo))
 	if err != nil {
 		hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 		return

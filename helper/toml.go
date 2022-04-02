@@ -41,6 +41,8 @@ span_poll_interval = "{{ .SpanPollInterval }}"
 
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"
+heimdall_tx_fee = "{{ .HeimdallTxFee }}"
+gas_adjustment = "{{ .GasAdjustment }}"
 
 #### gas price ####
 main_chain_max_gas_price = "{{ .MainchainMaxGasPrice }}"

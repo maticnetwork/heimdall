@@ -23,7 +23,8 @@ clean:
 tests:
 	# go test  -v ./...
 
-	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ ./bor/ -cover -coverprofile=cover.out
+
 
 # make build						Will generate for mainnet by default
 # make build network=mainnet		Will generate for mainnet
@@ -75,7 +76,7 @@ run-heimdall:
 
 start-heimdall:
 	mkdir -p ./logs &
-	./build/heimdalld start > ./logs/heimdalld.log &
+	./build/heimdalld start --minimum-gas-prices 1.9matic > ./logs/heimdalld.log &
 
 reset-heimdall:
 	./build/heimdalld unsafe-reset-all

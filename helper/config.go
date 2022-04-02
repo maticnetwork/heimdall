@@ -82,6 +82,9 @@ var (
 	DefaultCLIHome  = os.ExpandEnv("$HOME/.heimdallcli")
 	DefaultNodeHome = os.ExpandEnv("$HOME/.heimdalld")
 	MinBalance      = big.NewInt(100000000000000000) // aka 0.1 Ether
+
+	DefaultHeimdallTxFee = "300000000000000000matic"
+	DefaultGasAdjustment = float64(1.2)
 )
 
 var cdc = amino.NewCodec()
@@ -101,7 +104,9 @@ type Configuration struct {
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
 
-	MainchainGasLimit uint64 `mapstructure:"main_chain_gas_limit"` // gas limit to mainchain transaction. eg....submit checkpoint.
+	MainchainGasLimit uint64  `mapstructure:"main_chain_gas_limit"` // gas limit to mainchain transaction. eg....submit checkpoint.
+	HeimdallTxFee     string  `mapstructure:"heimdall_tx_fee"`      // fee deducted per tx on heimdall.
+	GasAdjustment     float64 `mapstructure:"gas_adjustment"`       // gas adjustment per tx on heimdall.
 
 	MainchainMaxGasPrice int64 `mapstructure:"main_chain_max_gas_price"` // max gas price to mainchain transaction. eg....submit checkpoint.
 
@@ -226,6 +231,8 @@ func GetDefaultHeimdallConfig() Configuration {
 		HeimdallServerURL: DefaultHeimdallServerURL,
 
 		MainchainGasLimit: DefaultMainchainGasLimit,
+		HeimdallTxFee:     DefaultHeimdallTxFee,
+		GasAdjustment:     DefaultGasAdjustment,
 
 		MainchainMaxGasPrice: DefaultMainchainMaxGasPrice,
 
