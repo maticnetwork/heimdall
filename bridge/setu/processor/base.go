@@ -137,7 +137,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 // checkTxAgainstMempool checks if the transaction is already in the mempool or not
 // It is consumed only for `clerk` processor
 func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg) (bool, error) {
-	endpoint := helper.GetConfig().TendermintRPCUrl + "/unconfirmed_txs"
+	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
 	resp, err := http.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		bp.Logger.Error("Error fetching mempool tx", "url", endpoint, "error", err)
@@ -171,7 +171,7 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg) (bool, error) {
 	status := false
 Loop:
 	for _, txn := range Response.Result.Txs {
-		// Tenderming encodes the transactions with base64 encoding. Decode it first.
+		// Tendermint encodes the transactions with base64 encoding. Decode it first.
 		txBytes, err := base64.StdEncoding.DecodeString(txn)
 		if err != nil {
 			continue
@@ -188,9 +188,20 @@ Loop:
 		// If required, add case for others here.
 		switch txMsg.Type() {
 		case "event-record":
-			// typecase the txs for clerk type message
-			mempoolTxMsg := txMsg.(clerkTypes.MsgEventRecord)
-			clerkMsg := msg.(clerkTypes.MsgEventRecord)
+
+			// typecast the txs for clerk type message
+			mempoolTxMsg, ok := txMsg.(clerkTypes.MsgEventRecord)
+			if !ok {
+				bp.Logger.Error("Unable to typecast message to clerk event Record")
+				continue Loop
+			}
+
+			// typecast the msg for clerk type message
+			clerkMsg, ok := msg.(clerkTypes.MsgEventRecord)
+			if !ok {
+				bp.Logger.Error("Unable to typecast message to clerk event Record")
+				continue Loop
+			}
 
 			// check the transaction hash in message
 			if clerkMsg.GetTxHash() != mempoolTxMsg.GetTxHash() {

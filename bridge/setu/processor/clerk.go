@@ -118,10 +118,8 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		// Don't drop the transaction. Keep retrying in 12 seconds, until the transaction
 		// in mempool is processed or cancelled.
 		if inMempool, _ := cp.checkTxAgainstMempool(msg); inMempool {
-			cp.Logger.Info("Similar transaction already in mempool. Retrying after 12 seconds", "event", eventName)
+			cp.Logger.Info("Similar transaction already in mempool, Will retry in sometime", "event", eventName)
 			return tasks.NewErrRetryTaskLater("transaction already in mempool", util.RetryTaskDelay)
-		} else {
-			cp.Logger.Info("Transaction not in mempool. Proceeding to broadcast", "event", eventName)
 		}
 
 		// return broadcast to heimdall

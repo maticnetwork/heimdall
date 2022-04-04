@@ -52,6 +52,8 @@ const (
 	SlashingTxStatusURL     = "/slashing/isoldtx"
 	SlashingTickCountURL    = "/slashing/tick-count"
 
+	TendermintUnconfirmedTxsURL = "/unconfirmed_txs"
+
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
 	TaskDelayBetweenEachVal = 6 * time.Second
