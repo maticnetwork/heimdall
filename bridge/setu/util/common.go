@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -54,7 +56,8 @@ const (
 	SlashingTxStatusURL     = "/slashing/isoldtx"
 	SlashingTickCountURL    = "/slashing/tick-count"
 
-	TendermintUnconfirmedTxsURL = "/unconfirmed_txs"
+	TendermintUnconfirmedTxsURL      = "/unconfirmed_txs"
+	TendermintUnconfirmedTxsCountURL = "/num_unconfirmed_txs"
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
@@ -173,8 +176,12 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 		}
 	}
 
+	// Change calculation later as per the discussion
+	// Currently it will multiply delay for every 1000 unconfirmed txns in mempool
+	mempoolFactor := GetUnconfirmedTxnCount() / 1000
+
 	// calculate delay
-	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal
+	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
 	return isCurrentValidator, taskDelay
 }
 
@@ -432,4 +439,32 @@ func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 	}
 
 	return response.Height
+}
+
+func GetUnconfirmedTxnCount() int {
+	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
+	resp, err := http.Get(endpoint)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)
+		return 0
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("Error fetching mempool txs count", "error", err)
+		return 0
+	}
+
+	// a minimal response of the unconfirmed txs
+	var response TendermintUnconfirmedTxs
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
+		return 0
+	}
+
+	count, _ := strconv.Atoi(response.Result.Total)
+
+	return count
 }
