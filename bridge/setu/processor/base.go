@@ -150,14 +150,9 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg) (bool, error) {
 	}
 
 	// a minimal response of the unconfirmed txs
-	var Response struct {
-		Result struct {
-			Total string   `json:"total"`
-			Txs   []string `json:"txs"`
-		} `json:"result"`
-	}
+	var response util.TendermintUnconfirmedTxs
 
-	err = json.Unmarshal(body, &Response)
+	err = json.Unmarshal(body, &response)
 	if err != nil {
 		bp.Logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
 		return false, err
@@ -170,7 +165,7 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg) (bool, error) {
 
 	status := false
 Loop:
-	for _, txn := range Response.Result.Txs {
+	for _, txn := range response.Result.Txs {
 		// Tendermint encodes the transactions with base64 encoding. Decode it first.
 		txBytes, err := base64.StdEncoding.DecodeString(txn)
 		if err != nil {
