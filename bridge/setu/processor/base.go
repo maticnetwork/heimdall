@@ -174,12 +174,14 @@ Loop:
 		// Tendermint encodes the transactions with base64 encoding. Decode it first.
 		txBytes, err := base64.StdEncoding.DecodeString(txn)
 		if err != nil {
+			bp.Logger.Error("Error decoding tx (base64 decoder) while checking against mempool", "error", err)
 			continue
 		}
 
 		// Unmarshal the transaction from bytes
 		decodedTx, err := helper.GetTxDecoder(bp.cliCtx.Codec)(txBytes)
 		if err != nil {
+			bp.Logger.Error("Error decoding tx (tx decoder) while checking against mempool", "error", err)
 			continue
 		}
 		txMsg := decodedTx.GetMsgs()[0]
@@ -192,14 +194,14 @@ Loop:
 			// typecast the txs for clerk type message
 			mempoolTxMsg, ok := txMsg.(clerkTypes.MsgEventRecord)
 			if !ok {
-				bp.Logger.Error("Unable to typecast message to clerk event Record")
+				bp.Logger.Error("Unable to typecast message to clerk event record while checking against mempool")
 				continue Loop
 			}
 
 			// typecast the msg for clerk type message
 			clerkMsg, ok := msg.(clerkTypes.MsgEventRecord)
 			if !ok {
-				bp.Logger.Error("Unable to typecast message to clerk event Record")
+				bp.Logger.Error("Unable to typecast message to clerk event record while checking against mempool")
 				continue Loop
 			}
 
