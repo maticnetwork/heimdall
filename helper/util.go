@@ -848,8 +848,7 @@ func simulateMsgs(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []
 		return
 	}
 
-	estimated, adjusted, err = CalculateGas(cliCtx.QueryWithData, cliCtx.Codec, txBytes, txBldr.GasAdjustment())
-	return
+	return CalculateGas(cliCtx.QueryWithData, cliCtx.Codec, txBytes, txBldr.GasAdjustment())
 }
 
 // CalculateGas simulates the execution of a transaction and returns
