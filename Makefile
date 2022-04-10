@@ -76,7 +76,7 @@ run-heimdall:
 
 start-heimdall:
 	mkdir -p ./logs &
-	./build/heimdalld start --minimum-gas-prices 1.9matic > ./logs/heimdalld.log &
+	./build/heimdalld start > ./logs/heimdalld.log &
 
 reset-heimdall:
 	./build/heimdalld unsafe-reset-all
