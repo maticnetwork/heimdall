@@ -53,7 +53,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 	if err := helper.UnpackLog(fp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		fp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := fp.isOldTx(fp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := fp.isOldTx(fp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), "topup"); isOld {
 			fp.Logger.Info("Ignoring task to send topup to heimdall as already processed",
 				"event", eventName,
 				"user", event.User,
