@@ -58,6 +58,7 @@ const (
 	CommitTimeout           = 2 * time.Minute
 	TaskDelayBetweenEachVal = 24 * time.Second
 	RetryTaskDelay          = 12 * time.Second
+	RetryStateSyncTaskDelay = 24 * time.Second
 
 	BridgeDBFlag = "bridge-db"
 )
