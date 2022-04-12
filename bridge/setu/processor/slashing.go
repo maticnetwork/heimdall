@@ -184,7 +184,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), "slashing"); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.SlashingEvent); isOld {
 			sp.Logger.Info("Ignoring task to send tick ack to heimdall as already processed",
 				"event", eventName,
 				"tickID", event.Nonce,
@@ -234,7 +234,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), "slashing"); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.SlashingEvent); isOld {
 			sp.Logger.Info("Ignoring sending unjail to heimdall as already processed",
 				"event", eventName,
 				"ValidatorID", event.ValidatorId,

@@ -28,6 +28,8 @@ import (
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
 
+type BridgeEvent string
+
 const (
 	AccountDetailsURL       = "/auth/accounts/%v"
 	LastNoAckURL            = "/checkpoints/last-no-ack"
@@ -59,6 +61,12 @@ const (
 	TaskDelayBetweenEachVal = 24 * time.Second
 	RetryTaskDelay          = 12 * time.Second
 	RetryStateSyncTaskDelay = 24 * time.Second
+
+	// Bridge event types
+	StakingEvent  BridgeEvent = "staking"
+	TopupEvent    BridgeEvent = "topup"
+	ClerkEvent    BridgeEvent = "clerk"
+	SlashingEvent BridgeEvent = "slashing"
 
 	BridgeDBFlag = "bridge-db"
 )

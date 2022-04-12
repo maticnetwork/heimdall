@@ -106,7 +106,7 @@ func (bp *BaseProcessor) Stop() {
 
 // isOldTx checks if the transaction already exists in the chain or not
 // It is a generic function, which is consumed in all processors
-func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64, eventType string) (bool, error) {
+func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64, eventType util.BridgeEvent) (bool, error) {
 	queryParam := map[string]interface{}{
 		"txhash":   txHash,
 		"logindex": logIndex,
@@ -115,13 +115,13 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 	// define the endpoint based on the type of event
 	var endpoint string
 	switch eventType {
-	case "staking":
+	case util.StakingEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
-	case "topup":
+	case util.TopupEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
-	case "clerk":
+	case util.ClerkEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
-	case "slashing":
+	case util.SlashingEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.SlashingTxStatusURL)
 	}
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
