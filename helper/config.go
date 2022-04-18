@@ -205,7 +205,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 
 	if conf.BorRPCTimeout == 0 {
 		// fallback to default
-		Logger.Debug("Invalid BOR RPC timeout provided, falling back to default value", "timeout", DefaultEthRPCTimeout)
+		Logger.Debug("Invalid BOR RPC timeout provided, falling back to default value", "timeout", DefaultBorRPCTimeout)
 		conf.BorRPCTimeout = DefaultBorRPCTimeout
 	}
 
