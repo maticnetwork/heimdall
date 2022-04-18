@@ -65,6 +65,8 @@ const (
 	RetryTaskDelay          = 12 * time.Second
 	RetryStateSyncTaskDelay = 24 * time.Second
 
+	mempoolTxnCountDivisor = 1000
+
 	// Bridge event types
 	StakingEvent  BridgeEvent = "staking"
 	TopupEvent    BridgeEvent = "topup"
@@ -178,7 +180,13 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 
 	// Change calculation later as per the discussion
 	// Currently it will multiply delay for every 1000 unconfirmed txns in mempool
-	mempoolFactor := GetUnconfirmedTxnCount() / 1000
+	// For example if the current default delay is 12 Seconds
+	// Then for upto 1000 txns it will stay as 12 only
+	// For 1000-2000 It will be 24 seconds
+	// For 2000-3000 it will be 36 seconds
+	// Basically for every 1000 txns it will increase the factor by 1.
+
+	mempoolFactor := GetUnconfirmedTxnCount() / mempoolTxnCountDivisor
 
 	// calculate delay
 	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
