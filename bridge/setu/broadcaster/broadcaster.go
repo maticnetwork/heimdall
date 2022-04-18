@@ -128,8 +128,12 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 
 	tb.logger.Info("Sending transaction to bor", "txHash", signedTx.Hash())
 
+	// create a context with timeout
+	ctx, cancel := context.WithTimeout(context.Background(), helper.GetConfig().BorRPCTimeout)
+	defer cancel()
+
 	// broadcast transaction
-	if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
+	if err := maticClient.SendTransaction(ctx, signedTx); err != nil {
 		tb.logger.Error("Error while broadcasting the transaction to maticchain", "error", err)
 		return err
 	}
