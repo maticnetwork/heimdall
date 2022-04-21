@@ -7,37 +7,72 @@ import (
 )
 
 // NewTestTx creates new test tx
-func NewTestTx(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, fee StdFee) sdk.Tx {
-	signBytes := StdSignBytes(ctx.ChainID(), accNum, seq, fee, msg, "")
+func NewTestTx(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64) sdk.Tx {
+	signBytes := StdSignBytes(ctx.ChainID(), accNum, seq, msg, "")
 	sig, err := priv.Sign(signBytes)
 	if err != nil {
 		panic(err)
 	}
 
-	tx := NewStdTx(msg, fee, sig, "")
+	tx := NewStdTx(msg, sig, "")
+	return tx
+}
+
+// NewTestTxWithFee creates new test tx
+func NewTestTxWithFee(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, fee StdFee) sdk.Tx {
+	signBytes := StdSignBytesWithFee(ctx.ChainID(), accNum, seq, fee, msg, "")
+	sig, err := priv.Sign(signBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	tx := NewStdTxWithFee(msg, fee, sig, "")
 	return tx
 }
 
 // NewTestTxWithMemo create new test tx
-func NewTestTxWithMemo(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, memo string, fee StdFee) sdk.Tx {
-	signBytes := StdSignBytes(ctx.ChainID(), accNum, seq, fee, msg, "")
+func NewTestTxWithMemo(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, memo string) sdk.Tx {
+	signBytes := StdSignBytes(ctx.ChainID(), accNum, seq, msg, "")
 	sig, err := priv.Sign(signBytes)
 	if err != nil {
 		panic(err)
 	}
 
-	tx := NewStdTx(msg, fee, sig, memo)
+	tx := NewStdTx(msg, sig, memo)
+	return tx
+}
+
+// NewTestTxWithMemoWithFee create new test tx
+func NewTestTxWithMemoWithFee(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, memo string, fee StdFee) sdk.Tx {
+	signBytes := StdSignBytesWithFee(ctx.ChainID(), accNum, seq, fee, msg, "")
+	sig, err := priv.Sign(signBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	tx := NewStdTxWithFee(msg, fee, sig, memo)
 	return tx
 }
 
 // NewTestTxWithSignBytes creates tx with sign bytes
-func NewTestTxWithSignBytes(msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, signBytes []byte, memo string, fee StdFee) sdk.Tx {
+func NewTestTxWithSignBytes(msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, signBytes []byte, memo string) sdk.Tx {
 	sig, err := priv.Sign(signBytes)
 	if err != nil {
 		panic(err)
 	}
 
-	tx := NewStdTx(msg, fee, sig, memo)
+	tx := NewStdTx(msg, sig, memo)
+	return tx
+}
+
+// NewTestTxWithSignBytesWithFee creates tx with sign bytes
+func NewTestTxWithSignBytesWithFee(msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq uint64, signBytes []byte, memo string, fee StdFee) sdk.Tx {
+	sig, err := priv.Sign(signBytes)
+	if err != nil {
+		panic(err)
+	}
+
+	tx := NewStdTxWithFee(msg, fee, sig, memo)
 	return tx
 }
 

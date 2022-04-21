@@ -35,7 +35,7 @@ func (suite *querierHandlerSuite) SetupTest() {
 	suite.app = app.Setup(isCheckTx)
 	suite.ctx = suite.app.BaseApp.NewContext(isCheckTx, abci.Header{})
 	suite.mockCaller = mocks.IContractCaller{}
-	suite.querier = bor.NewQuerier(suite.app.BorKeeper, &suite.mockCaller)
+	suite.querier = bor.NewQuerier(suite.app.BorKeeper)
 }
 
 func (suite *querierHandlerSuite) TestNewQueirer() {

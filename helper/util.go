@@ -359,14 +359,16 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 		return nil, err
 	}
 
-	if txBldr.SimulateAndExecute() || cliCtx.Simulate {
-		txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
-		if err != nil {
-			return nil, err
-		}
+	if cliCtx.Height > TxWithGasHeight {
+		if txBldr.SimulateAndExecute() || cliCtx.Simulate {
+			txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
+			if err != nil {
+				return nil, err
+			}
 
-		gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
+			gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
+			_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
+		}
 	}
 
 	fromName := cliCtx.GetFromName()
@@ -419,15 +421,17 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 		return nil, err
 	}
 
-	if txBldr.SimulateAndExecute() || cliCtx.Simulate {
-		txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
-		if err != nil {
-			return nil, err
+	if cliCtx.Height > TxWithGasHeight {
+		if txBldr.SimulateAndExecute() || cliCtx.Simulate {
+			txBldr, err = EnrichWithGas(txBldr, cliCtx, msgs)
+			if err != nil {
+				return nil, err
+			}
+
+			gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
+
+			_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
 		}
-
-		gasEst := GasEstimateResponse{GasEstimate: txBldr.Gas()}
-
-		_, _ = fmt.Fprintf(os.Stderr, "%s\n", gasEst.String())
 	}
 
 	fromName := cliCtx.GetFromName()
@@ -875,6 +879,9 @@ func CalculateGas(
 }
 
 func adjustGasEstimate(estimate uint64, adjustment float64) uint64 {
+	if uint64(adjustment*float64(estimate)) > uint64(MaxTxFee) {
+		return uint64(MaxTxFee)
+	}
 	return uint64(adjustment * float64(estimate))
 }
 

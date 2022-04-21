@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
@@ -96,6 +97,8 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 
 func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxResult abci.SideTxResultType) sdk.Result {
 
+	var txBytes []byte
+
 	// Skip handler if topup is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new topup since side-tx didn't get yes votes")
@@ -126,27 +129,33 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 		return err.Result()
 	}
 
-	// Find the fee to be transfered to sender.
-	txBytes := ctx.TxBytes()
+	if ctx.BlockHeight() > helper.TxWithGasHeight {
+		// Find the fee to be transfered to sender.
+		txBytes = ctx.TxBytes()
 
-	// fetch side txs sigs
-	decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
-	tx, err := decoder(txBytes)
-	if err != nil {
-		k.Logger(ctx).Error("Error while decoding topup tx", "error", err)
-		return err.Result()
-	}
+		// fetch side txs sigs
+		decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
+		tx, err := decoder(txBytes)
+		if err != nil {
+			k.Logger(ctx).Error("Error while decoding topup tx", "error", err)
+			return err.Result()
+		}
 
-	// topup must be of type auth.StdTx
-	stdTx, ok := tx.(authTypes.StdTx)
-	if !ok {
-		k.Logger(ctx).Error("topup tx must be StdTx", "error", err)
-		return err.Result()
-	}
+		// topup must be of type auth.StdTx
+		stdTx, ok := tx.(authTypes.StdTx)
+		if !ok {
+			k.Logger(ctx).Error("topup tx must be StdTx", "error", err)
+			return err.Result()
+		}
 
-	// Transfer fee to sender (proposer)
-	if err := k.bk.SendCoins(ctx, user, msg.FromAddress, stdTx.Fee.Amount); err != nil {
-		return err.Result()
+		// Transfer fee to sender (proposer)
+		if err := k.bk.SendCoins(ctx, user, msg.FromAddress, stdTx.Fee.Amount); err != nil {
+			return err.Result()
+		}
+	} else {
+		if err := k.bk.SendCoins(ctx, user, msg.FromAddress, auth.DefaultFeeWantedPerTx); err != nil {
+			return err.Result()
+		}
 	}
 
 	k.Logger(ctx).Debug("Persisted topup state for", "user", user, "topupAmount", topupAmount.String())

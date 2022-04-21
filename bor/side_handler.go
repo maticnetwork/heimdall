@@ -50,8 +50,9 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 	k.Logger(ctx).Debug("✅ Validating External call for span msg",
 		"msgSeed", msg.Seed.String(),
 	)
+
 	// calculate next span seed locally
-	nextSpanSeed, err := k.GetNextSpanSeed(ctx, contractCaller)
+	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching next span seed from mainchain")
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
@@ -106,7 +107,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 	}
 
 	// check for replay
-	if found := k.HasSpan(ctx, msg.ID); found {
+	if k.HasSpan(ctx, msg.ID) {
 		k.Logger(ctx).Debug("Skipping new span as it's already processed")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}

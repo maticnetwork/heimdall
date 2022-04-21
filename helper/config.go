@@ -85,6 +85,7 @@ var (
 
 	DefaultHeimdallTxFee = "300000000000000000matic"
 	DefaultGasAdjustment = float64(2)
+	MaxTxFee             = 1000000
 )
 
 var cdc = amino.NewCodec()

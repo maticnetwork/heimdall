@@ -1,7 +1,6 @@
 package broadcaster
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -9,8 +8,6 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bor "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
@@ -71,10 +68,13 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		WithTxEncoder(txEncoder).
 		WithAccountNumber(tb.accNum).
 		WithSequence(tb.lastSeqNo).
-		WithFees(helper.GetConfig().HeimdallTxFee).
-		WithGasAdjustment(helper.GetConfig().GasAdjustment).
-		WithSimulateAndExecute(true).
 		WithChainID(chainID)
+
+	if tb.cliCtx.Height > helper.TxWithGasHeight {
+		txBldr = txBldr.WithFees(helper.GetConfig().HeimdallTxFee).
+			WithGasAdjustment(helper.GetConfig().GasAdjustment).
+			WithSimulateAndExecute(true)
+	}
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
 	if err != nil {
@@ -102,43 +102,3 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 	tb.lastSeqNo += 1
 	return nil
 }
-
-// BroadcastToMatic broadcast to matic
-func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
-	tb.maticMutex.Lock()
-	defer tb.maticMutex.Unlock()
-
-	// get matic client
-	maticClient := helper.GetMaticClient()
-
-	// get auth
-	auth, err := helper.GenerateAuthObj(maticClient, *msg.To, msg.Data)
-
-	if err != nil {
-		tb.logger.Error("Error generating auth object", "error", err)
-		return err
-	}
-
-	// Create the transaction, sign it and schedule it for execution
-	rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
-
-	// signer
-	signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
-	if err != nil {
-		tb.logger.Error("Error signing the transaction", "error", err)
-		return err
-	}
-
-	tb.logger.Info("Sending transaction to bor", "txHash", signedTx.Hash())
-
-	// broadcast transaction
-	if err := maticClient.SendTransaction(context.Background(), signedTx); err != nil {
-		tb.logger.Error("Error while broadcasting the transaction to maticchain", "error", err)
-		return err
-	}
-
-	return nil
-}
-
-// BroadcastToRootchain broadcast to rootchain
-func (tb *TxBroadcaster) BroadcastToRootchain() {}

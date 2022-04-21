@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/crypto"
@@ -18,6 +19,12 @@ import (
 var (
 	// simulation signature values used to estimate gas consumption
 	simSecp256k1Pubkey secp256k1.PubKeySecp256k1
+
+	// DefaultFeeInMatic represents default fee in matic
+	DefaultFeeInMatic = big.NewInt(10).Exp(big.NewInt(10), big.NewInt(15), nil)
+
+	// DefaultFeeWantedPerTx fee wanted per tx
+	DefaultFeeWantedPerTx = sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(DefaultFeeInMatic)}}
 )
 
 func init() {
@@ -69,108 +76,198 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrInternal(fmt.Sprintf("%s module account has not been set", authTypes.FeeCollectorName)).Result(), true
 		}
 
-		// all transactions must be of type auth.StdTx
-		stdTx, ok := tx.(authTypes.StdTx)
-		if !ok {
+		stdTx, okStdTx := tx.(authTypes.StdTx)
+		stdTxWithFee, okStdTxWithFee := tx.(authTypes.StdTxWithFee)
+
+		if !okStdTx && !okStdTxWithFee {
 			// Set a gas meter with limit 0 as to prevent an infinite gas meter attack
 			// during runTx.
 			newCtx = SetGasMeter(simulate, ctx, 0)
 			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
 		}
-		ctx.Logger().Debug("fee and gas set in tx", "feeAmount", stdTx.Fee.Amount, "gasWanted", stdTx.Fee.Gas, "simulate", simulate, "ischeckTx", ctx.IsCheckTx())
 
-		// Ensure that the provided fees meet a minimum threshold for the validator,
-		// if this is a CheckTx. This is only for local mempool purposes, and thus
-		// is only ran on check tx.
-		if ctx.IsCheckTx() && !simulate {
-			res := EnsureSufficientMempoolFees(ctx, stdTx.Fee)
-			if !res.IsOK() {
-				return newCtx, res, true
-			}
-		}
+		if ctx.BlockHeight() > helper.TxWithGasHeight && okStdTxWithFee {
+			ctx.Logger().Debug("fee and gas set in tx", "feeAmount", stdTx.Fee.Amount, "gasWanted", stdTxWithFee.Fee.Gas, "simulate", simulate, "ischeckTx", ctx.IsCheckTx())
 
-		newCtx = SetGasMeter(simulate, ctx, stdTx.Fee.Gas)
-		// AnteHandlers must have their own defer/recover in order for the BaseApp
-		// to know how much gas was used! This is because the GasMeter is created in
-		// the AnteHandler, but if it panics the context won't be set properly in
-		// runTx's recover call.
-		defer func() {
-			if r := recover(); r != nil {
-				switch rType := r.(type) {
-				case sdk.ErrorOutOfGas:
-					log := fmt.Sprintf(
-						"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
-						rType.Descriptor, stdTx.Fee.Gas, newCtx.GasMeter().GasConsumed(),
-					)
-					res = sdk.ErrOutOfGas(log).Result()
-
-					res.GasWanted = stdTx.Fee.Gas
-					res.GasUsed = newCtx.GasMeter().GasConsumed()
-					abort = true
-				default:
-					panic(r)
+			// Ensure that the provided fees meet a minimum threshold for the validator,
+			// if this is a CheckTx. This is only for local mempool purposes, and thus
+			// is only ran on check tx.
+			if ctx.IsCheckTx() && !simulate {
+				res := EnsureSufficientMempoolFees(ctx, stdTxWithFee.Fee)
+				if !res.IsOK() {
+					return newCtx, res, true
 				}
 			}
-		}()
 
-		// validate tx
-		if err := tx.ValidateBasic(); err != nil {
-			return newCtx, err.Result(), true
-		}
+			newCtx = SetGasMeter(simulate, ctx, stdTxWithFee.Fee.Gas)
+			// AnteHandlers must have their own defer/recover in order for the BaseApp
+			// to know how much gas was used! This is because the GasMeter is created in
+			// the AnteHandler, but if it panics the context won't be set properly in
+			// runTx's recover call.
+			defer func() {
+				if r := recover(); r != nil {
+					switch rType := r.(type) {
+					case sdk.ErrorOutOfGas:
+						log := fmt.Sprintf(
+							"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
+							rType.Descriptor, stdTxWithFee.Fee.Gas, newCtx.GasMeter().GasConsumed(),
+						)
+						res = sdk.ErrOutOfGas(log).Result()
 
-		// get account params
-		params := ak.GetParams(ctx)
-		newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
+						res.GasWanted = stdTxWithFee.Fee.Gas
+						res.GasUsed = newCtx.GasMeter().GasConsumed()
+						abort = true
+					default:
+						panic(r)
+					}
+				}
+			}()
 
-		if res := ValidateMemo(stdTx, params); !res.IsOK() {
-			return newCtx, res, true
-		}
+			// validate tx
+			if err := tx.ValidateBasic(); err != nil {
+				return newCtx, err.Result(), true
+			}
 
-		// stdSigs contains the sequence number, account number, and signatures.
-		// When simulating, this would just be a 0-length slice.
-		signerAddrs := stdTx.GetSigners()
+			// get account params
+			params := ak.GetParams(ctx)
+			newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 
-		if len(signerAddrs) == 0 {
-			return newCtx, sdk.ErrNoSignatures("no signers").Result(), true
-		}
+			if res := ValidateMemo(stdTxWithFee, params); !res.IsOK() {
+				return newCtx, res, true
+			}
 
-		if len(signerAddrs) > 1 {
-			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
-		}
+			// stdSigs contains the sequence number, account number, and signatures.
+			// When simulating, this would just be a 0-length slice.
+			signerAddrs := stdTxWithFee.GetSigners()
 
-		isGenesis := ctx.BlockHeight() == 0
+			if len(signerAddrs) == 0 {
+				return newCtx, sdk.ErrNoSignatures("no signers").Result(), true
+			}
 
-		// fetch first signer, who's going to pay the fees
-		signerAcc, res := GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[0]))
-		if !res.IsOK() {
-			return newCtx, res, true
-		}
+			if len(signerAddrs) > 1 {
+				return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
+			}
 
-		// deduct the fees
-		if !stdTx.Fee.Amount.IsZero() {
-			res = DeductFees(feeCollector, newCtx, signerAcc, stdTx.Fee.Amount)
+			isGenesis := ctx.BlockHeight() == 0
+
+			// fetch first signer, who's going to pay the fees
+			signerAcc, res := GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[0]))
 			if !res.IsOK() {
 				return newCtx, res, true
 			}
 
-			// reload the account as fees have been deducted
-			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
+			// deduct the fees
+			if !stdTxWithFee.Fee.Amount.IsZero() {
+				res = DeductFees(feeCollector, newCtx, signerAcc, stdTxWithFee.Fee.Amount)
+				if !res.IsOK() {
+					return newCtx, res, true
+				}
+
+				// reload the account as fees have been deducted
+				signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
+			}
+
+			// stdSigs contains the sequence number, account number, and signatures.
+			// When simulating, this would just be a 0-length slice.
+			stdSigs := stdTxWithFee.GetSignatures()
+
+			// check signature, return account with incremented nonce
+			signBytes := GetSignBytes(newCtx.ChainID(), stdTxWithFee, signerAcc, isGenesis)
+			signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
+			if !res.IsOK() {
+				return newCtx, res, true
+			}
+			ak.SetAccount(newCtx, signerAcc)
+
+			// TODO: tx tags (?)
+			return newCtx, sdk.Result{GasWanted: stdTxWithFee.Fee.Gas}, false // continue...
+		} else if okStdTx {
+			// get account params
+			params := ak.GetParams(ctx)
+
+			// gas for tx
+			gasForTx := params.MaxTxGas // stdTx.Fee.Gas
+
+			amount, ok := sdk.NewIntFromString(params.TxFees)
+			if !ok {
+				return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
+			}
+			feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
+
+			// new gas meter
+			newCtx = SetGasMeter(simulate, ctx, gasForTx)
+
+			// AnteHandlers must have their own defer/recover in order for the BaseApp
+			// to know how much gas was used! This is because the GasMeter is created in
+			// the AnteHandler, but if it panics the context won't be set properly in
+			// runTx's recover call.
+			defer func() {
+				if r := recover(); r != nil {
+					switch rType := r.(type) {
+					case sdk.ErrorOutOfGas:
+						log := fmt.Sprintf(
+							"out of gas in location: %v; gasWanted: %d, gasUsed: %d",
+							rType.Descriptor, gasForTx, newCtx.GasMeter().GasConsumed(),
+						)
+						res = sdk.ErrOutOfGas(log).Result()
+
+						res.GasWanted = gasForTx
+						res.GasUsed = newCtx.GasMeter().GasConsumed()
+						abort = true
+					default:
+						panic(r)
+					}
+				}
+			}()
+			// validate tx
+			if err := tx.ValidateBasic(); err != nil {
+				return newCtx, err.Result(), true
+			}
+
+			if res := ValidateMemo(stdTx, params); !res.IsOK() {
+				return newCtx, res, true
+			}
+			// stdSigs contains the sequence number, account number, and signatures.
+			// When simulating, this would just be a 0-length slice.
+			signerAddrs := stdTx.GetSigners()
+			if len(signerAddrs) == 0 {
+				return newCtx, sdk.ErrNoSignatures("no signers").Result(), true
+			}
+			if len(signerAddrs) > 1 {
+				return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
+			}
+			isGenesis := ctx.BlockHeight() == 0
+			// fetch first signer, who's going to pay the fees
+			signerAcc, res := GetSignerAcc(newCtx, ak, types.AccAddressToHeimdallAddress(signerAddrs[0]))
+			if !res.IsOK() {
+				return newCtx, res, true
+			}
+
+			// deduct the fees
+			if !feeForTx.IsZero() {
+				res = DeductFees(feeCollector, newCtx, signerAcc, feeForTx)
+				if !res.IsOK() {
+					return newCtx, res, true
+				}
+				// reload the account as fees have been deducted
+				signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
+			}
+			// stdSigs contains the sequence number, account number, and signatures.
+			// When simulating, this would just be a 0-length slice.
+			stdSigs := stdTx.GetSignatures()
+			// check signature, return account with incremented nonce
+			signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
+			signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
+			if !res.IsOK() {
+				return newCtx, res, true
+			}
+
+			ak.SetAccount(newCtx, signerAcc)
+
+			// TODO: tx tags (?)
+			return newCtx, sdk.Result{GasWanted: gasForTx}, false // continue...
 		}
 
-		// stdSigs contains the sequence number, account number, and signatures.
-		// When simulating, this would just be a 0-length slice.
-		stdSigs := stdTx.GetSignatures()
-
-		// check signature, return account with incremented nonce
-		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
-		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
-		if !res.IsOK() {
-			return newCtx, res, true
-		}
-		ak.SetAccount(newCtx, signerAcc)
-
-		// TODO: tx tags (?)
-		return newCtx, sdk.Result{GasWanted: stdTx.Fee.Gas}, false // continue...
 	}
 }
 

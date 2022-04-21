@@ -68,10 +68,15 @@ func (suite *AnteTestSuite) TestAnteValidation() {
 	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	fee := authTypes.NewTestStdFee()
-	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0), fee) // use sdk's auth module for msg
+	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0)) // use sdk's auth module for msg
 
 	_, result1, _ := checkInvalidTx(t, anteHandler, ctx, tx1, false, sdk.CodeInternal)
 	require.Contains(t, result1.Log, "fee_collector module account has not been set")
+
+	tx2 := types.NewTestTxWithFee(ctx, msg1, priv1, uint64(0), uint64(0), fee) // use sdk's auth module for msg
+
+	_, result2, _ := checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeInternal)
+	require.Contains(t, result2.Log, "fee_collector module account has not been set")
 }
 
 /*
@@ -136,16 +141,24 @@ func (suite *AnteTestSuite) TestGasLimit() {
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// test good tx from one signer
-	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0), fee)
+	tx = types.NewTestTx(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0))
 	_, result, _ := checkValidTx(t, anteHandler, ctx, tx, false)
 	require.Equal(t, fee.Gas, result.GasWanted)
 
-	// checkpoint msg
-
-	cmsg := TestCheckpointMsg{*sdkAuth.NewTestMsg(addr2)}
 	// test good tx from one signer
+	tx = types.NewTestTxWithFee(ctx, msg, priv1, acc1.GetAccountNumber(), uint64(0), fee)
+	_, result1, _ := checkValidTx(t, anteHandler, ctx, tx, false)
+	require.Equal(t, fee.Gas, result1.GasWanted)
 
-	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0), fee)
+	// checkpoint msg
+	cmsg := TestCheckpointMsg{*sdkAuth.NewTestMsg(addr2)}
+
+	// test good tx from one signer
+	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0))
+	_, result, _ = checkValidTx(t, anteHandler, ctx, tx, false)
+
+	// test good tx from one signer
+	tx = types.NewTestTxWithFee(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0), fee)
 	_, result, _ = checkValidTx(t, anteHandler, ctx, tx, false)
 }
 
@@ -175,9 +188,13 @@ func (suite *AnteTestSuite) TestStdTx() {
 
 	msg2 := sdkAuth.NewTestMsg(addr1)
 	memo := "more than 5 length memo"
-	tx2 := types.NewTestTxWithMemo(ctx, msg2, priv1, uint64(0), uint64(0), memo, authTypes.NewTestStdFee()) // use sdk's auth module for msg
+	tx2 := types.NewTestTxWithMemo(ctx, msg2, priv1, uint64(0), uint64(0), memo) // use sdk's auth module for msg
 
 	checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeMemoTooLarge)
+
+	tx3 := types.NewTestTxWithMemoWithFee(ctx, msg2, priv1, uint64(0), uint64(0), memo, authTypes.NewTestStdFee()) // use sdk's auth module for msg
+
+	checkInvalidTx(t, anteHandler, ctx, tx3, false, sdk.CodeMemoTooLarge)
 }
 
 func (suite *AnteTestSuite) TestSigErrors() {
@@ -190,11 +207,31 @@ func (suite *AnteTestSuite) TestSigErrors() {
 	// test no signers
 	msg1 := sdkAuth.NewTestMsg()
 	fee := authTypes.NewTestStdFee()
-	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0), fee) // use sdk's auth module for msg
+	tx1 := types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0)) // use sdk's auth module for msg
 
 	// Check no signatures fails
 	require.Equal(t, 0, len(msg1.GetSigners()))
 	checkInvalidTx(t, anteHandler, ctx, tx1, false, sdk.CodeUnauthorized)
+
+	// unknown address error
+	msg2 := sdkAuth.NewTestMsg(addr1) // using first address
+	tx2 := types.NewTestTx(ctx, msg2, priv2, uint64(0), uint64(0))
+
+	// Check no signatures fails
+	checkInvalidTx(t, anteHandler, ctx, tx2, false, sdk.CodeUnknownAddress)
+
+	// multi signers
+	msg3 := sdkAuth.NewTestMsg(addr1, addr2) // using first address
+	tx3 := types.NewTestTx(ctx, msg3, priv1, uint64(0), uint64(0))
+
+	// Check no signatures fails
+	checkInvalidTx(t, anteHandler, ctx, tx3, false, sdk.CodeUnauthorized)
+
+	tx4 := types.NewTestTxWithFee(ctx, msg1, priv1, uint64(0), uint64(0), fee) // use sdk's auth module for msg
+
+	// Check no signatures fails
+	require.Equal(t, 0, len(msg1.GetSigners()))
+	checkInvalidTx(t, anteHandler, ctx, tx4, false, sdk.CodeUnauthorized)
 
 	// unknown address error
 	msg2 := sdkAuth.NewTestMsg(addr1) // using first address

@@ -2,7 +2,6 @@ package types
 
 import (
 	"encoding/json"
-	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -12,14 +11,11 @@ import (
 
 var (
 	_ sdk.Tx = (*StdTx)(nil)
-
-	maxGasWanted = uint64((1 << 63) - 1)
 )
 
 // StdTx is a standard way to wrap a Msg with Fee and Signatures.
 type StdTx struct {
 	Msg       sdk.Msg      `json:"msg" yaml:"msg"`
-	Fee       StdFee       `json:"fee" yaml:"fee"`
 	Signature StdSignature `json:"signature" yaml:"signature"`
 	Memo      string       `json:"memo" yaml:"memo"`
 }
@@ -32,10 +28,9 @@ type StdTxRaw struct {
 }
 
 // NewStdTx is function to get new std tx object
-func NewStdTx(msg sdk.Msg, fee StdFee, sig StdSignature, memo string) StdTx {
+func NewStdTx(msg sdk.Msg, sig StdSignature, memo string) StdTx {
 	return StdTx{
 		Msg:       msg,
-		Fee:       fee,
 		Signature: sig,
 		Memo:      memo,
 	}
@@ -51,15 +46,8 @@ func (tx StdTx) GetMsgs() []sdk.Msg {
 func (tx StdTx) ValidateBasic() sdk.Error {
 	stdSigs := tx.GetSignatures()
 
-	if tx.Fee.Gas > maxGasWanted {
-		return sdk.ErrGasOverflow(fmt.Sprintf("invalid gas supplied; %d > %d", tx.Fee.Gas, maxGasWanted))
-	}
-	if tx.Fee.Amount.IsAnyNegative() {
-		return sdk.ErrInsufficientFee(fmt.Sprintf("invalid fee %s amount provided", tx.Fee.Amount))
-	}
-
-	if len(stdSigs) == 0 {
-		return sdk.ErrNoSignatures("no signers")
+	if tx.Signature.Empty() {
+		return sdk.ErrNoSignatures("No signers")
 	}
 
 	if len(stdSigs) != 1 || len(stdSigs) != len(tx.GetSigners()) {
