@@ -28,7 +28,7 @@ type StdTxRaw struct {
 }
 
 // NewStdTx is function to get new std tx object
-func NewStdTx(msg sdk.Msg, sig StdSignature, memo string) StdTx {
+func newStdTx(msg sdk.Msg, sig StdSignature, memo string) StdTx {
 	return StdTx{
 		Msg:       msg,
 		Signature: sig,
