@@ -514,14 +514,27 @@ func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (au
 
 // PrintUnsignedStdTx builds an unsigned StdTx and prints it to os.Stdout.
 func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) error {
-	stdTx, err := buildUnsignedStdTxOffline(txBldr, cliCtx, msgs)
-	if err != nil {
-		return err
-	}
+	var json []byte
+	if cliCtx.Height > TxWithGasHeight {
+		stdTxWithFee, err := buildUnsignedStdTxOfflineWithFee(txBldr, cliCtx, msgs)
+		if err != nil {
+			return err
+		}
 
-	json, err := cliCtx.Codec.MarshalJSON(stdTx)
-	if err != nil {
-		return err
+		json, err = cliCtx.Codec.MarshalJSON(stdTxWithFee)
+		if err != nil {
+			return err
+		}
+	} else {
+		stdTx, err := buildUnsignedStdTxOffline(txBldr, cliCtx, msgs)
+		if err != nil {
+			return err
+		}
+
+		json, err = cliCtx.Codec.MarshalJSON(stdTx)
+		if err != nil {
+			return err
+		}
 	}
 
 	_, _ = fmt.Fprintf(cliCtx.Output, "%s\n", json)
@@ -696,7 +709,16 @@ func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLICon
 		return stdTx, err
 	}
 
-	return authTypes.NewStdTx(stdSignMsg.Msg, stdSignMsg.Fee, nil, stdSignMsg.Memo), nil
+	return authTypes.NewStdTx(stdSignMsg.Msg, nil, stdSignMsg.Memo), nil
+}
+
+func buildUnsignedStdTxOfflineWithFee(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTxWithFee authTypes.StdTxWithFee, err error) {
+	stdSignMsgWithFee, err := txBldr.BuildSignMsgWithFee(msgs)
+	if err != nil {
+		return stdTxWithFee, err
+	}
+
+	return authTypes.NewStdTxWithFee(stdSignMsgWithFee.Msg, stdSignMsgWithFee.Fee, nil, stdSignMsgWithFee.Memo), nil
 }
 
 // getSplitPoint returns the largest power of 2 less than length

@@ -142,14 +142,14 @@ func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxRes
 		}
 
 		// topup must be of type auth.StdTx
-		stdTx, ok := tx.(authTypes.StdTx)
+		stdTxWithFee, ok := tx.(authTypes.StdTxWithFee)
 		if !ok {
 			k.Logger(ctx).Error("topup tx must be StdTx", "error", err)
 			return err.Result()
 		}
 
 		// Transfer fee to sender (proposer)
-		if err := k.bk.SendCoins(ctx, user, msg.FromAddress, stdTx.Fee.Amount); err != nil {
+		if err := k.bk.SendCoins(ctx, user, msg.FromAddress, stdTxWithFee.Fee.Amount); err != nil {
 			return err.Result()
 		}
 	} else {

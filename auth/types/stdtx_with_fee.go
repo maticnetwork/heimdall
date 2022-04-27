@@ -15,19 +15,19 @@ var (
 
 // StdTxWithFee is a standard way to wrap a Msg with Fee and Signatures.
 type StdTxWithFee struct {
-	Msg       sdk.Msg      `json:"msg" yaml:"msg"`
-	Fee       StdFee       `json:"fee" yaml:"fee"`
-	Signature StdSignature `json:"signature" yaml:"signature"`
-	Memo      string       `json:"memo" yaml:"memo"`
+	StdTx
+	Fee StdFee `json:"fee" yaml:"fee"`
 }
 
 // NewStdTxWithFee is function to get new std tx object
 func NewStdTxWithFee(msg sdk.Msg, fee StdFee, sig StdSignature, memo string) StdTxWithFee {
 	return StdTxWithFee{
-		Msg:       msg,
-		Fee:       fee,
-		Signature: sig,
-		Memo:      memo,
+		StdTx: StdTx{
+			Msg:       msg,
+			Signature: sig,
+			Memo:      memo,
+		},
+		Fee: fee,
 	}
 }
 

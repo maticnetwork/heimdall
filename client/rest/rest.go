@@ -26,6 +26,8 @@ func WriteGenerateStdTxResponse(
 	msgs []sdk.Msg,
 ) {
 
+	var output []byte
+
 	gasAdj, ok := rest.ParseFloat64OrReturnBadRequest(w, br.GasAdjustment, client.DefaultGasAdjustment)
 	if !ok {
 		return
@@ -48,28 +50,36 @@ func WriteGenerateStdTxResponse(
 			return
 		}
 
-		// txBldr, err = utils.EnrichWithGas(txBldr, cliCtx, msgs)
-		// if err != nil {
-		// 	hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-		// 	return
-		// }
-
 		if br.Simulate {
 			hmRest.WriteSimulationResponse(w, cliCtx.Codec, txBldr.Gas())
 			return
 		}
 	}
 
-	stdMsg, err := txBldr.BuildSignMsg(msgs)
-	if err != nil {
-		hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-		return
-	}
+	if cliCtx.Height > helper.TxWithGasHeight {
+		stdMsgWithFee, err := txBldr.BuildSignMsgWithFee(msgs)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
-	output, err := cliCtx.Codec.MarshalJSON(authTypes.NewStdTx(stdMsg.Msg, stdMsg.Fee, nil, stdMsg.Memo))
-	if err != nil {
-		hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-		return
+		output, err = cliCtx.Codec.MarshalJSON(authTypes.NewStdTxWithFee(stdMsgWithFee.Msg, stdMsgWithFee.Fee, nil, stdMsgWithFee.Memo))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+	} else {
+		stdMsg, err := txBldr.BuildSignMsg(msgs)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		output, err = cliCtx.Codec.MarshalJSON(authTypes.NewStdTx(stdMsg.Msg, nil, stdMsg.Memo))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
 	}
 
 	w.Header().Set("Content-Type", "application/json")

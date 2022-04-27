@@ -83,11 +83,11 @@ func NewAnteHandler(
 			// Set a gas meter with limit 0 as to prevent an infinite gas meter attack
 			// during runTx.
 			newCtx = SetGasMeter(simulate, ctx, 0)
-			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
+			return newCtx, sdk.ErrInternal("tx must be StdTx or StdTxWithFee").Result(), true
 		}
 
 		if ctx.BlockHeight() > helper.TxWithGasHeight && okStdTxWithFee {
-			ctx.Logger().Debug("fee and gas set in tx", "feeAmount", stdTx.Fee.Amount, "gasWanted", stdTxWithFee.Fee.Gas, "simulate", simulate, "ischeckTx", ctx.IsCheckTx())
+			ctx.Logger().Debug("fee and gas set in tx", "feeAmount", stdTxWithFee.Fee.Amount, "gasWanted", stdTxWithFee.Fee.Gas, "simulate", simulate, "ischeckTx", ctx.IsCheckTx())
 
 			// Ensure that the provided fees meet a minimum threshold for the validator,
 			// if this is a CheckTx. This is only for local mempool purposes, and thus
@@ -132,7 +132,7 @@ func NewAnteHandler(
 			params := ak.GetParams(ctx)
 			newCtx.GasMeter().ConsumeGas(params.TxSizeCostPerByte*sdk.Gas(len(newCtx.TxBytes())), "txSize")
 
-			if res := ValidateMemo(stdTxWithFee, params); !res.IsOK() {
+			if res := ValidateMemoWithFee(stdTxWithFee, params); !res.IsOK() {
 				return newCtx, res, true
 			}
 
@@ -172,14 +172,13 @@ func NewAnteHandler(
 			stdSigs := stdTxWithFee.GetSignatures()
 
 			// check signature, return account with incremented nonce
-			signBytes := GetSignBytes(newCtx.ChainID(), stdTxWithFee, signerAcc, isGenesis)
+			signBytes := GetSignBytesWithFee(newCtx.ChainID(), stdTxWithFee, signerAcc, isGenesis)
 			signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
 			if !res.IsOK() {
 				return newCtx, res, true
 			}
 			ak.SetAccount(newCtx, signerAcc)
 
-			// TODO: tx tags (?)
 			return newCtx, sdk.Result{GasWanted: stdTxWithFee.Fee.Gas}, false // continue...
 		} else if okStdTx {
 			// get account params
@@ -266,8 +265,12 @@ func NewAnteHandler(
 
 			// TODO: tx tags (?)
 			return newCtx, sdk.Result{GasWanted: gasForTx}, false // continue...
+		} else {
+			// Set a gas meter with limit 0 as to prevent an infinite gas meter attack
+			// during runTx.
+			newCtx = SetGasMeter(simulate, ctx, 0)
+			return newCtx, sdk.ErrInternal("tx must be StdTx or StdTxWithFee").Result(), true
 		}
-
 	}
 }
 
@@ -287,6 +290,21 @@ func GetSignerAcc(
 // ValidateMemo validates the memo size.
 func ValidateMemo(stdTx authTypes.StdTx, params authTypes.Params) sdk.Result {
 	memoLength := len(stdTx.GetMemo())
+	if uint64(memoLength) > params.MaxMemoCharacters {
+		return sdk.ErrMemoTooLarge(
+			fmt.Sprintf(
+				"maximum number of characters is %d but received %d characters",
+				params.MaxMemoCharacters, memoLength,
+			),
+		).Result()
+	}
+
+	return sdk.Result{}
+}
+
+// ValidateMemo validates the memo size.
+func ValidateMemoWithFee(stdTxWithFee authTypes.StdTxWithFee, params authTypes.Params) sdk.Result {
+	memoLength := len(stdTxWithFee.GetMemo())
 	if uint64(memoLength) > params.MaxMemoCharacters {
 		return sdk.ErrMemoTooLarge(
 			fmt.Sprintf(
@@ -404,7 +422,18 @@ func GetSignBytes(chainID string, stdTx authTypes.StdTx, acc authTypes.Account, 
 		accNum = acc.GetAccountNumber()
 	}
 
-	return authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Fee, stdTx.Msg, stdTx.Memo)
+	return authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Msg, stdTx.Memo)
+}
+
+// GetSignBytes returns a slice of bytes to sign over for a given transaction
+// and an account.
+func GetSignBytesWithFee(chainID string, stdTxWithFee authTypes.StdTxWithFee, acc authTypes.Account, genesis bool) []byte {
+	var accNum uint64
+	if !genesis {
+		accNum = acc.GetAccountNumber()
+	}
+
+	return authTypes.StdSignBytesWithFee(chainID, accNum, acc.GetSequence(), stdTxWithFee.Fee, stdTxWithFee.Msg, stdTxWithFee.Memo)
 }
 
 // EnsureSufficientMempoolFees verifies that the given transaction has supplied
