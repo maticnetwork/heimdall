@@ -406,13 +406,42 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var checkpointUnmarshal hmTypes.Checkpoint
+		json.Unmarshal(res, &checkpointUnmarshal)
+
+		checkpointWithID := &CheckpointWithID{
+			ID:         ackCount,
+			Proposer:   checkpointUnmarshal.Proposer,
+			StartBlock: checkpointUnmarshal.StartBlock,
+			EndBlock:   checkpointUnmarshal.EndBlock,
+			RootHash:   checkpointUnmarshal.RootHash,
+			BorChainID: checkpointUnmarshal.BorChainID,
+			TimeStamp:  checkpointUnmarshal.TimeStamp,
+		}
+
+		resWithID, err := json.Marshal(checkpointWithID)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		}
+
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoint found"); !ok {
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
 			return
 		}
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		rest.PostProcessResponse(w, cliCtx, resWithID)
 	}
+}
+
+//Temporary Checkpoint struct to store the Checkpoint ID
+type CheckpointWithID struct {
+	ID         uint64                  `json:"id"`
+	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
+	StartBlock uint64                  `json:"start_block"`
+	EndBlock   uint64                  `json:"end_block"`
+	RootHash   hmTypes.HeimdallHash    `json:"root_hash"`
+	BorChainID string                  `json:"bor_chain_id"`
+	TimeStamp  uint64                  `json:"timestamp"`
 }
 
 // get checkpoint by checkppint number from store
@@ -444,12 +473,31 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var checkpointUnmarshal hmTypes.Checkpoint
+		json.Unmarshal(res, &checkpointUnmarshal)
+
+		checkpointWithID := &CheckpointWithID{
+			ID:         number,
+			Proposer:   checkpointUnmarshal.Proposer,
+			StartBlock: checkpointUnmarshal.StartBlock,
+			EndBlock:   checkpointUnmarshal.EndBlock,
+			RootHash:   checkpointUnmarshal.RootHash,
+			BorChainID: checkpointUnmarshal.BorChainID,
+			TimeStamp:  checkpointUnmarshal.TimeStamp,
+		}
+
+		resWithID, err := json.Marshal(checkpointWithID)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		}
+
 		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoint found"); !ok {
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
 			return
 		}
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		rest.PostProcessResponse(w, cliCtx, resWithID)
+
 	}
 }
 
