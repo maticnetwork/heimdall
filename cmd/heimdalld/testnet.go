@@ -217,7 +217,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 	)
 
 	cmd.Flags().Int(flagNumNonValidators, 8,
-		"Number of validators to initialize the testnet with",
+		"Number of non-validators to initialize the testnet with",
 	)
 
 	cmd.Flags().StringP(flagOutputDir, "o", "./mytestnet",

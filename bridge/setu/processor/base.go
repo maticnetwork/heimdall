@@ -1,9 +1,16 @@
 package processor
 
 import (
+	"encoding/base64"
+	"encoding/json"
+	"io/ioutil"
+	"net/http"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types"
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
 
@@ -95,4 +102,132 @@ func (bp *BaseProcessor) String() string {
 // OnStop stops all necessary go routines
 func (bp *BaseProcessor) Stop() {
 	// override to stop any go-routines in individual processors
+}
+
+// isOldTx checks if the transaction already exists in the chain or not
+// It is a generic function, which is consumed in all processors
+func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64, eventType util.BridgeEvent) (bool, error) {
+	queryParam := map[string]interface{}{
+		"txhash":   txHash,
+		"logindex": logIndex,
+	}
+
+	// define the endpoint based on the type of event
+	var endpoint string
+	switch eventType {
+	case util.StakingEvent:
+		endpoint = helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
+	case util.TopupEvent:
+		endpoint = helper.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
+	case util.ClerkEvent:
+		endpoint = helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
+	case util.SlashingEvent:
+		endpoint = helper.GetHeimdallServerEndpoint(util.SlashingTxStatusURL)
+	}
+	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+	if err != nil {
+		bp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
+		return false, err
+	}
+
+	res, err := helper.FetchFromAPI(bp.cliCtx, url)
+	if err != nil {
+		bp.Logger.Error("Error fetching tx status", "url", url, "error", err)
+		return false, err
+	}
+
+	var status bool
+	if err := json.Unmarshal(res.Result, &status); err != nil {
+		bp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
+		return false, err
+	}
+
+	return status, nil
+}
+
+// checkTxAgainstMempool checks if the transaction is already in the mempool or not
+// It is consumed only for `clerk` processor
+func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg) (bool, error) {
+	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
+	resp, err := http.Get(endpoint)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		bp.Logger.Error("Error fetching mempool tx", "url", endpoint, "error", err)
+		return false, err
+	}
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		bp.Logger.Error("Error fetching mempool tx", "error", err)
+		return false, err
+	}
+
+	// a minimal response of the unconfirmed txs
+	var response util.TendermintUnconfirmedTxs
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		bp.Logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
+		return false, err
+	}
+
+	// Iterate over txs present in the mempool
+	// We can verify if the message we're about to send is present by
+	// checking the type of transaction, the transaction hash and log index
+	// present in the data of transaction
+
+	status := false
+Loop:
+	for _, txn := range response.Result.Txs {
+		// Tendermint encodes the transactions with base64 encoding. Decode it first.
+		txBytes, err := base64.StdEncoding.DecodeString(txn)
+		if err != nil {
+			bp.Logger.Error("Error decoding tx (base64 decoder) while checking against mempool", "error", err)
+			continue
+		}
+
+		// Unmarshal the transaction from bytes
+		decodedTx, err := helper.GetTxDecoder(bp.cliCtx.Codec)(txBytes)
+		if err != nil {
+			bp.Logger.Error("Error decoding tx (tx decoder) while checking against mempool", "error", err)
+			continue
+		}
+		txMsg := decodedTx.GetMsgs()[0]
+
+		// We only need to check for `event-record` type transactions.
+		// If required, add case for others here.
+		switch txMsg.Type() {
+		case "event-record":
+
+			// typecast the txs for clerk type message
+			mempoolTxMsg, ok := txMsg.(clerkTypes.MsgEventRecord)
+			if !ok {
+				bp.Logger.Error("Unable to typecast message to clerk event record while checking against mempool")
+				continue Loop
+			}
+
+			// typecast the msg for clerk type message
+			clerkMsg, ok := msg.(clerkTypes.MsgEventRecord)
+			if !ok {
+				bp.Logger.Error("Unable to typecast message to clerk event record while checking against mempool")
+				continue Loop
+			}
+
+			// check the transaction hash in message
+			if clerkMsg.GetTxHash() != mempoolTxMsg.GetTxHash() {
+				continue Loop
+			}
+
+			// check the log index in the message
+			if clerkMsg.GetLogIndex() != mempoolTxMsg.GetLogIndex() {
+				continue Loop
+			}
+
+			// If we reach here, there's already a same transaction in the mempool
+			status = true
+			break Loop
+		default:
+			// ignore
+		}
+	}
+
+	return status, nil
 }
