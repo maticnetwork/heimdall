@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -54,13 +56,16 @@ const (
 	SlashingTxStatusURL     = "/slashing/isoldtx"
 	SlashingTickCountURL    = "/slashing/tick-count"
 
-	TendermintUnconfirmedTxsURL = "/unconfirmed_txs"
+	TendermintUnconfirmedTxsURL      = "/unconfirmed_txs"
+	TendermintUnconfirmedTxsCountURL = "/num_unconfirmed_txs"
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
 	TaskDelayBetweenEachVal = 24 * time.Second
 	RetryTaskDelay          = 12 * time.Second
 	RetryStateSyncTaskDelay = 24 * time.Second
+
+	mempoolTxnCountDivisor = 1000
 
 	// Bridge event types
 	StakingEvent  BridgeEvent = "staking"
@@ -173,8 +178,18 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 		}
 	}
 
+	// Change calculation later as per the discussion
+	// Currently it will multiply delay for every 1000 unconfirmed txns in mempool
+	// For example if the current default delay is 12 Seconds
+	// Then for upto 1000 txns it will stay as 12 only
+	// For 1000-2000 It will be 24 seconds
+	// For 2000-3000 it will be 36 seconds
+	// Basically for every 1000 txns it will increase the factor by 1.
+
+	mempoolFactor := GetUnconfirmedTxnCount() / mempoolTxnCountDivisor
+
 	// calculate delay
-	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal
+	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
 	return isCurrentValidator, taskDelay
 }
 
@@ -432,4 +447,32 @@ func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 	}
 
 	return response.Height
+}
+
+func GetUnconfirmedTxnCount() int {
+	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
+	resp, err := http.Get(endpoint)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)
+		return 0
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("Error fetching mempool txs count", "error", err)
+		return 0
+	}
+
+	// a minimal response of the unconfirmed txs
+	var response TendermintUnconfirmedTxs
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
+		return 0
+	}
+
+	count, _ := strconv.Atoi(response.Result.Total)
+
+	return count
 }
