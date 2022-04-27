@@ -63,9 +63,9 @@ func (tx StdTxWithFee) ValidateBasic() sdk.Error {
 //
 
 // DefaultTxWithFeeDecoder logic for standard transaction decoding
-func DefaultTxWithFeeDecoder(cdc *codec.Codec) sdk.TxDecoder {
+func DefaultTxDecoder[T sdk.Tx](cdc *codec.Codec) sdk.TxDecoder {
 	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		var tx = StdTxWithFee{}
+		var tx = new(T)
 
 		if len(txBytes) == 0 {
 			return nil, sdk.ErrTxDecode("txBytes are empty")
@@ -78,7 +78,7 @@ func DefaultTxWithFeeDecoder(cdc *codec.Codec) sdk.TxDecoder {
 			return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
 		}
 
-		return tx, nil
+		return *tx, nil
 	}
 }
 

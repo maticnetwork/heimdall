@@ -196,26 +196,6 @@ func (fee StdFee) GasPrices() sdk.DecCoins {
 // Decoders
 //
 
-// DefaultTxDecoder logic for standard transaction decoding
-func DefaultTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
-	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		var tx = StdTx{}
-
-		if len(txBytes) == 0 {
-			return nil, sdk.ErrTxDecode("txBytes are empty")
-		}
-
-		// StdTx.Msg is an interface. The concrete types
-		// are registered by MakeTxCodec
-		err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
-		if err != nil {
-			return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
-		}
-
-		return tx, nil
-	}
-}
-
 // DefaultTxEncoder logic for standard transaction encoding
 func DefaultTxEncoder(cdc *codec.Codec) sdk.TxEncoder {
 	return func(tx sdk.Tx) ([]byte, error) {
