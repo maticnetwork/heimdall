@@ -1,6 +1,7 @@
 package broadcaster
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -35,7 +36,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	}
 
 	for index, test := range testData {
-		t.Run(string(index), func(t *testing.T) {
+		t.Run(fmt.Sprint(index), func(t *testing.T) {
 			// create and send checkpoint message
 			msg := checkpointTypes.NewMsgCheckpointBlock(
 				test.Proposer,
@@ -43,6 +44,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 				test.EndBlock,
 				test.RootHash,
 				test.AccountRootHash,
+				"1234",
 			)
 
 			err := _txBroadcaster.BroadcastToHeimdall(msg)

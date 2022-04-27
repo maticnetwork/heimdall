@@ -73,7 +73,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		if len(signerPubKey) == 64 {
 			signerPubKey = util.AppendPrefix(signerPubKey)
 		}
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
 			sp.Logger.Info("Ignoring task to send validatorjoin to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
@@ -146,7 +146,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validator", event.User,
@@ -216,7 +216,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
@@ -287,7 +287,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			newSignerPubKey = util.AppendPrefix(newSignerPubKey)
 		}
 
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
@@ -344,35 +344,6 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 		}
 	}
 	return nil
-}
-
-// isOldTx  checks if tx is already processed or not
-func (sp *StakingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
-	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
-	}
-
-	endpoint := helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
-	url, err := util.CreateURLWithQuery(endpoint, queryParam)
-	if err != nil {
-		sp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
-		return false, err
-	}
-
-	res, err := helper.FetchFromAPI(sp.cliCtx, url)
-	if err != nil {
-		sp.Logger.Error("Error fetching tx status", "url", url, "error", err)
-		return false, err
-	}
-
-	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
-		sp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
-		return false, err
-	}
-
-	return status, nil
 }
 
 func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64) (bool, uint64, error) {
