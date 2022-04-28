@@ -225,7 +225,6 @@ func (bldr TxBuilder) BuildSignMsg(msgs []sdk.Msg) (StdSignMsg, error) {
 		Sequence:      bldr.sequence,
 		Memo:          bldr.memo,
 		Msg:           msgs[0], // allow only one message
-		Fee:           NewStdFee(bldr.gas, fees),
 	}, nil
 }
 
@@ -236,7 +235,7 @@ func (bldr TxBuilder) Sign(privKey secp256k1.PrivKeySecp256k1, msg StdSignMsg) (
 		return nil, err
 	}
 
-	return bldr.txEncoder(NewStdTx(msg.Msg, msg.Fee, sig, msg.Memo))
+	return bldr.txEncoder(newStdTx(msg.Msg, sig, msg.Memo))
 }
 
 // SignWithPassphrase signs a transaction given a name, passphrase, and a single message to
@@ -247,7 +246,7 @@ func (bldr TxBuilder) SignWithPassphrase(name, passphrase string, msg StdSignMsg
 		return nil, err
 	}
 
-	return bldr.txEncoder(NewStdTx(msg.Msg, msg.Fee, sig, msg.Memo))
+	return bldr.txEncoder(newStdTx(msg.Msg, sig, msg.Memo))
 }
 
 // BuildAndSign builds a single message to be signed, and signs a transaction
@@ -283,7 +282,7 @@ func (bldr TxBuilder) BuildTxForSim(msgs []sdk.Msg) ([]byte, error) {
 	// the ante handler will populate with a sentinel pubkey
 	// sig := StdSignature{}
 	sig := StdSignature{}
-	return bldr.txEncoder(NewStdTx(signMsg.Msg, signMsg.Fee, sig, signMsg.Memo))
+	return bldr.txEncoder(newStdTx(signMsg.Msg, sig, signMsg.Memo))
 }
 
 // SignStdTxWithPassphrase appends a signature to a StdTx and returns a copy of it. If append
@@ -299,13 +298,12 @@ func (bldr TxBuilder) SignStdTxWithPassphrase(name, passphrase string, stdTx Std
 		Sequence:      bldr.sequence,
 		Msg:           stdTx.GetMsgs()[0],
 		Memo:          stdTx.GetMemo(),
-		Fee:           stdTx.Fee,
 	})
 	if err != nil {
 		return
 	}
 
-	signedStdTx = NewStdTx(stdTx.GetMsgs()[0], stdTx.Fee, stdSignature, stdTx.GetMemo())
+	signedStdTx = newStdTx(stdTx.GetMsgs()[0], stdSignature, stdTx.GetMemo())
 	return
 }
 
@@ -322,7 +320,6 @@ func (bldr TxBuilder) SignStdTx(privKey secp256k1.PrivKeySecp256k1, stdTx StdTx,
 		Sequence:      bldr.sequence,
 		Memo:          stdTx.Memo,
 		Msg:           stdTx.Msg, // allow only one message
-		Fee:           stdTx.Fee,
 	}
 
 	sig, err := MakeSignature(privKey, signMsg)
@@ -330,7 +327,7 @@ func (bldr TxBuilder) SignStdTx(privKey secp256k1.PrivKeySecp256k1, stdTx StdTx,
 		return
 	}
 
-	signedStdTx = NewStdTx(signMsg.Msg, stdTx.Fee, sig, signMsg.Memo)
+	signedStdTx = newStdTx(signMsg.Msg, sig, signMsg.Memo)
 	return
 }
 

@@ -24,7 +24,7 @@ func TestStdTx(t *testing.T) {
 	msg := sdk.NewTestMsg(addr)
 	sig := StdSignature{}
 
-	tx := NewStdTx(msg, sig, "")
+	tx := newStdTx(msg, sig, "")
 	require.Equal(t, msg, tx.GetMsgs()[0])
 	require.Equal(t, sig, tx.GetSignatures()[0])
 
@@ -57,7 +57,7 @@ func TestDefaultTxEncoder(t *testing.T) {
 	encoder := DefaultTxEncoder(cdc)
 
 	msg := sdk.NewTestMsg(addr)
-	tx := NewStdTx(msg, StdSignature{}, "")
+	tx := newStdTx(msg, StdSignature{}, "")
 
 	cdcBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
 

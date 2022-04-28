@@ -14,7 +14,7 @@ func NewTestTx(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum uint64,
 		panic(err)
 	}
 
-	tx := NewStdTx(msg, sig, "")
+	tx := newStdTx(msg, sig, "")
 	return tx
 }
 
@@ -26,7 +26,7 @@ func NewTestTxWithFee(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum 
 		panic(err)
 	}
 
-	tx := NewStdTxWithFee(msg, fee, sig, "")
+	tx := newStdTxWithFee(msg, sig, "", fee)
 	return tx
 }
 
@@ -38,7 +38,7 @@ func NewTestTxWithMemo(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey, accNum
 		panic(err)
 	}
 
-	tx := NewStdTx(msg, sig, memo)
+	tx := newStdTx(msg, sig, memo)
 	return tx
 }
 
@@ -50,7 +50,7 @@ func NewTestTxWithMemoWithFee(ctx sdk.Context, msg sdk.Msg, priv crypto.PrivKey,
 		panic(err)
 	}
 
-	tx := NewStdTxWithFee(msg, fee, sig, memo)
+	tx := newStdTxWithFee(msg, sig, memo, fee)
 	return tx
 }
 
@@ -61,7 +61,7 @@ func NewTestTxWithSignBytes(msg sdk.Msg, priv crypto.PrivKey, accNum uint64, seq
 		panic(err)
 	}
 
-	tx := NewStdTx(msg, sig, memo)
+	tx := newStdTx(msg, sig, memo)
 	return tx
 }
 
@@ -72,7 +72,7 @@ func NewTestTxWithSignBytesWithFee(msg sdk.Msg, priv crypto.PrivKey, accNum uint
 		panic(err)
 	}
 
-	tx := NewStdTxWithFee(msg, fee, sig, memo)
+	tx := newStdTxWithFee(msg, sig, memo, fee)
 	return tx
 }
 

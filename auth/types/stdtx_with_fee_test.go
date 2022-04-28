@@ -19,7 +19,7 @@ func TestStdTxWithFee(t *testing.T) {
 	sig := StdSignature{}
 
 	fee := StdFee{}
-	tx := NewStdTxWithFee(msg, fee, sig, "")
+	tx := newStdTxWithFee(msg, sig, "", fee)
 	require.Equal(t, msg, tx.GetMsgs()[0])
 	require.Equal(t, sig, tx.GetSignatures()[0])
 
@@ -50,11 +50,11 @@ func TestDefaultTxWithFeeEncoder(t *testing.T) {
 	sdk.RegisterCodec(cdc)
 	RegisterCodec(cdc)
 	cdc.RegisterConcrete(sdk.TestMsg{}, "cosmos-sdk/Test", nil)
-	encoder := DefaultTxWithFeeEncoder(cdc)
+	encoder := DefaultTxEncoder(cdc)
 
 	fee := StdFee{}
 	msg := sdk.NewTestMsg(addr)
-	tx := NewStdTxWithFee(msg, fee, StdSignature{}, "")
+	tx := newStdTxWithFee(msg, StdSignature{}, "", fee)
 
 	cdcBytes, err := cdc.MarshalBinaryLengthPrefixed(tx)
 

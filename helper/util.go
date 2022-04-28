@@ -274,8 +274,8 @@ func GetTxEncoder(cdc *codec.Codec) sdk.TxEncoder {
 }
 
 // GetTxDecoder returns tx decoder
-func GetTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
-	return authTypes.DefaultTxDecoder(cdc)
+func GetTxDecoder[T sdk.Tx](cdc *codec.Codec) sdk.TxDecoder {
+	return authTypes.DefaultTxDecoder[T](cdc)
 }
 
 // GetStdTxBytes get tx bytes
@@ -696,7 +696,7 @@ func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLICon
 		return stdTx, err
 	}
 
-	return authTypes.NewStdTx(stdSignMsg.Msg, stdSignMsg.Fee, nil, stdSignMsg.Memo), nil
+	return authTypes.NewTx(stdSignMsg.Msg, nil, stdSignMsg.Memo, stdSignMsg.Fee), nil
 }
 
 // getSplitPoint returns the largest power of 2 less than length
