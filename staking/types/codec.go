@@ -11,6 +11,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgSignerUpdate{}, "staking/MsgSignerUpdate", nil)
 	cdc.RegisterConcrete(MsgValidatorExit{}, "staking/MsgValidatorExit", nil)
 	cdc.RegisterConcrete(MsgStakeUpdate{}, "staking/MsgStakeUpdate", nil)
+	cdc.RegisterConcrete(MsgStakeUpdates{}, "staking/MsgStakeUpdates", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

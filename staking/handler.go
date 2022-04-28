@@ -28,6 +28,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
 		case types.MsgStakeUpdate:
 			return HandleMsgStakeUpdate(ctx, msg, k, contractCaller)
+		case types.MsgStakeUpdates:
+			return HandleMsgStakeUpdates(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in staking module").Result()
 		}
@@ -264,6 +266,69 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
 		),
 	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// HandleMsgStakeUpdate handles stake update message
+func HandleMsgStakeUpdates(ctx sdk.Context, msg types.MsgStakeUpdates, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
+	for i, stakeUpdate := range msg {
+		k.Logger(ctx).Debug("✅ Validating stake update msg",
+			"validatorID", stakeUpdate.ID,
+			"newAmount", stakeUpdate.NewAmount,
+			"txHash", stakeUpdate.TxHash,
+			"logIndex", stakeUpdate.LogIndex,
+			"blockNumber", stakeUpdate.BlockNumber,
+		)
+
+		// pull validator from store
+		_, ok := k.GetValidatorFromValID(ctx, stakeUpdate.ID)
+		if !ok {
+			k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", stakeUpdate.ID)
+			return hmCommon.ErrNoValidator(k.Codespace()).Result()
+		}
+
+		// sequence id
+		blockNumber := new(big.Int).SetUint64(stakeUpdate.BlockNumber)
+		sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+		sequence.Add(sequence, new(big.Int).SetUint64(stakeUpdate.LogIndex))
+
+		// check if incoming tx is older
+		if k.HasStakingSequence(ctx, sequence.String()) {
+			k.Logger(ctx).Error("Older invalid tx found")
+			return hmCommon.ErrOldTx(k.Codespace()).Result()
+		}
+
+		// pull validator from store
+		validator, ok := k.GetValidatorFromValID(ctx, stakeUpdate.ID)
+		if !ok {
+			k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", stakeUpdate.ID)
+			return hmCommon.ErrNoValidator(k.Codespace()).Result()
+		}
+
+		if stakeUpdate.Nonce != validator.Nonce+1+uint64(i) {
+			k.Logger(ctx).Error("Incorrect validator nonce")
+			return hmCommon.ErrNonce(k.Codespace()).Result()
+		}
+
+		// set validator amount
+		_, err := helper.GetPowerFromAmount(stakeUpdate.NewAmount.BigInt())
+		if err != nil {
+			return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid newamount %v for validator %v", stakeUpdate.NewAmount, stakeUpdate.ID)).Result()
+		}
+
+		ctx.EventManager().EmitEvents(sdk.Events{
+			sdk.NewEvent(
+				types.EventTypeStakeUpdate,
+				sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+				sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+				sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(stakeUpdate.Nonce, 10)),
+			),
+		})
+	}
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

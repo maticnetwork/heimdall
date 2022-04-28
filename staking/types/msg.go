@@ -118,10 +118,6 @@ func (msg MsgValidatorJoin) GetNonce() uint64 {
 // Stake update
 //
 
-//
-// validator exit
-//
-
 var _ sdk.Msg = &MsgStakeUpdate{}
 
 // MsgStakeUpdate represents stake update
@@ -291,6 +287,51 @@ func (msg MsgSignerUpdate) GetSideSignBytes() []byte {
 // GetNonce Returns nonce
 func (msg MsgSignerUpdate) GetNonce() uint64 {
 	return msg.Nonce
+}
+
+//
+// Stake updates
+//
+
+var _ sdk.Msg = &MsgStakeUpdates{}
+
+type MsgStakeUpdates []MsgStakeUpdate
+
+func NewMsgStakeUpdates(stakeUpdates []MsgStakeUpdate) MsgStakeUpdates {
+	return stakeUpdates
+}
+
+func (msg MsgStakeUpdates) Type() string {
+	return "validator-stake-updates"
+}
+
+func (msg MsgStakeUpdates) Route() string {
+	return RouterKey
+}
+
+func (msg MsgStakeUpdates) GetSigners() []sdk.AccAddress {
+	signers := make([]sdk.AccAddress, 0)
+	for _, stakeUpdate := range msg {
+		signers = append(signers, hmTypes.HeimdallAddressToAccAddress(stakeUpdate.From))
+	}
+	return signers
+}
+
+func (msg MsgStakeUpdates) GetSignBytes() []byte {
+	b, err := cdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgStakeUpdates) ValidateBasic() sdk.Error {
+	for _, stakeUpdate := range msg {
+		if err := stakeUpdate.ValidateBasic(); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 //

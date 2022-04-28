@@ -32,6 +32,8 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 			return SideHandleMsgSignerUpdate(ctx, msg, k, contractCaller)
 		case types.MsgStakeUpdate:
 			return SideHandleMsgStakeUpdate(ctx, msg, k, contractCaller)
+		case types.MsgStakeUpdates:
+			return SideHandleMsgStakeUpdates(ctx, msg, k, contractCaller)
 		default:
 			return abci.ResponseDeliverSideTx{
 				Code: uint32(sdk.CodeUnknownRequest),
@@ -54,6 +56,8 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 			return PostHandleMsgSignerUpdate(ctx, k, msg, sideTxResult)
 		case types.MsgStakeUpdate:
 			return PostHandleMsgStakeUpdate(ctx, k, msg, sideTxResult)
+		case types.MsgStakeUpdates:
+			return PostHandleMsgStakeUpdates(ctx, k, msg, sideTxResult)
 		default:
 			return sdk.ErrUnknownRequest("Unrecognized Staking Msg type").Result()
 		}
@@ -301,6 +305,18 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 	}
 
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator exit msg")
+	result.Result = abci.SideTxResultType_Yes
+	return
+}
+
+func SideHandleMsgStakeUpdates(ctx sdk.Context, msg types.MsgStakeUpdates, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+	for _, stakeUpdate := range msg {
+		if response := SideHandleMsgStakeUpdate(ctx, stakeUpdate, k, contractCaller); response.Result == abci.SideTxResultType_Skip {
+			return response
+		}
+	}
+
+	k.Logger(ctx).Debug("✅ Succesfully validated External call for stake updates msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
@@ -649,6 +665,19 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
 		),
 	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// PostHandleMsgStakeUpdates handles stake updates message
+func PostHandleMsgStakeUpdates(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdates, sideTxResult abci.SideTxResultType) sdk.Result {
+	for _, stakeUpdate := range msg {
+		if response := PostHandleMsgStakeUpdate(ctx, k, stakeUpdate, sideTxResult); !response.IsOK() {
+			return response
+		}
+	}
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
