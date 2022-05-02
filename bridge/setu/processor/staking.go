@@ -18,7 +18,7 @@ import (
 )
 
 const (
-	defaultDelayDuration time.Duration = 10 * time.Second
+	defaultDelayDuration time.Duration = 15 * time.Second
 )
 
 // StakingProcessor - process staking related events
@@ -354,8 +354,12 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 	}
 
 	if currentNonce+1 != txnNonce {
-		sp.Logger.Error("Nonce for the given event not in order", "validatorId", validatorId, "currentNonce", currentNonce, "txnNonce", txnNonce)
-		return false, txnNonce - currentNonce, nil
+		diff := txnNonce - currentNonce
+		if diff > 10 {
+			diff = 10
+		}
+		sp.Logger.Error("Nonce for the given event not in order", "validatorId", validatorId, "currentNonce", currentNonce, "txnNonce", txnNonce, "delay", diff*uint64(defaultDelayDuration))
+		return false, diff, nil
 	}
 
 	stakingTxnCount, err := queryTxCount(sp.cliCtx, validatorId, currentHeight)
