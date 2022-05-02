@@ -356,7 +356,7 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 	if currentNonce+1 != txnNonce {
 		diff := txnNonce - currentNonce
 		if diff > 10 {
-			return false, 10, nil
+			diff = 10
 		}
 		sp.Logger.Error("Nonce for the given event not in order", "validatorId", validatorId, "currentNonce", currentNonce, "txnNonce", txnNonce, "delay", diff*uint64(defaultDelayDuration))
 		return false, diff, nil
