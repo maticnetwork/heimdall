@@ -146,7 +146,7 @@ func main() {
 	rootCmd.AddCommand(testnetCmd(ctx, cdc))
 
 	// prepare and add flags
-	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
+	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("/var/lib/heimdall"))
 	err := executor.Execute()
 	if err != nil {
 		// Note: Handle with #870
