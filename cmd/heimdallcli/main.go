@@ -112,7 +112,7 @@ func main() {
 	)
 
 	// prepare and add flags
-	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
+	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("/var/lib/heimdall"))
 	err := executor.Execute()
 	if err != nil {
 		// Note: Handle with #870
