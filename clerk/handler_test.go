@@ -113,7 +113,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 		suite.contractCaller = mocks.IContractCaller{}
 
 		const letterBytes = "abcdefABCDEF"
-		b := make([]byte, helper.MaxStateSyncSize+3)
+		b := make([]byte, helper.LegacyMaxStateSyncSize+3)
 		for i := range b {
 			b[i] = letterBytes[rand.Intn(len(letterBytes))]
 		}

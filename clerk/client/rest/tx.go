@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
 
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 	"github.com/maticnetwork/heimdall/helper"
@@ -50,7 +51,10 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// get ContractAddress
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
 
-		if len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
+		if util.GetBlockHeight(cliCtx) > helper.SpanOverrideBlockHeight && len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
+			RestLogger.Info(`Data is too large to process, Resetting to ""`, "id", req.ID)
+			req.Data = ""
+		} else if len(types.HexToHexBytes(req.Data)) > helper.LegacyMaxStateSyncSize {
 			RestLogger.Info(`Data is too large to process, Resetting to ""`, "id", req.ID)
 			req.Data = ""
 		}
