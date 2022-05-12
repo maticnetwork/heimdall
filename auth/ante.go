@@ -98,10 +98,9 @@ func NewAnteHandler(
 		feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
 
 		// new gas meter
-		newCtx = SetGasMeter(simulate, ctx, gasForTx)
+		newCtx = SetGasMeter(simulate, ctx, params.TxSizeCostPerByte*sdk.Gas(len(ctx.TxBytes())))
 		txGas := params.TxSizeCostPerByte * sdk.Gas(len(newCtx.TxBytes()))
 		fmt.Println("txGas: ", txGas)
-		newCtx = SetGasMeter(simulate, ctx, txGas)
 		newCtx.GasMeter().ConsumeGas(txGas, "txSize")
 		fmt.Println("newCtx.GasMeter().GasConsumed(): ", newCtx.GasMeter().GasConsumed())
 
