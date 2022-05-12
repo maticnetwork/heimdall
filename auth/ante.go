@@ -89,7 +89,7 @@ func NewAnteHandler(
 		params := ak.GetParams(ctx)
 
 		// gas for tx
-		gasForTx := params.TxSizeCostPerByte * sdk.Gas(len(ctx.TxBytes())) // stdTx.Fee.Gas
+		gasForTx := params.TxSizeCostPerByte*sdk.Gas(len(ctx.TxBytes())) + params.SigVerifyCostSecp256k1 // stdTx.Fee.Gas
 
 		amount, ok := sdk.NewIntFromString(params.TxFees)
 		if !ok {
@@ -100,7 +100,6 @@ func NewAnteHandler(
 		// new gas meter
 		newCtx = SetGasMeter(simulate, ctx, gasForTx)
 		fmt.Println("gasForTx: ", gasForTx)
-		newCtx.GasMeter().ConsumeGas(gasForTx, "txSize")
 
 		// AnteHandlers must have their own defer/recover in order for the BaseApp
 		// to know how much gas was used! This is because the GasMeter is created in
