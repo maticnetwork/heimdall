@@ -89,9 +89,14 @@ func NewAnteHandler(
 		params := ak.GetParams(ctx)
 
 		// gas for tx
-		gasForTx := params.TxSizeCostPerByte*sdk.Gas(len(ctx.TxBytes())) + params.SigVerifyCostSecp256k1 // stdTx.Fee.Gas
+		gasForTx := params.MaxTxGas // stdTx.Fee.Gas
+		gas := params.TxSizeCostPerByte*sdk.Gas(len(ctx.TxBytes())) + params.SigVerifyCostSecp256k1
 
-		amount, ok := sdk.NewIntFromString(params.TxFees)
+		glDec := sdk.NewDec(int64(gas))
+		fee := glDec
+		requiredFees := sdk.NewCoin(authTypes.FeeToken, fee.Ceil().RoundInt())
+
+		amount, ok := sdk.NewIntFromString(requiredFees.Amount.String())
 		if !ok {
 			return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
 		}
