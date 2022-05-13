@@ -365,7 +365,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		// Get ack count
 		//
 
-		ackcountBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
+		ackcountBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -406,13 +406,42 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoint found"); !ok {
-			return
+		var checkpointUnmarshal hmTypes.Checkpoint
+		json.Unmarshal(res, &checkpointUnmarshal)
+
+		checkpointWithID := &CheckpointWithID{
+			ID:         ackCount,
+			Proposer:   checkpointUnmarshal.Proposer,
+			StartBlock: checkpointUnmarshal.StartBlock,
+			EndBlock:   checkpointUnmarshal.EndBlock,
+			RootHash:   checkpointUnmarshal.RootHash,
+			BorChainID: checkpointUnmarshal.BorChainID,
+			TimeStamp:  checkpointUnmarshal.TimeStamp,
 		}
 
-		rest.PostProcessResponse(w, cliCtx, res)
+		resWithID, err := json.Marshal(checkpointWithID)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		}
+
+		// error if no checkpoint found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
+			return
+		}
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, resWithID)
 	}
+}
+
+//Temporary Checkpoint struct to store the Checkpoint ID
+type CheckpointWithID struct {
+	ID         uint64                  `json:"id"`
+	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
+	StartBlock uint64                  `json:"start_block"`
+	EndBlock   uint64                  `json:"end_block"`
+	RootHash   hmTypes.HeimdallHash    `json:"root_hash"`
+	BorChainID string                  `json:"bor_chain_id"`
+	TimeStamp  uint64                  `json:"timestamp"`
 }
 
 // get checkpoint by checkppint number from store
@@ -438,18 +467,37 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// query checkpoint
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoint found"); !ok {
-			return
+		var checkpointUnmarshal hmTypes.Checkpoint
+		json.Unmarshal(res, &checkpointUnmarshal)
+
+		checkpointWithID := &CheckpointWithID{
+			ID:         number,
+			Proposer:   checkpointUnmarshal.Proposer,
+			StartBlock: checkpointUnmarshal.StartBlock,
+			EndBlock:   checkpointUnmarshal.EndBlock,
+			RootHash:   checkpointUnmarshal.RootHash,
+			BorChainID: checkpointUnmarshal.BorChainID,
+			TimeStamp:  checkpointUnmarshal.TimeStamp,
 		}
 
-		rest.PostProcessResponse(w, cliCtx, res)
+		resWithID, err := json.Marshal(checkpointWithID)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+		}
+
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
+			return
+		}
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, resWithID)
+
 	}
 }
 
@@ -483,7 +531,7 @@ func checkpointListhandlerFn(
 		}
 
 		// query checkpoint
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointList), queryParams)
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointList), queryParams)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -493,7 +541,7 @@ func checkpointListhandlerFn(
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoints found"); !ok {
 			return
 		}
-
+		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

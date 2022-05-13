@@ -161,7 +161,11 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 		chainParams.StateSenderAddress.EthAddress(),
 	}}
 	// get logs from rootchain by filter
-	logs, err := rl.contractConnector.MainChainClient.FilterLogs(context.Background(), query)
+
+	ethClientTimeout := rl.contractConnector.MainChainTimeout
+	ctx, cancel := context.WithTimeout(context.Background(), ethClientTimeout)
+	defer cancel()
+	logs, err := rl.contractConnector.MainChainClient.FilterLogs(ctx, query)
 	if err != nil {
 		rl.Logger.Error("Error while filtering logs", "error", err)
 		return

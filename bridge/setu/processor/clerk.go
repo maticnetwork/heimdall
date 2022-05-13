@@ -4,7 +4,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -69,7 +69,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.ClerkEvent); isOld {
 			cp.Logger.Info("Ignoring task to send deposit to heimdall as already processed",
 				"event", eventName,
 				"id", event.Id,
@@ -95,7 +95,10 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"blockNumber", vLog.BlockNumber,
 		)
 
-		if len(event.Data) > helper.MaxStateSyncSize {
+		if util.GetBlockHeight(cp.cliCtx) > helper.SpanOverrideBlockHeight && len(event.Data) > helper.MaxStateSyncSize {
+			cp.Logger.Info(`Data is too large to process, Resetting to ""`, "data", hex.EncodeToString(event.Data))
+			event.Data = hmTypes.HexToHexBytes("")
+		} else if len(event.Data) > helper.LegacyMaxStateSyncSize {
 			cp.Logger.Info(`Data is too large to process, Resetting to ""`, "data", hex.EncodeToString(event.Data))
 			event.Data = hmTypes.HexToHexBytes("")
 		}
@@ -111,6 +114,14 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			chainParams.BorChainID,
 		)
 
+		// Check if we have the same transaction in mempool or not
+		// Don't drop the transaction. Keep retrying after `util.RetryStateSyncTaskDelay = 24 seconds`,
+		// until the transaction in mempool is processed or cancelled.
+		if inMempool, _ := cp.checkTxAgainstMempool(msg); inMempool {
+			cp.Logger.Info("Similar transaction already in mempool, retrying in sometime", "event", eventName, "retry delay", util.RetryStateSyncTaskDelay)
+			return tasks.NewErrRetryTaskLater("transaction already in mempool", util.RetryStateSyncTaskDelay)
+		}
+
 		// return broadcast to heimdall
 		if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
 			cp.Logger.Error("Error while broadcasting clerk Record to heimdall", "error", err)
@@ -118,35 +129,6 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		}
 	}
 	return nil
-}
-
-// isOldTx  checks if tx is already processed or not
-func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
-	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
-	}
-
-	endpoint := helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
-	url, err := util.CreateURLWithQuery(endpoint, queryParam)
-	if err != nil {
-		cp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
-		return false, err
-	}
-
-	res, err := helper.FetchFromAPI(cp.cliCtx, url)
-	if err != nil {
-		cp.Logger.Error("Error fetching tx status", "url", url, "error", err)
-		return false, err
-	}
-
-	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
-		cp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
-		return false, err
-	}
-
-	return status, nil
 }
 
 //

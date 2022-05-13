@@ -67,8 +67,13 @@ const (
 	BroadcastAsync = "async"
 	// --
 
+	// RPC Endpoints
 	DefaultMainRPCUrl = "http://localhost:9545"
 	DefaultBorRPCUrl  = "http://localhost:8545"
+
+	// RPC Timeouts
+	DefaultEthRPCTimeout = 5 * time.Second
+	DefaultBorRPCTimeout = 5 * time.Second
 
 	// Services
 
@@ -101,8 +106,12 @@ const (
 
 	secretFilePerm = 0600
 
+	// Legacy value - DO NOT CHANGE
 	// Maximum allowed event record data size
-	MaxStateSyncSize = 100000
+	LegacyMaxStateSyncSize = 100000
+
+	// New max state sync size after hardfork
+	MaxStateSyncSize = 30000
 )
 
 var (
@@ -124,6 +133,9 @@ type Configuration struct {
 	EthRPCUrl        string `mapstructure:"eth_rpc_url"`        // RPC endpoint for main chain
 	BorRPCUrl        string `mapstructure:"bor_rpc_url"`        // RPC endpoint for bor chain
 	TendermintRPCUrl string `mapstructure:"tendermint_rpc_url"` // tendemint node url
+
+	EthRPCTimeout time.Duration `mapstructure:"eth_rpc_timeout"` // timeout for eth rpc
+	BorRPCTimeout time.Duration `mapstructure:"bor_rpc_timeout"` // timeout for bor rpc
 
 	AmqpURL           string `mapstructure:"amqp_url"`             // amqp url
 	HeimdallServerURL string `mapstructure:"heimdall_rest_server"` // heimdall server url
@@ -245,6 +257,19 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		log.Fatalln("Unable to read flag values. Check log for details.", "Error", err)
 	}
 
+	// perform checks for timeout
+	if conf.EthRPCTimeout == 0 {
+		// fallback to default
+		Logger.Debug("Invalid ETH RPC timeout provided, falling back to default value", "timeout", DefaultEthRPCTimeout)
+		conf.EthRPCTimeout = DefaultEthRPCTimeout
+	}
+
+	if conf.BorRPCTimeout == 0 {
+		// fallback to default
+		Logger.Debug("Invalid BOR RPC timeout provided, falling back to default value", "timeout", DefaultBorRPCTimeout)
+		conf.BorRPCTimeout = DefaultBorRPCTimeout
+	}
+
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
 		log.Fatalln("Unable to dial via ethClient", "URL=", conf.EthRPCUrl, "chain=eth", "Error", err)
 	}
@@ -280,6 +305,9 @@ func GetDefaultHeimdallConfig() Configuration {
 		EthRPCUrl:        DefaultMainRPCUrl,
 		BorRPCUrl:        DefaultBorRPCUrl,
 		TendermintRPCUrl: DefaultTendermintNodeURL,
+
+		EthRPCTimeout: DefaultEthRPCTimeout,
+		BorRPCTimeout: DefaultBorRPCTimeout,
 
 		AmqpURL:           DefaultAmqpURL,
 		HeimdallServerURL: DefaultHeimdallServerURL,

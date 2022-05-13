@@ -11,6 +11,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -101,7 +102,10 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("data should be hex string")
 			}
 
-			if len(data) > helper.MaxStateSyncSize {
+			if util.GetBlockHeight(cliCtx) > helper.SpanOverrideBlockHeight && len(data) > helper.MaxStateSyncSize {
+				logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
+				data = hmTypes.HexToHexBytes("")
+			} else if len(data) > helper.LegacyMaxStateSyncSize {
 				logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
 				data = hmTypes.HexToHexBytes("")
 			}
