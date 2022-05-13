@@ -8,13 +8,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/tendermint/tendermint/libs/log"
+
 	"github.com/maticnetwork/heimdall/bank"
 	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 var (
@@ -145,7 +146,6 @@ func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.Div
 
 // GetDividendAccountByAddress will return DividendAccount of user
 func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address hmTypes.HeimdallAddress) (dividendAccount hmTypes.DividendAccount, err error) {
-
 	// check if dividend account exists
 	if !k.CheckIfDividendAccountExists(ctx, address) {
 		return dividendAccount, errors.New("Dividend Account not found")

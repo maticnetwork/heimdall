@@ -10,6 +10,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/bor/common"
+
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"

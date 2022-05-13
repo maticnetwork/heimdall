@@ -7,13 +7,14 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+	tmTypes "github.com/tendermint/tendermint/types"
+
 	"github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 // NewSideTxHandler returns a side handler for "topup" type messages.
@@ -45,7 +46,6 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 }
 
 func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-
 	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", uint64(msg.LogIndex),
@@ -116,7 +116,6 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 }
 
 func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, sideTxResult abci.SideTxResultType) sdk.Result {
-
 	// Skip handler if clerk is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new clerk since side-tx didn't get yes votes")

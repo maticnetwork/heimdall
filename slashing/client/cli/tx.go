@@ -87,7 +87,6 @@ $ <appcli> tx slashing unjail --from mykey
 }
 
 func GetCmdTick(cdc *codec.Codec) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "tick",
 		Short: "send slash tick when total slashedamount exceeds limit",
@@ -129,7 +128,6 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 }
 
 func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "tick-ack",
 		Short: "send tick ack",

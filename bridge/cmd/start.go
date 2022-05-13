@@ -16,6 +16,7 @@ import (
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/listener"
@@ -32,12 +33,11 @@ const (
 
 // GetStartCmd returns the start command to start bridge
 func GetStartCmd() *cobra.Command {
-	var logger = helper.Logger.With("module", "bridge/cmd/")
+	logger := helper.Logger.With("module", "bridge/cmd/")
 	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			// create codec
 			cdc := app.MakeCodec()
 			// queue connector & http client
@@ -120,7 +120,8 @@ func GetStartCmd() *cobra.Command {
 			// wait for all processes
 			wg.Add(len(services))
 			wg.Wait()
-		}}
+		},
+	}
 
 	// log level
 	startCmd.Flags().String(logLevel, "info", "Log level for bridge")

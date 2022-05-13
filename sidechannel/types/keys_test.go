@@ -4,8 +4,9 @@ import (
 	"encoding/binary"
 	"testing"
 
-	"github.com/maticnetwork/heimdall/sidechannel/types"
 	"github.com/stretchr/testify/require"
+
+	"github.com/maticnetwork/heimdall/sidechannel/types"
 )
 
 func TestTxStoreKey(t *testing.T) {

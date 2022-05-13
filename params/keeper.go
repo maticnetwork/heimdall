@@ -6,9 +6,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/tendermint/tendermint/libs/log"
+
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/params/types"
-	"github.com/tendermint/tendermint/libs/log"
 )
 
 // Keeper of the global paramstore

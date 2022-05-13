@@ -42,7 +42,6 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 // 5. Also update the jailStatus of Validator
 // 6. emit event TickConfirmation
 func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating tick msg",
 		"msgID", msg.ID,
 		"SlashInfoBytes", msg.SlashingInfoBytes.String(),
@@ -105,7 +104,6 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 // Validators must submit a transaction to unjail itself after
 // having been jailed (and thus unbonded) for downtime
 func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating unjail msg",
 		"validatorId", msg.ID,
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
@@ -146,7 +144,6 @@ func handleMsgUnjail(ctx sdk.Context, msg types.MsgUnjail, k Keeper, contractCal
 	2. flush the last tick slashing info
 */
 func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating TickAck msg",
 		"ID", msg.ID,
 		"SlashedAmount", msg.SlashedAmount,

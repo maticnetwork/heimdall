@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
+
 	errs "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
@@ -21,11 +22,12 @@ import (
 
 	"github.com/maticnetwork/heimdall/topup"
 
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -365,5 +367,4 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 
 	result := suite.handler(ctx, msgValJoin)
 	require.True(t, result.IsOK(), "expected validator stake update to be ok, got %v", result)
-
 }

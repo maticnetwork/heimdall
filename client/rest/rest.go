@@ -25,7 +25,6 @@ func WriteGenerateStdTxResponse(
 	br hmRest.BaseReq,
 	msgs []sdk.Msg,
 ) {
-
 	gasAdj, ok := rest.ParseFloat64OrReturnBadRequest(w, br.GasAdjustment, client.DefaultGasAdjustment)
 	if !ok {
 		return
@@ -73,6 +72,7 @@ func WriteGenerateStdTxResponse(
 	}
 
 	w.Header().Set("Content-Type", "application/json")
+
 	if _, err := w.Write(output); err != nil {
 		log.Printf("could not write response: %v", err)
 	}

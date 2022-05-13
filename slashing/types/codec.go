@@ -9,7 +9,6 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgUnjail{}, "slashing/MsgUnjail", nil)
 	cdc.RegisterConcrete(MsgTick{}, "slashing/MsgTick", nil)
 	cdc.RegisterConcrete(MsgTickAck{}, "slashing/MsgTickAck", nil)
-
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

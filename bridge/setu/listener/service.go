@@ -2,11 +2,12 @@ package listener
 
 import (
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/tendermint/tendermint/libs/common"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/tendermint/tendermint/libs/common"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
 const (
@@ -28,8 +29,7 @@ type ListenerService struct {
 
 // NewListenerService returns new service object for listneing to events
 func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
-
-	var logger = util.Logger().With("service", ListenerServiceStr)
+	logger := util.Logger().With("service", ListenerServiceStr)
 
 	// creating listener object
 	listenerService := &ListenerService{}
@@ -78,5 +78,4 @@ func (listenerService *ListenerService) OnStop() {
 	}
 
 	listenerService.Logger.Info("all listeners stopped")
-
 }

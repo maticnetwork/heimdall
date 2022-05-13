@@ -264,7 +264,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
 	}
 
-	//update signer in prev Validator
+	// update signer in prev Validator
 	validator.Signer = newSigner
 	validator.PubKey = newPubkey
 	validator.VotingPower = validatorPower
@@ -477,7 +477,6 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 
 // unjail a validator
 func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
-
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
@@ -495,5 +494,4 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
 	return
-
 }

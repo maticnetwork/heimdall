@@ -9,6 +9,17 @@ run:
   skip-files:
     - gen_.*.go
     - .*_gen.go
+    - gov/simulation/msgs.go
+    - gov/querier_test.go
+    - gov/genesis_test.go
+    - gov/keeper_test.go
+    - gov/querier_test.go
+    - gov/tally_test.go
+    - gov/types/msgs_test.go
+    - gov/types/keys_test.go
+    - params/client/utils/utils_test.go
+    - params/types/proposal_test.go
+    - slashing/simulation/decoder_test.go
 
 linters:
   enable:
@@ -48,11 +59,11 @@ linters:
     - unparam
     - wsl
     - errorlint
+    - gofumpt
 
 linters-settings:
   gofmt:
     simplify: true
-    auto-fix: false
 
   goconst:
     min-len: 3 # minimum length of string constant
@@ -63,7 +74,7 @@ linters-settings:
     local-prefixes: github.com/maticnetwork/heimdall
   
   nestif:
-    min-complexity: 3
+    min-complexity: 4
   
   prealloc:
     for-loops: true

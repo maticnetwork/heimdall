@@ -5,6 +5,7 @@ import (
 
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
@@ -44,7 +45,7 @@ func (fp *FeeProcessor) RegisterTasks() {
 
 // processTopupFeeEvent - processes topup fee event
 func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string) error {
-	var vLog = types.Log{}
+	vLog := types.Log{}
 	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		fp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err

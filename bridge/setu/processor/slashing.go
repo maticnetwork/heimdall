@@ -10,6 +10,7 @@ import (
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
@@ -52,19 +53,18 @@ func (sp *SlashingProcessor) RegisterTasks() {
 	sp.queueConnector.Server.RegisterTask("sendTickToRootchain", sp.sendTickToRootchain)
 	sp.queueConnector.Server.RegisterTask("sendTickAckToHeimdall", sp.sendTickAckToHeimdall)
 	sp.queueConnector.Server.RegisterTask("sendUnjailToHeimdall", sp.sendUnjailToHeimdall)
-
 }
 
 // processSlashLimitEvent - processes slash limit event
 func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight int64) (err error) {
 	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
-	var event = sdk.StringEvent{}
+	event := sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
 
-	//Get latestSlashInoBytes from HeimdallServer
+	// Get latestSlashInoBytes from HeimdallServer
 	latestSlashInoBytes, err := sp.fetchLatestSlashInoBytes()
 	if err != nil {
 		sp.Logger.Info("Error while fetching latestSlashInoBytes from HeimdallServer", "err", err)
@@ -72,7 +72,7 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 	}
 
 	var tickCount uint64
-	//Get tickCount from HeimdallServer
+	// Get tickCount from HeimdallServer
 	if tickCount, err = sp.fetchTickCount(); err != nil {
 		sp.Logger.Info("Error while fetching tick count from HeimdallServer", "err", err)
 		return err
@@ -110,7 +110,7 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 */
 func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight int64) (err error) {
 	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
-	var event = sdk.StringEvent{}
+	event := sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
@@ -173,7 +173,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 sendTickAckToHeimdall - sends tick ack msg to heimdall
 */
 func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes string) error {
-	var vLog = types.Log{}
+	vLog := types.Log{}
 	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
@@ -223,7 +223,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 sendUnjailToHeimdall - sends unjail msg to heimdall
 */
 func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes string) error {
-	var vLog = types.Log{}
+	vLog := types.Log{}
 	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err

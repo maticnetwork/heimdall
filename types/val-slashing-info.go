@@ -15,7 +15,6 @@ type ValidatorSlashingInfo struct {
 }
 
 func NewValidatorSlashingInfo(id ValidatorID, slashedAmount uint64, isJailed bool) ValidatorSlashingInfo {
-
 	return ValidatorSlashingInfo{
 		ID:            id,
 		SlashedAmount: slashedAmount,

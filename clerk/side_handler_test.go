@@ -13,6 +13,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	ethTypes "github.com/maticnetwork/bor/core/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/clerk"
 	"github.com/maticnetwork/heimdall/clerk/types"
@@ -225,7 +226,6 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecord() {
 		require.Nil(t, storedEventRecord)
 		require.Error(t, err)
 	})
-
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandler() {

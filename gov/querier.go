@@ -7,6 +7,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/gov/types"
 )
 
@@ -166,7 +167,6 @@ func queryTally(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Ke
 func queryVotes(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params types.QueryProposalParams
 	err := keeper.cdc.UnmarshalJSON(req.Data, &params)
-
 	if err != nil {
 		return nil, sdk.ErrUnknownRequest(sdk.AppendMsgToErr("incorrectly formatted request data", err.Error()))
 	}

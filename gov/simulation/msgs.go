@@ -51,7 +51,6 @@ func SimulateSubmittingVotingAndSlashingForProposal(k gov.Keeper, contentSim Con
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account,
 	) (opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
-
 		// 1) submit proposal now
 		sender := simulation.RandomAcc(r, accs)
 		content := contentSim(r, app, ctx, accs)
@@ -128,8 +127,8 @@ func simulationCreateMsgSubmitProposal(r *rand.Rand, c govTypes.Content, s simul
 // SimulateMsgDeposit generates a MsgDeposit with random values.
 func SimulateMsgDeposit(k gov.Keeper) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account) (
-		opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
-
+		opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error,
+	) {
 		acc := simulation.RandomAcc(r, accs)
 		proposalID, ok := randomProposalID(r, k, ctx)
 		if !ok {
@@ -159,8 +158,8 @@ func SimulateMsgVote(k gov.Keeper) simulation.Operation {
 // nolint: unparam
 func operationSimulateMsgVote(k gov.Keeper, acc simulation.Account, proposalID uint64) simulation.Operation {
 	return func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accs []simulation.Account) (
-		opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error) {
-
+		opMsg simulation.OperationMsg, fOps []simulation.FutureOperation, err error,
+	) {
 		if acc.Equals(simulation.Account{}) {
 			acc = simulation.RandomAcc(r, accs)
 		}

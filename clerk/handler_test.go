@@ -123,7 +123,6 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 		err := msg.ValidateBasic()
 		require.Error(t, err)
 	})
-
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {

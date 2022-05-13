@@ -11,6 +11,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/bor/common"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -35,7 +36,6 @@ type ProposeSpanReq struct {
 
 func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		// read req from request
 		var req ProposeSpanReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {

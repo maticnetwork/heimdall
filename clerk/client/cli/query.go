@@ -8,9 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/maticnetwork/heimdall/helper"
 
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
@@ -68,7 +69,6 @@ func GetStateRecord(cdc *codec.Codec) *cobra.Command {
 				fmt.Sprintf("custom/%s/%s", clerkTypes.QuerierRoute, clerkTypes.QueryRecord),
 				queryParams,
 			)
-
 			if err != nil {
 				return err
 			}

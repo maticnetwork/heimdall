@@ -8,6 +8,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	borCommon "github.com/maticnetwork/bor/common"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -18,7 +20,6 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"

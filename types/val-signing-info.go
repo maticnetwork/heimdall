@@ -27,7 +27,6 @@ func NewValidatorSigningInfo(
 	valID ValidatorID, startHeight, indexOffset int64,
 	missedBlocksCounter int64,
 ) ValidatorSigningInfo {
-
 	return ValidatorSigningInfo{
 		ValID:       valID,
 		StartHeight: startHeight,
@@ -55,16 +54,19 @@ func MarshallValSigningInfo(cdc *codec.Codec, valSigningInfo ValidatorSigningInf
 	if err != nil {
 		return bz, err
 	}
+
 	return bz, nil
 }
 
 // amono unmarshall validator
 func UnmarshallValSigningInfo(cdc *codec.Codec, value []byte) (ValidatorSigningInfo, error) {
 	var valSigningInfo ValidatorSigningInfo
+
 	// unmarshall validator and return
 	err := cdc.UnmarshalBinaryBare(value, &valSigningInfo)
 	if err != nil {
 		return valSigningInfo, err
 	}
+
 	return valSigningInfo, nil
 }

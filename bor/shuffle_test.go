@@ -8,8 +8,9 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 func TestShuffleList(t *testing.T) {

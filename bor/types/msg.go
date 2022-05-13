@@ -3,6 +3,7 @@ package types
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 

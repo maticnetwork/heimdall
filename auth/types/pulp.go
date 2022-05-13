@@ -22,14 +22,17 @@ type Pulp struct {
 	typeInfos map[string]reflect.Type
 }
 
-var once sync.Once
-var pulp *Pulp
+var (
+	once sync.Once
+	pulp *Pulp
+)
 
 // GetPulpInstance gets new pulp codec
 func GetPulpInstance() *Pulp {
 	once.Do(func() {
 		pulp = NewPulp()
 	})
+
 	return pulp
 }
 
@@ -37,6 +40,7 @@ func GetPulpInstance() *Pulp {
 func NewPulp() *Pulp {
 	p := &Pulp{}
 	p.typeInfos = make(map[string]reflect.Type)
+
 	return p
 }
 
@@ -61,6 +65,7 @@ func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 // EncodeToBytes encodes msg to bytes
 func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
 	msg := tx.GetMsgs()[0]
+
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err
@@ -82,6 +87,7 @@ func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 	}
 
 	rtype := p.typeInfos[hex.EncodeToString(data[:PulpHashLength])]
+
 	newMsg := reflect.New(rtype).Interface()
 	if err := rlp.DecodeBytes(txRaw.Msg[:], newMsg); err != nil {
 		return nil, err
@@ -97,5 +103,6 @@ func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 		Signature: txRaw.Signature,
 		Memo:      txRaw.Memo,
 	}
+
 	return result, nil
 }

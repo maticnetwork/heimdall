@@ -33,7 +33,6 @@ func NewMsgEventRecord(
 	contractAddress types.HeimdallAddress,
 	data types.HexBytes,
 	chainID string,
-
 ) MsgEventRecord {
 	return MsgEventRecord{
 		From:            from,

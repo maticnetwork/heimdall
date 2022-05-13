@@ -13,12 +13,13 @@ import (
 	"github.com/maticnetwork/bor/eth"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
-	"github.com/maticnetwork/heimdall/file"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+
+	"github.com/maticnetwork/heimdall/file"
 
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -73,7 +74,7 @@ const (
 
 	DefaultBorChainID string = "15001"
 
-	secretFilePerm = 0600
+	secretFilePerm = 0o600
 
 	// Legacy value - DO NOT CHANGE
 	// Maximum allowed event record data size
@@ -127,12 +128,16 @@ type Configuration struct {
 var conf Configuration
 
 // MainChainClient stores eth clie nt for Main chain Network
-var mainChainClient *ethclient.Client
-var mainRPCClient *rpc.Client
+var (
+	mainChainClient *ethclient.Client
+	mainRPCClient   *rpc.Client
+)
 
 // MaticClient stores eth/rpc client for Matic Network
-var maticClient *ethclient.Client
-var maticRPCClient *rpc.Client
+var (
+	maticClient    *ethclient.Client
+	maticRPCClient *rpc.Client
+)
 
 var maticEthClient *eth.EthAPIBackend
 

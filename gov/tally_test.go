@@ -232,7 +232,6 @@ func TestTallyOnlyValidatorsVetoed(t *testing.T) {
 	require.False(t, passes)
 	require.True(t, burnDeposits)
 	require.False(t, tallyResults.Equals(EmptyTallyResult()))
-
 }
 
 func TestTallyOnlyValidatorsAbstainPasses(t *testing.T) {

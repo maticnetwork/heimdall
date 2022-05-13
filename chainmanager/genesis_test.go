@@ -4,11 +4,12 @@ import (
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/chainmanager/types"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 // GenesisTestSuite integrate test suite context object
@@ -29,7 +30,7 @@ func TestGenesisTestSuite(t *testing.T) {
 	suite.Run(t, new(GenesisTestSuite))
 }
 
-//TestInitExportGenesis test import and export genesis state
+// TestInitExportGenesis test import and export genesis state
 func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	params := types.DefaultParams()
@@ -41,5 +42,4 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 
 	actualParams := chainmanager.ExportGenesis(ctx, app.ChainKeeper)
 	require.Equal(t, genesisState, actualParams)
-
 }

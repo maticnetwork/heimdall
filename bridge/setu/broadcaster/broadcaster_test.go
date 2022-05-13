@@ -5,12 +5,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/maticnetwork/heimdall/app"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 )
 
 // Parallel test - to check BroadcastToHeimdall syncronization

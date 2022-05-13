@@ -11,9 +11,10 @@ import (
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // NewSideTxHandler returns a side handler for "span" type messages.

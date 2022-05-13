@@ -20,7 +20,6 @@ type valInput struct {
 }
 
 func TestNewValidator(t *testing.T) {
-
 	// valCase created so as to pass it to assertPanics func,
 	// ideally would like to get rid of this and pass the function directly
 
@@ -69,14 +68,14 @@ func TestSortValidatorByAddress(t *testing.T) {
 	}{
 		{
 			in: []Validator{
-				Validator{Signer: BytesToHeimdallAddress([]byte("3"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("2"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("1"))},
+				{Signer: BytesToHeimdallAddress([]byte("3"))},
+				{Signer: BytesToHeimdallAddress([]byte("2"))},
+				{Signer: BytesToHeimdallAddress([]byte("1"))},
 			},
 			out: []Validator{
-				Validator{Signer: BytesToHeimdallAddress([]byte("1"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("2"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("3"))},
+				{Signer: BytesToHeimdallAddress([]byte("1"))},
+				{Signer: BytesToHeimdallAddress([]byte("2"))},
+				{Signer: BytesToHeimdallAddress([]byte("3"))},
 			},
 			msg: "reverse sorting of validator objects",
 		},

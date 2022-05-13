@@ -6,13 +6,14 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 type GenesisTestSuite struct {
@@ -80,5 +81,4 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	require.Equal(t, genesisState.LastNoACK, actualParams.LastNoACK)
 	require.Equal(t, genesisState.Params, actualParams.Params)
 	require.LessOrEqual(t, len(actualParams.Checkpoints), len(genesisState.Checkpoints))
-
 }

@@ -14,6 +14,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/bor/common"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"

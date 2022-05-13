@@ -14,6 +14,7 @@ import (
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
@@ -75,7 +76,6 @@ type BaseListener struct {
 
 // NewBaseListener creates a new BaseListener.
 func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
-
 	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
@@ -202,7 +202,6 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 
 // OnStop stops all necessary go routines
 func (bl *BaseListener) Stop() {
-
 	// cancel subscription if any
 	if bl.cancelSubscription != nil {
 		bl.cancelSubscription()

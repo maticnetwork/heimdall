@@ -7,14 +7,16 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/staking"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
-	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 // GenesisTestSuite integrate test suite context object
@@ -44,7 +46,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	stakingSequence := make([]string, n)
 	accounts := simulation.RandomAccounts(r1, n)
 
-	for i, _ := range stakingSequence {
+	for i := range stakingSequence {
 		stakingSequence[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
 	}
 

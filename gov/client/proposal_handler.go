@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+
 	"github.com/maticnetwork/heimdall/gov/client/rest"
 )
 

@@ -11,12 +11,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	bor "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/core/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/libs/log"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // TxBroadcaster uses to broadcast transaction to each chain
@@ -43,7 +45,6 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	account, err := util.GetAccount(cliCtx, address)
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
-
 	}
 
 	txBroadcaster := TxBroadcaster{
@@ -110,7 +111,6 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 
 	// get auth
 	auth, err := helper.GenerateAuthObj(maticClient, *msg.To, msg.Data)
-
 	if err != nil {
 		tb.logger.Error("Error generating auth object", "error", err)
 		return err

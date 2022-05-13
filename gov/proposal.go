@@ -93,7 +93,6 @@ func (keeper Keeper) GetProposals(ctx sdk.Context) (proposals types.Proposals) {
 // status will filter proposals by status
 // numLatest will fetch a specified number of the most recent proposals, or 0 for all proposals
 func (keeper Keeper) GetProposalsFiltered(ctx sdk.Context, voterID hmTypes.ValidatorID, depositorID hmTypes.ValidatorID, status types.ProposalStatus, numLatest uint64) []types.Proposal {
-
 	maxProposalID, err := keeper.GetProposalID(ctx)
 	if err != nil {
 		return []types.Proposal{}

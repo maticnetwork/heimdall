@@ -10,9 +10,7 @@ import (
 	"github.com/maticnetwork/bor/rlp"
 )
 
-var (
-	_ sdk.Tx = (*StdTx)(nil)
-)
+var _ sdk.Tx = (*StdTx)(nil)
 
 // StdTx is a standard way to wrap a Msg with Fee and Signatures.
 type StdTx struct {
@@ -207,7 +205,7 @@ func (fee StdFee) GasPrices() sdk.DecCoins {
 // DefaultTxDecoder logic for standard transaction decoding
 func DefaultTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
-		var tx = StdTx{}
+		var tx StdTx
 
 		if len(txBytes) == 0 {
 			return nil, sdk.ErrTxDecode("txBytes are empty")

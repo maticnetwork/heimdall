@@ -10,15 +10,16 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // QuerierTestSuite integrate test suite context object
@@ -105,7 +106,6 @@ func (suite *QuerierTestSuite) TestQueryAckCount() {
 
 	actualAckcount, _ := strconv.ParseUint(string(res), 0, 64)
 	require.Equal(t, actualAckcount, ackCount)
-
 }
 
 func (suite *QuerierTestSuite) TestQueryCheckpoint() {
@@ -205,7 +205,6 @@ func (suite *QuerierTestSuite) TestQueryLastNoAck() {
 
 	actualRes, _ := strconv.ParseUint(string(res), 10, 64)
 	require.Equal(t, actualRes, noAck)
-
 }
 
 func (suite *QuerierTestSuite) TestQueryCheckpointList() {

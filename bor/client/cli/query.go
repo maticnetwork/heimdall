@@ -98,7 +98,6 @@ func GetLatestSpan(cdc *codec.Codec) *cobra.Command {
 
 			// fetch latest span
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestSpan), nil)
-
 			// fetch span
 			if err != nil {
 				return err

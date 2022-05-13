@@ -22,7 +22,7 @@ func NormalizeVoteOption(option string) string {
 	}
 }
 
-//NormalizeProposalType - normalize user specified proposal type
+// NormalizeProposalType - normalize user specified proposal type
 func NormalizeProposalType(proposalType string) string {
 	switch proposalType {
 	default:
@@ -30,7 +30,7 @@ func NormalizeProposalType(proposalType string) string {
 	}
 }
 
-//NormalizeProposalStatus - normalize user specified proposal status
+// NormalizeProposalStatus - normalize user specified proposal status
 func NormalizeProposalStatus(status string) string {
 	switch status {
 	case "DepositPeriod", "deposit_period":

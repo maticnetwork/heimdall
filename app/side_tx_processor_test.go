@@ -16,8 +16,10 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var testTxStateData1 = []byte("test-tx-state1")
-var testTxStateData2 = []byte("test-tx-state2")
+var (
+	testTxStateData1 = []byte("test-tx-state1")
+	testTxStateData2 = []byte("test-tx-state2")
+)
 
 //
 // Test suite

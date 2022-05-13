@@ -34,7 +34,6 @@ type AccountKeeper struct {
 func NewAccountKeeper(
 	cdc *codec.Codec, key sdk.StoreKey, paramstore subspace.Subspace, proto func() types.Account,
 ) AccountKeeper {
-
 	return AccountKeeper{
 		key:           key,
 		proto:         proto,

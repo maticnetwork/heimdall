@@ -14,6 +14,7 @@ func KVStorePrefixIteratorPaginated(kvs sdk.KVStore, prefix []byte, page, limit 
 		page:     page,
 		limit:    limit,
 	}
+
 	pi.skip()
 
 	return pi
@@ -27,7 +28,9 @@ func KVStoreReversePrefixIteratorPaginated(kvs sdk.KVStore, prefix []byte, page,
 		page:     page,
 		limit:    limit,
 	}
+
 	pi.skip()
+
 	return pi
 }
 
@@ -39,6 +42,7 @@ func KVStorePrefixRangeIteratorPaginated(kvs sdk.KVStore, page, limit uint, from
 		page:     page,
 		limit:    limit,
 	}
+
 	pi.skip()
 
 	return pi
@@ -50,7 +54,6 @@ type PaginatedIterator struct {
 
 	page, limit uint // provided during initialization
 	iterated    uint // incremented in a call to Next
-
 }
 
 func (pi *PaginatedIterator) skip() {
@@ -64,7 +67,9 @@ func (pi *PaginatedIterator) Next() {
 	if !pi.Valid() {
 		panic(fmt.Sprintf("PaginatedIterator reached limit %d", pi.limit))
 	}
+
 	pi.Iterator.Next()
+
 	pi.iterated++
 }
 
@@ -73,5 +78,6 @@ func (pi *PaginatedIterator) Valid() bool {
 	if pi.iterated >= pi.limit {
 		return false
 	}
+
 	return pi.Iterator.Valid()
 }

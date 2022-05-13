@@ -15,6 +15,7 @@ import (
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -428,7 +429,6 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash, requiredConfirmations uin
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmations uint64) (*ethTypes.Receipt, error) {
-
 	var receipt *ethTypes.Receipt = nil
 	receiptCache, ok := c.ReceiptCache.Get(tx.String())
 
@@ -676,7 +676,6 @@ func (c *ContractCaller) DecodeUnJailedEvent(contractAddress common.Address, rec
 // CurrentAccountStateRoot get current account root from on chain
 func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginfo.Stakinginfo) ([32]byte, error) {
 	accountStateRoot, err := stakingInfoInstance.GetAccountStateRoot(nil)
-
 	if err != nil {
 		Logger.Error("Unable to get current account state roor", "Error", err)
 		var emptyArr [32]byte

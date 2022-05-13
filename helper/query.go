@@ -307,7 +307,6 @@ func FetchVotes(
 ) (votes []*tmTypes.CommitSig, sigs []byte, chainID string, err error) {
 	// get block client
 	blockDetails, err := GetBlockWithClient(client, height+1)
-
 	if err != nil {
 		return nil, nil, "", err
 	}
@@ -334,7 +333,6 @@ func FetchSideTxSigs(
 ) ([][3]*big.Int, error) {
 	// get block client
 	blockDetails, err := GetBlockWithClient(client, height)
-
 	if err != nil {
 		return nil, err
 	}

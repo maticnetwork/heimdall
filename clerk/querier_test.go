@@ -9,6 +9,7 @@ import (
 	"time"
 
 	ethTypes "github.com/maticnetwork/bor/core/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/clerk"
 	"github.com/maticnetwork/heimdall/clerk/types"

@@ -9,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
+
 	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/slashing/types"
@@ -81,8 +82,8 @@ func (k *Keeper) SetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validato
 
 // IterateValidatorSigningInfos iterates over the stored ValidatorSigningInfo
 func (k *Keeper) IterateValidatorSigningInfos(ctx sdk.Context,
-	handler func(valID hmTypes.ValidatorID, info hmTypes.ValidatorSigningInfo) (stop bool)) {
-
+	handler func(valID hmTypes.ValidatorID, info hmTypes.ValidatorSigningInfo) (stop bool),
+) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.ValidatorSigningInfoKey)
 	defer iter.Close()
@@ -114,8 +115,8 @@ func (k *Keeper) GetValidatorMissedBlockBitArray(ctx sdk.Context, valID hmTypes.
 // IterateValidatorMissedBlockBitArray iterates over the signed blocks window
 // and performs a callback function
 func (k *Keeper) IterateValidatorMissedBlockBitArray(ctx sdk.Context,
-	valID hmTypes.ValidatorID, handler func(index int64, missed bool) (stop bool)) {
-
+	valID hmTypes.ValidatorID, handler func(index int64, missed bool) (stop bool),
+) {
 	store := ctx.KVStore(k.storeKey)
 	index := int64(0)
 	params := k.GetParams(ctx)
@@ -368,8 +369,8 @@ func (k *Keeper) RemoveBufferValSlashingInfo(ctx sdk.Context, valID hmTypes.Vali
 
 // IterateBufferValSlashingInfos iterates over the stored ValidatorSlashingInfo
 func (k *Keeper) IterateBufferValSlashingInfos(ctx sdk.Context,
-	handler func(slashingInfo hmTypes.ValidatorSlashingInfo) (stop bool)) {
-
+	handler func(slashingInfo hmTypes.ValidatorSlashingInfo) (stop bool),
+) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.BufferValSlashingInfoKey)
 	defer iter.Close()
@@ -492,8 +493,8 @@ func (k *Keeper) RemoveTickValSlashingInfo(ctx sdk.Context, valID hmTypes.Valida
 
 // IterateTickValSlashingInfos iterates over the stored ValidatorSlashingInfo
 func (k *Keeper) IterateTickValSlashingInfos(ctx sdk.Context,
-	handler func(slashingInfo hmTypes.ValidatorSlashingInfo) (stop bool)) {
-
+	handler func(slashingInfo hmTypes.ValidatorSlashingInfo) (stop bool),
+) {
 	store := ctx.KVStore(k.storeKey)
 	iter := sdk.KVStorePrefixIterator(store, types.TickValSlashingInfoKey)
 	defer iter.Close()

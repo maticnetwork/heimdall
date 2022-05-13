@@ -144,7 +144,7 @@ func dividendAccountRootHandlerFn(
 			return
 		}
 
-		var accountRootHash = hmTypes.BytesToHeimdallHash(res)
+		accountRootHash := hmTypes.BytesToHeimdallHash(res)
 		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
 		result, err := json.Marshal(&accountRootHash)

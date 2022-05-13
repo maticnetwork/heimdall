@@ -31,7 +31,6 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		)...,
 	)
 	return slashingQueryCmd
-
 }
 
 /* // GetCmdQuerySigningInfo implements the command to query signing info.

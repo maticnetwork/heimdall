@@ -22,8 +22,6 @@ import (
 	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/console"
 	"github.com/maticnetwork/bor/crypto"
-	"github.com/maticnetwork/heimdall/file"
-	"github.com/maticnetwork/heimdall/version"
 	"github.com/pborman/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,6 +32,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/file"
+	"github.com/maticnetwork/heimdall/version"
 
 	"github.com/maticnetwork/heimdall/app"
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
@@ -205,7 +206,6 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 		Short: "Export genesis file with state-dump",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-
 			// cliCtx := context.NewCLIContext().WithCodec(cdc)
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
@@ -276,7 +276,7 @@ func generateKeystore(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// Then write the new keyfile in place of the old one.
-			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0600); err != nil {
+			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0o600); err != nil {
 				return err
 			}
 			return nil
@@ -314,7 +314,7 @@ func generateValidatorKey(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0600)
+			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0o600)
 			if err != nil {
 				return err
 			}

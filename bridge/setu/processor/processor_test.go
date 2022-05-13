@@ -4,11 +4,12 @@ import (
 	"os"
 	"testing"
 
+	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/spf13/viper"
-	"github.com/stretchr/testify/assert"
 
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"

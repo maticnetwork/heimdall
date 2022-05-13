@@ -8,6 +8,7 @@ import (
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/core/types"
+
 	"github.com/maticnetwork/heimdall/helper"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,7 +52,6 @@ func (hl *HeimdallListener) Start() error {
 
 // ProcessHeader -
 func (hl *HeimdallListener) ProcessHeader(*types.Header) {
-
 }
 
 // StartPolling - starts polling for heimdall events

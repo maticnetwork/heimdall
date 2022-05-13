@@ -7,12 +7,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/helper"
-	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/cmd/tendermint/commands"
 	"github.com/tendermint/tendermint/libs/cli"
+
+	"github.com/maticnetwork/heimdall/helper"
+	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 )
 
 func rollbackCmd(ctx *server.Context) *cobra.Command {
@@ -38,7 +39,6 @@ application.
 			}
 
 			height, hash, err := commands.RollbackState(config)
-
 			if err != nil {
 				return fmt.Errorf("failed to rollback tendermint state: %w", err)
 			}

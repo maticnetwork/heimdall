@@ -7,9 +7,10 @@ import (
 	"testing"
 
 	"github.com/maticnetwork/bor/common"
+	"github.com/spf13/viper"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types"
-	"github.com/spf13/viper"
 )
 
 //  Test - to decode signers from checkpoint sigs data

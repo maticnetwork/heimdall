@@ -12,6 +12,7 @@ import (
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/crypto"
 	"github.com/maticnetwork/bor/ethclient"
+
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -161,7 +162,6 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 		acceptDelegation,
 		signerPubkeyBytes,
 	)
-
 	if err != nil {
 		Logger.Error("Error while submitting stake", "error", err)
 		return err

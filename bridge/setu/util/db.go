@@ -6,9 +6,11 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 )
 
-var bridgeDB *leveldb.DB
-var bridgeDBOnce sync.Once
-var bridgeDBCloseOnce sync.Once
+var (
+	bridgeDB          *leveldb.DB
+	bridgeDBOnce      sync.Once
+	bridgeDBCloseOnce sync.Once
+)
 
 // GetBridgeDBInstance get sington object for bridge-db
 func GetBridgeDBInstance(filePath string) *leveldb.DB {

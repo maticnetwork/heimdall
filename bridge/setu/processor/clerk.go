@@ -7,6 +7,7 @@ import (
 	"github.com/RichardKnop/machinery/v1/tasks"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
@@ -52,7 +53,7 @@ func (cp *ClerkProcessor) RegisterTasks() {
 // 1. check if this deposit event has to be broadcasted to heimdall
 // 2. create and broadcast  record transaction to heimdall
 func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes string) error {
-	var vLog = types.Log{}
+	vLog := types.Log{}
 	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err

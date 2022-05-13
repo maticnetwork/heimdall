@@ -6,6 +6,7 @@ import (
 	big "math/big"
 
 	common "github.com/maticnetwork/bor/common"
+
 	erc20 "github.com/maticnetwork/heimdall/contracts/erc20"
 
 	heimdalltypes "github.com/maticnetwork/heimdall/types"

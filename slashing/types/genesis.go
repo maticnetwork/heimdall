@@ -6,6 +6,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -29,7 +30,6 @@ func NewGenesisState(
 	tickValSlashingInfo []*hmTypes.ValidatorSlashingInfo,
 	tickCount uint64,
 ) GenesisState {
-
 	return GenesisState{
 		Params:                params,
 		SigningInfos:          signingInfos,

@@ -223,7 +223,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
 
 	// create heimdall app
-	var app = &HeimdallApp{
+	app := &HeimdallApp{
 		cdc:       cdc,
 		BaseApp:   bApp,
 		keys:      keys,

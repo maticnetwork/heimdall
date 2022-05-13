@@ -75,7 +75,6 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 
 	var data types.GenesisState
 	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
-
 	if err != nil {
 		return err
 	}
@@ -95,7 +94,6 @@ func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
 // GetQueryCmd returns no root query command for the slashing module.
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return slashingCli.GetQueryCmd(cdc)
-
 }
 
 //____________________________________________________________________________
@@ -154,7 +152,6 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
 	InitGenesis(ctx, am.keeper, genesisState)
 	return []abci.ValidatorUpdate{}
-
 }
 
 // ExportGenesis returns the exported genesis state as raw bytes for the auth

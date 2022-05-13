@@ -42,7 +42,6 @@ func NewTxBuilder(
 	fees sdk.Coins,
 	gasPrices sdk.DecCoins,
 ) TxBuilder {
-
 	return TxBuilder{
 		txEncoder:          txEncoder,
 		keybase:            nil,

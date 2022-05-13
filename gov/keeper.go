@@ -53,7 +53,6 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	rtr Router,
 ) Keeper {
-
 	// ensure governance module account is set
 	if addr := supplyKeeper.GetModuleAddress(types.ModuleName); addr.Empty() {
 		panic(fmt.Sprintf("%s module account has not been set", types.ModuleName))

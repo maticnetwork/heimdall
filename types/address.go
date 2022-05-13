@@ -17,8 +17,10 @@ const (
 )
 
 // Ensure that different address types implement the interface
-var _ sdk.Address = HeimdallAddress{}
-var _ yaml.Marshaler = HeimdallAddress{}
+var (
+	_ sdk.Address    = HeimdallAddress{}
+	_ yaml.Marshaler = HeimdallAddress{}
+)
 
 // HeimdallAddress represents heimdall address
 type HeimdallAddress common.Address

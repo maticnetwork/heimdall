@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/common"
@@ -1107,7 +1108,6 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	nonce := big.NewInt(3)
 
 	suite.Run("No Result", func() {
-
 		msgValJoin := types.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(address.Bytes()),
 			validatorId,

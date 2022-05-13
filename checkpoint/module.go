@@ -11,12 +11,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/gorilla/mux"
+	"github.com/spf13/cobra"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/topup"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/spf13/cobra"
-	abci "github.com/tendermint/tendermint/abci/types"
 
 	checkpointCli "github.com/maticnetwork/heimdall/checkpoint/client/cli"
 	checkpointRest "github.com/maticnetwork/heimdall/checkpoint/client/rest"
@@ -73,7 +74,6 @@ func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 
 	var data types.GenesisState
 	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
-
 	if err != nil {
 		return err
 	}

@@ -4,8 +4,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	abci "github.com/tendermint/tendermint/abci/types"
+
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 
 	"github.com/maticnetwork/heimdall/app"
 )

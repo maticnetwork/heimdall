@@ -123,6 +123,7 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	copy(output[32-l:], input[:])
 	return
 }
+
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
 	for _, v := range data {
@@ -152,7 +153,7 @@ func nextPowerOfTwo(n uint64) uint64 {
 
 // spins go-routines to fetch batch elements to allow creation of large merkle trees
 func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem, checkpointLength uint64) (err error) {
-	var batchLength = int(checkpointLength)
+	batchLength := int(checkpointLength)
 	// group
 	var g errgroup.Group
 

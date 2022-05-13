@@ -12,6 +12,7 @@ import (
 	"github.com/gorilla/mux"
 
 	"github.com/maticnetwork/bor/consensus/bor"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -62,7 +63,6 @@ func fetchNextSpanSeedHandlerFn(
 
 		// return result
 		rest.PostProcessResponse(w, cliCtx, res)
-
 	}
 }
 

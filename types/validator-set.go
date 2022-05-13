@@ -420,7 +420,6 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 // by processChanges for duplicates and invalid values.
 // No changes are made to the validator set 'vals'.
 func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVotingPower int64, numNewValidators int, err error) {
-
 	updatedTotalVotingPower = vals.TotalVotingPower()
 
 	for _, valUpdate := range updates {
@@ -645,7 +644,7 @@ func (vals *ValidatorSet) StringIndented(indent string) string {
 
 	var valStrings []string
 
-	vals.Iterate(func(index int, val *Validator) bool {
+	vals.Iterate(func(_ int, val *Validator) bool {
 		valStrings = append(valStrings, val.String())
 		return false
 	})

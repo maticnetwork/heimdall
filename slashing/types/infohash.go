@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/maticnetwork/bor/rlp"
+
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -24,7 +25,6 @@ func sortModifiedSlashInfoByID(modifiedSlashInfos []*ModifiedSlashInfo) []*Modif
 
 // SortAndRLPEncodeSlashInfos  - RLP encoded slashing infos
 func SortAndRLPEncodeSlashInfos(slashingInfos []*hmTypes.ValidatorSlashingInfo) ([]byte, error) {
-
 	// convert slashingInfos to modifiedSlashingInfos
 	var updatedslashInfos []*ModifiedSlashInfo
 	for _, slashInfo := range slashingInfos {

@@ -83,7 +83,6 @@ func (a AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Rout
 
 // get the root tx command of this module
 func (a AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-
 	var proposalCLIHandlers []*cobra.Command
 	for _, proposalHandler := range a.proposalHandlers {
 		proposalCLIHandlers = append(proposalCLIHandlers, proposalHandler.CLIHandler(cdc))

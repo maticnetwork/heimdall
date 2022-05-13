@@ -7,6 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	tmTypes "github.com/tendermint/tendermint/types"
+
 	"github.com/maticnetwork/heimdall/auth"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/common"
@@ -14,7 +16,6 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 // NewSideTxHandler returns a side handler for "topup" type messages.
@@ -47,7 +48,6 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // SideHandleMsgTopup handles MsgTopup message for external call
 func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-
 	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", uint64(msg.LogIndex),
@@ -96,7 +96,6 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 }
 
 func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxResult abci.SideTxResultType) sdk.Result {
-
 	// Skip handler if topup is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new topup since side-tx didn't get yes votes")

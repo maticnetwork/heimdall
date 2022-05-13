@@ -180,7 +180,6 @@ func TestDeposits(t *testing.T) {
 	require.False(t, found)
 	require.Equal(t, addr0Initial, input.mApp.AccountKeeper.GetAccount(ctx, input.addrs[0]).GetCoins())
 	require.Equal(t, addr1Initial, input.mApp.AccountKeeper.GetAccount(ctx, input.addrs[1]).GetCoins())
-
 }
 
 func TestVotes(t *testing.T) {

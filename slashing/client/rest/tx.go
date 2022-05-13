@@ -89,7 +89,6 @@ func newUnjailRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 func newTickRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from Request
 		var req TickReq
@@ -109,13 +108,11 @@ func newTickRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		)
 
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
-
 	}
 }
 
 func newTickAckHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		var req TickAckReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return

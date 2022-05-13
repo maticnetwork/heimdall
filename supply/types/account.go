@@ -18,8 +18,10 @@ import (
 // Module account
 //
 
-var _ exported.ModuleAccountI = (*ModuleAccount)(nil)
-var _ authTypes.Account = (*ModuleAccount)(nil)
+var (
+	_ exported.ModuleAccountI = (*ModuleAccount)(nil)
+	_ authTypes.Account       = (*ModuleAccount)(nil)
+)
 
 type (
 	// ModuleAccountInterface exported module account interface
@@ -83,6 +85,7 @@ func (ma *ModuleAccount) RemovePermission(permission string) error {
 			return nil
 		}
 	}
+
 	return fmt.Errorf("cannot remove non granted permission %s", permission)
 }
 
@@ -93,6 +96,7 @@ func (ma ModuleAccount) HasPermission(permission string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -122,6 +126,7 @@ func (ma ModuleAccount) String() string {
 	if err != nil {
 		panic(err)
 	}
+
 	return string(b)
 }
 
@@ -144,7 +149,6 @@ func (ma ModuleAccount) MarshalYAML() (interface{}, error) {
 		Name:          ma.Name,
 		Permissions:   ma.Permissions,
 	})
-
 	if err != nil {
 		return nil, err
 	}

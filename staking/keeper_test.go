@@ -6,6 +6,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/app"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -13,12 +14,13 @@ import (
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	stakingSim "github.com/maticnetwork/heimdall/staking/simulation"
 
-	"github.com/maticnetwork/heimdall/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/types/simulation"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 type KeeperTestSuite struct {
@@ -231,7 +233,6 @@ func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
 			require.Fail(t, "Validator is not removed from updatedvalidator set")
 		}
 	}
-
 }
 
 func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
@@ -257,7 +258,6 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
 	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Signer.Bytes()), "New Validator should be added")
 	require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.TotalVotingPower(), "Total VotingPower should be increased")
-
 }
 
 func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
@@ -299,7 +299,6 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 		4. When signer is updatedctx
 		5. When Validator Exits
 	**/
-
 }
 
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {

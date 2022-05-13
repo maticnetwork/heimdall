@@ -6,12 +6,12 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/slashing/types"
 	tmtypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/slashing/types"
 )
 
 func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
-
 	if !k.GetParams(ctx).EnableSlashing {
 		k.Logger(ctx).Debug("slashing is not enabled. To enable, send a proposal via governance")
 		return

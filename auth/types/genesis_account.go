@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	supplyExported "github.com/maticnetwork/heimdall/supply/exported"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -38,7 +39,6 @@ func NewGenesisAccountRaw(
 	module string,
 	permissions ...string,
 ) GenesisAccount {
-
 	return GenesisAccount{
 		Address:           address,
 		Coins:             coins,
@@ -100,5 +100,6 @@ func (gaccs GenesisAccounts) Contains(acc hmTypes.HeimdallAddress) bool {
 			return true
 		}
 	}
+
 	return false
 }

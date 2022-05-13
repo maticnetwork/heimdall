@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/maticnetwork/heimdall/params/subspace"
 )
 
@@ -58,7 +59,6 @@ func NewParams(
 	signedBlocksWindow int64, minSignedPerWindow sdk.Dec, downtimeJailDuration time.Duration,
 	slashFractionDoubleSign, slashFractionDowntime sdk.Dec, slashFractionLimit sdk.Dec, jailFractionLimit sdk.Dec, maxEvidenceAge time.Duration, enableSlashing bool,
 ) Params {
-
 	return Params{
 		SignedBlocksWindow:      signedBlocksWindow,
 		MinSignedPerWindow:      minSignedPerWindow,

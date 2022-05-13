@@ -89,9 +89,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, result)
-
 	}
-
 }
 
 // Returns validator information by signer address

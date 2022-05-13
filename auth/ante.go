@@ -220,7 +220,6 @@ func processSig(
 	params authTypes.Params,
 	sigGasConsumer SignatureVerificationGasConsumer,
 ) (updatedAcc authTypes.Account, res sdk.Result) {
-
 	if res := sigGasConsumer(ctx.GasMeter(), sig, params); !res.IsOK() {
 		return nil, res
 	}

@@ -59,7 +59,6 @@ func NewBaseAccount(
 	accountNumber uint64,
 	sequence uint64,
 ) *BaseAccount {
-
 	return &BaseAccount{
 		Address:       address,
 		Coins:         coins,
@@ -76,7 +75,9 @@ func (acc BaseAccount) String() string {
 	if acc.PubKey != nil {
 		// pubkey = sdk.MustBech32ifyAccPub(acc.PubKey)
 		var pubObject secp256k1.PubKeySecp256k1
+
 		cdc.MustUnmarshalBinaryBare(acc.PubKey.Bytes(), &pubObject)
+
 		pubkey = "0x" + hex.EncodeToString(pubObject[:])
 	}
 
@@ -112,7 +113,9 @@ func (acc *BaseAccount) SetAddress(addr types.HeimdallAddress) error {
 	if len(acc.Address) != 0 && !acc.Address.Empty() {
 		return errors.New("cannot override BaseAccount address")
 	}
+
 	acc.Address = addr
+
 	return nil
 }
 
@@ -178,9 +181,11 @@ func (acc BaseAccount) Validate() error {
 
 // MarshalYAML returns the YAML representation of an account.
 func (acc BaseAccount) MarshalYAML() (interface{}, error) {
-	var bs []byte
-	var err error
-	var pubkey string
+	var (
+		bs     []byte
+		err    error
+		pubkey string
+	)
 
 	if acc.PubKey != nil {
 		pubkey, err = sdk.Bech32ifyAccPub(acc.PubKey)

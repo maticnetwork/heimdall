@@ -22,7 +22,6 @@ func initChain(
 	r *rand.Rand, params Params, accounts []simulation.Account, app *baseapp.BaseApp,
 	appStateFn simulation.AppStateFn, config simulation.Config,
 ) (mockValidators, time.Time, []simulation.Account, string) {
-
 	appState, accounts, chainID, genesisTimestamp := appStateFn(r, accounts, config)
 
 	req := abci.RequestInitChain{
@@ -43,7 +42,6 @@ func SimulateFromSeed(
 	appStateFn simulation.AppStateFn, ops WeightedOperations,
 	blackListedAccs map[string]bool, config simulation.Config,
 ) (stopEarly bool, exportedParams Params, err error) {
-
 	// in case we have to end early, don't os.Exit so that we can run cleanup code.
 	testingMode, t, b := getTestingMode(tb)
 	fmt.Fprintf(w, "Starting SimulateFromSeed with randomness created with seed %d\n", int(config.Seed))
@@ -72,6 +70,7 @@ func SimulateFromSeed(
 
 	// remove module account address if they exist in accs
 	var tmpAccs []simulation.Account
+
 	for _, acc := range accs {
 		if !blackListedAccs[acc.Address.String()] {
 			tmpAccs = append(tmpAccs, acc)
@@ -92,7 +91,9 @@ func SimulateFromSeed(
 
 	// Setup code to catch SIGTERM's
 	c := make(chan os.Signal)
+
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
 	go func() {
 		receivedSignal := <-c
 		fmt.Fprintf(w, "\nExiting early due to %s, on block %d, operation %d\n", receivedSignal, header.Height, opCount)
@@ -100,14 +101,17 @@ func SimulateFromSeed(
 		stopEarly = true
 	}()
 
-	var pastTimes []time.Time
-	var pastVoteInfos [][]abci.VoteInfo
+	var (
+		pastTimes     []time.Time
+		pastVoteInfos [][]abci.VoteInfo
+	)
 
 	request := RandomRequestBeginBlock(r, params,
 		validators, pastTimes, pastVoteInfos, eventStats.Tally, header)
 
 	// These are operations which have been queued by previous operations
 	operationQueue := NewOperationQueue()
+
 	timeOperationQueue := []simulation.FutureOperation{}
 
 	logWriter := NewLogWriter(testingMode)
@@ -236,8 +240,8 @@ type blockSimFn func(ctx sdk.Context, r *rand.Rand, app *baseapp.BaseApp,
 func createBlockSimulator(t *testing.T, tb testing.TB, testingMode bool, w io.Writer, params Params,
 	event func(route, op, evResult string), ops WeightedOperations,
 	operationQueue OperationQueue, timeOperationQueue []simulation.FutureOperation,
-	logWriter LogWriter, config simulation.Config) blockSimFn {
-
+	logWriter LogWriter, config simulation.Config,
+) blockSimFn {
 	t.Helper()
 
 	lastBlockSizeState := 0 // state for [4 * uniform distribution]
@@ -247,7 +251,6 @@ func createBlockSimulator(t *testing.T, tb testing.TB, testingMode bool, w io.Wr
 	return func(
 		ctx sdk.Context, r *rand.Rand, app *baseapp.BaseApp, accounts []simulation.Account, header abci.Header,
 	) (opCount int) {
-
 		_, _ = fmt.Fprintf(
 			w, "\rSimulating... block %d/%d, operation %d/%d.",
 			header.Height, config.NumBlocks, opCount, blocksize,
@@ -309,8 +312,8 @@ Comment: %s`,
 func runQueuedOperations(tb testing.TB, ctx sdk.Context, queueOps map[int][]simulation.Operation,
 	height int, r *rand.Rand, app *baseapp.BaseApp,
 	accounts []simulation.Account, logWriter LogWriter,
-	event func(route, op, evResult string), lean bool, chainID string) (numOpsRan int) {
-
+	event func(route, op, evResult string), lean bool, chainID string,
+) (numOpsRan int) {
 	queuedOp, ok := queueOps[height]
 	if !ok {
 		return 0
@@ -340,8 +343,8 @@ func runQueuedTimeOperations(tb testing.TB, ctx sdk.Context, queueOps []simulati
 	height int, currentTime time.Time, r *rand.Rand,
 	app *baseapp.BaseApp, accounts []simulation.Account,
 	logWriter LogWriter, event func(route, op, evResult string),
-	lean bool, chainID string) (numOpsRan int) {
-	
+	lean bool, chainID string,
+) (numOpsRan int) {
 	tb.Helper()
 
 	numOpsRan = 0

@@ -76,8 +76,10 @@ const (
 	BridgeDBFlag = "bridge-db"
 )
 
-var logger log.Logger
-var loggerOnce sync.Once
+var (
+	logger     log.Logger
+	loggerOnce sync.Once
+)
 
 // Logger returns logger singleton instance
 func Logger() log.Logger {
@@ -102,7 +104,6 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	result, err := helper.FetchFromAPI(cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
-
 	if err != nil {
 		logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
 		return false, err
@@ -238,8 +239,8 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
 }
 
-//CreateURLWithQuery receives the uri and parameters in key value form
-//it will return the new url with the given query from the parameter
+// CreateURLWithQuery receives the uri and parameters in key value form
+// it will return the new url with the given query from the parameter
 func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error) {
 	urlObj, err := url.Parse(uri)
 	if err != nil {
@@ -322,7 +323,6 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
 	)
-
 	if err != nil {
 		logger.Error("Error fetching chainmanager params", "err", err)
 		return nil, err
@@ -343,7 +343,6 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(CheckpointParamsURL),
 	)
-
 	if err != nil {
 		logger.Error("Error fetching Checkpoint params", "err", err)
 		return nil, err
@@ -364,7 +363,6 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, e
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(BufferedCheckpointURL),
 	)
-
 	if err != nil {
 		logger.Debug("Error fetching buffered checkpoint", "err", err)
 		return nil, err
@@ -385,7 +383,6 @@ func GetlastestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, er
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(LatestCheckpointURL),
 	)
-
 	if err != nil {
 		logger.Debug("Error fetching latest checkpoint", "err", err)
 		return nil, err
@@ -417,7 +414,6 @@ func GetValidatorNonce(cliCtx cliContext.CLIContext, validatorID uint64) (uint64
 	result, err := helper.FetchFromAPI(cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ValidatorURL, strconv.FormatUint(validatorID, 10))),
 	)
-
 	if err != nil {
 		logger.Error("Error fetching validator data", "error", err)
 		return 0, 0, err
@@ -440,7 +436,6 @@ func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(CountCheckpointURL),
 	)
-
 	if err != nil {
 		logger.Debug("Error fetching latest block height", "err", err)
 		return 0

@@ -34,7 +34,7 @@ func NewProcessorService(
 	httpClient *httpClient.HTTP,
 	txBroadcaster *broadcaster.TxBroadcaster,
 ) *ProcessorService {
-	var logger = util.Logger().With("module", processorServiceStr)
+	logger := util.Logger().With("module", processorServiceStr)
 	// creating processor object
 	processorService := &ProcessorService{
 		queueConnector: queueConnector,

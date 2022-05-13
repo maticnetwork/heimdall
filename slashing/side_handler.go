@@ -8,12 +8,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	tmTypes "github.com/tendermint/tendermint/types"
+
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 // NewSideTxHandler returns a side handler for "topup" type messages.
@@ -149,7 +150,6 @@ func SideHandleMsgUnjail(ctx sdk.Context, k Keeper, msg types.MsgUnjail, contrac
 // 4. Also update the jailStatus of Validator
 // 5. emit event TickConfirmation
 func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResult abci.SideTxResultType) sdk.Result {
-
 	// Skip handler if tick is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new tick since side-tx didn't get yes votes")
@@ -231,7 +231,6 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 	2. flush the last tick slashing info
 */
 func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideTxResult abci.SideTxResultType) sdk.Result {
-
 	// Skip handler if topup is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new topup since side-tx didn't get yes votes")

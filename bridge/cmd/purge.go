@@ -1,10 +1,11 @@
 package cmd
 
 import (
-	"github.com/maticnetwork/heimdall/bridge/setu/queue"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
 	"github.com/streadway/amqp"
+
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // purgeCmd represents the reset of queue
@@ -18,7 +19,7 @@ var purgeCmd = &cobra.Command{
 }
 
 func purgeQueue() {
-	var logger = helper.Logger.With("module", "bridge/cmd/")
+	logger := helper.Logger.With("module", "bridge/cmd/")
 	dialer := helper.GetConfig().AmqpURL
 
 	// amqp dialer

@@ -14,6 +14,7 @@ import (
 
 	"github.com/maticnetwork/bor/common"
 	ethcmn "github.com/maticnetwork/bor/common"
+
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -39,7 +40,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/checkpoints/list", checkpointListhandlerFn(cliCtx)).Methods("GET")
 
 	r.HandleFunc("/checkpoints/{number}", checkpointByNumberHandlerFunc(cliCtx)).Methods("GET")
-
 }
 
 // HTTP request handler to query the auth params values
@@ -120,7 +120,6 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -260,7 +259,6 @@ type stateDump struct {
 // get all state-dump of heimdall
 func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -433,7 +431,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-//Temporary Checkpoint struct to store the Checkpoint ID
+// Temporary Checkpoint struct to store the Checkpoint ID
 type CheckpointWithID struct {
 	ID         uint64                  `json:"id"`
 	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
@@ -497,7 +495,6 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, resWithID)
-
 	}
 }
 

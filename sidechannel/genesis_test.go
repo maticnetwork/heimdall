@@ -9,11 +9,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/sidechannel"
 	"github.com/maticnetwork/heimdall/sidechannel/simulation"
 	"github.com/maticnetwork/heimdall/sidechannel/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // GenesisTestSuite integrate test suite context object
@@ -35,7 +36,7 @@ func TestGenesisTestSuite(t *testing.T) {
 	suite.Run(t, new(GenesisTestSuite))
 }
 
-//TestInitExportGenesis test import and export genesis state
+// TestInitExportGenesis test import and export genesis state
 func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 

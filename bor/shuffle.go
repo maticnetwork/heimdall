@@ -8,19 +8,21 @@ import (
 	"github.com/prysmaticlabs/prysm/shared/hashutil"
 )
 
-const seedSize = int8(32)
-const roundSize = int8(1)
-const positionWindowSize = int8(4)
-const pivotViewSize = seedSize + roundSize
-const totalSize = seedSize + roundSize + positionWindowSize
-const ShuffleRoundCount = 90
+const (
+	seedSize           = int8(32)
+	roundSize          = int8(1)
+	positionWindowSize = int8(4)
+	pivotViewSize      = seedSize + roundSize
+	totalSize          = seedSize + roundSize + positionWindowSize
+	ShuffleRoundCount  = 90
+)
 
 var maxShuffleListSize uint64 = 1 << 40
 
 // SplitIndices splits a list into n pieces.
 func SplitIndices(l []uint64, n uint64) [][]uint64 {
 	var divided [][]uint64
-	var lSize = uint64(len(l))
+	lSize := uint64(len(l))
 	for i := uint64(0); i < n; i++ {
 		start := SplitOffset(lSize, n, i)
 		end := SplitOffset(lSize, n, i+1)

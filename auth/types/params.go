@@ -58,7 +58,6 @@ func NewParams(
 	maxTxGas uint64,
 	txFees string,
 ) Params {
-
 	return Params{
 		MaxMemoCharacters:      maxMemoCharacters,
 		TxSigLimit:             txSigLimit,
@@ -81,14 +80,34 @@ func ParamKeyTable() subspace.KeyTable {
 // nolint
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeyMaxMemoCharacters, &p.MaxMemoCharacters},
-		{KeyTxSigLimit, &p.TxSigLimit},
-		{KeyTxSizeCostPerByte, &p.TxSizeCostPerByte},
-		{KeySigVerifyCostED25519, &p.SigVerifyCostED25519},
-		{KeySigVerifyCostSecp256k1, &p.SigVerifyCostSecp256k1},
-
-		{KeyMaxTxGas, &p.MaxTxGas},
-		{KeyTxFees, &p.TxFees},
+		{
+			Key:   KeyMaxMemoCharacters,
+			Value: &p.MaxMemoCharacters,
+		},
+		{
+			Key:   KeyTxSigLimit,
+			Value: &p.TxSigLimit,
+		},
+		{
+			Key:   KeyTxSizeCostPerByte,
+			Value: &p.TxSizeCostPerByte,
+		},
+		{
+			Key:   KeySigVerifyCostED25519,
+			Value: &p.SigVerifyCostED25519,
+		},
+		{
+			Key:   KeySigVerifyCostSecp256k1,
+			Value: &p.SigVerifyCostSecp256k1,
+		},
+		{
+			Key:   KeyMaxTxGas,
+			Value: &p.MaxTxGas,
+		},
+		{
+			Key:   KeyTxFees,
+			Value: &p.TxFees,
+		},
 	}
 }
 
@@ -96,6 +115,7 @@ func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 func (p Params) Equal(p2 Params) bool {
 	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
 	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+
 	return bytes.Equal(bz1, bz2)
 }
 
@@ -116,6 +136,7 @@ func DefaultParams() Params {
 // String implements the stringer interface.
 func (p Params) String() string {
 	var sb strings.Builder
+
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("MaxMemoCharacters: %d\n", p.MaxMemoCharacters))
 	sb.WriteString(fmt.Sprintf("TxSigLimit: %d\n", p.TxSigLimit))
@@ -124,6 +145,7 @@ func (p Params) String() string {
 	sb.WriteString(fmt.Sprintf("SigVerifyCostSecp256k1: %d\n", p.SigVerifyCostSecp256k1))
 	sb.WriteString(fmt.Sprintf("MaxTxGas: %d\n", p.MaxTxGas))
 	sb.WriteString(fmt.Sprintf("TxFees: %s\n", p.TxFees))
+
 	return sb.String()
 }
 
@@ -209,21 +231,27 @@ func (p Params) Validate() error {
 	if err := validateTxSigLimit(p.TxSigLimit); err != nil {
 		return err
 	}
+
 	if err := validateSigVerifyCostED25519(p.SigVerifyCostED25519); err != nil {
 		return err
 	}
+
 	if err := validateSigVerifyCostSecp256k1(p.SigVerifyCostSecp256k1); err != nil {
 		return err
 	}
+
 	if err := validateSigVerifyCostSecp256k1(p.MaxMemoCharacters); err != nil {
 		return err
 	}
+
 	if err := validateTxSizeCostPerByte(p.TxSizeCostPerByte); err != nil {
 		return err
 	}
+
 	if err := validateMaxTxGas(p.MaxTxGas); err != nil {
 		return err
 	}
+
 	if err := validateTxFees(p.TxFees); err != nil {
 		return err
 	}

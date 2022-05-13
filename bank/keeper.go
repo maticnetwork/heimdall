@@ -13,10 +13,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var (
-	// DefaultValue default value
-	DefaultValue = []byte{0x01}
-)
+// DefaultValue default value
+var DefaultValue = []byte{0x01}
 
 // TODO: Remove this later
 // ModuleCommunicator manager to access validator info
@@ -75,7 +73,6 @@ func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 func (keeper Keeper) SetCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) sdk.Error {
-
 	if !amt.IsValid() && !amt.IsZero() {
 		return sdk.ErrInvalidCoins(amt.String())
 	}
@@ -98,7 +95,6 @@ func (keeper Keeper) SetCoins(
 func (keeper Keeper) SubtractCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Coins, sdk.Error) {
-
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}
@@ -129,7 +125,6 @@ func (keeper Keeper) SubtractCoins(
 func (keeper Keeper) AddCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Coins, sdk.Error) {
-
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}

@@ -7,6 +7,7 @@ import (
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+
 	"github.com/maticnetwork/heimdall/chainmanager/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/module"
@@ -64,14 +65,14 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { borChainID = GenBorChainId(r) },
 	)
 
-	var maticTokenAddress = GenHeimdallAddress()
-	var stakingManagerAddress = GenHeimdallAddress()
-	var slashManagerAddress = GenHeimdallAddress()
-	var rootChainAddress = GenHeimdallAddress()
-	var stakingInfoAddress = GenHeimdallAddress()
-	var stateSenderAddress = GenHeimdallAddress()
-	var stateReceiverAddress = GenHeimdallAddress()
-	var validatorSetAddress = GenHeimdallAddress()
+	maticTokenAddress := GenHeimdallAddress()
+	stakingManagerAddress := GenHeimdallAddress()
+	slashManagerAddress := GenHeimdallAddress()
+	rootChainAddress := GenHeimdallAddress()
+	stakingInfoAddress := GenHeimdallAddress()
+	stateSenderAddress := GenHeimdallAddress()
+	stateReceiverAddress := GenHeimdallAddress()
+	validatorSetAddress := GenHeimdallAddress()
 	chainParams := types.ChainParams{
 		BorChainID:            borChainID,
 		MaticTokenAddress:     maticTokenAddress,

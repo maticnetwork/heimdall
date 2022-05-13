@@ -44,7 +44,6 @@ func NewMsgValidatorJoin(
 	blockNumber uint64,
 	nonce uint64,
 ) MsgValidatorJoin {
-
 	return MsgValidatorJoin{
 		From:            from,
 		ID:              hmTypes.NewValidatorID(id),

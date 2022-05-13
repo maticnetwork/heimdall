@@ -224,7 +224,7 @@ func latestSlashInfoBytesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var slashInfoBytes = hmTypes.BytesToHexBytes(res)
+		slashInfoBytes := hmTypes.BytesToHexBytes(res)
 		RestLogger.Debug("Fetched slashInfoBytes ", "SlashInfoBytes", slashInfoBytes.String())
 
 		result, err := json.Marshal(&slashInfoBytes)
@@ -236,7 +236,6 @@ func latestSlashInfoBytesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// return result
 		rest.PostProcessResponse(w, cliCtx, result)
-
 	}
 }
 

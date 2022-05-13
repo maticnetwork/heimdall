@@ -34,7 +34,7 @@ var networks = []string{
 }
 
 func main() {
-	var network = networks[0]
+	network := networks[0]
 	if len(os.Args) > 1 {
 		networkFile := os.Args[1]
 		for _, n := range networks {

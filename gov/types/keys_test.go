@@ -6,8 +6,9 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var addr = hmTypes.BytesToHeimdallAddress(secp256k1.GenPrivKey().PubKey().Address())
@@ -37,7 +38,6 @@ func TestProposalKeys(t *testing.T) {
 }
 
 func TestDepositKeys(t *testing.T) {
-
 	key := DepositsKey(2)
 	proposalID := SplitProposalKey(key)
 	require.Equal(t, int(proposalID), 2)
@@ -54,7 +54,6 @@ func TestDepositKeys(t *testing.T) {
 }
 
 func TestVoteKeys(t *testing.T) {
-
 	key := VotesKey(2)
 	proposalID := SplitProposalKey(key)
 	require.Equal(t, int(proposalID), 2)

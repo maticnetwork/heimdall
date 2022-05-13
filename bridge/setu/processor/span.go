@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/maticnetwork/bor/common"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 
@@ -42,7 +43,6 @@ func (sp *SpanProcessor) Start() error {
 
 // RegisterTasks - nil
 func (sp *SpanProcessor) RegisterTasks() {
-
 }
 
 // startPolling - polls heimdall and checks if new span needs to be proposed
@@ -93,7 +93,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		// log new span
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
-		//Get NextSpanSeed from HeimdallServer
+		// Get NextSpanSeed from HeimdallServer
 		var seed common.Hash
 		if seed, err = sp.fetchNextSpanSeed(); err != nil {
 			sp.Logger.Info("Error while fetching next span seed from HeimdallServer", "err", err)
@@ -210,8 +210,6 @@ func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed common.Hash, err erro
 
 // OnStop stops all necessary go routines
 func (sp *SpanProcessor) Stop() {
-
 	// cancel span polling
 	sp.cancelSpanService()
-
 }
