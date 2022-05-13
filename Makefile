@@ -39,13 +39,15 @@ clean:
 # make build network=mumbai			Will generate for mumbai
 # make build network=local			Will generate for local with NewSelectionAlgoHeight = 0
 # make build network=anythingElse	Will generate for mainnet by default
-build: clean
+build: clean build-binaries
+	@echo "====================================================\n==================Build Successful==================\n===================================================="
+
+build-binaries:
 	go run helper/heimdall-params.template.go $(network)
 	mkdir -p build
 	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
 	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
 	go build $(BUILD_FLAGS) -o build/bridge bridge/bridge.go
-	@echo "====================================================\n==================Build Successful==================\n===================================================="
 
 # make install							Will generate for mainnet by default
 # make install network=mainnet			Will generate for mainnet

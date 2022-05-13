@@ -1,19 +1,80 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "**"
+      - "!master"
+  pull_request:
+    branches:
+      - "master"
+    types: [closed]
+
+concurrency:
+  group: build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
-    runs-on: ubuntu-latest
+    if: (github.event.action != 'closed' || github.event.pull_request.merged == true)
+    strategy:
+      matrix:
+        os: [ ubuntu-20.04, macos-11 ] # list of os: https://github.com/actions/virtual-environments
+    runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+      - run: |
+          git submodule update --init --recursive --force
+          git fetch --no-tags --prune --depth=1 origin +refs/heads/master:refs/remotes/origin/master
+
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.13
+          go-version: 1.18.x
+
+      - name: Golang-ci install
+        if: runner.os == 'Linux'
+        run: make lintci-deps
+
+      - uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/Library/Caches/go-build
+            ~/go/pkg/mod
+            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+            restore-keys: ${{ runner.os }}-go-
+
       - name: "Build binaries"
         run: make build
+
+      - name: Reproducible build test
+        run: |
+          make build
+          shasum -a256 ./build/heimdalld > heimdalld1.sha256
+          shasum -a256 ./build/heimdallcli > heimdallcli1.sha256
+          shasum -a256 ./build/bridge > bridge1.sha256
+          make build
+          shasum -a256 ./build/heimdalld > heimdalld2.sha256
+          shasum -a256 ./build/heimdallcli > heimdallcli2.sha256
+          shasum -a256 ./build/bridge > bridge2.sha256
+          if ! cmp -s heimdalld1.sha256 heimdalld2.sha256; then
+            echo >&2 "Reproducible build broken - heimdalld"; cat heimdalld1.sha256; cat heimdalld2.sha256; exit 1
+          fi
+          if ! cmp -s heimdallcli1.sha256 heimdallcli2.sha256; then
+            echo >&2 "Reproducible build broken - heimdallcli"; cat heimdallcli1.sha256; cat heimdallcli2.sha256; exit 1
+          fi
+          if ! cmp -s bridge1.sha256 bridge2.sha256; then
+            echo >&2 "Reproducible build broken - bridge"; cat bridge1.sha256; cat bridge2.sha256; exit 1
+          fi
+
+      - name: Lint
+        if: runner.os == 'Linux'
+        run: make lint
+
       - name: "Run tests"
         run: make tests
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
