@@ -75,6 +75,9 @@ jobs:
       - name: "Run tests"
         run: make tests
 
+      - name: "Run tests with race flags"
+        run: make tests-race
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:

@@ -13,7 +13,9 @@ GOPATH = $(shell go env GOPATH)
 PACKAGE = github.com/maticnetwork/heimdall
 GO_FLAGS += -trimpath -buildvcs=false
 
-GOTEST = GODEBUG=cgocheck=0 go test $(GO_FLAGS)
+TEST_PACKAGES = ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/
+
+GOTEST = GODEBUG=cgocheck=0 go test $(GO_FLAGS) $(TEST_PACKAGES)
 
 ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
 		  -X github.com/maticnetwork/heimdall/version.ServerName=heimdalld \
@@ -115,9 +117,13 @@ start-all:
 	mkdir -p ./logs
 	bash docker/start-heimdall.sh
 
-test:
+test: clean
 	go run helper/heimdall-params.template.go network=local
-	go test -v -race ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
+	$(GOTEST) -coverprofile=cover.out
+
+test-race: clean
+	go run helper/heimdall-params.template.go network=local
+	$(GOTEST) -race -cover -coverprofile=cover.out
 
 escape:
 	cd $(path) && go test -gcflags "-m -m" -run none -bench=BenchmarkJumpdest* -benchmem -memprofile mem.out
