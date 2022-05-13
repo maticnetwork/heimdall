@@ -43,8 +43,14 @@ type testParams struct {
 
 func (tp *testParams) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{[]byte(keyMaxValidators), &tp.MaxValidators},
-		{[]byte(keySlashingRate), &tp.SlashingRate},
+		{
+			Key:   []byte(keyMaxValidators),
+			Value: &tp.MaxValidators,
+		},
+		{
+			Key:   []byte(keySlashingRate),
+			Value: &tp.SlashingRate,
+		},
 	}
 }
 
@@ -66,6 +72,8 @@ func testProposal(changes ...paramTypes.ParamChange) paramTypes.ParameterChangeP
 }
 
 func newTestInput(t *testing.T) testInput {
+	t.Helper()
+
 	cdc := codec.New()
 	types.RegisterCodec(cdc)
 
@@ -88,6 +96,8 @@ func newTestInput(t *testing.T) testInput {
 }
 
 func TestProposalHandlerPassed(t *testing.T) {
+	t.Parallel()
+
 	input := newTestInput(t)
 	ss := input.keeper.Subspace(testSubspace).WithKeyTable(
 		subspace.NewKeyTable().RegisterParamSet(&testParams{}),
@@ -98,11 +108,14 @@ func TestProposalHandlerPassed(t *testing.T) {
 	require.NoError(t, hdlr(input.ctx, tp))
 
 	var param uint16
+
 	ss.Get(input.ctx, []byte(keyMaxValidators), &param)
 	require.Equal(t, param, uint16(1))
 }
 
 func TestProposalHandlerFailed(t *testing.T) {
+	t.Parallel()
+
 	input := newTestInput(t)
 	ss := input.keeper.Subspace(testSubspace).WithKeyTable(
 		subspace.NewKeyTable().RegisterParamSet(&testParams{}),
@@ -118,6 +131,8 @@ func TestProposalHandlerFailed(t *testing.T) {
 }
 
 func TestProposalHandlerSubspaceFailed(t *testing.T) {
+	t.Parallel()
+
 	input := newTestInput(t)
 
 	// without subspace
@@ -127,16 +142,19 @@ func TestProposalHandlerSubspaceFailed(t *testing.T) {
 }
 
 func TestProposalHandlerUpdateOmitempty(t *testing.T) {
+	t.Parallel()
+
 	input := newTestInput(t)
 	ss := input.keeper.Subspace(testSubspace).WithKeyTable(
 		subspace.NewKeyTable().RegisterParamSet(&testParams{}),
 	)
 
 	hdlr := params.NewParamChangeProposalHandler(input.keeper)
-	var param testParamsSlashingRate
 
 	tp := testProposal(paramTypes.NewParamChange(testSubspace, keySlashingRate, `{"downtime": 7}`))
 	require.NoError(t, hdlr(input.ctx, tp))
+
+	var param testParamsSlashingRate
 
 	ss.Get(input.ctx, []byte(keySlashingRate), &param)
 	require.Equal(t, testParamsSlashingRate{0, 7}, param)

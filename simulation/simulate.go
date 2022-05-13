@@ -113,7 +113,7 @@ func SimulateFromSeed(
 	logWriter := NewLogWriter(testingMode)
 
 	blockSimulator := createBlockSimulator(
-		testingMode, tb, t, w, params, eventStats.Tally,
+		t, tb, testingMode, w, params, eventStats.Tally,
 		ops, operationQueue, timeOperationQueue, logWriter, config)
 
 	if !testingMode {
@@ -149,18 +149,18 @@ func SimulateFromSeed(
 
 		// Run queued operations. Ignores blocksize if blocksize is too small
 		numQueuedOpsRan := runQueuedOperations(
-			operationQueue, int(header.Height), tb, r, app, ctx, accs, logWriter,
+			tb, ctx, operationQueue, int(header.Height), r, app, accs, logWriter,
 			eventStats.Tally, config.Lean, config.ChainID,
 		)
 
 		numQueuedTimeOpsRan := runQueuedTimeOperations(
-			timeOperationQueue, int(header.Height), header.Time,
-			tb, r, app, ctx, accs, logWriter, eventStats.Tally,
+			tb, ctx, timeOperationQueue, int(header.Height), header.Time,
+			r, app, accs, logWriter, eventStats.Tally,
 			config.Lean, config.ChainID,
 		)
 
 		// run standard operations
-		operations := blockSimulator(r, app, ctx, accs, header)
+		operations := blockSimulator(ctx, r, app, accs, header)
 		opCount += operations + numQueuedOpsRan + numQueuedTimeOpsRan
 
 		res := app.EndBlock(abci.RequestEndBlock{})
@@ -228,22 +228,24 @@ func SimulateFromSeed(
 
 //______________________________________________________________________________
 
-type blockSimFn func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
+type blockSimFn func(ctx sdk.Context, r *rand.Rand, app *baseapp.BaseApp,
 	accounts []simulation.Account, header abci.Header) (opCount int)
 
 // Returns a function to simulate blocks. Written like this to avoid constant
 // parameters being passed everytime, to minimize memory overhead.
-func createBlockSimulator(testingMode bool, tb testing.TB, t *testing.T, w io.Writer, params Params,
+func createBlockSimulator(t *testing.T, tb testing.TB, testingMode bool, w io.Writer, params Params,
 	event func(route, op, evResult string), ops WeightedOperations,
 	operationQueue OperationQueue, timeOperationQueue []simulation.FutureOperation,
 	logWriter LogWriter, config simulation.Config) blockSimFn {
+
+	t.Helper()
 
 	lastBlockSizeState := 0 // state for [4 * uniform distribution]
 	blocksize := 0
 	selectOp := ops.getSelectOpFn()
 
 	return func(
-		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accounts []simulation.Account, header abci.Header,
+		ctx sdk.Context, r *rand.Rand, app *baseapp.BaseApp, accounts []simulation.Account, header abci.Header,
 	) (opCount int) {
 
 		_, _ = fmt.Fprintf(
@@ -273,7 +275,7 @@ func createBlockSimulator(testingMode bool, tb testing.TB, t *testing.T, w io.Wr
 				// NOTE: the Rand 'r' should not be used here.
 				opAndR := opAndRz[i]
 				op, r2 := opAndR.op, opAndR.rand
-				opMsg, futureOps, err := op(r2, app, ctx, accounts, config.ChainID)
+				opMsg, futureOps, err := op(ctx, r2, app, accounts, config.ChainID)
 				opMsg.LogEvent(event)
 
 				if !config.Lean || opMsg.OK {
@@ -304,9 +306,9 @@ Comment: %s`,
 }
 
 // nolint: errcheck
-func runQueuedOperations(queueOps map[int][]simulation.Operation,
-	height int, tb testing.TB, r *rand.Rand, app *baseapp.BaseApp,
-	ctx sdk.Context, accounts []simulation.Account, logWriter LogWriter,
+func runQueuedOperations(tb testing.TB, ctx sdk.Context, queueOps map[int][]simulation.Operation,
+	height int, r *rand.Rand, app *baseapp.BaseApp,
+	accounts []simulation.Account, logWriter LogWriter,
 	event func(route, op, evResult string), lean bool, chainID string) (numOpsRan int) {
 
 	queuedOp, ok := queueOps[height]
@@ -320,7 +322,7 @@ func runQueuedOperations(queueOps map[int][]simulation.Operation,
 		// For now, queued operations cannot queue more operations.
 		// If a need arises for us to support queued messages to queue more messages, this can
 		// be changed.
-		opMsg, _, err := queuedOp[i](r, app, ctx, accounts, chainID)
+		opMsg, _, err := queuedOp[i](ctx, r, app, accounts, chainID)
 		opMsg.LogEvent(event)
 		if !lean || opMsg.OK {
 			logWriter.AddEntry((QueuedMsgEntry(int64(height), opMsg)))
@@ -334,11 +336,13 @@ func runQueuedOperations(queueOps map[int][]simulation.Operation,
 	return numOpsRan
 }
 
-func runQueuedTimeOperations(queueOps []simulation.FutureOperation,
-	height int, currentTime time.Time, tb testing.TB, r *rand.Rand,
-	app *baseapp.BaseApp, ctx sdk.Context, accounts []simulation.Account,
+func runQueuedTimeOperations(tb testing.TB, ctx sdk.Context, queueOps []simulation.FutureOperation,
+	height int, currentTime time.Time, r *rand.Rand,
+	app *baseapp.BaseApp, accounts []simulation.Account,
 	logWriter LogWriter, event func(route, op, evResult string),
 	lean bool, chainID string) (numOpsRan int) {
+	
+	tb.Helper()
 
 	numOpsRan = 0
 	for len(queueOps) > 0 && currentTime.After(queueOps[0].BlockTime) {
@@ -346,7 +350,7 @@ func runQueuedTimeOperations(queueOps []simulation.FutureOperation,
 		// For now, queued operations cannot queue more operations.
 		// If a need arises for us to support queued messages to queue more messages, this can
 		// be changed.
-		opMsg, _, err := queueOps[0].Op(r, app, ctx, accounts, chainID)
+		opMsg, _, err := queueOps[0].Op(ctx, r, app, accounts, chainID)
 		opMsg.LogEvent(event)
 		if !lean || opMsg.OK {
 			logWriter.AddEntry(QueuedMsgEntry(int64(height), opMsg))

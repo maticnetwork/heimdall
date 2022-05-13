@@ -1,7 +1,19 @@
 # Fetch git latest tag
 LATEST_GIT_TAG:=$(shell git describe --tags $(git rev-list --tags --max-count=1))
 VERSION := $(shell echo $(shell git describe --tags) | sed 's/^v//')
-COMMIT := $(shell git log -1 --format='%H')
+COMMIT ?= $(shell git rev-list -1 HEAD)
+GIT_BRANCH ?= $(shell git rev-parse --abbrev-ref HEAD)
+GIT_TAG    ?= $(shell git describe --tags `git rev-list --tags="v*" --max-count=1`)
+
+GO ?= latest
+GOBIN = $(CURDIR)/build/bin
+GORUN = env GO111MODULE=on go run
+GOPATH = $(shell go env GOPATH)
+
+PACKAGE = github.com/maticnetwork/heimdall
+GO_FLAGS += -trimpath -buildvcs=false
+
+GOTEST = GODEBUG=cgocheck=0 go test $(GO_FLAGS)
 
 ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
 		  -X github.com/maticnetwork/heimdall/version.ServerName=heimdalld \
@@ -14,16 +26,13 @@ ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
 
+ldflags += -X ${PACKAGE}/params.GitCommit=${COMMIT} -X ${PACKAGE}/params.GitBranch=${GIT_BRANCH} -X ${PACKAGE}/params.GitTag=${GIT_TAG}
+
 BUILD_FLAGS := -ldflags '$(ldflags)'
 
 clean:
 	rm -rf build
 	rm -f helper/heimdall-params.go
-
-tests:
-	# go test  -v ./...
-
-	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
 
 # make build						Will generate for mainnet by default
 # make build network=mainnet		Will generate for mainnet
@@ -104,16 +113,22 @@ start-all:
 	mkdir -p ./logs
 	bash docker/start-heimdall.sh
 
-#
-# Code quality
-#
+test:
+	go run helper/heimdall-params.template.go network=local
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
 
-LINT_COMMAND := $(shell command -v golangci-lint 2> /dev/null)
+escape:
+	cd $(path) && go test -gcflags "-m -m" -run none -bench=BenchmarkJumpdest* -benchmem -memprofile mem.out
+
 lint:
-ifndef LINT_COMMAND
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.23.8
-endif
-	golangci-lint run
+	@./build/bin/golangci-lint run --config ./.golangci.yml
+
+lintci-deps:
+	rm -f ./build/bin/golangci-lint
+	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./build/bin v1.46.0
+
+goimports:
+	goimports -local "$(PACKAGE)" -w .
 
 #
 # docker commands

@@ -38,25 +38,27 @@ func NewQueueConnector(dialer string) *QueueConnector {
 		},
 	}
 
+	logger := util.Logger().With("module", "QueueConnector")
+
 	server, err := machinery.NewServer(cnf)
 	if err != nil {
-		// do something with the error
+		logger.Error("NewQueueConnector error: %s", err)
+		panic(err)
 	}
 
 	// queue connector
-	connector := QueueConnector{
-		logger: util.Logger().With("module", "QueueConnector"),
+	return &QueueConnector{
+		logger: logger,
 		Server: server,
 	}
-
-	// connector
-	return &connector
 }
 
 // StartWorker - starts worker to process registered tasks
 func (qc *QueueConnector) StartWorker() {
 	worker := qc.Server.NewWorker("invoke-processor", 10)
 	qc.logger.Info("Starting machinery worker")
+
 	errors := make(chan error)
+
 	worker.LaunchAsync(errors)
 }

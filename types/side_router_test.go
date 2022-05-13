@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
-
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -19,6 +18,8 @@ var testPostTxHandler = func(_ sdk.Context, _ sdk.Msg, _ abci.SideTxResultType) 
 }
 
 func TestSideRouter(t *testing.T) {
+	t.Parallel()
+
 	rtr := types.NewSideRouter()
 	handler := &types.SideHandlers{
 		SideTxHandler: testSideTxHandler,

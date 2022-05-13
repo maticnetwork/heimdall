@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
+	"github.com/maticnetwork/bor/common/hexutil"
 	"github.com/maticnetwork/bor/rlp"
 )
 
@@ -64,7 +65,9 @@ func (tx StdTx) ValidateBasic() sdk.Error {
 // Duplicate addresses will be omitted.
 func (tx StdTx) GetSigners() []sdk.AccAddress {
 	seen := map[string]bool{}
+
 	var signers []sdk.AccAddress
+
 	for _, msg := range tx.GetMsgs() {
 		for _, addr := range msg.GetSigners() {
 			if !seen[addr.String()] {
@@ -73,6 +76,7 @@ func (tx StdTx) GetSigners() []sdk.AccAddress {
 			}
 		}
 	}
+
 	return signers
 }
 
@@ -124,12 +128,14 @@ func (ss StdSignature) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (ss *StdSignature) UnmarshalJSON(data []byte) error {
 	var s string
+
 	err := json.Unmarshal(data, &s)
 	if err != nil {
 		return err
 	}
 
 	*ss = common.FromHex(s)
+
 	return nil
 }
 
@@ -144,7 +150,7 @@ func (ss StdSignature) String() string {
 		return ""
 	}
 
-	return common.ToHex(ss)
+	return hexutil.Encode(ss)
 }
 
 //
@@ -176,10 +182,12 @@ func (fee StdFee) Bytes() []byte {
 	if len(fee.Amount) == 0 {
 		fee.Amount = sdk.NewCoins()
 	}
+
 	bz, err := ModuleCdc.MarshalJSON(fee) // TODO
 	if err != nil {
 		panic(err)
 	}
+
 	return bz
 }
 

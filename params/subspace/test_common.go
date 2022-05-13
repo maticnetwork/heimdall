@@ -4,15 +4,13 @@ import (
 	"os"
 	"testing"
 
-	"github.com/stretchr/testify/require"
-
-	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
-	dbm "github.com/tendermint/tm-db"
-
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
+	dbm "github.com/tendermint/tm-db"
 )
 
 // Keys for parameter access
@@ -22,6 +20,8 @@ const (
 
 // Returns components for testing
 func DefaultTestComponents(t *testing.T) (sdk.Context, Subspace, func() sdk.CommitID) {
+	t.Helper()
+
 	cdc := codec.New()
 	key := sdk.NewKVStoreKey(StoreKey)
 	tkey := sdk.NewTransientStoreKey(TStoreKey)
@@ -33,6 +33,7 @@ func DefaultTestComponents(t *testing.T) (sdk.Context, Subspace, func() sdk.Comm
 	ms.MountStoreWithDB(tkey, sdk.StoreTypeTransient, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
+
 	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
 	subspace := NewSubspace(cdc, key, tkey, TestParamStore)
 

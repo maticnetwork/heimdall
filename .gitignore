@@ -17,3 +17,5 @@ helper/heimdall-params.go
 
 data/
 dist/
+
+*.out
