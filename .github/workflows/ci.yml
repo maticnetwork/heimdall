@@ -42,8 +42,8 @@ jobs:
             ~/.cache/go-build
             ~/Library/Caches/go-build
             ~/go/pkg/mod
-            key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
-            restore-keys: ${{ runner.os }}-go-
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: ${{ runner.os }}-go-
 
       - name: "Build binaries"
         run: make build
