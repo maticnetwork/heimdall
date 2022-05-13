@@ -48,6 +48,8 @@ func (suite *AnteTestSuite) SetupTest() {
 }
 
 func TestAnteTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(AnteTestSuite))
 }
 
@@ -392,19 +394,25 @@ func (suite *AnteTestSuite) TestFees() {
 
 // run the tx through the anteHandler and ensure its valid
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, sdk.Result, bool) {
+	t.Helper()
+
 	newCtx, result, abort := anteHandler(ctx, tx, simulate)
+
 	require.Equal(t, "", result.Log)
 	require.False(t, abort)
 	require.Equal(t, sdk.CodeOK, result.Code)
 	require.True(t, result.IsOK())
+
 	return newCtx, result, abort
 }
 
 // run the tx through the anteHandler and ensure it fails with the given code
 func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool, code sdk.CodeType) (sdk.Context, sdk.Result, bool) {
-	newCtx, result, abort := anteHandler(ctx, tx, simulate)
-	require.True(t, abort)
+	t.Helper()
 
+	newCtx, result, abort := anteHandler(ctx, tx, simulate)
+
+	require.True(t, abort)
 	require.Equal(t, code, result.Code, fmt.Sprintf("Expected %v, got %v", code, result))
 	require.Equal(t, sdk.CodespaceRoot, result.Codespace)
 

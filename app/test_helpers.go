@@ -18,7 +18,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/app/helpers"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -26,9 +25,11 @@ import (
 func Setup(isCheckTx bool) *HeimdallApp {
 	db := dbm.NewMemDB()
 	app := NewHeimdallApp(log.NewNopLogger(), db)
+
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState()
+
 		stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 		if err != nil {
 			panic(err)
@@ -85,6 +86,7 @@ type GenerateAccountStrategy func(int) []hmTypes.HeimdallAddress
 // createRandomAccounts is a strategy used by addTestAddrs() in order to generated addresses in random order.
 func createRandomAccounts(accNum int) []hmTypes.HeimdallAddress {
 	testAddrs := make([]hmTypes.HeimdallAddress, accNum)
+
 	for i := 0; i < accNum; i++ {
 		pk := secp256k1.GenPrivKey().PubKey()
 		testAddrs[i] = hmTypes.BytesToHeimdallAddress(pk.Address().Bytes())
@@ -95,12 +97,14 @@ func createRandomAccounts(accNum int) []hmTypes.HeimdallAddress {
 
 // createIncrementalAccounts is a strategy used by addTestAddrs() in order to generated addresses in ascending order.
 func createIncrementalAccounts(accNum int) []hmTypes.HeimdallAddress {
-	var addresses []hmTypes.HeimdallAddress
+	addresses := make([]hmTypes.HeimdallAddress, 0, accNum)
+
 	var buffer bytes.Buffer
 
 	// start at 100 so we can make up to 999 test addresses with valid test addresses
 	for i := 100; i < (accNum + 100); i++ {
 		numString := strconv.Itoa(i)
+
 		buffer.WriteString("A58856F0FD53BF058B4909A21AEC019107BA6") // base address string
 
 		buffer.WriteString(numString) // adding on final two digits to make addresses unique
@@ -160,6 +164,7 @@ func addTestAddrs(app *HeimdallApp, ctx sdk.Context, accNum int, accAmt sdk.Int,
 func saveAccount(app *HeimdallApp, ctx sdk.Context, addr hmTypes.HeimdallAddress, initCoins sdk.Coins) {
 	acc := app.AccountKeeper.NewAccountWithAddress(ctx, addr)
 	app.AccountKeeper.SetAccount(ctx, acc)
+
 	_, err := app.BankKeeper.AddCoins(ctx, addr, initCoins)
 	if err != nil {
 		panic(err)
@@ -179,8 +184,11 @@ func ConvertAddrsToValAddrs(addrs []sdk.AccAddress) []sdk.ValAddress {
 
 // CheckBalance checks the balance of an account.
 func CheckBalance(t *testing.T, app *HeimdallApp, addr hmTypes.HeimdallAddress, balances sdk.Coins) {
+	t.Helper()
+
 	ctxCheck := app.BaseApp.NewContext(true, abci.Header{})
 	account := app.AccountKeeper.GetAccount(ctxCheck, addr)
+
 	require.True(t, balances.IsEqual(account.GetCoins()))
 }
 
@@ -192,6 +200,8 @@ func SignCheckDeliver(
 	t *testing.T, cdc *codec.Codec, app *bam.BaseApp, header abci.Header, msgs []sdk.Msg,
 	accNums, seq []uint64, expSimPass, expPass bool, priv ...crypto.PrivKey,
 ) (sdk.Result, error) {
+	t.Helper()
+
 	// generate tx
 	tx := helpers.GenTx(
 		msgs,
@@ -250,6 +260,7 @@ func GenSequenceOfTxs(msgs []sdk.Msg, accNums []uint64, initSeqNums []uint64, nu
 			initSeqNums,
 			priv...,
 		)
+
 		incrementAllSequenceNumbers(initSeqNums)
 	}
 
@@ -264,14 +275,17 @@ func incrementAllSequenceNumbers(initSeqNums []uint64) {
 
 // CreateTestPubKeys returns a total of numPubKeys public keys in ascending order.
 func CreateTestPubKeys(numPubKeys int) []crypto.PubKey {
-	var publicKeys []crypto.PubKey
 	var buffer bytes.Buffer
+
+	publicKeys := make([]crypto.PubKey, 0, numPubKeys)
 
 	// start at 10 to avoid changing 1 to 01, 2 to 02, etc
 	for i := 100; i < (numPubKeys + 100); i++ {
 		numString := strconv.Itoa(i)
+
 		buffer.WriteString("0B485CFC0EECC619440448436F8FC9DF40566F2369E72400281454CB552AF") // base pubkey string
 		buffer.WriteString(numString)                                                       // adding on final two digits to make pubkeys unique
+
 		publicKeys = append(publicKeys, NewPubKeyFromHex(buffer.String()))
 		buffer.Reset()
 	}
@@ -285,7 +299,10 @@ func NewPubKeyFromHex(pk string) (res crypto.PubKey) {
 	if err != nil {
 		panic(err)
 	}
+
 	var pkEd secp256k1.PubKeySecp256k1
+
 	copy(pkEd[:], pkBytes)
+
 	return pkEd
 }

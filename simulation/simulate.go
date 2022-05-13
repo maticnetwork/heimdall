@@ -117,7 +117,7 @@ func SimulateFromSeed(
 	logWriter := NewLogWriter(testingMode)
 
 	blockSimulator := createBlockSimulator(
-		t, tb, testingMode, w, params, eventStats.Tally,
+		t, testingMode, w, params, eventStats.Tally,
 		ops, operationQueue, timeOperationQueue, logWriter, config)
 
 	if !testingMode {
@@ -237,7 +237,7 @@ type blockSimFn func(ctx sdk.Context, r *rand.Rand, app *baseapp.BaseApp,
 
 // Returns a function to simulate blocks. Written like this to avoid constant
 // parameters being passed everytime, to minimize memory overhead.
-func createBlockSimulator(t *testing.T, tb testing.TB, testingMode bool, w io.Writer, params Params,
+func createBlockSimulator(t *testing.T, testingMode bool, w io.Writer, params Params,
 	event func(route, op, evResult string), ops WeightedOperations,
 	operationQueue OperationQueue, timeOperationQueue []simulation.FutureOperation,
 	logWriter LogWriter, config simulation.Config,
@@ -287,7 +287,7 @@ func createBlockSimulator(t *testing.T, tb testing.TB, testingMode bool, w io.Wr
 
 				if err != nil {
 					logWriter.PrintLogs()
-					tb.Fatalf(`error on block  %d/%d, operation (%d/%d) from x/%s:
+					t.Fatalf(`error on block  %d/%d, operation (%d/%d) from x/%s:
 %v
 Comment: %s`,
 						header.Height, config.NumBlocks, opCount, blocksize, opMsg.Route, err, opMsg.Comment)
@@ -314,6 +314,8 @@ func runQueuedOperations(tb testing.TB, ctx sdk.Context, queueOps map[int][]simu
 	accounts []simulation.Account, logWriter LogWriter,
 	event func(route, op, evResult string), lean bool, chainID string,
 ) (numOpsRan int) {
+	tb.Helper()
+
 	queuedOp, ok := queueOps[height]
 	if !ok {
 		return 0
