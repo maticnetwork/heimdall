@@ -159,7 +159,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			contractCallerObj, err := helper.NewContractCaller()
 
 			// get headers
-			roothash, err := contractCallerObj.GetRootHash(uint64(start), uint64(end), params.MaxCheckpointLength)
+			roothash, err := contractCallerObj.GetRootHash(start, end, params.MaxCheckpointLength)
 			if err != nil {
 				RestLogger.Error("Unable to get roothash", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -184,8 +184,8 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			// header block -- checkpoint
 			checkpoint := HeaderBlockResult{
 				Proposer:   validatorSet.Proposer.Signer,
-				StartBlock: uint64(start),
-				EndBlock:   uint64(end),
+				StartBlock: start,
+				EndBlock:   end,
 				RootHash:   ethcmn.BytesToHash(roothash),
 			}
 

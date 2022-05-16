@@ -48,7 +48,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 

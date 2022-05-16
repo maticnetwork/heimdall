@@ -429,7 +429,7 @@ func GetValidatorNonce(cliCtx cliContext.CLIContext, validatorID uint64) (uint64
 		return 0, 0, err
 	}
 
-	logger.Debug("Validator data recieved ", "validator", validator.String())
+	logger.Debug("Validator data received ", "validator", validator.String())
 
 	return validator.Nonce, result.Height, nil
 }

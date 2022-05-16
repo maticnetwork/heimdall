@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Parallel test - to check BroadcastToHeimdall syncronization
+// Parallel test - to check BroadcastToHeimdall synchronization
 func TestBroadcastToHeimdall(t *testing.T) {
 	t.Parallel()
 	cdc := app.MakeCodec()

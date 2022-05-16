@@ -47,7 +47,7 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 	// Calculate total stake Power of all Signers.
 	for i := 0; i < len(sigInput); i += sigLength {
 		signature := sigInput[i : i+sigLength]
-		pKey, err := authTypes.RecoverPubkey(voteBytes, []byte(signature))
+		pKey, err := authTypes.RecoverPubkey(voteBytes, signature)
 		if err != nil {
 			fmt.Println("Error Recovering PubKey", "Error", err)
 			return nil, err

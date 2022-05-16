@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// storing constant as this recomended as a secruity feature
+	// storing constant as this recommended as a secruity feature
 	secretPerm os.FileMode = 0600
 )
 
@@ -23,7 +23,7 @@ func PermCheck(filePath string, validPerm os.FileMode) error {
 	}
 
 	filePerm := f.Mode()
-	if filePerm != os.FileMode(validPerm) {
+	if filePerm != validPerm {
 		return types.ErrInvalidPermissions{File: filePath, Perm: validPerm}
 	}
 

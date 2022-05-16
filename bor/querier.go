@@ -138,7 +138,7 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 
 	// return error if span doesn't exist
 	if span == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("latest span does not exist"))
+		return nil, sdk.ErrInternal("latest span does not exist")
 	}
 
 	// json record

@@ -143,7 +143,7 @@ func DeriveRand(r *rand.Rand) *rand.Rand {
 	return rand.New(ms)
 }
 
-//RandHex generates random hex string of given lenght
+//RandHex generates random hex string of given length
 func RandHex(length int) []byte {
 	bytes := make([]byte, length)
 	if _, err := cRand.Read(bytes); err != nil {

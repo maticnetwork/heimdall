@@ -67,7 +67,7 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = uint64(gasLimit) // uint64(gasLimit)
+	auth.GasLimit = gasLimit // uint64(gasLimit)
 
 	return
 }
@@ -167,7 +167,7 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 		return err
 	}
 
-	Logger.Info("Submitted stake sucessfully", "txHash", tx.Hash().String())
+	Logger.Info("Submitted stake sucscessfully", "txHash", tx.Hash().String())
 	return nil
 }
 
@@ -191,6 +191,6 @@ func (c *ContractCaller) ApproveTokens(amount *big.Int, stakeManager common.Addr
 		return err
 	}
 
-	Logger.Info("Sent approve tx sucessfully", "txHash", tx.Hash().String())
+	Logger.Info("Sent approve tx successfully", "txHash", tx.Hash().String())
 	return nil
 }

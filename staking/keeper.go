@@ -494,6 +494,5 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 
 	// add updated validator to store with new key
 	k.AddValidator(ctx, validator)
-	return
 
 }

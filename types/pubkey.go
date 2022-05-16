@@ -37,7 +37,7 @@ func (a *PubKey) UnmarshalText(input []byte) error {
 	return hexutil.UnmarshalFixedText("PubKey", input, a[:])
 }
 
-// String returns string representatin of key
+// String returns string representation of key
 func (a PubKey) String() string {
 	return "0x" + hex.EncodeToString(a[:])
 }

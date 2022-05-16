@@ -50,7 +50,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 
 	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -90,7 +90,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for topup msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for topup msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }

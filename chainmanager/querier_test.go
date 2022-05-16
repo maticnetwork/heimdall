@@ -76,7 +76,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 
 	json.Unmarshal(res, &params)
 
-	// match reponse params
+	// match response params
 	require.Equal(t, defaultParams.MainchainTxConfirmations, params.MainchainTxConfirmations)
 	require.Equal(t, defaultParams.MaticchainTxConfirmations, params.MaticchainTxConfirmations)
 	require.Equal(t, defaultParams.ChainParams, params.ChainParams)
