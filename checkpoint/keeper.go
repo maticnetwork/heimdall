@@ -112,7 +112,6 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 
 	// store in key provided
 	store.Set(key, out)
-
 	return nil
 }
 

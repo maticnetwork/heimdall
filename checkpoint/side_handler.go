@@ -48,13 +48,13 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
 	if err != nil {
-		logger.Error("Unable to get checkpoint from db", "error", err)
+		logger.Error("Unable to get checkpoint from db", "error", err, "Header Index:", msg.HeaderIndex)
 		return common.ErrorSideTx(k.Codespace(), common.CodeNoCheckpoint)
 	}
 
 	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
 	if err != nil {
-		logger.Error("Unable to fetch rootchain contract instance", "error", err)
+		logger.Error("Unable to fetch rootchain contract instance", "error", err, "Eth Address", chainParams.RootChainAddress.EthAddress())
 		return common.ErrorSideTx(k.Codespace(), common.CodeOldCheckpoint)
 	}
 
@@ -70,7 +70,16 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 	}
 
 	if msg.EndBlock != end || msg.StartBlock != start || !bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) || !bytes.Equal(msg.Proposer.Bytes(), proposer.Bytes()) {
-		logger.Error("Checkpoint on Rootchain is not same as msg")
+		logger.Error("Checkpoint on Rootchain is not same as msg",
+			"message start block", msg.StartBlock,
+			"Rootchain Checkpoint start block", start,
+			"message end block", msg.EndBlock,
+			"Rootchain Checkpointt end block", end,
+			"message proposer", msg.Proposer,
+			"Rootchain Checkpoint proposer", proposer,
+			"message root hash", msg.RootHash,
+			"Rootchain Checkpoint root hash", root,
+		)
 		return common.ErrorSideTx(k.Codespace(), common.CodeCheckpointAlreadyExists)
 	}
 
@@ -94,6 +103,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 			"error", err,
 			"startBlock", msg.StartBlock,
 			"endBlock", msg.EndBlock,
+			"rootHash", msg.RootHash,
 		)
 	} else if validCheckpoint {
 		// vote `yes` if checkpoint is valid
@@ -124,7 +134,10 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 	rootChainInstance, err := contractCaller.GetRootChainInstance(chainParams.RootChainAddress.EthAddress())
 	if err != nil {
-		logger.Error("Unable to fetch rootchain contract instance", "error", err)
+		logger.Error("Unable to fetch rootchain contract instance",
+			"error", err,
+			"Eth Address", chainParams.RootChainAddress.EthAddress(),
+		)
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
@@ -140,7 +153,18 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 		!msg.Proposer.Equals(proposer) ||
 		!bytes.Equal(msg.RootHash.Bytes(), root.Bytes()) {
 
-		logger.Error("Invalid message. It doesn't match with contract state", "error", err, "checkpointNumber", msg.Number)
+		logger.Error("Invalid message. It doesn't match with contract state",
+			"error", err,
+			"checkpointNumber", msg.Number,
+			"message start block", msg.StartBlock,
+			"Rootchain Checkpoint start block", start,
+			"message end block", msg.EndBlock,
+			"Rootchain Checkpointt end block", end,
+			"message proposer", msg.Proposer,
+			"Rootchain Checkpoint proposer", proposer,
+			"message root hash", msg.RootHash,
+			"Rootchain Checkpoint root hash", root,
+		)
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
@@ -190,7 +214,9 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
 	if err != nil {
-		logger.Error("Unable to get checkpoint from db", "error", err)
+		logger.Error("Unable to get checkpoint from db",
+			"error", err,
+			"Checkpoint Number", msg.HeaderIndex)
 		return common.ErrNoCheckpointFound(k.Codespace()).Result()
 	}
 
