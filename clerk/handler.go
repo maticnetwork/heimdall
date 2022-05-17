@@ -60,7 +60,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 
 	// check if incoming tx is older
 	if k.HasRecordSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
+		k.Logger(ctx).Error("Older invalid tx found", "Sequence", sequence.String())
 		return common.ErrOldTx(k.Codespace()).Result()
 	}
 
