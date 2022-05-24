@@ -11,6 +11,6 @@
     --bridge --all \
     --rest-server
   Type=simple
-  User=root
+  User=ubuntu
 [Install]
   WantedBy=multi-user.target
