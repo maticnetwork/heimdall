@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -152,7 +153,8 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 
 // CalculateTaskDelay calculates delay required for current validator to propose the tx
 // It solves for multiple validators sending same transaction.
-func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
+func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, time.Duration) {
+	start := time.Now().UnixMilli()
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
@@ -190,6 +192,13 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 
 	// calculate delay
 	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
+
+	if stateSyncedEvent, ok := CheckAndGetStateSyncedEvent(event); ok {
+		logger.Debug("StateSyncedEvent: CalculateTaskDelay",
+			"stateSyncId", "timeElapsed", "validatorPosition", "taskDelay",
+			stateSyncedEvent.Id, time.Now().UnixMilli()-start, valPosition, taskDelay)
+	}
+
 	return isCurrentValidator, taskDelay
 }
 
@@ -475,4 +484,15 @@ func GetUnconfirmedTxnCount() int {
 	count, _ := strconv.Atoi(response.Result.Total)
 
 	return count
+}
+
+// CheckAndGetStateSyncedEvent checks if the event is of type statesender.StatesenderStateSynced
+// and eventually returns it with result of the check
+func CheckAndGetStateSyncedEvent(event interface{}) (statesender.StatesenderStateSynced, bool) {
+	switch event.(type) {
+	case statesender.StatesenderStateSynced:
+		event := event.(statesender.StatesenderStateSynced)
+		return event, true
+	}
+	return statesender.StatesenderStateSynced{}, false
 }

@@ -54,7 +54,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 	if err := helper.UnpackLog(fp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		fp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := fp.isOldTx(fp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.TopupEvent); isOld {
+		if isOld, _ := fp.isOldTx(fp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.TopupEvent, event); isOld {
 			fp.Logger.Info("Ignoring task to send topup to heimdall as already processed",
 				"event", eventName,
 				"user", event.User,
@@ -79,7 +79,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), hmTypes.BytesToHeimdallAddress(event.User.Bytes()), sdk.NewIntFromBigInt(event.Fee), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
-		if err := fp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := fp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "error", err)
 			return err
 		}
