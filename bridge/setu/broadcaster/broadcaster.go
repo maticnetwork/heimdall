@@ -59,7 +59,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 
 // BroadcastToHeimdall broadcast to heimdall
 func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) error {
-	start := time.Now().UnixMilli()
+	start := time.Now().UnixNano()
 
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
@@ -106,7 +106,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
 		tb.logger.Debug("StateSyncedEvent: BroadcastToHeimdall",
 			"stateSyncId", "timeElapsed", "TxHash",
-			stateSyncedEvent.Id, time.Now().UnixMilli()-start, txHash)
+			stateSyncedEvent.Id, time.Now().UnixNano()-start, txHash)
 	}
 
 	return nil
