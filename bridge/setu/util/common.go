@@ -6,11 +6,11 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"github.com/maticnetwork/bor/accounts/abi"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 	"os"
-	"reflect"
 	"strconv"
 	"sync"
 	"time"
@@ -481,16 +481,22 @@ func GetUnconfirmedTxnCount() int {
 	return count
 }
 
-// LogElapsedTimeForStateSyncedEvent logs useful info if event is of type statesender.StatesenderStateSynced
+// LogElapsedTimeForStateSyncedEvent logs useful info for StateSynced events
 func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
 	switch event.(type) {
-	case statesender.StatesenderStateSynced:
+	case statesender.StatesenderStateSynced, *statesender.StatesenderStateSyncedIterator:
 		event := event.(statesender.StatesenderStateSynced)
 		logger.Info("StateSyncedEvent: "+functionName,
 			"stateSyncId", event.Id,
 			"timeElapsed", time.Now().Sub(startTime).Milliseconds())
+	case *abi.Event:
+		event := event.(abi.Event)
+		if event.String() == "StateSynced" {
+			logger.Info("StateSyncedEvent-ABIEvent: "+functionName,
+				"stateSyncId", event.Id,
+				"timeElapsed", time.Now().Sub(startTime).Milliseconds())
+		}
 	default:
-		logger.Info("Different type", "type", reflect.TypeOf(event))
 		// do nothing
 	}
 
