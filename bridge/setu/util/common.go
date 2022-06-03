@@ -484,7 +484,7 @@ func GetUnconfirmedTxnCount() int {
 // LogElapsedTimeForStateSyncedEvent logs useful info for StateSynced events
 func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
 	switch event.(type) {
-	case statesender.StatesenderStateSynced, *statesender.StatesenderStateSyncedIterator:
+	case statesender.StatesenderStateSynced, *statesender.StatesenderStateSynced:
 		event := event.(statesender.StatesenderStateSynced)
 		logger.Info("StateSyncedEvent: "+functionName,
 			"stateSyncId", event.Id,
