@@ -239,10 +239,10 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 
 				case "StateSynced":
 					event := new(statesender.StatesenderStateSynced)
-					rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
 					if err := helper.UnpackLog(rl.stateSenderAbi, event, selectedEvent.Name, &vLog); err != nil {
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
+					rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
 						rl.sendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
