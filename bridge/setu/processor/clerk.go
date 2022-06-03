@@ -82,6 +82,8 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"logIndex", uint64(vLog.Index),
 				"blockNumber", vLog.BlockNumber,
 			)
+			cp.Logger.Debug("StateSyncedEvent: sendStateSyncedToHeimdall",
+				"stateSyncId", "timeElapsed", event.Id, time.Now().UnixNano()-start)
 			return nil
 		}
 
