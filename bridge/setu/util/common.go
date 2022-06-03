@@ -482,13 +482,14 @@ func GetUnconfirmedTxnCount() int {
 
 // LogElapsedTimeForStateSyncedEvent logs useful info if event is of type statesender.StatesenderStateSynced
 func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
-	switch event.(type) {
+	switch eType := event.(type) {
 	case statesender.StatesenderStateSynced:
 		event := event.(statesender.StatesenderStateSynced)
 		logger.Info("StateSyncedEvent: "+functionName,
 			"stateSyncId", event.Id,
 			"timeElapsed", time.Now().Sub(startTime).Milliseconds())
 	default:
+		logger.Info("Different type", "type", eType)
 		// do nothing
 	}
 
