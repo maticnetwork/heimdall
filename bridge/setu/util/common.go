@@ -155,6 +155,11 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 // It solves for multiple validators sending same transaction.
 func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, time.Duration) {
 	start := time.Now()
+	if stateSyncedEvent, ok := CheckAndGetStateSyncedEvent(event); ok {
+		logger.Info("StateSyncedEvent: CalculateTaskDelay",
+			"stateSyncId", stateSyncedEvent.Id,
+			"timeElapsed", time.Now().Sub(start).Milliseconds())
+	}
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
@@ -192,14 +197,6 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 
 	// calculate delay
 	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
-
-	if stateSyncedEvent, ok := CheckAndGetStateSyncedEvent(event); ok {
-		logger.Info("StateSyncedEvent: CalculateTaskDelay",
-			"stateSyncId", stateSyncedEvent.Id,
-			"timeElapsed", time.Now().Sub(start).Milliseconds(),
-			"validatorPosition", valPosition,
-			"taskDelay", taskDelay)
-	}
 
 	return isCurrentValidator, taskDelay
 }

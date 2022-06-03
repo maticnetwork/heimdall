@@ -64,6 +64,14 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
 
+	defer func() {
+		if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
+			tb.logger.Info("StateSyncedEvent: BroadcastToHeimdall",
+				"stateSyncId", stateSyncedEvent.Id,
+				"timeElapsed", time.Now().Sub(start).Milliseconds())
+		}
+	}()
+
 	// tx encoder
 	txEncoder := helper.GetTxEncoder(tb.cliCtx.Codec)
 	// chain id
@@ -102,13 +110,6 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
 	// increment account sequence
 	tb.lastSeqNo += 1
-
-	if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-		tb.logger.Info("StateSyncedEvent: BroadcastToHeimdall",
-			"stateSyncId", stateSyncedEvent.Id,
-			"timeElapsed", time.Now().Sub(start).Milliseconds(),
-			"TxHash", txHash)
-	}
 
 	return nil
 }

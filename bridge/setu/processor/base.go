@@ -109,6 +109,13 @@ func (bp *BaseProcessor) Stop() {
 // It is a generic function, which is consumed in all processors
 func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64, eventType util.BridgeEvent, event interface{}) (bool, error) {
 	start := time.Now()
+	defer func() {
+		if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
+			bp.Logger.Info("StateSyncedEvent: isOldTx",
+				"stateSyncId", stateSyncedEvent.Id,
+				"timeElapsed", time.Now().Sub(start).Milliseconds())
+		}
+	}()
 
 	queryParam := map[string]interface{}{
 		"txhash":   txHash,
@@ -145,13 +152,6 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 		return false, err
 	}
 
-	if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-		bp.Logger.Info("StateSyncedEvent: isOldTx",
-			"stateSyncId", stateSyncedEvent.Id,
-			"timeElapsed", time.Now().Sub(start).Milliseconds(),
-			"isOldTx", status)
-	}
-
 	return status, nil
 }
 
@@ -159,6 +159,13 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 // It is consumed only for `clerk` processor
 func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{}) (bool, error) {
 	start := time.Now()
+	defer func() {
+		if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
+			bp.Logger.Info("StateSyncedEvent: checkTxAgainstMempool",
+				"stateSyncId", stateSyncedEvent.Id,
+				"timeElapsed", time.Now().Sub(start).Milliseconds())
+		}
+	}()
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
 	resp, err := http.Get(endpoint)
@@ -239,13 +246,6 @@ Loop:
 		default:
 			// ignore
 		}
-	}
-
-	if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-		bp.Logger.Info("StateSyncedEvent: checkTxAgainstMempool",
-			"stateSyncId", stateSyncedEvent.Id,
-			"timeElapsed", time.Now().Sub(start).Milliseconds(),
-			"isTxAlreadyInMempool", status)
 	}
 
 	return status, nil
