@@ -239,7 +239,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 
 				case "StateSynced":
 					event := new(statesender.StatesenderStateSynced)
-					rl.Logger.Debug("StateSyncedEvent: detected", "stateSyncId", event.Id)
+					rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
 					if err := helper.UnpackLog(rl.stateSenderAbi, event, selectedEvent.Name, &vLog); err != nil {
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
@@ -304,7 +304,7 @@ func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string
 	if err != nil {
 		rl.Logger.Error("Error sending task", "taskName", taskName, "error", err)
 	} else if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-		rl.Logger.Debug("StateSyncedEvent: sendTaskWithDelay",
+		rl.Logger.Info("StateSyncedEvent: sendTaskWithDelay",
 			"stateSyncId", "timeElapsed", "delayTime",
 			stateSyncedEvent.Id, time.Now().UnixNano()-start, eta)
 	}

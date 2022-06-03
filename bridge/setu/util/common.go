@@ -194,7 +194,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
 
 	if stateSyncedEvent, ok := CheckAndGetStateSyncedEvent(event); ok {
-		logger.Debug("StateSyncedEvent: CalculateTaskDelay",
+		logger.Info("StateSyncedEvent: CalculateTaskDelay",
 			"stateSyncId", "timeElapsed", "validatorPosition", "taskDelay",
 			stateSyncedEvent.Id, time.Now().UnixNano()-start, valPosition, taskDelay)
 	}

@@ -146,7 +146,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 	}
 
 	if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-		bp.Logger.Debug("StateSyncedEvent: isOldTx",
+		bp.Logger.Info("StateSyncedEvent: isOldTx",
 			"stateSyncId", "timeElapsed", "isOldTx",
 			stateSyncedEvent.Id, time.Now().UnixNano()-start, status)
 	}
@@ -241,7 +241,7 @@ Loop:
 	}
 
 	if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-		bp.Logger.Debug("StateSyncedEvent: checkTxAgainstMempool",
+		bp.Logger.Info("StateSyncedEvent: checkTxAgainstMempool",
 			"stateSyncId", "timeElapsed", "isTxAlreadyInMempool",
 			stateSyncedEvent.Id, time.Now().UnixNano()-start, status)
 	}

@@ -104,7 +104,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	tb.lastSeqNo += 1
 
 	if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-		tb.logger.Debug("StateSyncedEvent: BroadcastToHeimdall",
+		tb.logger.Info("StateSyncedEvent: BroadcastToHeimdall",
 			"stateSyncId", "timeElapsed", "TxHash",
 			stateSyncedEvent.Id, time.Now().UnixNano()-start, txHash)
 	}
