@@ -61,7 +61,7 @@ const (
 
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
-	TaskDelayBetweenEachVal = 24 * time.Second
+	TaskDelayBetweenEachVal = 10 * time.Second
 	RetryTaskDelay          = 12 * time.Second
 	RetryStateSyncTaskDelay = 24 * time.Second
 
