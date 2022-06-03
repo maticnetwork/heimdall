@@ -52,7 +52,7 @@ func (cp *ClerkProcessor) RegisterTasks() {
 // 1. check if this deposit event has to be broadcasted to heimdall
 // 2. create and broadcast  record transaction to heimdall
 func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes string) error {
-	start := time.Now().UnixNano()
+	start := time.Now()
 
 	var vLog = types.Log{}
 	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
@@ -83,7 +83,8 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"blockNumber", vLog.BlockNumber,
 			)
 			cp.Logger.Info("StateSyncedEvent: sendStateSyncedToHeimdall",
-				"stateSyncId", "timeElapsed", event.Id, time.Now().UnixNano()-start)
+				"stateSyncId", event.Id,
+				"timeElapsed", time.Now().Sub(start).Milliseconds())
 			return nil
 		}
 
