@@ -484,12 +484,20 @@ func GetUnconfirmedTxnCount() int {
 func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
 	switch event.(type) {
 	case statesender.StatesenderStateSynced:
-		event := event.(statesender.StatesenderStateSynced)
+		event, ok := event.(statesender.StatesenderStateSynced)
+		if !ok {
+			logger.Error("Unable to typecast event to statesender.StatesenderStateSynced")
+			break
+		}
 		logger.Info("StateSyncedEvent: "+functionName,
 			"stateSyncId", event.Id,
 			"timeElapsed", time.Now().Sub(startTime).Milliseconds())
 	case *statesender.StatesenderStateSynced:
-		event := event.(*statesender.StatesenderStateSynced)
+		event, ok := event.(*statesender.StatesenderStateSynced)
+		if !ok {
+			logger.Error("Unable to typecast event to *statesender.StatesenderStateSynced")
+			break
+		}
 		logger.Info("StateSyncedEvent: "+functionName,
 			"stateSyncId", event.Id,
 			"timeElapsed", time.Now().Sub(startTime).Milliseconds())
