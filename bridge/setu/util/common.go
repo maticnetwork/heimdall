@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"github.com/maticnetwork/bor/accounts/abi"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -484,18 +483,16 @@ func GetUnconfirmedTxnCount() int {
 // LogElapsedTimeForStateSyncedEvent logs useful info for StateSynced events
 func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
 	switch event.(type) {
-	case statesender.StatesenderStateSynced, *statesender.StatesenderStateSynced:
+	case statesender.StatesenderStateSynced:
 		event := event.(statesender.StatesenderStateSynced)
 		logger.Info("StateSyncedEvent: "+functionName,
 			"stateSyncId", event.Id,
 			"timeElapsed", time.Now().Sub(startTime).Milliseconds())
-	case *abi.Event:
-		event := event.(abi.Event)
-		if event.String() == "StateSynced" {
-			logger.Info("StateSyncedEvent-ABIEvent: "+functionName,
-				"stateSyncId", event.Id,
-				"timeElapsed", time.Now().Sub(startTime).Milliseconds())
-		}
+	case *statesender.StatesenderStateSynced:
+		event := event.(*statesender.StatesenderStateSynced)
+		logger.Info("StateSyncedEvent: "+functionName,
+			"stateSyncId", event.Id,
+			"timeElapsed", time.Now().Sub(startTime).Milliseconds())
 	default:
 		// do nothing
 	}
