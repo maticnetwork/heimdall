@@ -280,14 +280,8 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 }
 
 func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string, logBytes []byte, delay time.Duration, event interface{}) {
-	start := time.Now()
-	defer func() {
-		if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-			rl.Logger.Info("StateSyncedEvent: sendTaskWithDelay",
-				"stateSyncId", stateSyncedEvent.Id,
-				"timeElapsed", time.Now().Sub(start).Milliseconds())
-		}
-	}()
+	defer util.LogElapsedTimeForStateSyncedEvent(event, "sendTaskWithDelay", time.Now())
+
 	signature := &tasks.Signature{
 		Name: taskName,
 		Args: []tasks.Arg{

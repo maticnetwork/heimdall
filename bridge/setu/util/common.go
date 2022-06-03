@@ -154,12 +154,7 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 // CalculateTaskDelay calculates delay required for current validator to propose the tx
 // It solves for multiple validators sending same transaction.
 func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, time.Duration) {
-	start := time.Now()
-	if stateSyncedEvent, ok := CheckAndGetStateSyncedEvent(event); ok {
-		logger.Info("StateSyncedEvent: CalculateTaskDelay",
-			"stateSyncId", stateSyncedEvent.Id,
-			"timeElapsed", time.Now().Sub(start).Milliseconds())
-	}
+	defer LogElapsedTimeForStateSyncedEvent(event, "CalculateTaskDelay", time.Now())
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
@@ -485,13 +480,16 @@ func GetUnconfirmedTxnCount() int {
 	return count
 }
 
-// CheckAndGetStateSyncedEvent checks if the event is of type statesender.StatesenderStateSynced
-// and eventually returns it with result of the check
-func CheckAndGetStateSyncedEvent(event interface{}) (statesender.StatesenderStateSynced, bool) {
+// LogElapsedTimeForStateSyncedEvent logs useful info if event is of type statesender.StatesenderStateSynced
+func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
 	switch event.(type) {
 	case statesender.StatesenderStateSynced:
 		event := event.(statesender.StatesenderStateSynced)
-		return event, true
+		logger.Info("StateSyncedEvent: "+functionName,
+			"stateSyncId", event.Id,
+			"timeElapsed", time.Now().Sub(startTime).Milliseconds())
+	default:
+		// do nothing
 	}
-	return statesender.StatesenderStateSynced{}, false
+
 }

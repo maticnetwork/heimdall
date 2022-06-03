@@ -71,6 +71,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
+		defer util.LogElapsedTimeForStateSyncedEvent(event, "sendStateSyncedToHeimdall", start)
 		if isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.ClerkEvent, event); isOld {
 			cp.Logger.Info("Ignoring task to send deposit to heimdall as already processed",
 				"event", eventName,
@@ -82,11 +83,6 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"logIndex", uint64(vLog.Index),
 				"blockNumber", vLog.BlockNumber,
 			)
-			defer func() {
-				cp.Logger.Info("StateSyncedEvent: sendStateSyncedToHeimdall",
-					"stateSyncId", event.Id,
-					"timeElapsed", time.Now().Sub(start).Milliseconds())
-			}()
 			return nil
 		}
 

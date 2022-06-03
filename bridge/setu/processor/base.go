@@ -108,14 +108,7 @@ func (bp *BaseProcessor) Stop() {
 // isOldTx checks if the transaction already exists in the chain or not
 // It is a generic function, which is consumed in all processors
 func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64, eventType util.BridgeEvent, event interface{}) (bool, error) {
-	start := time.Now()
-	defer func() {
-		if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-			bp.Logger.Info("StateSyncedEvent: isOldTx",
-				"stateSyncId", stateSyncedEvent.Id,
-				"timeElapsed", time.Now().Sub(start).Milliseconds())
-		}
-	}()
+	defer util.LogElapsedTimeForStateSyncedEvent(event, "isOldTx", time.Now())
 
 	queryParam := map[string]interface{}{
 		"txhash":   txHash,
@@ -158,14 +151,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 // checkTxAgainstMempool checks if the transaction is already in the mempool or not
 // It is consumed only for `clerk` processor
 func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{}) (bool, error) {
-	start := time.Now()
-	defer func() {
-		if stateSyncedEvent, ok := util.CheckAndGetStateSyncedEvent(event); ok {
-			bp.Logger.Info("StateSyncedEvent: checkTxAgainstMempool",
-				"stateSyncId", stateSyncedEvent.Id,
-				"timeElapsed", time.Now().Sub(start).Milliseconds())
-		}
-	}()
+	defer util.LogElapsedTimeForStateSyncedEvent(event, "checkTxAgainstMempool", time.Now())
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
 	resp, err := http.Get(endpoint)
