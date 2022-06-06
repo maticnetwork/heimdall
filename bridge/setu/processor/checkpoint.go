@@ -635,7 +635,7 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 
 	// return broadcast to heimdall
 	if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-		cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "error", err)
+		cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "error", err, "msg", msg)
 		return err
 	}
 
