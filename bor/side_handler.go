@@ -3,6 +3,7 @@ package bor
 import (
 	"bytes"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -50,6 +51,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 	k.Logger(ctx).Debug("✅ Validating External call for span msg",
 		"msgSeed", msg.Seed.String(),
 	)
+
+	defer helper.LogElapsedTime("Bor>SideHandleMsgSpan", time.Now())
 
 	// calculate next span seed locally
 	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
@@ -100,6 +103,9 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 
 // PostHandleMsgEventSpan handles state persisting span msg
 func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, sideTxResult abci.SideTxResultType) sdk.Result {
+
+	defer helper.LogElapsedTime("Bank->PostHandleMsgEventSpan", time.Now())
+
 	// Skip handler if span is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new span since side-tx didn't get yes votes")

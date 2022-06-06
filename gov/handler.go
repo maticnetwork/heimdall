@@ -2,11 +2,13 @@ package gov
 
 import (
 	"fmt"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/gov/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -33,6 +35,9 @@ func NewHandler(keeper Keeper) sdk.Handler {
 }
 
 func handleMsgSubmitProposal(ctx sdk.Context, keeper Keeper, msg types.MsgSubmitProposal) sdk.Result {
+
+	defer helper.LogElapsedTime("Gov->handleMsgSubmitProposal", time.Now())
+
 	if _, err := getValidValidator(ctx, keeper, msg.Proposer, msg.Validator); err != nil {
 		return hmCommon.ErrInvalidMsg(keeper.Codespace(), "No active validator by proposer").Result()
 	}
@@ -71,6 +76,9 @@ func handleMsgSubmitProposal(ctx sdk.Context, keeper Keeper, msg types.MsgSubmit
 }
 
 func handleMsgDeposit(ctx sdk.Context, keeper Keeper, msg types.MsgDeposit) sdk.Result {
+
+	defer helper.LogElapsedTime("Gov->handleMsgDeposit", time.Now())
+
 	if _, err := getValidValidator(ctx, keeper, msg.Depositor, msg.Validator); err != nil {
 		return hmCommon.ErrInvalidMsg(keeper.Codespace(), "No active validator by depositor").Result()
 	}
@@ -101,6 +109,9 @@ func handleMsgDeposit(ctx sdk.Context, keeper Keeper, msg types.MsgDeposit) sdk.
 }
 
 func handleMsgVote(ctx sdk.Context, keeper Keeper, msg types.MsgVote) sdk.Result {
+
+	defer helper.LogElapsedTime("Gov->handleMsgVote", time.Now())
+
 	if _, err := getValidValidator(ctx, keeper, msg.Voter, msg.Validator); err != nil {
 		return hmCommon.ErrInvalidMsg(keeper.Codespace(), "No active validator by voter").Result()
 	}
@@ -127,6 +138,9 @@ func handleMsgVote(ctx sdk.Context, keeper Keeper, msg types.MsgVote) sdk.Result
 
 // checks if validator is active validator by signer and checks if incoming validator id matches with stored validator
 func getValidValidator(ctx sdk.Context, keeper Keeper, signer hmTypes.HeimdallAddress, validator hmTypes.ValidatorID) (hmTypes.Validator, error) {
+
+	defer helper.LogElapsedTime("Gov->getValidValidator", time.Now())
+
 	v, err := keeper.sk.GetActiveValidatorInfo(ctx, signer.Bytes())
 	if err != nil {
 		keeper.Logger(ctx).Info("No active validator by signer", "signer", signer.String())

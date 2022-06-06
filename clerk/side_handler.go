@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"math/big"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -51,6 +52,8 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
+
+	defer helper.LogElapsedTime("Clerk->SideHandleMsgEventRecord", time.Now())
 
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
@@ -116,6 +119,8 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 }
 
 func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, sideTxResult abci.SideTxResultType) sdk.Result {
+
+	defer helper.LogElapsedTime("Clerk->PostHandleMsgEventRecord", time.Now())
 
 	// Skip handler if clerk is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {

@@ -34,6 +34,9 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // handleMsgCheckpointAdjust adjusts checkpoint
 func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
+	defer helper.LogElapsedTime("Checkpoint->handleMsgCheckpointAdjust (Adjusting the checkpoint)", time.Now())
+
 	logger := k.Logger(ctx)
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
@@ -72,8 +75,10 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	logger := k.Logger(ctx)
 
+	defer helper.LogElapsedTime("Checkpoint->handleMsgCheckpoint (Validating the checkpoint transaction)", time.Now())
+
+	logger := k.Logger(ctx)
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
 
@@ -191,6 +196,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
+	defer helper.LogElapsedTime("Checkpoint->handleMsgCheckpointAck (if Checkpoint submitted on chain is valid)", time.Now())
+
 	// Get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
@@ -233,6 +240,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
 
+	defer helper.LogElapsedTime("handleMsgCheckpointNoAck (checkpoint no-ack transaction)", time.Now())
 	// Get current block time
 	currentTime := ctx.BlockTime()
 

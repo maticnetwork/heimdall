@@ -2,6 +2,7 @@ package topup
 
 import (
 	"math/big"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -38,6 +39,8 @@ func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		"blockNumber", msg.BlockNumber,
 	)
 
+	defer helper.LogElapsedTime("Topup->HandleMsgTopup", time.Now())
+
 	if !k.bk.GetSendEnabled(ctx) {
 		return types.ErrSendDisabled(k.Codespace()).Result()
 	}
@@ -70,6 +73,9 @@ func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 
 // HandleMsgWithdrawFee handle withdraw fee event
 func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) sdk.Result {
+
+	defer helper.LogElapsedTime("Topup->HandleMsgWithdrawFee", time.Now())
+
 	// partial withdraw
 	amount := msg.Amount
 

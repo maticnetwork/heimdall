@@ -3,6 +3,7 @@ package topup
 import (
 	"bytes"
 	"math/big"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -54,6 +55,8 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 		"blockNumber", msg.BlockNumber,
 	)
 
+	defer helper.LogElapsedTime("Topup->SideHandleMsgTopup", time.Now())
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -96,6 +99,8 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 }
 
 func PostHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, sideTxResult abci.SideTxResultType) sdk.Result {
+
+	defer helper.LogElapsedTime("Topup->PostHandleMsgTopup", time.Now())
 
 	// Skip handler if topup is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {

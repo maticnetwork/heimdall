@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -69,6 +70,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 		"blockNumber", msg.BlockNumber,
 	)
 
+	defer helper.LogElapsedTime("Stalking->SideHandleMsgValidatorJoin", time.Now())
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -152,6 +154,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 		"blockNumber", msg.BlockNumber,
 	)
 
+	defer helper.LogElapsedTime("Stalking->SideHandleMsgStakeUpdate", time.Now())
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -202,6 +205,8 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
+
+	defer helper.LogElapsedTime("Stalking->SideHandlerSignerUpdate", time.Now())
 
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
@@ -262,6 +267,8 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 		"blockNumber", msg.BlockNumber,
 	)
 
+	defer helper.LogElapsedTime("Stalking->SideHandlerMsgValidatorExit", time.Now())
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -311,6 +318,8 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 
 // PostHandleMsgValidatorJoin msg validator join
 func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidatorJoin, sideTxResult abci.SideTxResultType) sdk.Result {
+
+	defer helper.LogElapsedTime("Stalking->PostHandlerMsgValidatorJoin", time.Now())
 
 	// Skip handler if validator join is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
@@ -408,6 +417,8 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
+	defer helper.LogElapsedTime("Stalking->PostHandlerMsgStakeUpdate", time.Now())
+
 	// Check for replay attack
 	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
 	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
@@ -474,6 +485,9 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 
 // PostHandleMsgSignerUpdate handles signer update message
 func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpdate, sideTxResult abci.SideTxResultType) sdk.Result {
+
+	defer helper.LogElapsedTime("Stalking->PostHandlerMsgSingerUpdate", time.Now())
+
 	// Skip handler if signer update is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping signer update since side-tx didn't get yes votes")
@@ -591,6 +605,9 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 
 // PostHandleMsgValidatorExit handle msg validator exit
 func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidatorExit, sideTxResult abci.SideTxResultType) sdk.Result {
+
+	defer helper.LogElapsedTime("Stalking->PostHandlerMsgValidatorExit", time.Now())
+
 	// Skip handler if validator exit is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping validator exit since side-tx didn't get yes votes")

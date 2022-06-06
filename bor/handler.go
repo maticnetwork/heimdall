@@ -2,11 +2,13 @@ package bor
 
 import (
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // NewHandler returns a handler for "bor" type messages.
@@ -31,6 +33,8 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 		"endBlock", msg.EndBlock,
 		"seed", msg.Seed.String(),
 	)
+
+	defer helper.LogElapsedTime("Bor->HandleMsgProposeSpan", time.Now())
 
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)

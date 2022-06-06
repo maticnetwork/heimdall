@@ -3,6 +3,7 @@ package checkpoint
 import (
 	"bytes"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -37,6 +38,9 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 // SideHandleMsgCheckpointAdjust handles MsgCheckpointAdjust message for external call
 func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAdjust, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	logger := k.Logger(ctx)
+
+	defer helper.LogElapsedTime("SideHandleMsgCheckpointAdjust (MsgCheckpointAdjust message for external call)", time.Now())
+
 	chainParams := k.ck.GetParams(ctx).ChainParams
 	params := k.GetParams(ctx)
 
@@ -81,6 +85,9 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	// get params
+
+	defer helper.LogElapsedTime("SideHandleMsgCheckpoint (MsgCheckpointAdjust message for external call)", time.Now())
+
 	params := k.GetParams(ctx)
 	maticTxConfirmations := k.ck.GetParams(ctx).MaticchainTxConfirmations
 
@@ -176,6 +183,8 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAdjust, sideTxResult abci.SideTxResultType, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
+	defer helper.LogElapsedTime("Checkpoint->PostHandleCheckpointAdjust", time.Now())
+
 	// Skip handler if checkpoint-adjust is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		logger.Debug("Skipping new checkpoint-adjust since side-tx didn't get yes votes", "checkpointNumber", msg.HeaderIndex)
@@ -241,6 +250,8 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 // PostHandleMsgCheckpoint handles msg checkpoint
 func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
+
+	defer helper.LogElapsedTime("Checkpoint->PostHandleMsgCheckpoint (handle msg checkpoint)", time.Now())
 
 	// Skip handler if checkpoint is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
@@ -337,6 +348,8 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 // PostHandleMsgCheckpointAck handles msg checkpoint ack
 func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
+
+	defer helper.LogElapsedTime("Checkpoint->PostHandleMsgCheckpointAck (handle msg checkpoint ack)", time.Now())
 
 	// Skip handler if checkpoint-ack is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {

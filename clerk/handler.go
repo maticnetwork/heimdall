@@ -4,6 +4,7 @@ import (
 	"encoding/hex"
 	"math/big"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -37,6 +38,8 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		"logIndex", uint64(msg.LogIndex),
 		"blockNumber", msg.BlockNumber,
 	)
+
+	defer helper.LogElapsedTime("Clerk->handleMsgEventRecord", time.Now())
 
 	// check if event record exists
 	if exists := k.HasEventRecord(ctx, msg.ID); exists {

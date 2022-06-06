@@ -15,6 +15,7 @@ import (
 	"os"
 	"path"
 	"sort"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
@@ -797,4 +798,13 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
 	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
+}
+
+func LogElapsedTime(functionName string, startTime time.Time) {
+
+	timeElapsed := time.Now().Sub(startTime).Milliseconds()
+
+	Logger.Info("Function Name", functionName,
+		"timeElapsed", timeElapsed)
+
 }

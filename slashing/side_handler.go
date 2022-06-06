@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"math/big"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -69,6 +70,7 @@ func SideHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, contr
 		"blockNumber", msg.BlockNumber,
 	)
 
+	defer helper.LogElapsedTime("Slashing->SideHandleMsgTickAck", time.Now())
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -110,6 +112,7 @@ func SideHandleMsgUnjail(ctx sdk.Context, k Keeper, msg types.MsgUnjail, contrac
 		"validatorID", msg.ID,
 	)
 
+	defer helper.LogElapsedTime("Slashing->SideHandelMsgUnjail", time.Now())
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams
@@ -151,6 +154,8 @@ func SideHandleMsgUnjail(ctx sdk.Context, k Keeper, msg types.MsgUnjail, contrac
 func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResult abci.SideTxResultType) sdk.Result {
 
 	// Skip handler if tick is not approved
+	defer helper.LogElapsedTime("Slashing->PostHandleMsgTick", time.Now())
+
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new tick since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
@@ -232,6 +237,8 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 */
 func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideTxResult abci.SideTxResultType) sdk.Result {
 
+	defer helper.LogElapsedTime("Slashing->PostHandleMsgTickAck", time.Now())
+
 	// Skip handler if topup is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new topup since side-tx didn't get yes votes")
@@ -307,6 +314,8 @@ func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideT
 // having been jailed (and thus unbonded) for downtime
 func PostHandleMsgUnjail(ctx sdk.Context, k Keeper, msg types.MsgUnjail, sideTxResult abci.SideTxResultType) sdk.Result {
 	// Skip handler if topup is not approved
+	defer helper.LogElapsedTime("Slashing-PostHandleMsgUnjail", time.Now())
+
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new topup since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()

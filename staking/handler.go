@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math/big"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -46,6 +47,8 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
+
+	defer helper.LogElapsedTime("Stalking->HandleMsgValidatorJoin", time.Now())
 
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
@@ -105,6 +108,8 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
+
+	defer helper.LogElapsedTime("Stalking->HandleMsgStakeUpdate", time.Now())
 
 	// pull validator from store
 	_, ok := k.GetValidatorFromValID(ctx, msg.ID)
@@ -167,6 +172,8 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		"blockNumber", msg.BlockNumber,
 	)
 
+	defer helper.LogElapsedTime("Stalking->HandleMsgSignerUpdate", time.Now())
+
 	newPubKey := msg.NewSignerPubKey
 	newSigner := newPubKey.Address()
 
@@ -225,6 +232,8 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
+
+	defer helper.LogElapsedTime("Stalking->HandleMsgValidatorExit", time.Now())
 
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
