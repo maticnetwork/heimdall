@@ -417,7 +417,7 @@ func (sp *SlashingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string
 
 	var status bool
 	if err := json.Unmarshal(res.Result, &status); err != nil {
-		sp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
+		sp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "txhash", txHash, "error", err)
 		return false, err
 	}
 

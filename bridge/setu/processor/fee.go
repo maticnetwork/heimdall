@@ -81,7 +81,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 
 		// return broadcast to heimdall
 		if err := fp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "error", err)
+			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "msg", msg, "error", err)
 			return err
 		}
 	}
@@ -104,7 +104,7 @@ func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, log
 
 	res, err := helper.FetchFromAPI(fp.cliCtx, url)
 	if err != nil {
-		fp.Logger.Error("Error fetching tx status", "url", url, "error", err)
+		fp.Logger.Error("Error fetching tx status", "url", url, "txhash", txHash, "error", err)
 		return false, err
 	}
 

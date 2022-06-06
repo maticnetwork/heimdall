@@ -132,6 +132,7 @@ func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, l
 
 	endpoint := helper.GetHeimdallServerEndpoint(util.ClerkTxStatusURL)
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
+
 	if err != nil {
 		cp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
 		return false, err
@@ -139,7 +140,7 @@ func (cp *ClerkProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, l
 
 	res, err := helper.FetchFromAPI(cp.cliCtx, url)
 	if err != nil {
-		cp.Logger.Error("Error fetching tx status", "url", url, "error", err)
+		cp.Logger.Error("Error fetching tx status", "url", url, "txhash", txHash, "error", err)
 		return false, err
 	}
 

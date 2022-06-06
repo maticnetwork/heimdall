@@ -13,7 +13,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-// NewHandler creates new handler for handling messages for checkpoint module
+// NewHandler creates new handler for handling messages for clerk module
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -49,7 +49,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 
 	// check chain id
 	if chainParams.BorChainID != msg.ChainID {
-		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID)
+		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID, "BorChainId", chainParams.BorChainID)
 		return common.ErrInvalidBorChainID(k.Codespace()).Result()
 	}
 

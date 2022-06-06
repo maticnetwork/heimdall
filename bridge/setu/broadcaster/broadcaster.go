@@ -41,6 +41,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	// current address
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 	account, err := util.GetAccount(cliCtx, address)
+
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
 
