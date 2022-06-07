@@ -34,7 +34,7 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 
 			rs := lcd.NewRestServer(cdc)
 			registerRoutesFn(rs)
-			logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+			logger := tmLog.NewTMJSONLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
 			err := rs.Start(
 				viper.GetString(client.FlagListenAddr),
 				viper.GetInt(client.FlagMaxOpenConnections),
