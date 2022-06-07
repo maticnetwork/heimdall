@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"sync"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -57,9 +58,10 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 }
 
 // BroadcastToHeimdall broadcast to heimdall
-func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
+func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) error {
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
+	defer util.LogElapsedTimeForStateSyncedEvent(event, "BroadcastToHeimdall", time.Now())
 
 	// tx encoder
 	txEncoder := helper.GetTxEncoder(tb.cliCtx.Codec)
@@ -93,10 +95,13 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg) error {
 		return err
 	}
 
-	tb.logger.Info("Tx sent on heimdall", "txHash", txResponse.TxHash, "accSeq", tb.lastSeqNo, "accNum", tb.accNum)
+	txHash := txResponse.TxHash
+
+	tb.logger.Info("Tx sent on heimdall", "txHash", txHash, "accSeq", tb.lastSeqNo, "accNum", tb.accNum)
 	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
 	// increment account sequence
 	tb.lastSeqNo += 1
+
 	return nil
 }
 

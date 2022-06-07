@@ -111,7 +111,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		}
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 			sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
 			return
 		}

@@ -73,7 +73,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		if len(signerPubKey) == 64 {
 			signerPubKey = util.AppendPrefix(signerPubKey)
 		}
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent, event); isOld {
 			sp.Logger.Info("Ignoring task to send validatorjoin to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
@@ -127,7 +127,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 		)
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			sp.Logger.Error("Error while broadcasting unstakeInit to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
 			return err
 		}
@@ -146,7 +146,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent, event); isOld {
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validator", event.User,
@@ -197,7 +197,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 		)
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			sp.Logger.Error("Error while broadcasting unstakeInit to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
 			return err
 		}
@@ -216,7 +216,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 	if err := helper.UnpackLog(sp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent, event); isOld {
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
@@ -263,7 +263,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		)
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			sp.Logger.Error("Error while broadcasting stakeupdate to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
 			return err
 		}
@@ -287,7 +287,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			newSignerPubKey = util.AppendPrefix(newSignerPubKey)
 		}
 
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.StakingEvent, event); isOld {
 			sp.Logger.Info("Ignoring task to send unstakeinit to heimdall as already processed",
 				"event", eventName,
 				"validatorID", event.ValidatorId,
@@ -338,7 +338,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 		)
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			sp.Logger.Error("Error while broadcasting signerChainge to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
 			return err
 		}
