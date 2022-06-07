@@ -25,6 +25,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	hmtypes "github.com/maticnetwork/heimdall/types"
@@ -152,7 +153,8 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 
 // CalculateTaskDelay calculates delay required for current validator to propose the tx
 // It solves for multiple validators sending same transaction.
-func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
+func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, time.Duration) {
+	defer LogElapsedTimeForStateSyncedEvent(event, "CalculateTaskDelay", time.Now())
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
@@ -186,10 +188,11 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 	// For 2000-3000 it will be 36 seconds
 	// Basically for every 1000 txns it will increase the factor by 1.
 
-	mempoolFactor := GetUnconfirmedTxnCount() / mempoolTxnCountDivisor
+	mempoolFactor := GetUnconfirmedTxnCount(event) / mempoolTxnCountDivisor
 
 	// calculate delay
 	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
+
 	return isCurrentValidator, taskDelay
 }
 
@@ -449,7 +452,9 @@ func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 	return response.Height
 }
 
-func GetUnconfirmedTxnCount() int {
+func GetUnconfirmedTxnCount(event interface{}) int {
+	defer LogElapsedTimeForStateSyncedEvent(event, "GetUnconfirmedTxnCount", time.Now())
+
 	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
 	resp, err := http.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
@@ -475,4 +480,28 @@ func GetUnconfirmedTxnCount() int {
 	count, _ := strconv.Atoi(response.Result.Total)
 
 	return count
+}
+
+// LogElapsedTimeForStateSyncedEvent logs useful info for StateSynced events
+func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
+	if event == nil {
+		return
+	}
+	timeElapsed := time.Now().Sub(startTime).Milliseconds()
+	var typedEvent statesender.StatesenderStateSynced
+
+	switch e := event.(type) {
+	case statesender.StatesenderStateSynced:
+		typedEvent = e
+	case *statesender.StatesenderStateSynced:
+		if e == nil {
+			return
+		}
+		typedEvent = *e
+	default:
+		return
+	}
+	logger.Info("StateSyncedEvent: "+functionName,
+		"stateSyncId", typedEvent.Id,
+		"timeElapsed", timeElapsed)
 }

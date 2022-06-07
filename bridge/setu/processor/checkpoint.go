@@ -287,7 +287,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		)
 
 		// return broadcast to heimdall
-		if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			cp.Logger.Error("Error while broadcasting checkpoint-ack to heimdall", "error", err)
 			return err
 		}
@@ -462,7 +462,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 	)
 
 	// return broadcast to heimdall
-	if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		cp.Logger.Error("Error while broadcasting checkpoint to heimdall", "error", err)
 		return err
 	}
@@ -634,7 +634,7 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 	)
 
 	// return broadcast to heimdall
-	if err := cp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "error", err)
 		return err
 	}
