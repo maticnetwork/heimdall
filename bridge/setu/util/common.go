@@ -188,7 +188,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 	// For 2000-3000 it will be 36 seconds
 	// Basically for every 1000 txns it will increase the factor by 1.
 
-	mempoolFactor := GetUnconfirmedTxnCount() / mempoolTxnCountDivisor
+	mempoolFactor := GetUnconfirmedTxnCount(event) / mempoolTxnCountDivisor
 
 	// calculate delay
 	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
@@ -452,7 +452,9 @@ func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 	return response.Height
 }
 
-func GetUnconfirmedTxnCount() int {
+func GetUnconfirmedTxnCount(event interface{}) int {
+	defer LogElapsedTimeForStateSyncedEvent(event, "GetUnconfirmedTxnCount", time.Now())
+
 	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
 	resp, err := http.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
