@@ -18,7 +18,7 @@ import (
 
 func TestHeimdallAppExport(t *testing.T) {
 	db := db.NewMemDB()
-	happ := NewHeimdallApp(log.NewTMJSONLogger(log.NewSyncWriter(os.Stdout)), db)
+	happ := NewHeimdallApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db)
 	genesisState := NewDefaultGenesisState()
 
 	// Get state bytes
@@ -37,7 +37,7 @@ func TestHeimdallAppExport(t *testing.T) {
 	happ.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newHapp := NewHeimdallApp(log.NewTMJSONLogger(log.NewSyncWriter(os.Stdout)), db)
+	newHapp := NewHeimdallApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db)
 	_, _, err = newHapp.ExportAppStateAndValidators()
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
@@ -83,7 +83,7 @@ func TestHeimdallAppExportWithRand(t *testing.T) {
 	app.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newHapp := NewHeimdallApp(log.NewTMJSONLogger(log.NewSyncWriter(os.Stdout)), db)
+	newHapp := NewHeimdallApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db)
 	exportedState, _, err := newHapp.ExportAppStateAndValidators()
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 	require.NotEmpty(t, string(exportedState))

@@ -33,7 +33,7 @@ func DefaultTestComponents(t *testing.T) (sdk.Context, Subspace, func() sdk.Comm
 	ms.MountStoreWithDB(tkey, sdk.StoreTypeTransient, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
-	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewTMJSONLogger(os.Stdout))
+	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
 	subspace := NewSubspace(cdc, key, tkey, TestParamStore)
 
 	return ctx, subspace, ms.Commit

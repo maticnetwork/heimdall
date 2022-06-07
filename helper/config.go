@@ -94,7 +94,7 @@ var cdc = amino.NewCodec()
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
-	Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
+	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
 // Configuration represents heimdall config

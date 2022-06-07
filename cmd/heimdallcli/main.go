@@ -217,7 +217,7 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
-			logger := log.NewTMJSONLogger(log.NewSyncWriter(os.Stdout))
+			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 			db, err := sdk.NewLevelDB("application", dataDir)
 			if err != nil {
 				panic(err)
