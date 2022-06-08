@@ -26,7 +26,8 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			helper.InitHeimdallConfig("")
-
+			// cosmos-sdk RestServer's logger is private
+			// so despite using json log flag, it will log with a standard TMLogger
 			rs := lcd.NewRestServer(cdc)
 			registerRoutesFn(rs)
 			logger := helper.Logger.With("module", "rest-server")
