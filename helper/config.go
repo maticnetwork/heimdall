@@ -202,7 +202,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	// perform check for json logging
-	if strings.Compare(conf.LogsType, "json") == 0 {
+	if conf.LogsType == "json" {
 		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
 	} else {
 		// default fallback
