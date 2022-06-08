@@ -50,7 +50,7 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 	viper.Set(bridgeDBFlag, bridgeDBValue)
 	viper.Set(borChainIDFlag, borChainIDValue)
-	viper.Set(logsTypeValue, logsTypeValue)
+	viper.Set(logsTypeFlag, logsTypeValue)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
