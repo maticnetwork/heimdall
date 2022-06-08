@@ -15,7 +15,7 @@ import (
 const (
 	bridgeDBFlag   = "bridge-db"
 	borChainIDFlag = "bor-chain-id"
-	jsonLogsFlag   = "bor-chain-id"
+	jsonLogsFlag   = "json"
 )
 
 // rootCmd represents the base command when called without any subcommands
