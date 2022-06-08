@@ -9,7 +9,6 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -83,7 +82,7 @@ var loggerOnce sync.Once
 // Logger returns logger singleton instance
 func Logger() log.Logger {
 	loggerOnce.Do(func() {
-		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+		logger = helper.Logger
 		option, _ := log.AllowLevel(viper.GetString("log_level"))
 		logger = log.NewFilter(logger, option)
 
