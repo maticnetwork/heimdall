@@ -73,7 +73,7 @@ const (
 
 	DefaultBorChainID string = "15001"
 
-	IsJsonLogEnabled = false
+	DefaultLogsType = "json"
 
 	secretFilePerm = 0600
 
@@ -125,7 +125,7 @@ type Configuration struct {
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
 
 	// json logging
-	IsJsonLogsEnabled bool `mapstructure:"json_logs_enabled"` // if true, enable logging in json format
+	LogsType string `mapstructure:"logs_type"` // if true, enable logging in json format
 }
 
 var conf Configuration
@@ -201,10 +201,10 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 	}
 
 	// perform check for json logging
-	if conf.IsJsonLogsEnabled {
-		// fallback to default
+	if strings.Compare(conf.LogsType, "json") == 0 {
 		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
 	} else {
+		// default fallback
 		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 	}
 
@@ -273,7 +273,7 @@ func GetDefaultHeimdallConfig() Configuration {
 
 		NoACKWaitTime: NoACKWaitTime,
 
-		IsJsonLogsEnabled: IsJsonLogEnabled,
+		LogsType: DefaultLogsType,
 	}
 }
 
