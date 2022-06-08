@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/tendermint/tendermint/libs/log"
 	"io/ioutil"
 	"os"
 	"path"
@@ -216,7 +217,7 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
-			logger := helper.Logger
+			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 			db, err := sdk.NewLevelDB("application", dataDir)
 			if err != nil {
 				panic(err)
