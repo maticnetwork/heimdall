@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/common"
@@ -95,7 +94,7 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 	)
 
 	// return broadcast to heimdall
-	if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+	if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 		sp.Logger.Error("Error while broadcasting Tick msg to heimdall", "error", err)
 		return err
 	}
@@ -185,7 +184,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.SlashingEvent, event); isOld {
 			sp.Logger.Info("Ignoring task to send tick ack to heimdall as already processed",
 				"event", eventName,
 				"tickID", event.Nonce,
@@ -212,7 +211,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Nonce.Uint64(), event.Amount.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			sp.Logger.Error("Error while broadcasting tick-ack to heimdall", "error", err)
 			return err
 		}
@@ -235,7 +234,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 		sp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 
-		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := sp.isOldTx(sp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.SlashingEvent, event); isOld {
 			sp.Logger.Info("Ignoring sending unjail to heimdall as already processed",
 				"event", eventName,
 				"ValidatorID", event.ValidatorId,
@@ -266,7 +265,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 		)
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
+		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			sp.Logger.Error("Error while broadcasting unjail to heimdall", "error", err)
 			return err
 		}
@@ -397,31 +396,6 @@ func (sp *SlashingProcessor) validateTickSlashInfo(slashInfoList []*hmTypes.Vali
 	}
 	sp.Logger.Info("SlashingInfoBytes mismatch", "tickSlashInfoBytes", hex.EncodeToString(tickSlashInfoBytes), "slashInfoBytes", slashInfoBytes)
 	return false, errors.New("Validation failed. tickSlashInfoBytes mismatch")
-}
-
-// isOldTx  checks if tx is already processed or not
-func (sp *SlashingProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
-	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
-	}
-
-	endpoint := helper.GetHeimdallServerEndpoint(util.SlashingTxStatusURL)
-	url, err := util.CreateURLWithQuery(endpoint, queryParam)
-
-	res, err := helper.FetchFromAPI(sp.cliCtx, url)
-	if err != nil {
-		sp.Logger.Error("Error fetching tx status", "url", url, "error", err)
-		return false, err
-	}
-
-	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
-		sp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "txhash", txHash, "error", err)
-		return false, err
-	}
-
-	return status, nil
 }
 
 //
