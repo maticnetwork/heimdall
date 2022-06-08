@@ -1,6 +1,7 @@
 package app
 
 import (
+	"github.com/maticnetwork/heimdall/helper"
 	"math/rand"
 	"os"
 	"testing"
@@ -8,7 +9,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -18,7 +18,7 @@ import (
 
 func TestHeimdallAppExport(t *testing.T) {
 	db := db.NewMemDB()
-	happ := NewHeimdallApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db)
+	happ := NewHeimdallApp(helper.Logger, db)
 	genesisState := NewDefaultGenesisState()
 
 	// Get state bytes
@@ -37,7 +37,7 @@ func TestHeimdallAppExport(t *testing.T) {
 	happ.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newHapp := NewHeimdallApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db)
+	newHapp := NewHeimdallApp(helper.Logger, db)
 	_, _, err = newHapp.ExportAppStateAndValidators()
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 }
@@ -83,7 +83,7 @@ func TestHeimdallAppExportWithRand(t *testing.T) {
 	app.Commit()
 
 	// Making a new app object with the db, so that initchain hasn't been called
-	newHapp := NewHeimdallApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db)
+	newHapp := NewHeimdallApp(helper.Logger, db)
 	exportedState, _, err := newHapp.ExportAppStateAndValidators()
 	require.NoError(t, err, "ExportAppStateAndValidators should not have an error")
 	require.NotEmpty(t, string(exportedState))

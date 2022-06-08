@@ -31,7 +31,6 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
-	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
 
@@ -217,7 +216,7 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 			}
 
 			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
-			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			logger := helper.Logger
 			db, err := sdk.NewLevelDB("application", dataDir)
 			if err != nil {
 				panic(err)

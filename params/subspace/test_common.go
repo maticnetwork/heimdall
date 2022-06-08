@@ -1,13 +1,13 @@
 package subspace
 
 import (
+	"github.com/maticnetwork/heimdall/helper"
 	"os"
 	"testing"
 
 	"github.com/stretchr/testify/require"
 
 	abci "github.com/tendermint/tendermint/abci/types"
-	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -33,7 +33,7 @@ func DefaultTestComponents(t *testing.T) (sdk.Context, Subspace, func() sdk.Comm
 	ms.MountStoreWithDB(tkey, sdk.StoreTypeTransient, db)
 	err := ms.LoadLatestVersion()
 	require.Nil(t, err)
-	ctx := sdk.NewContext(ms, abci.Header{}, false, log.NewTMLogger(os.Stdout))
+	ctx := sdk.NewContext(ms, abci.Header{}, false, helper.Logger)
 	subspace := NewSubspace(cdc, key, tkey, TestParamStore)
 
 	return ctx, subspace, ms.Commit
