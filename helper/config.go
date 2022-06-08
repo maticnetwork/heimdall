@@ -28,7 +28,6 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
-	LogsTypeFlag           = "logs"
 
 	// ---
 	// TODO Move these to common client flags
@@ -74,7 +73,7 @@ const (
 
 	DefaultBorChainID string = "15001"
 
-	DefaultLogsType = "json"
+	IsJsonLogEnabled = false
 
 	secretFilePerm = 0600
 
@@ -97,11 +96,6 @@ var cdc = amino.NewCodec()
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
-	if strings.Compare(viper.GetString(LogsTypeFlag), DefaultLogsType) == 0 {
-		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
-	} else {
-		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
-	}
 }
 
 // Configuration represents heimdall config
@@ -129,6 +123,9 @@ type Configuration struct {
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
+
+	// json logging
+	IsJsonLogsEnabled bool `mapstructure:"json_logs_enabled"` // if true, enable logging in json format
 }
 
 var conf Configuration
@@ -203,6 +200,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
+	// perform check for json logging
+	if conf.IsJsonLogsEnabled {
+		// fallback to default
+		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
+	} else {
+		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
+	}
+
 	// perform checks for timeout
 	if conf.EthRPCTimeout == 0 {
 		// fallback to default
@@ -267,6 +272,8 @@ func GetDefaultHeimdallConfig() Configuration {
 		SpanPollInterval:         DefaultSpanPollInterval,
 
 		NoACKWaitTime: NoACKWaitTime,
+
+		IsJsonLogsEnabled: IsJsonLogEnabled,
 	}
 }
 
