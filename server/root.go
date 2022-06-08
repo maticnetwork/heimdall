@@ -1,17 +1,19 @@
 package server
 
 import (
+	"net/http"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/app"
-	tx "github.com/maticnetwork/heimdall/client/tx"
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	"net/http"
+
+	"github.com/maticnetwork/heimdall/app"
+	tx "github.com/maticnetwork/heimdall/client/tx"
+	"github.com/maticnetwork/heimdall/helper"
 
 	// unnamed import of statik for swagger UI support
 	_ "github.com/maticnetwork/heimdall/server/statik"

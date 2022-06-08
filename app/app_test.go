@@ -1,7 +1,6 @@
 package app
 
 import (
-	"github.com/tendermint/tendermint/libs/log"
 	"math/rand"
 	"os"
 	"testing"
@@ -9,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/stretchr/testify/require"
 	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/log"
 	db "github.com/tendermint/tm-db"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
