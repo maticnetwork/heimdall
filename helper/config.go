@@ -200,10 +200,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
+	Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
 	// perform check for json logging
-	if strings.Compare(conf.LogsType, "json") == 0 {
-		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
-	} else {
+	if strings.Compare(conf.LogsType, "json") != 0 {
 		// default fallback
 		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 	}
