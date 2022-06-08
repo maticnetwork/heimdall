@@ -28,6 +28,7 @@ const (
 	WithHeimdallConfigFlag = "with-heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+	LogsTypeFlag           = "logs"
 
 	// ---
 	// TODO Move these to common client flags
@@ -73,6 +74,8 @@ const (
 
 	DefaultBorChainID string = "15001"
 
+	DefaultLogsType = "json"
+
 	secretFilePerm = 0600
 
 	// Legacy value - DO NOT CHANGE
@@ -94,7 +97,11 @@ var cdc = amino.NewCodec()
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
-	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
+	if strings.Compare(viper.GetString(LogsTypeFlag), DefaultLogsType) == 0 {
+		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
+	} else {
+		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
+	}
 }
 
 // Configuration represents heimdall config
