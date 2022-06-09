@@ -118,7 +118,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
-		logger.Error("First checkpoint to start from block 0", "checkpoint start block", msg.StartBlock, "Error", err)
+		logger.Error("First checkpoint to start from block 0", "checkpoint start block", msg.StartBlock, "error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
