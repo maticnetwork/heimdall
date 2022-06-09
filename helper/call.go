@@ -338,7 +338,7 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 	balance, err := c.MainChainClient.BalanceAt(ctx, address, nil)
 	if err != nil {
-		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
+		Logger.Error("Unable to fetch balance of account from root chain", "Address", address.String(), "Error", err)
 		return big.NewInt(0), err
 	}
 
@@ -350,7 +350,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", stakerDetails.Status)
+		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "status", stakerDetails.Status, "error", err)
 		return
 	}
 
@@ -438,7 +438,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		// get main tx receipt
 		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
-			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
+			Logger.Error("Error while fetching mainchain receipt", "txHash", tx.Hex(), "error", err)
 			return nil, err
 		}
 

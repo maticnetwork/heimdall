@@ -44,7 +44,7 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 
 	checkpointObj, err := k.GetCheckpointByNumber(ctx, msg.HeaderIndex)
 	if err != nil {
-		logger.Error("Unable to get checkpoint from db", "error", err, "Header Index-", msg.HeaderIndex)
+		logger.Error("Unable to get checkpoint from db", "header index", msg.HeaderIndex, "error", err)
 		return common.ErrNoCheckpointFound(k.Codespace()).Result()
 	}
 
@@ -118,7 +118,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
-		logger.Error("First checkpoint to start from block 0", "Error", err, "Checkpoint start block", msg.StartBlock)
+		logger.Error("First checkpoint to start from block 0", "checkpoint start block", msg.StartBlock, "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
@@ -246,8 +246,8 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	// If last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
 	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
-		logger.Debug("Invalid No ACK -- Waiting for last checkpoint ACK", "lastCheckpointTime:", lastCheckpointTime, "Current Time", currentTime,
-			"buffer Time:", bufferTime.String(),
+		logger.Debug("Invalid No ACK -- Waiting for last checkpoint ACK", "lastCheckpointTime", lastCheckpointTime, "current time", currentTime,
+			"buffer Time", bufferTime.String(),
 		)
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
@@ -257,8 +257,8 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 
 	if lastNoAckTime.After(currentTime) || (currentTime.Sub(lastNoAckTime) < bufferTime) {
-		logger.Debug("Too many no-ack", "lastNoAckTime", lastNoAckTime, "Current Time", currentTime,
-			"buffer Time:", bufferTime.String())
+		logger.Debug("Too many no-ack", "lastNoAckTime", lastNoAckTime, "current time", currentTime,
+			"buffer Time", bufferTime.String())
 		return common.ErrTooManyNoACK(k.Codespace()).Result()
 	}
 
