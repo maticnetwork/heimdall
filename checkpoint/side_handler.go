@@ -100,10 +100,10 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller, maticTxConfirmations)
 	if err != nil {
 		logger.Error("Error validating checkpoint",
-			"error", err,
 			"startBlock", msg.StartBlock,
 			"endBlock", msg.EndBlock,
 			"rootHash", msg.RootHash,
+			"error", err,
 		)
 	} else if validCheckpoint {
 		// vote `yes` if checkpoint is valid
