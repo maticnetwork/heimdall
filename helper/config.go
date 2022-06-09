@@ -73,6 +73,8 @@ const (
 
 	DefaultBorChainID string = "15001"
 
+	DefaultLogsType = "json"
+
 	secretFilePerm = 0600
 
 	// Legacy value - DO NOT CHANGE
@@ -122,6 +124,9 @@ type Configuration struct {
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
+
+	// json logging
+	LogsType string `mapstructure:"logs_type"` // if true, enable logging in json format
 }
 
 var conf Configuration
@@ -196,6 +201,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
+	// perform check for json logging
+	if conf.LogsType == "json" {
+		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
+	} else {
+		// default fallback
+		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
+	}
+
 	// perform checks for timeout
 	if conf.EthRPCTimeout == 0 {
 		// fallback to default
@@ -260,6 +273,8 @@ func GetDefaultHeimdallConfig() Configuration {
 		SpanPollInterval:         DefaultSpanPollInterval,
 
 		NoACKWaitTime: NoACKWaitTime,
+
+		LogsType: DefaultLogsType,
 	}
 }
 

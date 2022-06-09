@@ -2,17 +2,14 @@ package server
 
 import (
 	"net/http"
-	"os"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/lcd"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/go-kit/kit/log"
 	"github.com/rakyll/statik/fs"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	tmLog "github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/app"
 	tx "github.com/maticnetwork/heimdall/client/tx"
@@ -31,10 +28,11 @@ func ServeCommands(cdc *codec.Codec, registerRoutesFn func(*lcd.RestServer)) *co
 		Short: "Start LCD (light-client daemon), a local REST server",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			helper.InitHeimdallConfig("")
-
+			// cosmos-sdk RestServer's logger is private
+			// so despite using json log flag, it will log with a standard TMLogger
 			rs := lcd.NewRestServer(cdc)
 			registerRoutesFn(rs)
-			logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+			logger := helper.Logger.With("module", "rest-server")
 			err := rs.Start(
 				viper.GetString(client.FlagListenAddr),
 				viper.GetInt(client.FlagMaxOpenConnections),
