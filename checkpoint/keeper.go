@@ -112,7 +112,6 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 
 	// store in key provided
 	store.Set(key, out)
-
 	return nil
 }
 
@@ -236,6 +235,7 @@ func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 		// get current ACK count
 		result, err := strconv.ParseUint(string(store.Get(LastNoACKKey)), 10, 64)
 		if err == nil {
+
 			return uint64(result)
 		}
 	}

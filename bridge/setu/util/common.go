@@ -214,6 +214,7 @@ func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 		return true, nil
 	}
+	logger.Debug("We are not the current proposer")
 
 	return false, nil
 }
