@@ -35,7 +35,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetQueryParams(cdc),
 			GetCheckpointBuffer(cdc),
 			GetLastNoACK(cdc),
-			GetHeaderFromIndex(cdc),
+			GetCheckpointByNumber(cdc),
 			GetCheckpointCount(cdc),
 		)...,
 	)
@@ -132,10 +132,10 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 }
 
 // GetHeaderFromIndex get checkpoint given header index
-func GetHeaderFromIndex(cdc *codec.Codec) *cobra.Command {
+func GetCheckpointByNumber(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "header",
-		Short: "get checkpoint (header) from index",
+		Short: "get checkpoint (header) by number",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 			headerNumber := viper.GetUint64(FlagHeaderNumber)
