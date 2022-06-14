@@ -41,6 +41,15 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
+//go:generate mockgen -destination=./mocks/http_client_mock.go -package=mocks . HTTPClient
+type HTTPClient interface {
+	Get(string) (resp *http.Response, err error)
+}
+
+var (
+	Client HTTPClient
+)
+
 // ZeroHash represents empty hash
 var ZeroHash = common.Hash{}
 
@@ -58,6 +67,10 @@ func GetFromAddress(cliCtx context.CLIContext) types.HeimdallAddress {
 	}
 
 	return types.BytesToHeimdallAddress(GetAddress())
+}
+
+func init() {
+	Client = &http.Client{}
 }
 
 // Paginate returns the correct starting and ending index for a paginated query,
@@ -775,7 +788,7 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 
 // FetchFromAPI fetches data from any URL
 func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
-	resp, err := http.Get(URL)
+	resp, err := Client.Get(URL)
 	if err != nil {
 		return result, err
 	}

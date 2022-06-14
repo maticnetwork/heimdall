@@ -2,16 +2,26 @@ package types
 
 import (
 	"fmt"
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 
 	"github.com/maticnetwork/heimdall/types"
 )
 
+var (
+	NQuerier NodeQuerier
+)
+
 // NodeQuerier is an interface that is satisfied by types that provide the QueryWithData method
+//go:generate mockgen -destination=./mocks/node_querier_mock.go -package=mocks . NodeQuerier
 type NodeQuerier interface {
 	// QueryWithData performs a query to a Tendermint node with the provided path
 	// and a data payload. It returns the result and height of the query upon success
 	// or an error if the query fails.
 	QueryWithData(path string, data []byte) ([]byte, int64, error)
+}
+
+func init() {
+	NQuerier = &cliContext.CLIContext{}
 }
 
 // AccountRetriever defines the properties of a type that can be used to
@@ -41,7 +51,7 @@ func (ar AccountRetriever) GetAccountWithHeight(addr types.HeimdallAddress) (Acc
 		return nil, 0, err
 	}
 
-	res, height, err := ar.querier.QueryWithData(fmt.Sprintf("custom/%s/%s", QuerierRoute, QueryAccount), bs)
+	res, height, err := NQuerier.QueryWithData(fmt.Sprintf("custom/%s/%s", QuerierRoute, QueryAccount), bs)
 	if err != nil {
 		return nil, height, err
 	}
