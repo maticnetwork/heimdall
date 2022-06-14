@@ -20,7 +20,7 @@ import (
 )
 
 const (
-	dummyTenderMintNode    = "http://dummy-localhost:26657"
+	dummyTenderMintNode    = "http://localhost:26657"
 	dummyHeimdallServerUrl = "https://dummy-heimdall-api.polygon.technology"
 
 	chainManagerParamsUrl      = dummyHeimdallServerUrl + "/chainmanager/params"
@@ -65,12 +65,45 @@ const (
 		}
 	}`
 
-	isOldTxUrl = dummyHeimdallServerUrl + "/clerk/isoldtx?logindex=0&txhash=0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854"
-	// TODO test false case
+	isOldTxUrl      = dummyHeimdallServerUrl + "/clerk/isoldtx?logindex=0&txhash=0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854"
 	isOldTxResponse = `
 	{
 		"height": "0",
-		"result": true
+		"result": false
+	}`
+
+	checkpointCountUrl      = dummyHeimdallServerUrl + "/checkpoints/count"
+	checkpointCountResponse = `
+	{
+		"height": "1",
+		"result": null
+	}`
+
+	unconfirmedTxsUrl      = dummyTenderMintNode + "/unconfirmed_txs"
+	unconfirmedTxsResponse = `
+	{
+		"height": "1",
+		"result": {
+			"total": "",
+			"txs": []
+		}
+	}`
+
+	getAccountWIthHeightResponseForAccountRetriever = `
+	{
+		"type": "auth/Account",
+		"value": {
+			"address": "0x5973918275c01f50555d44e92c9d9b353cadad54",
+			"coins": [{
+				"denom": "matic",
+				"amount": "10000000000000000000"
+			}],
+			"public_key": null,
+			"account_number": "0",
+			"sequence_number": "0",
+			"name": "",
+			"permissions": []
+		}
 	}`
 )
 
@@ -110,9 +143,11 @@ func prepareMockData(b *testing.B) {
 	mockHttpClient.EXPECT().Get(chainManagerParamsUrl).Return(prepareResponse(chainManagerParamsResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(getAccountUrl).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(isOldTxUrl).Return(prepareResponse(isOldTxResponse), nil).AnyTimes()
+	mockHttpClient.EXPECT().Get(checkpointCountUrl).Return(prepareResponse(checkpointCountResponse), nil).AnyTimes()
+	mockHttpClient.EXPECT().Get(unconfirmedTxsUrl).Return(prepareResponse(unconfirmedTxsResponse), nil).AnyTimes()
 	helper.Client = mockHttpClient
 
-	mockNodeQuerier.EXPECT().QueryWithData(gomock.Any(), gomock.Any()).Return(nil, int64(0), nil).AnyTimes()
+	mockNodeQuerier.EXPECT().QueryWithData(gomock.Any(), gomock.Any()).Return([]byte(getAccountWIthHeightResponseForAccountRetriever), int64(0), nil).AnyTimes()
 	authTypes.NQuerier = mockNodeQuerier
 }
 
@@ -125,14 +160,19 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 	config := helper.GetConfig()
 	config.HeimdallServerURL = dummyHeimdallServerUrl
+	config.TendermintRPCUrl = dummyTenderMintNode
 	helper.SetTestConfig(config)
 
 	txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
+	txBroadcaster.CliCtx.Simulate = true
+	txBroadcaster.CliCtx.SkipConfirm = true
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		return nil, err
 	}
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
+	cp.cliCtx.Simulate = true
+	cp.cliCtx.SkipConfirm = true
 	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, txBroadcaster, "clerk", cp)
 
 	return cp, nil

@@ -325,7 +325,10 @@ func BuildAndBroadcastMsgs(cliCtx context.CLIContext, txBldr authTypes.TxBuilder
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
-
+	// just simulate
+	if cliCtx.Simulate {
+		return sdk.TxResponse{TxHash: "0x" + hex.EncodeToString(txBytes)}, nil
+	}
 	// broadcast to a Tendermint node
 	return BroadcastTxBytes(cliCtx, txBytes, "")
 }
