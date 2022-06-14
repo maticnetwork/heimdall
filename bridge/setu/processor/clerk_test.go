@@ -65,7 +65,8 @@ const (
 		}
 	}`
 
-	isOldTxUrl      = dummyHeimdallServerUrl + "/clerk/isoldtx?logindex=0&txhash=0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854"
+	isOldTxUrl = dummyHeimdallServerUrl + "/clerk/isoldtx?logindex=0&txhash=0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854"
+	// TODO test false case
 	isOldTxResponse = `
 	{
 		"height": "0",
@@ -74,31 +75,29 @@ const (
 )
 
 func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
-
-	// given
-	prepareMockData(b)
-
-	// when
-	cp, err := prepareClerkProcessor()
-	if err != nil {
-		b.Fatal("Error initializing test clerk processor")
-		return
-	}
-	dlb, err := prepareDummyLogBytes()
-	if err != nil {
-		b.Fatal("Error creating test data")
-		return
-	}
-
-	// then
 	b.ReportAllocs()
 	b.ResetTimer()
 	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+		// given
+		prepareMockData(b)
+		cp, err := prepareClerkProcessor()
+		if err != nil {
+			b.Fatal("Error initializing test clerk processor")
+		}
+		dlb, err := prepareDummyLogBytes()
+		if err != nil {
+			b.Fatal("Error creating test data")
+		}
+		// when
+		b.StartTimer()
 		err = cp.sendStateSyncedToHeimdall("StateSynced", dlb.String())
-		b.Log("StateSynced sent to heimdall correctly")
+		// then
 		if err != nil {
 			b.Fatal(err)
 		}
+		b.Log("StateSynced sent to heimdall successfully")
 	}
 }
 
