@@ -244,7 +244,6 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 					}
 					rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						// TODO testing this now
 						rl.SendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 

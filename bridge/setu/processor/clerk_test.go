@@ -28,7 +28,7 @@ import (
 
 const (
 	dummyTenderMintNode    = "http://localhost:26657"
-	dummyHeimdallServerUrl = "https://heimdall-api-testnet.polygon.technology"
+	dummyHeimdallServerUrl = "https://dummy-heimdall-api-testnet.polygon.technology"
 
 	chainManagerParamsUrl      = dummyHeimdallServerUrl + "/chainmanager/params"
 	chainManagerParamsResponse = `
