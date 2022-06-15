@@ -3,6 +3,8 @@ package processor
 import (
 	"bytes"
 	"encoding/json"
+	"github.com/RichardKnop/machinery/v1"
+	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/golang/mock/gomock"
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
@@ -10,14 +12,18 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	authTypesMocks "github.com/maticnetwork/heimdall/auth/types/mocks"
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
+	"github.com/maticnetwork/heimdall/bridge/setu/listener"
+	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	helperMocks "github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/spf13/viper"
 	"io/ioutil"
+	"math/rand"
 	"net/http"
 	"os"
 	"testing"
+	"time"
 )
 
 const (
@@ -352,7 +358,8 @@ func BenchmarkIsOldTx(b *testing.B) {
 		}
 		// when
 		b.StartTimer()
-		status, err := cp.isOldTx(cp.cliCtx, "0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854",
+		status, err := cp.isOldTx(
+			cp.cliCtx, "0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854",
 			0, util.ClerkEvent, nil)
 		// then
 		if err != nil {
@@ -387,6 +394,33 @@ func BenchmarkCalculateTaskDelay(b *testing.B) {
 	}
 }
 
+func BenchmarkSendTaskWithDelay(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+		// given
+		prepareMockData(b)
+		logs, err := prepareDummyLogBytes()
+		if err != nil {
+			b.Fatal("Error creating test data")
+		}
+		rcl, err := prepareRootChainListener()
+		if err != nil {
+			b.Fatal("Error initializing test listener")
+		}
+		// when
+		b.StartTimer()
+		// This will trigger 'error="Set state pending error: dial tcp 127.0.0.1:6379: connect: connection refused'
+		// it's fine as long as we don't want to test the actual sendTask to rabbitmq
+		rcl.SendTaskWithDelay(
+			"sendStateSyncedToHeimdall", "StateSynced",
+			logs.Bytes(), time.Duration(rand.Intn(60)), nil)
+		b.Logf("SendTaskWithDelay tested successfully")
+	}
+}
+
 func prepareMockData(b *testing.B) {
 	mockCtrl := gomock.NewController(b)
 	defer mockCtrl.Finish()
@@ -412,10 +446,10 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	viper.Set("log_level", "debug")
 
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
-	config := helper.GetConfig()
-	config.HeimdallServerURL = dummyHeimdallServerUrl
-	config.TendermintRPCUrl = dummyTenderMintNode
-	helper.SetTestConfig(config)
+	configuration := helper.GetConfig()
+	configuration.HeimdallServerURL = dummyHeimdallServerUrl
+	configuration.TendermintRPCUrl = dummyTenderMintNode
+	helper.SetTestConfig(configuration)
 
 	txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 	txBroadcaster.CliCtx.Simulate = true
@@ -430,6 +464,32 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, txBroadcaster, "clerk", cp)
 
 	return cp, nil
+}
+
+func prepareRootChainListener() (*listener.RootChainListener, error) {
+	cdc := app.MakeCodec()
+
+	viper.Set(helper.NodeFlag, dummyTenderMintNode)
+	viper.Set("log_level", "debug")
+
+	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+	configuration := helper.GetConfig()
+	configuration.HeimdallServerURL = dummyHeimdallServerUrl
+	configuration.TendermintRPCUrl = dummyTenderMintNode
+	helper.SetTestConfig(configuration)
+
+	rcl := listener.NewRootChainListener()
+	rcl.Logger = helper.Logger
+
+	server, err := getTestServer()
+	if err != nil {
+		return nil, err
+	}
+
+	rcl.BaseListener = *listener.NewBaseListener(
+		cdc, &queue.QueueConnector{Server: server}, nil, helper.GetMainClient(), "rootchain", rcl)
+
+	return rcl, nil
 }
 
 func prepareDummyLogBytes() (*bytes.Buffer, error) {
@@ -475,4 +535,22 @@ func prepareResponse(body string) *http.Response {
 		Request:          nil,
 		TLS:              nil,
 	}
+}
+
+func getTestServer() (*machinery.Server, error) {
+	server, err := machinery.NewServer(&config.Config{
+		Broker:        "amqp://guest:guest@localhost:5672/",
+		DefaultQueue:  "machinery_tasks",
+		ResultBackend: "redis://127.0.0.1:6379",
+		AMQP: &config.AMQPConfig{
+			Exchange:      "machinery_exchange",
+			ExchangeType:  "direct",
+			BindingKey:    "machinery_task",
+			PrefetchCount: 1,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	return server, nil
 }

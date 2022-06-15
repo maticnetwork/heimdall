@@ -187,7 +187,7 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 				switch selectedEvent.Name {
 				case "NewHeaderBlock":
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
-						rl.sendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
+						rl.SendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
 					}
 				case "Staked":
 					event := new(stakinginfo.StakinginfoStaked)
@@ -197,11 +197,11 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 					if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
 						// topup has to be processed first before validator join. so adding delay.
 						delay := util.TaskDelayBetweenEachVal
-						rl.sendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						rl.SendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
 						// topup has to be processed first before validator join. so adding delay.
 						delay = delay + util.TaskDelayBetweenEachVal
-						rl.sendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						rl.SendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 
 				case "StakeUpdate":
@@ -210,9 +210,9 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
 					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-						rl.sendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, 0, event)
+						rl.SendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, 0, event)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						rl.SendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 
 				case "SignerChange":
@@ -221,9 +221,9 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
 					if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
-						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0, event)
+						rl.SendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0, event)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						rl.SendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 
 				case "UnstakeInit":
@@ -232,9 +232,9 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
 					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-						rl.sendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, 0, event)
+						rl.SendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, 0, event)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						rl.SendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 
 				case "StateSynced":
@@ -244,7 +244,8 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 					}
 					rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						// TODO testing this now
+						rl.SendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 
 				case "TopUpFee":
@@ -253,14 +254,14 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
 					if bytes.Equal(event.User.Bytes(), helper.GetAddress()) {
-						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0, event)
+						rl.SendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0, event)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						rl.SendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 
 				case "Slashed":
 					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
-						rl.sendTaskWithDelay("sendTickAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
+						rl.SendTaskWithDelay("sendTickAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
 					}
 
 				case "UnJailed":
@@ -269,9 +270,9 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 					}
 					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, 0, event)
+						rl.SendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, 0, event)
 					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay, event)
+						rl.SendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 				}
 			}
@@ -279,8 +280,8 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 	}
 }
 
-func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string, logBytes []byte, delay time.Duration, event interface{}) {
-	defer util.LogElapsedTimeForStateSyncedEvent(event, "sendTaskWithDelay", time.Now())
+func (rl *RootChainListener) SendTaskWithDelay(taskName string, eventName string, logBytes []byte, delay time.Duration, event interface{}) {
+	defer util.LogElapsedTimeForStateSyncedEvent(event, "SendTaskWithDelay", time.Now())
 
 	signature := &tasks.Signature{
 		Name: taskName,
