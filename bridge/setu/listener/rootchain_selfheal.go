@@ -24,7 +24,7 @@ func (rl *RootChainListener) startStakeUpdateSelfHealer(ctx context.Context) {
 				rl.Logger.Error("Error getting heimdall validators", "error", err)
 				continue
 			}
-			rl.Logger("Fetched validators list from heimdall", "len", len(validatorSet.Validators))
+			rl.Logger.Info("Fetched validators list from heimdall", "len", len(validatorSet.Validators))
 
 			// Make sure each validator is in sync
 			var wg sync.WaitGroup
