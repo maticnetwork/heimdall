@@ -158,16 +158,9 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 	valPosition := 0
 	isCurrentValidator := false
 
-	response, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+	validatorSet, err := GetValidatorSet(cliCtx)
 	if err != nil {
-		logger.Error("Unable to send request for current validatorset", "url", CurrentValidatorSetURL, "error", err)
-		return isCurrentValidator, 0
-	}
-
-	// unmarshall data from buffer
-	var validatorSet hmtypes.ValidatorSet
-	if err = json.Unmarshal(response.Result, &validatorSet); err != nil {
-		logger.Error("Error unmarshalling current validatorset data ", "error", err)
+		logger.Error("Error getting current validatorset data ", "error", err)
 		return isCurrentValidator, 0
 	}
 
