@@ -47,7 +47,7 @@ func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, er
 	return big.NewInt(0).SetBytes(latestEvent.Topics[1].Bytes()), nil
 }
 
-// getLatestStateID returns the StateSynced event based on the given state ID
+// getStateSync returns the StateSynced event based on the given state ID
 func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*statesender.StatesenderStateSynced, error) {
 	rootchainContext, err := rl.getRootChainContext()
 	if err != nil {
