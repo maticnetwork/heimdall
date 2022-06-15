@@ -47,7 +47,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 				"1234",
 			)
 
-			err := _txBroadcaster.BroadcastToHeimdall(msg)
+			err := _txBroadcaster.BroadcastToHeimdall(msg, nil)
 			assert.Empty(t, err, "Error broadcasting tx to heimdall", err)
 		})
 	}

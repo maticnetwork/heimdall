@@ -75,7 +75,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 		case <-ticker.C:
 			fromBlock, toBlock, err := hl.fetchFromAndToBlock()
 			if err != nil {
-				hl.Logger.Error("Error fetching fromBlock and toBlock...skipping events query", "error", err)
+				hl.Logger.Error("Error fetching from and toBlock, skipping events query", "fromBlock", fromBlock, "toBlock", toBlock, "error", err)
 			} else if fromBlock < toBlock {
 
 				hl.Logger.Info("Fetching new events between", "fromBlock", fromBlock, "toBlock", toBlock)
@@ -178,7 +178,7 @@ func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight
 	hl.Logger.Info("Received block event from Heimdall", "eventType", event.Type)
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
-		hl.Logger.Error("Error while parsing block event", "error", err, "eventType", event.Type)
+		hl.Logger.Error("Error while parsing block event", "eventType", event.Type, "error", err)
 		return
 	}
 

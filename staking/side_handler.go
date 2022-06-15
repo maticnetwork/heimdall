@@ -360,7 +360,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 	k.Logger(ctx).Debug("Adding new validator to state", "validator", newValidator.String())
 	err = k.AddValidator(ctx, newValidator)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to add validator to state", "error", err, "validator", newValidator.String())
+		k.Logger(ctx).Error("Unable to add validator to state", "validator", newValidator.String(), "error", err)
 		return hmCommon.ErrValidatorSave(k.Codespace()).Result()
 	}
 
@@ -369,7 +369,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 	valSigningInfo := hmTypes.NewValidatorSigningInfo(newValidator.ID, ctx.BlockHeight(), int64(0), int64(0))
 	err = k.AddValidatorSigningInfo(ctx, newValidator.ID, valSigningInfo)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to add validator signing info to state", "error", err, "valSigningInfo", valSigningInfo.String())
+		k.Logger(ctx).Error("Unable to add validator signing info to state", "valSigningInfo", valSigningInfo.String(), "error", err)
 		return hmCommon.ErrValidatorSigningInfoSave(k.Codespace()).Result()
 	}
 
@@ -444,7 +444,7 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 	// save validator
 	err = k.AddValidator(ctx, validator)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+		k.Logger(ctx).Error("Unable to update signer", "ValidatorID", validator.ID, "error", err)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
@@ -535,7 +535,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
+		k.Logger(ctx).Error("Unable to update signer", "validatorId", validator.ID, "error", err)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
@@ -545,7 +545,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 	// save validator
 	err := k.AddValidator(ctx, validator)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+		k.Logger(ctx).Error("Unable to update signer", "ValidatorID", validator.ID, "error", err)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 

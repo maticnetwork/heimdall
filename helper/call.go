@@ -315,7 +315,7 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
 	GetLastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
-		Logger.Error("Could not fetch current child block from rootchain contract", "Error", err)
+		Logger.Error("Could not fetch current child block from rootchain contract", "error", err)
 		return 0, err
 	}
 	return GetLastChildBlock.Uint64(), nil
@@ -325,7 +325,7 @@ func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchai
 func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error) {
 	currentHeaderBlock, err := rootChainInstance.CurrentHeaderBlock(nil)
 	if err != nil {
-		Logger.Error("Could not fetch current header block from rootchain contract", "Error", err)
+		Logger.Error("Could not fetch current header block from rootchain contract", "error", err)
 		return 0, err
 	}
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
@@ -338,7 +338,7 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 	balance, err := c.MainChainClient.BalanceAt(ctx, address, nil)
 	if err != nil {
-		Logger.Error("Unable to fetch balance of account from root chain", "Error", err, "Address", address.String())
+		Logger.Error("Unable to fetch balance of account from root chain", "Address", address.String(), "error", err)
 		return big.NewInt(0), err
 	}
 
@@ -350,7 +350,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "error", err, "validatorId", valID, "status", stakerDetails.Status)
+		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "status", stakerDetails.Status, "error", err)
 		return
 	}
 
@@ -378,7 +378,7 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.
 
 	latestBlock, err := c.MainChainClient.HeaderByNumber(ctx, blockNum)
 	if err != nil {
-		Logger.Error("Unable to connect to main chain", "Error", err)
+		Logger.Error("Unable to connect to main chain", "error", err)
 		return
 	}
 	return latestBlock, nil
@@ -390,7 +390,7 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	defer cancel()
 	latestBlock, err := c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	if err != nil {
-		Logger.Error("Unable to connect to matic chain", "Error", err)
+		Logger.Error("Unable to connect to matic chain", "error", err)
 		return
 	}
 	return latestBlock, nil
@@ -438,7 +438,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		// get main tx receipt
 		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
-			Logger.Error("Error while fetching mainchain receipt", "error", err, "txHash", tx.Hex())
+			Logger.Error("Error while fetching mainchain receipt", "txHash", tx.Hex(), "error", err)
 			return nil, err
 		}
 
@@ -452,7 +452,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 	// get main chain block
 	latestBlk, err := c.GetMainChainBlock(nil)
 	if err != nil {
-		Logger.Error("error getting latest block from main chain", "Error", err)
+		Logger.Error("error getting latest block from main chain", "error", err)
 		return nil, err
 	}
 	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
@@ -678,7 +678,7 @@ func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginf
 	accountStateRoot, err := stakingInfoInstance.GetAccountStateRoot(nil)
 
 	if err != nil {
-		Logger.Error("Unable to get current account state roor", "Error", err)
+		Logger.Error("Unable to get current account state roor", "error", err)
 		var emptyArr [32]byte
 		return emptyArr, err
 	}
@@ -694,7 +694,7 @@ func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginf
 func (c *ContractCaller) CurrentSpanNumber(validatorSetInstance *validatorset.Validatorset) (Number *big.Int) {
 	result, err := validatorSetInstance.CurrentSpanNumber(nil)
 	if err != nil {
-		Logger.Error("Unable to get current span number", "Error", err)
+		Logger.Error("Unable to get current span number", "error", err)
 		return nil
 	}
 
@@ -716,7 +716,7 @@ func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *valid
 func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.Statesender) (Number *big.Int) {
 	result, err := stateSenderInstance.Counter(nil)
 	if err != nil {
-		Logger.Error("Unable to get current counter number", "Error", err)
+		Logger.Error("Unable to get current counter number", "error", err)
 		return nil
 	}
 
