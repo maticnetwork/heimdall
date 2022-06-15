@@ -154,7 +154,7 @@ func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	}
 }
 
-// startPolling starts polling
+// StartPolling starts polling
 func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
 	// How often to fire the passed in function in second
 	interval := pollInterval

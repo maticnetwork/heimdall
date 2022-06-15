@@ -267,7 +267,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		)
 
 		// fetch latest checkpoint
-		latestCheckpoint, err := util.GetlastestCheckpoint(cp.cliCtx)
+		latestCheckpoint, err := util.GetLatestCheckpoint(cp.cliCtx)
 		// event checkpoint is older than or equal to latest checkpoint
 		if err == nil && latestCheckpoint != nil && latestCheckpoint.EndBlock >= event.End.Uint64() {
 			cp.Logger.Debug("Checkpoint ack is already submitted", "start", event.Start, "end", event.End)
