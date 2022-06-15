@@ -217,83 +217,81 @@ func (rl *RootChainListener) handleLog(vLog types.Log) {
 				rl.sendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay, event)
 			}
 
-				case "StakeUpdate":
-					event := new(stakinginfo.StakinginfoStakeUpdate)
-					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-					}
-					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-						rl.sendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, 0, event)
-					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, delay, event)
-					}
+		case "StakeUpdate":
+			event := new(stakinginfo.StakinginfoStakeUpdate)
+			if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+				rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+			}
+			if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
+				rl.sendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, 0, event)
+			} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
+				rl.sendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, delay, event)
+			}
 
-				case "SignerChange":
-					event := new(stakinginfo.StakinginfoSignerChange)
-					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-					}
-					if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
-						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0, event)
-					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay, event)
-					}
+		case "SignerChange":
+			event := new(stakinginfo.StakinginfoSignerChange)
+			if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+				rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+			}
+			if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
+				rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0, event)
+			} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
+				rl.sendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay, event)
+			}
 
-				case "UnstakeInit":
-					event := new(stakinginfo.StakinginfoUnstakeInit)
-					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-					}
-					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-						rl.sendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, 0, event)
-					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, delay, event)
-					}
+		case "UnstakeInit":
+			event := new(stakinginfo.StakinginfoUnstakeInit)
+			if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+				rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+			}
+			if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
+				rl.sendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, 0, event)
+			} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
+				rl.sendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, delay, event)
+			}
 
-				case "StateSynced":
-					event := new(statesender.StatesenderStateSynced)
-					if err := helper.UnpackLog(rl.stateSenderAbi, event, selectedEvent.Name, &vLog); err != nil {
-						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-					}
-					rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
-					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay, event)
-					}
+		case "StateSynced":
+			event := new(statesender.StatesenderStateSynced)
+			if err := helper.UnpackLog(rl.stateSenderAbi, event, selectedEvent.Name, &vLog); err != nil {
+				rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+			}
+			rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
+			if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
+				rl.sendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay, event)
+			}
 
-				case "TopUpFee":
-					event := new(stakinginfo.StakinginfoTopUpFee)
-					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-					}
-					if bytes.Equal(event.User.Bytes(), helper.GetAddress()) {
-						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0, event)
-					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delayv)
-					}
+		case "TopUpFee":
+			event := new(stakinginfo.StakinginfoTopUpFee)
+			if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+				rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+			}
+			if bytes.Equal(event.User.Bytes(), helper.GetAddress()) {
+				rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0, event)
+			} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
+				rl.sendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay, event)
+			}
 
-				case "Slashed":
-					if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
-						rl.sendTaskWithDelay("sendTickAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
-					}
+		case "Slashed":
+			if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
+				rl.sendTaskWithDelay("sendTickAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
+			}
 
-				case "UnJailed":
-					event := new(stakinginfo.StakinginfoUnJailed)
-					if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-						rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-					}
-					if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, 0, event)
-					} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-						rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay, event)
-					}
-				}
+		case "UnJailed":
+			event := new(stakinginfo.StakinginfoUnJailed)
+			if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+				rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
+			}
+			if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
+				rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, 0, event)
+			} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
+				rl.sendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay, event)
 			}
 		}
 	}
 }
 
 // sendTaskWithDelay sends the given task using the given delay time
-func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string, logBytes []byte, delay time.Duration) {
+func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string, logBytes []byte, delay time.Duration, event interface{}) {
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "sendTaskWithDelay", time.Now())
 
 	signature := &tasks.Signature{
@@ -315,6 +313,7 @@ func (rl *RootChainListener) sendTaskWithDelay(taskName string, eventName string
 	eta := time.Now().Add(delay)
 	signature.ETA = &eta
 	rl.Logger.Info("Sending task", "taskName", taskName, "currentTime", time.Now(), "delayTime", eta)
+
 	_, err := rl.queueConnector.Server.SendTask(signature)
 	if err != nil {
 		rl.Logger.Error("Error sending task", "taskName", taskName, "error", err)
