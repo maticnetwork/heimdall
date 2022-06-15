@@ -13,7 +13,7 @@ import (
 
 // startStakeUpdateSelfHealer starts the process to continuously re-process missing StakeUpdate events.
 func (rl *RootChainListener) startStakeUpdateSelfHealer(ctx context.Context) {
-	ticker := time.NewTicker(time.Minute)
+	ticker := time.NewTicker(15 * time.Second)
 
 	for {
 		select {
