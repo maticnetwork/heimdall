@@ -6,17 +6,13 @@ import (
 	"math/big"
 
 	ethereum "github.com/maticnetwork/bor"
+	"github.com/maticnetwork/bor/accounts/abi/bind"
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/helper"
 
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
-)
-
-const (
-	stateSyncedEventID  = "0x103fed9db65eac19c4d870f49ab7520fe03b99f1838e5996caf47e9e43308392"
-	stakeUpdatedEventID = "0x35af9eea1f0e7b300b0a14fae90139a072470e44daa3f14b5069bebbc1265bda"
 )
 
 var (
@@ -35,7 +31,7 @@ func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, er
 			rootchainContext.ChainmanagerParams.ChainParams.StateSenderAddress.EthAddress(),
 		},
 		Topics: [][]common.Hash{
-			{common.HexToHash(stateSyncedEventID)},
+			{statesender.GetStateSyncedEventID()},
 			{},
 			{},
 		},
@@ -44,7 +40,34 @@ func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, er
 		return nil, err
 	}
 
-	return big.NewInt(0).SetBytes(latestEvent.Topics[1].Bytes()), nil
+	var event statesender.StatesenderStateSynced
+	if err = helper.UnpackLog(rl.stateSenderAbi, event, "StateSynced", latestEvent); err != nil {
+		return nil, err
+	}
+
+	return event.Id, nil
+}
+
+// getCurrentStateID returns the current state ID handled by the polygon chain
+func (rl *RootChainListener) getCurrentStateID(ctx context.Context) (*big.Int, error) {
+	rootchainContext, err := rl.getRootChainContext()
+	if err != nil {
+		return nil, err
+	}
+
+	stateReceiverInstance, err := rl.contractConnector.GetStateReceiverInstance(
+		rootchainContext.ChainmanagerParams.ChainParams.StateReceiverAddress.EthAddress(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	stateId, err := stateReceiverInstance.LastStateId(&bind.CallOpts{Context: ctx})
+	if err != nil {
+		return nil, err
+	}
+
+	return stateId, nil
 }
 
 // getStateSync returns the StateSynced event based on the given state ID
@@ -59,7 +82,7 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 			rootchainContext.ChainmanagerParams.ChainParams.StateSenderAddress.EthAddress(),
 		},
 		Topics: [][]common.Hash{
-			{common.HexToHash(stateSyncedEventID)},
+			{statesender.GetStateSyncedEventID()},
 			{common.BytesToHash(big.NewInt(stateId).Bytes())},
 			{},
 		},
@@ -72,12 +95,12 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 		return nil, errNoEventsFound
 	}
 
-	return &statesender.StatesenderStateSynced{
-		Id:              big.NewInt(0).SetBytes(events[0].Topics[1].Bytes()),
-		ContractAddress: common.BytesToAddress(events[0].Topics[2].Bytes()),
-		Data:            events[0].Data,
-		Raw:             events[0],
-	}, nil
+	var event statesender.StatesenderStateSynced
+	if err = helper.UnpackLog(rl.stateSenderAbi, event, "StateSynced", &events[0]); err != nil {
+		return nil, err
+	}
+
+	return &event, nil
 }
 
 // getLatestNonce returns the nonce from the latest StakeUpdate event
@@ -92,7 +115,7 @@ func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uin
 			rootchainContext.ChainmanagerParams.ChainParams.StakingInfoAddress.EthAddress(),
 		},
 		Topics: [][]common.Hash{
-			{common.HexToHash(stakeUpdatedEventID)},
+			{stakinginfo.GetStakeUpdateEventID()},
 			{common.BytesToHash(big.NewInt(0).SetUint64(validatorId).Bytes())},
 			{},
 			{},
@@ -102,7 +125,12 @@ func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uin
 		return 0, err
 	}
 
-	return big.NewInt(0).SetBytes(latestEvent.Topics[2].Bytes()).Uint64(), nil
+	var event stakinginfo.StakinginfoStakeUpdate
+	if err = helper.UnpackLog(rl.stakingInfoAbi, &event, "StakeUpdate", latestEvent); err != nil {
+		return 0, err
+	}
+
+	return event.Nonce.Uint64(), nil
 }
 
 // getStakeUpdate returns StakeUpdate event based on the given validator ID and nonce
@@ -117,7 +145,7 @@ func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, no
 			rootchainContext.ChainmanagerParams.ChainParams.StakingInfoAddress.EthAddress(),
 		},
 		Topics: [][]common.Hash{
-			{common.HexToHash(stakeUpdatedEventID)},
+			{stakinginfo.GetStakeUpdateEventID()},
 			{common.BytesToHash(big.NewInt(0).SetUint64(validatorId).Bytes())},
 			{common.BytesToHash(big.NewInt(0).SetUint64(nonce).Bytes())},
 			{},

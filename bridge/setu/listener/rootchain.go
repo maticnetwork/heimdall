@@ -86,8 +86,8 @@ func (rl *RootChainListener) Start() error {
 	}
 	rl.Logger.Info("Subscribed to new head")
 
-	// Start self-healing process for StateSynced events
-	go rl.startStakeUpdateSelfHealer(ctx)
+	// Start self-healing process
+	go rl.startSelfHealing(ctx)
 
 	return nil
 }

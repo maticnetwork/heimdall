@@ -15,6 +15,7 @@ import (
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -23,7 +24,6 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
-
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -129,35 +129,35 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	// ABIs
 	//
 
-	if contractCallerObj.RootChainABI, err = getABI(string(rootchain.RootchainABI)); err != nil {
+	if contractCallerObj.RootChainABI, err = getABI(rootchain.RootchainABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StakingInfoABI, err = getABI(string(stakinginfo.StakinginfoABI)); err != nil {
+	if contractCallerObj.StakingInfoABI, err = getABI(stakinginfo.StakinginfoABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.ValidatorSetABI, err = getABI(string(validatorset.ValidatorsetABI)); err != nil {
+	if contractCallerObj.ValidatorSetABI, err = getABI(validatorset.ValidatorsetABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StateReceiverABI, err = getABI(string(statereceiver.StatereceiverABI)); err != nil {
+	if contractCallerObj.StateReceiverABI, err = getABI(statereceiver.StatereceiverABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StateSenderABI, err = getABI(string(statesender.StatesenderABI)); err != nil {
+	if contractCallerObj.StateSenderABI, err = getABI(statesender.StatesenderABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
+	if contractCallerObj.StakeManagerABI, err = getABI(stakemanager.StakemanagerABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.SlashManagerABI, err = getABI(string(slashmanager.SlashmanagerABI)); err != nil {
+	if contractCallerObj.SlashManagerABI, err = getABI(slashmanager.SlashmanagerABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.MaticTokenABI, err = getABI(string(erc20.Erc20ABI)); err != nil {
+	if contractCallerObj.MaticTokenABI, err = getABI(erc20.Erc20ABI); err != nil {
 		return
 	}
 
@@ -384,6 +384,20 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.
 	return latestBlock, nil
 }
 
+// GetMainChainBlockTime returns main chain block time
+func (c *ContractCaller) GetMainChainBlockTime(ctx context.Context, blockNum uint64) (time.Time, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.MainChainTimeout)
+	defer cancel()
+
+	latestBlock, err := c.MainChainClient.BlockByNumber(ctx, big.NewInt(0).SetUint64(blockNum))
+	if err != nil {
+		Logger.Error("Unable to connect to main chain", "error", err)
+		return time.Time{}, err
+	}
+
+	return time.Unix(int64(latestBlock.Time()), 0), nil
+}
+
 // GetMaticChainBlock returns child chain block header
 func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
@@ -428,8 +442,7 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash, requiredConfirmations uin
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmations uint64) (*ethTypes.Receipt, error) {
-
-	var receipt *ethTypes.Receipt = nil
+	var receipt *ethTypes.Receipt
 	receiptCache, ok := c.ReceiptCache.Get(tx.String())
 
 	if !ok {

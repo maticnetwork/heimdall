@@ -24,6 +24,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	clerktypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
@@ -51,6 +52,7 @@ const (
 	StakingTxStatusURL      = "/staking/isoldtx"
 	TopupTxStatusURL        = "/topup/isoldtx"
 	ClerkTxStatusURL        = "/clerk/isoldtx"
+	ClertEventRecordURL     = "/clerk/event-record/%d"
 	LatestSlashInfoBytesURL = "/slashing/latest_slash_info_bytes"
 	TickSlashInfoListURL    = "/slashing/tick_slash_infos"
 	SlashingTxStatusURL     = "/slashing/isoldtx"
@@ -452,13 +454,32 @@ func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(CountCheckpointURL),
 	)
-
 	if err != nil {
 		logger.Debug("Error fetching latest block height", "err", err)
 		return 0
 	}
 
 	return response.Height
+}
+
+// GetClerkEventRecord return last successful checkpoint
+func GetClerkEventRecord(cliCtx cliContext.CLIContext, stateId int64) (*clerktypes.EventRecord, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ClertEventRecordURL, stateId)),
+	)
+	if err != nil {
+		logger.Error("Error fetching event record by state ID", "error", err)
+		return nil, err
+	}
+
+	var eventRecord clerktypes.EventRecord
+	if err = json.Unmarshal(response.Result, &eventRecord); err != nil {
+		logger.Error("Error unmarshalling event record", "error", err)
+		return nil, err
+	}
+
+	return &eventRecord, nil
 }
 
 func GetUnconfirmedTxnCount(event interface{}) int {
