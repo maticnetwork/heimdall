@@ -66,8 +66,8 @@ const (
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
-	DefaultSHStateSyncedInterval    = time.Minute
-	DefaultSHStakeUpdateInterval    = 15 * time.Second
+	DefaultSHStateSyncedInterval    = 1 * time.Minute
+	DefaultSHStakeUpdateInterval    = 5 * time.Minute
 	DefaultSHMaxDepthDuration       = time.Hour
 
 	DefaultMainchainGasLimit = uint64(5000000)
