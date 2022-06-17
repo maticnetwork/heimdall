@@ -15,8 +15,8 @@ import (
 
 // startSelfHealing starts self-healing processes for all required events
 func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
-	stakeUpdateTicker := time.NewTicker(15 * time.Second)
-	stateSyncedTicker := time.NewTicker(time.Minute)
+	stakeUpdateTicker := time.NewTicker(helper.GetConfig().SHStakeUpdateInterval)
+	stateSyncedTicker := time.NewTicker(helper.GetConfig().SHStateSyncedInterval)
 
 	for {
 		select {
@@ -159,7 +159,7 @@ func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) 
 		return false, err
 	}
 
-	if time.Since(blockTime) < time.Hour {
+	if time.Since(blockTime) < helper.GetConfig().SHMaxDepthDuration {
 		rl.Logger.Info("Block time is less than an hour, skipping state sync")
 		return true, err
 	}
