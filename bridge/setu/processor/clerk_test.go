@@ -486,7 +486,6 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
 	cp.cliCtx.Simulate = true
 	cp.cliCtx.SkipConfirm = true
-	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, txBroadcaster, "clerk", cp)
 
 	return cp, nil
 }
