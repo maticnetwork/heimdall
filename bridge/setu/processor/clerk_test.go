@@ -88,8 +88,9 @@ const (
   		}
 	}`
 
-	unconfirmedTxsUrl      = dummyTenderMintNode + "/unconfirmed_txs"
-	unconfirmedTxsResponse = `
+	unconfirmedTxsUrl         = dummyTenderMintNode + "/unconfirmed_txs"
+	getUnconfirmedTxnCountUrl = dummyTenderMintNode + "/num_unconfirmed_txs"
+	unconfirmedTxsResponse    = `
 	{
 		"height": "1",
 		"result": {
@@ -369,31 +370,6 @@ func BenchmarkIsOldTx(b *testing.B) {
 	}
 }
 
-func BenchmarkCalculateTaskDelay(b *testing.B) {
-	b.ReportAllocs()
-	b.ResetTimer()
-	for i := 0; i < b.N; i++ {
-		b.StopTimer()
-		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
-		// given
-		prepareMockData(b)
-		cp, err := prepareClerkProcessor()
-		if err != nil {
-			b.Fatal("Error initializing test clerk processor")
-		}
-		// when
-		b.StartTimer()
-		// FIXME why does it fail on ctrl expectations?!
-		isCurrentValidator, timeDuration := util.CalculateTaskDelay(cp.cliCtx, nil)
-		// then
-		if err != nil {
-			b.Fatal(err)
-		}
-		b.Logf("isTxOld tested successfully. Results: isCurrentValidator: '%t', timeDuration: '%s'",
-			isCurrentValidator, timeDuration.String())
-	}
-}
-
 func BenchmarkSendTaskWithDelay(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -421,6 +397,54 @@ func BenchmarkSendTaskWithDelay(b *testing.B) {
 	}
 }
 
+func BenchmarkCalculateTaskDelay(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+		// given
+		prepareMockData(b)
+		cp, err := prepareClerkProcessor()
+		if err != nil {
+			b.Fatal("Error initializing test clerk processor")
+		}
+		// when
+		b.StartTimer()
+		// FIXME why does it fail on ctrl expectations?!
+		isCurrentValidator, timeDuration := util.CalculateTaskDelay(cp.cliCtx, nil)
+		// then
+		if err != nil {
+			b.Fatal(err)
+		}
+		b.Logf("isTxOld tested successfully. Results: isCurrentValidator: '%t', timeDuration: '%s'",
+			isCurrentValidator, timeDuration.String())
+	}
+}
+
+func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		b.StopTimer()
+		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+		// given
+		prepareMockData(b)
+		_, err := prepareDummyLogBytes()
+		if err != nil {
+			b.Fatal("Error creating test data")
+		}
+		_, err = prepareRootChainListener()
+		if err != nil {
+			b.Fatal("Error initializing test listener")
+		}
+		// when
+		b.StartTimer()
+		util.GetUnconfirmedTxnCount(nil)
+		b.Logf("GetUnconfirmedTxnCount tested successfully")
+	}
+}
+
 func prepareMockData(b *testing.B) {
 	mockCtrl := gomock.NewController(b)
 	defer mockCtrl.Finish()
@@ -432,6 +456,7 @@ func prepareMockData(b *testing.B) {
 	mockHttpClient.EXPECT().Get(isOldTxUrl).Return(prepareResponse(isOldTxResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(checkpointCountUrl).Return(prepareResponse(checkpointCountResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(unconfirmedTxsUrl).Return(prepareResponse(unconfirmedTxsResponse), nil).AnyTimes()
+	mockHttpClient.EXPECT().Get(getUnconfirmedTxnCountUrl).Return(prepareResponse(unconfirmedTxsResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(getValidatorSetUrl).Return(prepareResponse(getValidatorSetResponse), nil).AnyTimes()
 	helper.Client = mockHttpClient
 

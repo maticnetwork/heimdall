@@ -456,7 +456,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 	defer LogElapsedTimeForStateSyncedEvent(event, "GetUnconfirmedTxnCount", time.Now())
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
-	resp, err := http.Get(endpoint)
+	resp, err := helper.Client.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)
 		return 0
