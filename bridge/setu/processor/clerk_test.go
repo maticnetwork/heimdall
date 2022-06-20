@@ -476,7 +476,7 @@ func BenchmarkCalculateTaskDelay(b *testing.B) {
 				b.Fatal(err)
 			}
 
-			b.Logf("isTxOld tested successfully. Results: isCurrentValidator: '%t', timeDuration: '%s'",
+			b.Logf("CalculateTaskDelay tested successfully. Results: isCurrentValidator: '%t', timeDuration: '%s'",
 				isCurrentValidator, timeDuration.String())
 		}()
 	}
@@ -588,7 +588,9 @@ func prepareRootChainListener() (*listener.RootChainListener, func(), error) {
 
 	stopFn = func() {
 		rcl.Stop()
-		helper.GetMainClient().Close()
+		if helper.GetMainClient() != nil {
+			helper.GetMainClient().Close()
+		}
 		rcl.BaseListener.Stop()
 	}
 
