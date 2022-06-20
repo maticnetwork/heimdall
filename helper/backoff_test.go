@@ -43,11 +43,4 @@ func TestExponentialBackoff(t *testing.T) {
 		require.Equal(t, i, 3)
 		require.True(t, elapsed >= 600*time.Millisecond)
 	})
-
-	t.Run("failed with negative max value", func(t *testing.T) {
-		err := ExponentialBackoff(func() error {
-			return nil
-		}, -1, 100*time.Millisecond)
-		require.Equal(t, "max number should be more or equal to zero, but -1 given", err.Error())
-	})
 }
