@@ -52,7 +52,7 @@ const (
 	StakingTxStatusURL      = "/staking/isoldtx"
 	TopupTxStatusURL        = "/topup/isoldtx"
 	ClerkTxStatusURL        = "/clerk/isoldtx"
-	ClertEventRecordURL     = "/clerk/event-record/%d"
+	ClerkEventRecordURL     = "/clerk/event-record/%d"
 	LatestSlashInfoBytesURL = "/slashing/latest_slash_info_bytes"
 	TickSlashInfoListURL    = "/slashing/tick_slash_infos"
 	SlashingTxStatusURL     = "/slashing/isoldtx"
@@ -466,7 +466,7 @@ func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 func GetClerkEventRecord(cliCtx cliContext.CLIContext, stateId int64) (*clerktypes.EventRecord, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
-		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ClertEventRecordURL, stateId)),
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ClerkEventRecordURL, stateId)),
 	)
 	if err != nil {
 		logger.Error("Error fetching event record by state ID", "error", err)
