@@ -52,6 +52,7 @@ const (
 	}`
 
 	getAccountUrl      = dummyHeimdallServerUrl + "/auth/accounts/9FB29AAC15B9A4B7F17C3385939B007540F4D791"
+	getAccountUrl2     = dummyHeimdallServerUrl + "/auth/accounts/3F17F1962B36E491B30A40B2405849E597BA5FB5"
 	getAccountResponse = `
 	{
 	"height": "11384869",
@@ -88,13 +89,21 @@ const (
   		}
 	}`
 
-	unconfirmedTxsUrl         = dummyTenderMintNode + "/unconfirmed_txs"
-	getUnconfirmedTxnCountUrl = dummyTenderMintNode + "/num_unconfirmed_txs"
-	unconfirmedTxsResponse    = `
+	unconfirmedTxsUrl      = dummyTenderMintNode + "/unconfirmed_txs"
+	unconfirmedTxsResponse = `
 	{
 		"height": "1",
 		"result": {
 			"total": "",
+			"txs": []
+		}
+	}`
+
+	getUnconfirmedTxnCountUrl      = dummyTenderMintNode + "/num_unconfirmed_txs"
+	getUnconfirmedTxnCountResponse = `
+	{
+		"result": {
+			"total": "0",
 			"txs": []
 		}
 	}`
@@ -116,7 +125,7 @@ const (
 		}
 	}`
 
-	getValidatorSetUrl      = dummyHeimdallServerUrl + "/staking/validator-set]"
+	getValidatorSetUrl      = dummyHeimdallServerUrl + "/staking/validator-set"
 	getValidatorSetResponse = `
 	{
 	"height": "11384841",
@@ -319,13 +328,17 @@ const (
 )
 
 func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
+	mockCtrl := prepareMockData(b)
+	defer mockCtrl.Finish()
+
 	b.ReportAllocs()
 	b.ResetTimer()
+	b.StopTimer()
+
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+
 		// given
-		prepareMockData(b)
 		cp, err := prepareClerkProcessor()
 		if err != nil {
 			b.Fatal("Error initializing test clerk processor")
@@ -334,134 +347,174 @@ func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
 		if err != nil {
 			b.Fatal("Error creating test data")
 		}
+
 		// when
 		b.StartTimer()
 		err = cp.sendStateSyncedToHeimdall("StateSynced", dlb.String())
+		b.StopTimer()
+
 		// then
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		b.Log("StateSynced sent to heimdall successfully")
 	}
 }
 
 func BenchmarkIsOldTx(b *testing.B) {
+	mockCtrl := prepareMockData(b)
+	defer mockCtrl.Finish()
+
 	b.ReportAllocs()
 	b.ResetTimer()
+	b.StopTimer()
+
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+
 		// given
-		prepareMockData(b)
 		cp, err := prepareClerkProcessor()
 		if err != nil {
 			b.Fatal("Error initializing test clerk processor")
 		}
+
 		// when
 		b.StartTimer()
 		status, err := cp.isOldTx(
 			cp.cliCtx, "0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854",
 			0, util.ClerkEvent, nil)
+		b.StopTimer()
+
 		// then
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		b.Logf("isTxOld tested successfully with result: '%t'", status)
 	}
 }
 
 func BenchmarkSendTaskWithDelay(b *testing.B) {
+	mockCtrl := prepareMockData(b)
+	defer mockCtrl.Finish()
+	ts := make([]time.Duration, 0, b.N)
+	for i := 0; i < b.N; i++ {
+		ts = append(ts, time.Duration(rand.Intn(60)))
+	}
+
 	b.ReportAllocs()
 	b.ResetTimer()
+	b.StopTimer()
+
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+
 		// given
-		prepareMockData(b)
 		logs, err := prepareDummyLogBytes()
 		if err != nil {
 			b.Fatal("Error creating test data")
 		}
+
 		rcl, err := prepareRootChainListener()
 		if err != nil {
 			b.Fatal("Error initializing test listener")
 		}
+
 		// when
 		b.StartTimer()
 		// This will trigger 'error="Set state pending error: dial tcp 127.0.0.1:6379: connect: connection refused'
 		// it's fine as long as we don't want to test the actual sendTask to rabbitmq
 		rcl.SendTaskWithDelay(
 			"sendStateSyncedToHeimdall", "StateSynced",
-			logs.Bytes(), time.Duration(rand.Intn(60)), nil)
+			logs.Bytes(), ts[i], nil)
+		b.StopTimer()
+
+		// then
 		b.Logf("SendTaskWithDelay tested successfully")
 	}
 }
 
 func BenchmarkCalculateTaskDelay(b *testing.B) {
+	mockCtrl := prepareMockData(b)
+	defer mockCtrl.Finish()
+
 	b.ReportAllocs()
 	b.ResetTimer()
+	b.StopTimer()
+
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+
 		// given
-		prepareMockData(b)
 		cp, err := prepareClerkProcessor()
 		if err != nil {
 			b.Fatal("Error initializing test clerk processor")
 		}
+
 		// when
 		b.StartTimer()
-		// FIXME why does it fail on ctrl expectations?!
 		isCurrentValidator, timeDuration := util.CalculateTaskDelay(cp.cliCtx, nil)
+		b.StopTimer()
+
 		// then
 		if err != nil {
 			b.Fatal(err)
 		}
+
 		b.Logf("isTxOld tested successfully. Results: isCurrentValidator: '%t', timeDuration: '%s'",
 			isCurrentValidator, timeDuration.String())
 	}
 }
 
 func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
+	mockCtrl := prepareMockData(b)
+	defer mockCtrl.Finish()
+
 	b.ReportAllocs()
 	b.ResetTimer()
+	b.StopTimer()
+
 	for i := 0; i < b.N; i++ {
-		b.StopTimer()
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
+
 		// given
-		prepareMockData(b)
-		_, err := prepareDummyLogBytes()
-		if err != nil {
-			b.Fatal("Error creating test data")
-		}
-		_, err = prepareRootChainListener()
+		_, err := prepareRootChainListener()
 		if err != nil {
 			b.Fatal("Error initializing test listener")
 		}
+
 		// when
 		b.StartTimer()
 		util.GetUnconfirmedTxnCount(nil)
+		b.StopTimer()
+
+		// then
 		b.Logf("GetUnconfirmedTxnCount tested successfully")
 	}
 }
 
-func prepareMockData(b *testing.B) {
+func prepareMockData(b *testing.B) *gomock.Controller {
 	mockCtrl := gomock.NewController(b)
 	defer mockCtrl.Finish()
+
 	mockHttpClient := helperMocks.NewMockHTTPClient(mockCtrl)
 	mockNodeQuerier := authTypesMocks.NewMockNodeQuerier(mockCtrl)
 
 	mockHttpClient.EXPECT().Get(chainManagerParamsUrl).Return(prepareResponse(chainManagerParamsResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(getAccountUrl).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
+	mockHttpClient.EXPECT().Get(getAccountUrl2).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(isOldTxUrl).Return(prepareResponse(isOldTxResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(checkpointCountUrl).Return(prepareResponse(checkpointCountResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(unconfirmedTxsUrl).Return(prepareResponse(unconfirmedTxsResponse), nil).AnyTimes()
-	mockHttpClient.EXPECT().Get(getUnconfirmedTxnCountUrl).Return(prepareResponse(unconfirmedTxsResponse), nil).AnyTimes()
+	mockHttpClient.EXPECT().Get(getUnconfirmedTxnCountUrl).Return(prepareResponse(getUnconfirmedTxnCountResponse), nil).AnyTimes()
 	mockHttpClient.EXPECT().Get(getValidatorSetUrl).Return(prepareResponse(getValidatorSetResponse), nil).AnyTimes()
 	helper.Client = mockHttpClient
 
 	mockNodeQuerier.EXPECT().QueryWithData(gomock.Any(), gomock.Any()).Return([]byte(getAccountWIthHeightResponseForAccountRetriever), int64(0), nil).AnyTimes()
 	authTypes.NQuerier = mockNodeQuerier
+
+	return mockCtrl
 }
 
 func prepareClerkProcessor() (*ClerkProcessor, error) {
@@ -470,8 +523,7 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	viper.Set(helper.NodeFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
-	helper.InitHeimdallConfig(os.ExpandEnv(""))
-	configuration := helper.GetConfig()
+	configuration := helper.GetDefaultHeimdallConfig()
 	configuration.HeimdallServerURL = dummyHeimdallServerUrl
 	configuration.TendermintRPCUrl = dummyTenderMintNode
 	helper.SetTestConfig(configuration)
