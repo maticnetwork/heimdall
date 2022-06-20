@@ -164,6 +164,18 @@ func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) 
 		return true, err
 	}
 
-	rl.handleLog(event)
+	pubkey := helper.GetPubKey()
+	pubkeyBytes := pubkey[1:]
+
+	topic := event.Topics[0].Bytes()
+	for _, abiObject := range rl.abis {
+		selectedEvent := helper.EventByID(abiObject, topic)
+		if selectedEvent == nil {
+			continue
+		}
+
+		rl.handleLog(event, selectedEvent, pubkeyBytes)
+	}
+
 	return false, nil
 }
