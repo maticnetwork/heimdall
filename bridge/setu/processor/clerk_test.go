@@ -470,7 +470,7 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	viper.Set(helper.NodeFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
-	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+	helper.InitHeimdallConfig(os.ExpandEnv(""))
 	configuration := helper.GetConfig()
 	configuration.HeimdallServerURL = dummyHeimdallServerUrl
 	configuration.TendermintRPCUrl = dummyTenderMintNode
@@ -497,7 +497,7 @@ func prepareRootChainListener() (*listener.RootChainListener, error) {
 	viper.Set(helper.NodeFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
-	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+	helper.InitHeimdallConfig(os.ExpandEnv(""))
 	configuration := helper.GetConfig()
 	configuration.HeimdallServerURL = dummyHeimdallServerUrl
 	configuration.TendermintRPCUrl = dummyTenderMintNode
