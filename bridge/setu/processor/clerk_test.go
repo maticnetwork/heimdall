@@ -21,7 +21,6 @@ import (
 	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"os"
 	"testing"
 	"time"
 )
@@ -551,8 +550,7 @@ func prepareRootChainListener() (*listener.RootChainListener, error) {
 	viper.Set(helper.NodeFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
-	helper.InitHeimdallConfig(os.ExpandEnv(""))
-	configuration := helper.GetConfig()
+	configuration := helper.GetDefaultHeimdallConfig()
 	configuration.HeimdallServerURL = dummyHeimdallServerUrl
 	configuration.TendermintRPCUrl = dummyTenderMintNode
 	helper.SetTestConfig(configuration)
