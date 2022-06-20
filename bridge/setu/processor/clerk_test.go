@@ -328,9 +328,6 @@ const (
 )
 
 func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
-	mockCtrl := prepareMockData(b)
-	defer mockCtrl.Finish()
-
 	b.ReportAllocs()
 	b.ResetTimer()
 	b.StopTimer()
@@ -339,6 +336,8 @@ func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
 		// given
+		mockCtrl := prepareMockData(b)
+
 		cp, err := prepareClerkProcessor()
 		if err != nil {
 			b.Fatal("Error initializing test clerk processor")
@@ -359,21 +358,22 @@ func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
 		}
 
 		b.Log("StateSynced sent to heimdall successfully")
+		mockCtrl.Finish()
 	}
 }
 
 func BenchmarkIsOldTx(b *testing.B) {
-	mockCtrl := prepareMockData(b)
-	defer mockCtrl.Finish()
-
 	b.ReportAllocs()
 	b.ResetTimer()
 	b.StopTimer()
 
 	for i := 0; i < b.N; i++ {
+
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
 		// given
+		mockCtrl := prepareMockData(b)
+
 		cp, err := prepareClerkProcessor()
 		if err != nil {
 			b.Fatal("Error initializing test clerk processor")
@@ -392,12 +392,11 @@ func BenchmarkIsOldTx(b *testing.B) {
 		}
 
 		b.Logf("isTxOld tested successfully with result: '%t'", status)
+		mockCtrl.Finish()
 	}
 }
 
 func BenchmarkSendTaskWithDelay(b *testing.B) {
-	mockCtrl := prepareMockData(b)
-	defer mockCtrl.Finish()
 	ts := make([]time.Duration, 0, b.N)
 	for i := 0; i < b.N; i++ {
 		ts = append(ts, time.Duration(rand.Intn(60)))
@@ -411,6 +410,8 @@ func BenchmarkSendTaskWithDelay(b *testing.B) {
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
 		// given
+		mockCtrl := prepareMockData(b)
+
 		logs, err := prepareDummyLogBytes()
 		if err != nil {
 			b.Fatal("Error creating test data")
@@ -432,12 +433,11 @@ func BenchmarkSendTaskWithDelay(b *testing.B) {
 
 		// then
 		b.Logf("SendTaskWithDelay tested successfully")
+		mockCtrl.Finish()
 	}
 }
 
 func BenchmarkCalculateTaskDelay(b *testing.B) {
-	mockCtrl := prepareMockData(b)
-	defer mockCtrl.Finish()
 
 	b.ReportAllocs()
 	b.ResetTimer()
@@ -447,6 +447,8 @@ func BenchmarkCalculateTaskDelay(b *testing.B) {
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
 		// given
+		mockCtrl := prepareMockData(b)
+
 		cp, err := prepareClerkProcessor()
 		if err != nil {
 			b.Fatal("Error initializing test clerk processor")
@@ -464,13 +466,11 @@ func BenchmarkCalculateTaskDelay(b *testing.B) {
 
 		b.Logf("isTxOld tested successfully. Results: isCurrentValidator: '%t', timeDuration: '%s'",
 			isCurrentValidator, timeDuration.String())
+		mockCtrl.Finish()
 	}
 }
 
 func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
-	mockCtrl := prepareMockData(b)
-	defer mockCtrl.Finish()
-
 	b.ReportAllocs()
 	b.ResetTimer()
 	b.StopTimer()
@@ -479,6 +479,8 @@ func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
 		b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
 		// given
+		mockCtrl := prepareMockData(b)
+
 		_, err := prepareRootChainListener()
 		if err != nil {
 			b.Fatal("Error initializing test listener")
@@ -491,12 +493,12 @@ func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
 
 		// then
 		b.Logf("GetUnconfirmedTxnCount tested successfully")
+		mockCtrl.Finish()
 	}
 }
 
 func prepareMockData(b *testing.B) *gomock.Controller {
 	mockCtrl := gomock.NewController(b)
-	defer mockCtrl.Finish()
 
 	mockHttpClient := helperMocks.NewMockHTTPClient(mockCtrl)
 	mockNodeQuerier := authTypesMocks.NewMockNodeQuerier(mockCtrl)
@@ -538,6 +540,7 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
 	cp.cliCtx.Simulate = true
 	cp.cliCtx.SkipConfirm = true
+	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, txBroadcaster, "clerk", cp)
 
 	return cp, nil
 }
