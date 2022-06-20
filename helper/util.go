@@ -361,6 +361,11 @@ func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.Tx
 
 // GetSignedTxBytes returns signed tx bytes
 func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
+	// just simulate (useful for testing)
+	if cliCtx.Simulate {
+		return nil, nil
+	}
+
 	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
 		return nil, err
@@ -369,10 +374,6 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 	fromName := cliCtx.GetFromName()
 	if fromName == "" {
 		return txBldr.BuildAndSign(GetPrivKey(), msgs)
-	}
-
-	if cliCtx.Simulate {
-		return nil, nil
 	}
 
 	if !cliCtx.SkipConfirm {
