@@ -66,17 +66,25 @@ func (sp *SpanProcessor) startPolling(ctx context.Context, interval time.Duratio
 // checkAndPropose - will check if current user is span proposer and proposes the span
 func (sp *SpanProcessor) checkAndPropose() {
 	lastSpan, err := sp.getLastSpan()
-	if err == nil && lastSpan != nil {
-		sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
-		nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
+	if err != nil {
+		sp.Logger.Error("Unable to fetch last span", "error", err)
+		return
+	}
 
-		// check if current user is among next span producers
-		if err == nil && sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
-			go sp.propose(lastSpan, nextSpanMsg)
-		} else {
-			sp.Logger.Error("Unable to fetch next span details", "lastSpanId", lastSpan.ID)
-			return
-		}
+	if lastSpan == nil {
+		return
+	}
+
+	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
+	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
+	if err != nil {
+		sp.Logger.Error("Unable to fetch next span details", "error", err, "lastSpanId", lastSpan.ID)
+		return
+	}
+
+	// check if current user is among next span producers
+	if sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
+		go sp.propose(lastSpan, nextSpanMsg)
 	}
 }
 

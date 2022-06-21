@@ -17,9 +17,9 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
-	github.com/go-kit/kit v0.9.0
 	github.com/gogo/protobuf v1.3.0
 	github.com/golang/mock v1.6.0
+	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/gorilla/mux v1.7.3
 	github.com/graph-gophers/graphql-go v0.0.0-20200207002730-8334863f2c8b // indirect
 	github.com/hashicorp/golang-lru v0.5.3
@@ -42,7 +42,7 @@ require (
 	github.com/spf13/viper v1.4.0
 	github.com/status-im/keycard-go v0.0.0-20191119114148-6dd40a46baa0 // indirect
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
-	github.com/stretchr/testify v1.4.0
+	github.com/stretchr/testify v1.7.1
 	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/go-amino v0.15.0
