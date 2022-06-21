@@ -2,15 +2,14 @@ package listener
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/maticnetwork/bor/core/types"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/metric/global"
-	"go.opentelemetry.io/otel/metric/instrument"
-	"go.opentelemetry.io/otel/metric/instrument/syncint64"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
@@ -18,30 +17,20 @@ import (
 )
 
 var (
-	meter              = global.Meter(helper.NetworkName + ".heimdall.self-healing")
-	stateSyncedCounter syncint64.Counter
-	stakeUpdateCounter syncint64.Counter
+	stateSyncedCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "self_healing",
+		Subsystem: helper.NetworkName,
+		Name:      "StateSynced",
+		Help:      "The total number of missing StateSynced events",
+	}, []string{"id", "contract_address", "block_number", "tx_hash"})
+
+	stakeUpdateCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "self_healing",
+		Subsystem: helper.NetworkName,
+		Name:      "StakeUpdate",
+		Help:      "The total number of missing StakeUpdate events",
+	}, []string{"id", "nonce", "contract_address", "block_number", "tx_hash"})
 )
-
-func init() {
-	var err error
-
-	if stateSyncedCounter, err = meter.SyncInt64().Counter(
-		"StateSynced",
-		instrument.WithUnit("0"),
-		instrument.WithDescription("StateSynced missing event counter"),
-	); err != nil {
-		panic(err)
-	}
-
-	if stakeUpdateCounter, err = meter.SyncInt64().Counter(
-		"StakeUpdate",
-		instrument.WithUnit("0"),
-		instrument.WithDescription("StakeUpdate missing event counter"),
-	); err != nil {
-		panic(err)
-	}
-}
 
 // startSelfHealing starts self-healing processes for all required events
 func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
@@ -107,13 +96,13 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 				return
 			}
 
-			stakeUpdateCounter.Add(ctx, 1,
-				attribute.String("id", stakeUpdate.ValidatorId.String()),
-				attribute.String("nonce", stakeUpdate.Nonce.String()),
-				attribute.String("contract_address", stakeUpdate.Raw.Address.String()),
-				attribute.Int64("block_number", int64(stakeUpdate.Raw.BlockNumber)),
-				attribute.String("tx_hash", stakeUpdate.Raw.TxHash.String()),
-			)
+			stakeUpdateCounter.WithLabelValues(
+				stakeUpdate.ValidatorId.String(),
+				stakeUpdate.Nonce.String(),
+				stakeUpdate.Raw.Address.String(),
+				fmt.Sprintf("%d", stakeUpdate.Raw.BlockNumber),
+				stakeUpdate.Raw.TxHash.String(),
+			).Add(1)
 
 			if _, err = rl.processEvent(ctx, stakeUpdate.Raw); err != nil {
 				rl.Logger.Error("Error processing stake update for validator", "error", err, "id", id)
@@ -158,12 +147,12 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 			continue
 		}
 
-		stateSyncedCounter.Add(ctx, 1,
-			attribute.String("id", stateSynced.Id.String()),
-			attribute.String("contract_address", stateSynced.Raw.Address.String()),
-			attribute.Int64("block_number", int64(stateSynced.Raw.BlockNumber)),
-			attribute.String("tx_hash", stateSynced.Raw.TxHash.String()),
-		)
+		stateSyncedCounter.WithLabelValues(
+			stateSynced.Id.String(),
+			stateSynced.Raw.Address.String(),
+			fmt.Sprintf("%d", stateSynced.Raw.BlockNumber),
+			stateSynced.Raw.TxHash.String(),
+		).Add(1)
 
 		var ignore bool
 		if ignore, err = rl.processEvent(ctx, stateSynced.Raw); err != nil {
