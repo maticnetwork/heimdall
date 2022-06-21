@@ -183,6 +183,9 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 		topic := vLog.Topics[0].Bytes()
 		for _, abiObject := range rl.abis {
 			selectedEvent := helper.EventByID(abiObject, topic)
+			if selectedEvent == nil {
+				continue
+			}
 			logBytes, _ := json.Marshal(vLog)
 			if selectedEvent != nil {
 				rl.Logger.Debug("ReceivedEvent", "eventname", selectedEvent.Name)
@@ -276,10 +279,6 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 						rl.SendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay, event)
 					}
 				}
-				if selectedEvent == nil {
-					continue
-				}
-
 				rl.handleLog(vLog, selectedEvent, pubkeyBytes)
 			}
 		}
