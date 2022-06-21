@@ -11,26 +11,34 @@ Make sure your have go1.11+ already installed
 
 ### Install 
 ```bash 
-$ make install network=mainnet
+$ make install
 ```
-#### Usage 
-```
-# make install					Will generate for mainnet by default
-# make install network=mainnet			Will generate for mainnet
-# make install network=mumbai			Will generate for mumbai
-# make install network=local			Will generate for local with NewSelectionAlgoHeight = 0
-# make install network=anythingElse		Will generate for mainnet by default
+### Init-heimdall 
+```bash 
+$ heimdalld init
+$ heimdalld init --chain=mainnet        Will init with genesis.json for mainnet
+$ heimdalld init --chain=mumbai         Will init with genesis.json for mumbai
 ```
 ### Run-heimdall 
 ```bash 
 $ heimdalld start
 ```
+#### Usage
+```
+$ heimdalld start                       Will start for mainnet by default
+$ heimdalld start --chain=mainnet       Will start for mainnet
+$ heimdalld start --chain=mumbai        Will start for mumbai
+$ heimdalld start --chain=local         Will start for local with NewSelectionAlgoHeight = 0
+```
 
 ### Run rest server
-
 ```bash 
 $ heimdalld rest-server 
 ```
+
+### Run bridge
+```bash 
+$ heimdalld bridge 
 
 ### Develop using Docker
 
