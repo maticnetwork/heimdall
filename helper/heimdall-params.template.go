@@ -19,7 +19,7 @@ import (
 var packageTemplate = template.Must(template.New("").Parse(`package helper
 
 const (
-	NetworkName 			= "{{ .NetworkName }}"
+	NetworkName             = "{{ .NetworkName }}"
 	NewSelectionAlgoHeight  = {{ .BlockHeight }}
 	SpanOverrideBlockHeight = {{ .SpanOverrideBlockHeight }}
 )
