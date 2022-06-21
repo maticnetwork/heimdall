@@ -237,7 +237,7 @@ func (c *ContractCaller) GetStateSenderInstance(stateSenderAddress common.Addres
 func (c *ContractCaller) GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error) {
 	contractInstance, ok := c.ContractInstanceCache[stateReceiverAddress]
 	if !ok {
-		ci, err := statereceiver.NewStatereceiver(stateReceiverAddress, mainChainClient)
+		ci, err := statereceiver.NewStatereceiver(stateReceiverAddress, maticClient)
 		c.ContractInstanceCache[stateReceiverAddress] = ci
 		return ci, err
 	}
