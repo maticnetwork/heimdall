@@ -470,14 +470,16 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	validator.Jailed = valSlashingInfo.IsJailed
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Failed to add validator", "error", err)
+	}
+
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
 	return nil
 }
 
-// unjail a validator
+// Unjail a validator
 func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
-
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
@@ -493,5 +495,7 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	validator.Jailed = false
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Failed to add validator", "Error", err)
+	}
 }

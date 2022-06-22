@@ -320,14 +320,16 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add checkpoint to buffer with root hash and account hash
-	k.SetCheckpointBuffer(ctx, hmTypes.Checkpoint{
+	if err = k.SetCheckpointBuffer(ctx, hmTypes.Checkpoint{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
 		RootHash:   msg.RootHash,
 		Proposer:   msg.Proposer,
 		BorChainID: msg.BorChainID,
 		TimeStamp:  timeStamp,
-	})
+	}); err != nil {
+		logger.Error("Failed to set checkpoint buffer", "Error", err)
+	}
 
 	logger.Debug("New checkpoint into buffer stored",
 		"startBlock", msg.StartBlock,

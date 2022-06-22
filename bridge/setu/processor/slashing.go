@@ -48,11 +48,18 @@ func (sp *SlashingProcessor) Start() error {
 // RegisterTasks - Registers slashing related tasks with machinery
 func (sp *SlashingProcessor) RegisterTasks() {
 	sp.Logger.Info("Registering slashing related tasks")
-	sp.queueConnector.Server.RegisterTask("sendTickToHeimdall", sp.sendTickToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendTickToRootchain", sp.sendTickToRootchain)
-	sp.queueConnector.Server.RegisterTask("sendTickAckToHeimdall", sp.sendTickAckToHeimdall)
-	sp.queueConnector.Server.RegisterTask("sendUnjailToHeimdall", sp.sendUnjailToHeimdall)
-
+	if err := sp.queueConnector.Server.RegisterTask("sendTickToHeimdall", sp.sendTickToHeimdall); err != nil {
+		sp.Logger.Error("Failed to register sendTickToHeimdall task", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendTickToRootchain", sp.sendTickToRootchain); err != nil {
+		sp.Logger.Error("Failed to register sendTickToRootchain task", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendTickAckToHeimdall", sp.sendTickAckToHeimdall); err != nil {
+		sp.Logger.Error("Failed to register sendTickAckToHeimdall task", "error", err)
+	}
+	if err := sp.queueConnector.Server.RegisterTask("sendUnjailToHeimdall", sp.sendUnjailToHeimdall); err != nil {
+		sp.Logger.Error("Failed to register sendUnjailToHeimdall task", "error", err)
+	}
 }
 
 // processSlashLimitEvent - processes slash limit event

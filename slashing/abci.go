@@ -23,8 +23,9 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 		switch tmEvidence.Type {
 		case tmtypes.ABCIEvidenceTypeDuplicateVote:
 			evidence := types.ConvertDuplicateVoteEvidence(tmEvidence)
-			k.HandleDoubleSign(ctx, evidence.(types.Equivocation))
-
+			if err := k.HandleDoubleSign(ctx, evidence.(types.Equivocation)); err != nil {
+				k.Logger(ctx).Error("Failed to handle double sign", "Error", err)
+			}
 		default:
 			k.Logger(ctx).Error(fmt.Sprintf("ignored unknown evidence type: %s", tmEvidence.Type))
 		}
