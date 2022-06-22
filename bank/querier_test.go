@@ -72,15 +72,15 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 		Path: fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryBalance),
 		Data: []byte{},
 	}
-	res, err := querier(ctx, path, req)
-	require.Error(t, err)
+	res, sdkErr := querier(ctx, path, req)
+	require.Error(t, sdkErr)
 	require.Nil(t, res)
 
 	// balance for non-existing address (empty address)
 
 	req.Data = cdc.MustMarshalJSON(types.NewQueryBalanceParams(hmTypes.BytesToHeimdallAddress([]byte(""))))
-	res, err = querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr = querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
 	// fetch balance
@@ -91,8 +91,8 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 	// balance for non-existing address
 	_, _, addr := sdkAuth.KeyTestPubAddr()
 	req.Data = cdc.MustMarshalJSON(types.NewQueryBalanceParams(hmTypes.AccAddressToHeimdallAddress(addr)))
-	res, err = querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr = querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
 	require.NoError(t, json.Unmarshal(res, &balance))
@@ -101,7 +101,7 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 	// set account
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
 	amt := simulation.RandomFeeCoins()
-	err = acc1.SetCoins(amt)
+	err := acc1.SetCoins(amt)
 	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 

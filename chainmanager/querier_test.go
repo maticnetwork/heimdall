@@ -67,11 +67,11 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		Path: route,
 		Data: []byte{},
 	}
-	res, err := querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr := querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	err = json.Unmarshal(res, &params)
+	err := json.Unmarshal(res, &params)
 	require.NoError(t, err)
 
 	// match reponse params

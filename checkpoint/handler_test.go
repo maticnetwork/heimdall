@@ -68,7 +68,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	// check valid checkpoint
 	// generate proposer for validator set
