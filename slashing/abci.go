@@ -35,6 +35,13 @@ func BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock, k Keeper) {
 	// store whether or not they have actually signed it and slash/unbond any
 	// which have missed too many blocks in a row (downtime slashing)
 	for _, voteInfo := range req.LastCommitInfo.GetVotes() {
-		k.HandleValidatorSignature(ctx, voteInfo.Validator.Address, voteInfo.Validator.Power, voteInfo.SignedLastBlock)
+		if err := k.HandleValidatorSignature(
+			ctx,
+			voteInfo.Validator.Address,
+			voteInfo.Validator.Power,
+			voteInfo.SignedLastBlock,
+		); err != nil {
+			k.Logger(ctx).Error("Failed to handle validator signature", "Error", err, "address", voteInfo.Validator)
+		}
 	}
 }

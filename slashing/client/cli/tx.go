@@ -173,10 +173,18 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendTickAckTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagTickID)
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTickID); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagTickID", "Error", err)
+	}
 
 	return cmd
 }
