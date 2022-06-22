@@ -52,6 +52,7 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
+	google.golang.org/grpc v1.31.0 // indirect
 	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20200619000410-60c24ae608a6 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
