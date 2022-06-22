@@ -198,8 +198,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		heimdallViper.SetConfigFile(heimdallConfigFilePath) // set config file explicitly
 	}
 
+	// Handle errors reading the config file
 	err := heimdallViper.ReadInConfig()
-	if err != nil { // Handle errors reading the config file
+	if err != nil {
 		log.Fatal(err)
 	}
 
@@ -226,6 +227,24 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFilePath string) {
 		// fallback to default
 		Logger.Debug("Invalid BOR RPC timeout provided, falling back to default value", "timeout", DefaultBorRPCTimeout)
 		conf.BorRPCTimeout = DefaultBorRPCTimeout
+	}
+
+	if conf.SHStateSyncedInterval == 0 {
+		// fallback to default
+		Logger.Debug("Invalid self-healing StateSynced interval provided, falling back to default value", "interval", DefaultSHStateSyncedInterval)
+		conf.SHStateSyncedInterval = DefaultSHStateSyncedInterval
+	}
+
+	if conf.SHStakeUpdateInterval == 0 {
+		// fallback to default
+		Logger.Debug("Invalid self-healing StakeUpdate interval provided, falling back to default value", "interval", DefaultSHStakeUpdateInterval)
+		conf.SHStakeUpdateInterval = DefaultSHStakeUpdateInterval
+	}
+
+	if conf.SHMaxDepthDuration == 0 {
+		// fallback to default
+		Logger.Debug("Invalid self-healing max depth duration provided, falling back to default value", "duration", DefaultSHMaxDepthDuration)
+		conf.SHMaxDepthDuration = DefaultSHMaxDepthDuration
 	}
 
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
