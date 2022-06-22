@@ -72,15 +72,15 @@ func (suite *QuerierTestSuite) TestHandleQueryRecord() {
 		Path: route,
 		Data: []byte{},
 	}
-	_, err := querier(ctx, path, req)
-	require.Error(t, err, "failed to parse params")
+	_, sdkErr := querier(ctx, path, req)
+	require.Error(t, sdkErr, "failed to parse params")
 
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordParams(2)),
 	}
-	_, err = querier(ctx, path, req)
-	require.Error(t, err, "could not get state record")
+	_, sdkErr = querier(ctx, path, req)
+	require.Error(t, sdkErr, "could not get state record")
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
@@ -88,7 +88,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecord() {
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
-	err = ck.SetEventRecord(ctx, testRecord1)
+	err := ck.SetEventRecord(ctx, testRecord1)
 	require.NoError(t, err)
 
 	req = abci.RequestQuery{
@@ -110,8 +110,8 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordList() {
 		Path: route,
 		Data: []byte{},
 	}
-	_, err := querier(ctx, path, req)
-	require.Error(t, err, "failed to parse params")
+	_, sdkErr := querier(ctx, path, req)
+	require.Error(t, sdkErr, "failed to parse params")
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
@@ -119,7 +119,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordList() {
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
-	err = ck.SetEventRecord(ctx, testRecord1)
+	err := ck.SetEventRecord(ctx, testRecord1)
 	require.NoError(t, err)
 
 	req = abci.RequestQuery{

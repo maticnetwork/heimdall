@@ -77,10 +77,7 @@ func (k *Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecor
 		return err
 	}
 
-	if err := k.setEventRecordStore(ctx, key, value); err != nil {
-		return err
-	}
-	return nil
+	return k.setEventRecordStore(ctx, key, value)
 }
 
 // SetEventRecordWithID adds record to store with ID
@@ -92,10 +89,7 @@ func (k *Keeper) SetEventRecordWithID(ctx sdk.Context, record types.EventRecord)
 		return err
 	}
 
-	if err := k.setEventRecordStore(ctx, key, value); err != nil {
-		return err
-	}
-	return nil
+	return k.setEventRecordStore(ctx, key, value)
 }
 
 // setEventRecordStore adds value to store by key
@@ -118,10 +112,8 @@ func (k *Keeper) SetEventRecord(ctx sdk.Context, record types.EventRecord) error
 	if err := k.SetEventRecordWithID(ctx, record); err != nil {
 		return err
 	}
-	if err := k.SetEventRecordWithTime(ctx, record); err != nil {
-		return err
-	}
-	return nil
+
+	return k.SetEventRecordWithTime(ctx, record)
 }
 
 // GetEventRecord returns record from store
