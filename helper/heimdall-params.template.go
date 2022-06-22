@@ -18,13 +18,17 @@ import (
 
 var packageTemplate = template.Must(template.New("").Parse(`package helper
 
-const NewSelectionAlgoHeight = {{ .BlockHeight }}
-const SpanOverrideBlockHeight = {{ .SpanOverrideBlockHeight }}
+const (
+	NetworkName             = "{{ .NetworkName }}"
+	NewSelectionAlgoHeight  = {{ .BlockHeight }}
+	SpanOverrideBlockHeight = {{ .SpanOverrideBlockHeight }}
+)
 `))
 
 var tomlConfig struct {
-	NewSelectionAlgoHeight  int `toml:"new_selection_algo_height"`
-	SpanOverrideBlockHeight int `toml:"span_override_height"`
+	NetworkName             string `toml:"network_name"`
+	NewSelectionAlgoHeight  int    `toml:"new_selection_algo_height"`
+	SpanOverrideBlockHeight int    `toml:"span_override_height"`
 }
 
 var networks = []string{
@@ -52,9 +56,11 @@ func main() {
 	defer f.Close()
 
 	packageTemplate.Execute(f, struct {
+		NetworkName             string
 		BlockHeight             int
 		SpanOverrideBlockHeight int
 	}{
+		NetworkName:             tomlConfig.NetworkName,
 		BlockHeight:             tomlConfig.NewSelectionAlgoHeight,
 		SpanOverrideBlockHeight: tomlConfig.SpanOverrideBlockHeight,
 	})

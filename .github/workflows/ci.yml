@@ -12,7 +12,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.17.*
+          go-version: 1.18.x
 
       - name: "Build binaries"
         run: make build
@@ -24,6 +24,6 @@ jobs:
         run: make tests
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v1
+        uses: codecov/codecov-action@v2
         with:
           file: ./cover.out

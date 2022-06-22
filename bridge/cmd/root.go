@@ -1,10 +1,14 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -18,6 +22,12 @@ const (
 	logsTypeFlag   = "logs-type"
 )
 
+var (
+	logger = helper.Logger.With("module", "bridge/cmd/")
+
+	metricsServer http.Server
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:   "heimdall-bridge",
@@ -25,13 +35,22 @@ var rootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if cmd.Use != version.Cmd.Use {
 			// initialize tendermint viper config
-			InitTendermintViperConfig(cmd)
+			initTendermintViperConfig(cmd)
+
+			// init metrics server
+			initMetrics()
 		}
+	},
+	PostRunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
+		return metricsServer.Shutdown(ctx)
 	},
 }
 
-// InitTendermintViperConfig sets global viper configuration needed to heimdall
-func InitTendermintViperConfig(cmd *cobra.Command) {
+// initTendermintViperConfig sets global viper configuration needed to heimdall
+func initTendermintViperConfig(cmd *cobra.Command) {
 	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
 	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
@@ -54,6 +73,22 @@ func InitTendermintViperConfig(cmd *cobra.Command) {
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
+}
+
+// initMetrics initializes metrics server with the default handler
+func initMetrics() {
+	metricsServer = http.Server{
+		Addr: ":2112",
+	}
+
+	http.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		if err := metricsServer.ListenAndServe(); err != nil {
+			logger.Error("failed to start metrics server", "error", err)
+			os.Exit(1)
+		}
+	}()
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
@@ -93,7 +128,6 @@ func init() {
 		"Use json logger",
 	)
 
-	var logger = helper.Logger.With("module", "bridge/cmd/")
 	// bind all flags with viper
 	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
 		logger.Error("init | BindPFlag | rootCmd.Flags", "Error", err)
