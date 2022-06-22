@@ -284,7 +284,7 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 
 	select {
 	case event := <-eventCh:
-		return event.Data.(tmTypes.TMEventData), nil
+		return event.Data, nil
 	case <-ctx.Done():
 		return nil, errors.New("timed out waiting for event")
 	}

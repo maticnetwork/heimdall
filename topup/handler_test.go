@@ -127,7 +127,8 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
-		acc1.SetCoins(coins)
+		err := acc1.SetCoins(coins)
+		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc1)
 
 		// check if coins > 0
@@ -149,7 +150,8 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
-		acc1.SetCoins(coins)
+		err := acc1.SetCoins(coins)
+		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc1)
 
 		// check if coins > 0

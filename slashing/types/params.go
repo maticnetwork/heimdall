@@ -97,15 +97,15 @@ func (p Params) String() string {
 // ParamSetPairs - Implements params.ParamSet
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeySignedBlocksWindow, &p.SignedBlocksWindow},
-		{KeyMinSignedPerWindow, &p.MinSignedPerWindow},
-		{KeyDowntimeJailDuration, &p.DowntimeJailDuration},
-		{KeySlashFractionDoubleSign, &p.SlashFractionDoubleSign},
-		{KeySlashFractionDowntime, &p.SlashFractionDowntime},
-		{KeySlashFractionLimit, &p.SlashFractionLimit},
-		{KeyJailFractionLimit, &p.JailFractionLimit},
-		{KeyMaxEvidenceAge, &p.MaxEvidenceAge},
-		{KeyEnableSlashing, &p.EnableSlashing},
+		{Key: KeySignedBlocksWindow, Value: &p.SignedBlocksWindow},
+		{Key: KeyMinSignedPerWindow, Value: &p.MinSignedPerWindow},
+		{Key: KeyDowntimeJailDuration, Value: &p.DowntimeJailDuration},
+		{Key: KeySlashFractionDoubleSign, Value: &p.SlashFractionDoubleSign},
+		{Key: KeySlashFractionDowntime, Value: &p.SlashFractionDowntime},
+		{Key: KeySlashFractionLimit, Value: &p.SlashFractionLimit},
+		{Key: KeyJailFractionLimit, Value: &p.JailFractionLimit},
+		{Key: KeyMaxEvidenceAge, Value: &p.MaxEvidenceAge},
+		{Key: KeyEnableSlashing, Value: &p.EnableSlashing},
 	}
 }
 
@@ -115,78 +115,4 @@ func DefaultParams() Params {
 		DefaultSignedBlocksWindow, DefaultMinSignedPerWindow, DefaultDowntimeJailDuration,
 		DefaultSlashFractionDoubleSign, DefaultSlashFractionDowntime, DefaultSlashFractionLimit, DefaultJailFractionLimit, DefaultMaxEvidenceAge, DefaultEnableSlashing,
 	)
-}
-
-func validateSignedBlocksWindow(i interface{}) error {
-	v, ok := i.(int64)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v <= 0 {
-		return fmt.Errorf("signed blocks window must be positive: %d", v)
-	}
-
-	return nil
-}
-
-func validateMinSignedPerWindow(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNegative() {
-		return fmt.Errorf("min signed per window cannot be negative: %s", v)
-	}
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("min signed per window too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateDowntimeJailDuration(i interface{}) error {
-	v, ok := i.(time.Duration)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v <= 0 {
-		return fmt.Errorf("downtime jail duration must be positive: %s", v)
-	}
-
-	return nil
-}
-
-func validateSlashFractionDoubleSign(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNegative() {
-		return fmt.Errorf("double sign slash fraction cannot be negative: %s", v)
-	}
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("double sign slash fraction too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateSlashFractionDowntime(i interface{}) error {
-	v, ok := i.(sdk.Dec)
-	if !ok {
-		return fmt.Errorf("invalid parameter type: %T", i)
-	}
-
-	if v.IsNegative() {
-		return fmt.Errorf("downtime slash fraction cannot be negative: %s", v)
-	}
-	if v.GT(sdk.OneDec()) {
-		return fmt.Errorf("downtime slash fraction too large: %s", v)
-	}
-
-	return nil
 }

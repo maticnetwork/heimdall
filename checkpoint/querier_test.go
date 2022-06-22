@@ -168,7 +168,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 		borChainId,
 		timestamp,
 	)
-	app.CheckpointKeeper.SetCheckpointBuffer(ctx, checkpointBlock)
+	err := app.CheckpointKeeper.SetCheckpointBuffer(ctx, checkpointBlock)
+	require.NoError(t, err)
 
 	req := abci.RequestQuery{
 		Path: route,
@@ -238,7 +239,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 			timestamp,
 		)
 		checkpoints[i] = checkpoint
-		keeper.AddCheckpoint(ctx, headerBlockNumber, checkpoint)
+		err := keeper.AddCheckpoint(ctx, headerBlockNumber, checkpoint)
+		require.NoError(t, err)
 		keeper.UpdateACKCount(ctx)
 	}
 
@@ -267,7 +269,8 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	headerNumber := uint64(1)
 	startBlock := uint64(0)
@@ -287,7 +290,8 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 	)
 
 	suite.contractCaller.On("GetRootHash", checkpointBlock.StartBlock, checkpointBlock.EndBlock, uint64(1024)).Return(checkpointBlock.RootHash.Bytes(), nil)
-	app.CheckpointKeeper.AddCheckpoint(ctx, headerNumber, checkpointBlock)
+	err := app.CheckpointKeeper.AddCheckpoint(ctx, headerNumber, checkpointBlock)
+	require.NoError(t, err)
 
 	path := []string{types.QueryNextCheckpoint}
 

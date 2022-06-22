@@ -126,8 +126,12 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	suite.Run("Checkpoint not in countinuity", func() {
 		headerId := uint64(10000)
 
-		keeper.AddCheckpoint(ctx, headerId, header)
-		keeper.GetCheckpointByNumber(ctx, headerId)
+		err = keeper.AddCheckpoint(ctx, headerId, header)
+		require.NoError(t, err)
+
+		_, err = keeper.GetCheckpointByNumber(ctx, headerId)
+		require.NoError(t, err)
+
 		keeper.UpdateACKCount(ctx)
 		lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
 		if err == nil {
@@ -219,7 +223,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	// generate proposer for validator set
 	chSim.LoadValidatorSet(2, t, stakingKeeper, ctx, false, 10)
@@ -302,7 +307,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	// check valid checkpoint
 	// generate proposer for validator set
@@ -393,7 +399,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	// check valid checkpoint
 	// generate proposer for validator set
@@ -435,7 +442,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	// check valid checkpoint
 	// generate proposer for validator set

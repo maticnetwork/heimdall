@@ -82,7 +82,8 @@ func (suite *KeeperTestSuite) TestHasCoins() {
 	address := hmTypes.HexToHeimdallAddress("123")
 
 	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount*10)))
-	keeper.SetCoins(ctx, address, coins)
+	err := keeper.SetCoins(ctx, address, coins)
+	require.NoError(t, err)
 
 	res := app.BankKeeper.HasCoins(ctx, address, coins)
 	require.True(t, res)

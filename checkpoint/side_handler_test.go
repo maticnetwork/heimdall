@@ -78,7 +78,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSuccess() {
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.AddCheckpoint(ctx, 1, checkpoint)
+	err := keeper.AddCheckpoint(ctx, 1, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,
@@ -113,7 +114,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsRoot
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.AddCheckpoint(ctx, 1, checkpoint)
+	err := keeper.AddCheckpoint(ctx, 1, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,
@@ -143,7 +145,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustNotSameCheckpointAsR
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.AddCheckpoint(ctx, 1, checkpoint)
+	err := keeper.AddCheckpoint(ctx, 1, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,

@@ -55,7 +55,8 @@ func (suite *KeeperTestSuite) TestDividendAccount() {
 		User:      hmTypes.BytesToHeimdallAddress([]byte("some-address")),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 	ok := app.TopupKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.User)
 	require.Equal(t, ok, true)
 }

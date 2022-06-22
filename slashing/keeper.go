@@ -605,5 +605,4 @@ func (k *Keeper) IterateSlashingSequencesAndApplyFn(ctx sdk.Context, f func(sequ
 			return
 		}
 	}
-	return
 }

@@ -1227,8 +1227,10 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 		require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 
 		setUpdates := helper.GetUpdatedValidators(&oldValSet, keeper.GetAllValidators(ctx), 5)
-		oldValSet.UpdateWithChangeSet(setUpdates)
-		_ = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
+		err := oldValSet.UpdateWithChangeSet(setUpdates)
+		require.NoError(t, err)
+		err = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
+		require.NoError(t, err)
 
 		ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)
 		require.True(t, ok, "new signer should be found, got %v", ok)

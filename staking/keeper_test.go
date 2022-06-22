@@ -205,7 +205,8 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 				ProposerPriority: 0,
 			}
 			// check current validator
-			stakingKeeper.AddValidator(ctx, newVal)
+			err := stakingKeeper.AddValidator(ctx, newVal)
+			require.NoError(t, err)
 			checkpointKeeper.UpdateACKCountWithValue(ctx, item.ackcount)
 
 			isCurrentVal := stakingKeeper.IsCurrentValidatorByAddress(ctx, newVal.Signer.Bytes())
@@ -229,10 +230,11 @@ func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
 	prevValidatorSet.Validators[0].StartEpoch = 20
 
 	err := keeper.AddValidator(ctx, *prevValidatorSet.Validators[0])
-	require.Empty(t, err, "Unable to update validator set")
+	require.NoError(t, err)
 
 	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
-	currentValSet.UpdateWithChangeSet(setUpdates)
+	err = currentValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
 
 	updatedValSet := currentValSet
 
@@ -261,11 +263,12 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 	valToBeAdded := validators[0]
 	currentValSet := initValSet.Copy()
 
-	keeper.AddValidator(ctx, valToBeAdded)
+	err := keeper.AddValidator(ctx, valToBeAdded)
+	require.NoError(t, err)
 
 	setUpdates := helper.GetUpdatedValidators(currentValSet, keeper.GetAllValidators(ctx), 5)
-	currentValSet.UpdateWithChangeSet(setUpdates)
-
+	err = currentValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
 	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Signer.Bytes()), "New Validator should be added")
 	require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.TotalVotingPower(), "Total VotingPower should be increased")
@@ -288,10 +291,12 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	valToUpdate := currentValSet.Validators[0]
 	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
 
-	keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
+	err := keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
+	require.NoError(t, err)
 
 	setUpdates := helper.GetUpdatedValidators(&currentValSet, keeper.GetAllValidators(ctx), 5)
-	currentValSet.UpdateWithChangeSet(setUpdates)
+	err = currentValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
 
 	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
 
