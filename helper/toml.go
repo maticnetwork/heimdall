@@ -65,12 +65,11 @@ func init() {
 	}
 }
 
-// ParseConfig retrieves the default environment configuration for the
-// application.
+// ParseConfig retrieves the default environment configuration for the application.
 func ParseConfig() (*Configuration, error) {
-	conf := GetDefaultHeimdallConfig()
-	err := viper.Unmarshal(conf)
-	return &conf, err
+	defaultConf := GetDefaultHeimdallConfig()
+	err := viper.Unmarshal(defaultConf)
+	return &defaultConf, err
 }
 
 // WriteConfigFile renders config using the template and writes it to

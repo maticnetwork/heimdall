@@ -1,14 +1,20 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
+	"net/http"
+	"os"
 	"path/filepath"
+	"time"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	tendermintLogger "github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/helper"
-	logger "github.com/tendermint/tendermint/libs/log"
+	"github.com/maticnetwork/heimdall/version"
 )
 
 const (
@@ -17,25 +23,42 @@ const (
 	logsTypeFlag   = "logs-type"
 )
 
+var (
+	logger = helper.Logger.With("module", "bridge/cmd/")
+
+	metricsServer http.Server
+)
+
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
 	Use:     "heimdall-bridge",
 	Aliases: []string{"bridge"},
 	Short:   "Heimdall bridge deamon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
-		// initialize tendermint viper config
-		initTendermintViperConfig(cmd)
+		if cmd.Use != version.Cmd.Use {
+			// initialize tendermint viper config
+			initTendermintViperConfig(cmd)
+
+			// init metrics server
+			initMetrics()
+		}
+	},
+	PostRunE: func(cmd *cobra.Command, args []string) error {
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+		defer cancel()
+
+		return metricsServer.Shutdown(ctx)
 	},
 }
 
 // BridgeCommands returns command for bridge service
-func BridgeCommands(v *viper.Viper, loggerInstance logger.Logger, caller string) *cobra.Command {
+func BridgeCommands(v *viper.Viper, loggerInstance tendermintLogger.Logger, caller string) *cobra.Command {
 	DecorateWithBridgeRootFlags(rootCmd, v, loggerInstance, caller)
 	return rootCmd
 }
 
 // function is called when bridge flags needs to be added to command
-func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInstance logger.Logger, caller string) {
+func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInstance tendermintLogger.Logger, caller string) {
 	cmd.PersistentFlags().StringP(helper.TendermintNodeFlag, "n", helper.DefaultTendermintNode, "Node to connect to")
 	if err := v.BindPFlag(helper.TendermintNodeFlag, cmd.PersistentFlags().Lookup(helper.TendermintNodeFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, helper.TendermintNodeFlag), "Error", err)
@@ -75,24 +98,47 @@ func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInsta
 	}
 }
 
+// initMetrics initializes metrics server with the default handler
+func initMetrics() {
+	metricsServer = http.Server{
+		Addr: ":2112",
+	}
+
+	http.Handle("/metrics", promhttp.Handler())
+
+	go func() {
+		if err := metricsServer.ListenAndServe(); err != nil {
+			logger.Error("failed to start metrics server", "error", err)
+			os.Exit(1)
+		}
+	}()
+}
+
 // function is called to set appropriate bridge db path
 func AdjustBridgeDBValue(cmd *cobra.Command, v *viper.Viper) {
-	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
+	tendermintNode, _ := cmd.Flags().GetString(helper.TendermintNodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
+	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
+	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
+	borChainIDValue, _ := cmd.Flags().GetString(borChainIDFlag)
+	logsTypeValue, _ := cmd.Flags().GetString(logsTypeFlag)
 
 	// bridge-db directory (default storage)
 	if bridgeDBValue == "" {
 		bridgeDBValue = filepath.Join(homeValue, "bridge", "storage")
 	}
 
-	v.Set(bridgeDBFlag, bridgeDBValue)
+	// set to viper
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
+	viper.Set(helper.HomeFlag, homeValue)
+	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
+	viper.Set(bridgeDBFlag, bridgeDBValue)
+	viper.Set(borChainIDFlag, borChainIDValue)
+	viper.Set(logsTypeFlag, logsTypeValue)
 }
 
 // initTendermintViperConfig sets global viper configuration needed to heimdall
 func initTendermintViperConfig(cmd *cobra.Command) {
-
-	logsTypeValue, _ := cmd.Flags().GetString(logsTypeFlag)
-	viper.Set(logsTypeFlag, logsTypeValue)
 
 	// set appropriate bridge DB
 	AdjustBridgeDBValue(cmd, viper.GetViper())
