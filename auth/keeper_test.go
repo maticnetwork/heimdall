@@ -205,11 +205,7 @@ func (suite *KeeperTestSuite) TestIterateAccounts() {
 	var filteredAccounts []types.Account
 	app.AccountKeeper.IterateAccounts(ctx, func(acc types.Account) bool {
 		filteredAccounts = append(filteredAccounts, acc)
-
-		if acc.GetAccountNumber() > 5 {
-			return true
-		}
-		return false
+		return acc.GetAccountNumber() > 5
 	})
 	require.Equal(t, 5, len(filteredAccounts))
 }

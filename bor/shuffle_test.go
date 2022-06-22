@@ -47,7 +47,10 @@ func TestShuffleList(t *testing.T) {
 func TestValShuffle(t *testing.T) {
 	seedHash1 := common.HexToHash("0xc46afc66ad9f4b237414c23a0cf0c469aeb60f52176565990644a9ee36a17667")
 	initialVals := GenRandomVal(50, 0, 100, uint64(10), true, 1)
+
 	selectedProducerIndices, err := XXXSelectNextProducers(seedHash1, initialVals, 40)
+	require.NoError(t, err)
+
 	IDToPower := make(map[uint64]int64)
 	for _, ID := range selectedProducerIndices {
 		IDToPower[ID] = IDToPower[ID] + 1
@@ -60,8 +63,6 @@ func TestValShuffle(t *testing.T) {
 			selectedProducers = append(selectedProducers, val)
 		}
 	}
-
-	require.Empty(t, err, "Error has to be nil")
 }
 
 // Generate random validators

@@ -166,6 +166,7 @@ func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 	dividendAccounts := app.TopupKeeper.GetAllDividendAccounts(ctx)
 
 	accRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
+	require.NoError(t, err)
 	copy(accountRoot[:], accRoot)
 
 	// mock contracts
