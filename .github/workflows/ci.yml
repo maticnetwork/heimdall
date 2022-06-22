@@ -11,8 +11,8 @@ on:
       - '**'
 
 jobs:
-  build-test:
-    name: build test
+  build-lint-test:
+    name: build lint test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -25,6 +25,9 @@ jobs:
       - name: "Build binaries"
         run: make build
 
+      - name: "Run linter"
+        run: make lint
+
       - name: "Run tests"
         run: make tests
 
@@ -32,17 +35,3 @@ jobs:
         uses: codecov/codecov-action@v2
         with:
           file: ./cover.out
-
-  lint:
-    name: lint
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-
-      - name: Install Go
-        uses: actions/setup-go@v3
-        with:
-          go-version: 1.18.x
-
-      - name: "Run linter"
-        run: make lint
