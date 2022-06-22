@@ -197,7 +197,8 @@ func (suite *KeeperTestSuite) TestIterateAccounts() {
 	for i := 0; i < newAccounts; i++ {
 		addr := hmTypes.BytesToHeimdallAddress([]byte(fmt.Sprintf("address-%v", i)))
 		acc := app.AccountKeeper.NewAccountWithAddress(ctx, addr)
-		acc.SetCoins(simulation.RandomFeeCoins())
+		err := acc.SetCoins(simulation.RandomFeeCoins())
+		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc)
 	}
 	afterAccounts := app.AccountKeeper.GetAllAccounts(ctx) // current accounts

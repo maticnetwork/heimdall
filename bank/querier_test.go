@@ -101,7 +101,8 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 	// set account
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
 	amt := simulation.RandomFeeCoins()
-	acc1.SetCoins(amt)
+	err = acc1.SetCoins(amt)
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 
 	res, err = querier(ctx, path, req)
@@ -121,7 +122,8 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 		store := ctx.KVStore(happ.GetKey(authTypes.StoreKey))
 		store.Set(authTypes.AddressStoreKey(hmTypes.AccAddressToHeimdallAddress(addr)), []byte(""))
 		require.Panics(t, func() {
-			querier(ctx, path, req)
+			_, err = querier(ctx, path, req)
+			require.NoError(t, err)
 		})
 	}
 }

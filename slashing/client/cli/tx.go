@@ -79,7 +79,9 @@ $ <appcli> tx slashing unjail --from mykey
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.MarkFlagRequired(FlagTxHash)
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}

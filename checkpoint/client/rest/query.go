@@ -416,7 +416,10 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var checkpointUnmarshal hmTypes.Checkpoint
-		json.Unmarshal(res, &checkpointUnmarshal)
+		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
 		checkpointWithID := &CheckpointWithID{
 			ID:         ackCount,

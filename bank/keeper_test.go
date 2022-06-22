@@ -34,7 +34,8 @@ func (suite *KeeperTestSuite) TestSetCoins() {
 
 	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount*10)))
 	// keeper.SendCoins(ctx, hmTypes.HexToHeimdallAddress("123"), hmTypes.HexToHeimdallAddress("456"), coins)
-	keeper.SetCoins(ctx, address, coins)
+	err := keeper.SetCoins(ctx, address, coins)
+	require.NoError(t, err)
 
 	res := keeper.GetCoins(ctx, address)
 	require.Equal(t, res, coins)

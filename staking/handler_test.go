@@ -145,7 +145,8 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 
 	setUpdates := helper.GetUpdatedValidators(&oldValSet, keeper.GetAllValidators(ctx), 5)
-	oldValSet.UpdateWithChangeSet(setUpdates)
+	err := oldValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
 	_ = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
 
 	ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)

@@ -278,12 +278,13 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		addr3 := []byte("hello-3")
 		addr4 := []byte("hello-4")
 		// set validators
-		happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
+		err = happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
 			{Address: addr1, Power: 10},
 			{Address: addr2, Power: 20},
 			{Address: addr3, Power: 30},
 			{Address: addr4, Power: 40},
 		})
+		require.NoError(t, err)
 
 		res := happ.BeginSideBlocker(ctx, abci.RequestBeginSideBlock{})
 		require.Equal(t, 0, len(res.Events), "Events from begin side blocker result should be empty with validators but no sigs")
@@ -353,12 +354,13 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		addr3 := []byte("hello-3")
 		addr4 := []byte("hello-4")
 		// set validators
-		happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
+		err = happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
 			{Address: addr1, Power: 10},
 			{Address: addr2, Power: 20},
 			{Address: addr3, Power: 30},
 			{Address: addr4, Power: 40},
 		})
+		require.NoError(t, err)
 
 		req := abci.RequestBeginSideBlock{
 			SideTxResults: []abci.SideTxResult{

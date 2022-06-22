@@ -88,7 +88,8 @@ func (suite *QuerierTestSuite) TestHandleQueryRecord() {
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
-	ck.SetEventRecord(ctx, testRecord1)
+	err = ck.SetEventRecord(ctx, testRecord1)
+	require.NoError(t, err)
 
 	req = abci.RequestQuery{
 		Path: route,
@@ -118,7 +119,8 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordList() {
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
-	ck.SetEventRecord(ctx, testRecord1)
+	err = ck.SetEventRecord(ctx, testRecord1)
+	require.NoError(t, err)
 
 	req = abci.RequestQuery{
 		Path: route,

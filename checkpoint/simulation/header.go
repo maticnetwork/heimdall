@@ -38,7 +38,8 @@ func LoadValidatorSet(count int, t *testing.T, keeper staking.Keeper, ctx sdk.Co
 	for _, validator := range validators {
 		err := keeper.AddValidator(ctx, validator)
 		require.NoError(t, err, "Unable to set validator, Error: %v", err)
-		valSet.UpdateWithChangeSet([]*types.Validator{&validator})
+		err = valSet.UpdateWithChangeSet([]*types.Validator{&validator})
+		require.NoError(t, err)
 	}
 
 	err := keeper.UpdateValidatorSetInStore(ctx, valSet)

@@ -317,10 +317,12 @@ func (suite *AnteTestSuite) TestSequences() {
 
 	// set the accounts, we don't need the acc numbers as it is in the genesis block
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc1.SetCoins(simulation.RandomFeeCoins())
+	err := acc1.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	acc2.SetCoins(simulation.RandomFeeCoins())
+	err = acc2.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc2.SetAccountNumber(100))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 
@@ -374,7 +376,8 @@ func (suite *AnteTestSuite) TestFees() {
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 
 	// set some coins
-	acc1.SetCoins(sdk.NewCoins(sdk.NewInt64Coin(authTypes.FeeToken, 149)))
+	err := acc1.SetCoins(sdk.NewCoins(sdk.NewInt64Coin(authTypes.FeeToken, 149)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 
@@ -382,7 +385,8 @@ func (suite *AnteTestSuite) TestFees() {
 	require.True(sdk.IntEq(t, happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1)).GetCoins().AmountOf(authTypes.FeeToken), sdk.NewInt(149)))
 
 	amt, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	err = acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 

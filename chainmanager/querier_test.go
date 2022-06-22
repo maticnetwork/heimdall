@@ -68,13 +68,11 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		Data: []byte{},
 	}
 	res, err := querier(ctx, path, req)
-	// check no error found
 	require.NoError(t, err)
-
-	// check response is not nil
 	require.NotNil(t, res)
 
-	json.Unmarshal(res, &params)
+	err = json.Unmarshal(res, &params)
+	require.NoError(t, err)
 
 	// match reponse params
 	require.Equal(t, defaultParams.MainchainTxConfirmations, params.MainchainTxConfirmations)
