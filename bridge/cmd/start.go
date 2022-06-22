@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/spf13/cobra"
-
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/libs/common"
 	httpClient "github.com/tendermint/tendermint/rpc/client"
@@ -32,14 +31,13 @@ const (
 
 // GetStartCmd returns the start command to start bridge
 func GetStartCmd() *cobra.Command {
-	var logger = helper.Logger.With("module", "bridge/cmd/")
 	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start bridge server",
 		Run: func(cmd *cobra.Command, args []string) {
-
 			// create codec
 			cdc := app.MakeCodec()
+
 			// queue connector & http client
 			_queueConnector := queue.NewQueueConnector(helper.GetConfig().AmqpURL)
 			_queueConnector.StartWorker()
@@ -106,12 +104,12 @@ func GetStartCmd() *cobra.Command {
 				time.Sleep(waitDuration)
 			}
 
-			// strt all processes
+			// Start all processes
 			for _, service := range services {
 				go func(serv common.Service) {
 					defer wg.Done()
 					// TODO handle error while starting service
-					if err := serv.Start(); err != nil {
+					if err = serv.Start(); err != nil {
 						logger.Error("GetStartCmd | serv.Start", "Error", err)
 					}
 					<-serv.Quit()

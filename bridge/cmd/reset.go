@@ -13,15 +13,18 @@ import (
 var resetCmd = &cobra.Command{
 	Use:   "unsafe-reset-all",
 	Short: "Reset bridge server data",
-	Run: func(cmd *cobra.Command, args []string) {
+	RunE: func(cmd *cobra.Command, args []string) error {
 		dbLocation := viper.GetString(bridgeDBFlag)
-		if dir, err := ioutil.ReadDir(dbLocation); err != nil {
-			// fmt.Println(err)
-		} else {
-			for _, d := range dir {
-				os.RemoveAll(path.Join([]string{dbLocation, d.Name()}...))
-			}
+		dir, err := ioutil.ReadDir(dbLocation)
+		if err != nil {
+			return err
 		}
+
+		for _, d := range dir {
+			os.RemoveAll(path.Join([]string{dbLocation, d.Name()}...))
+		}
+
+		return nil
 	},
 }
 
