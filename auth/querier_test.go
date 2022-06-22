@@ -111,7 +111,8 @@ func (suite *QuerierTestSuite) TestQueryAccount() {
 		store := ctx.KVStore(happ.GetKey(authTypes.StoreKey))
 		store.Set(types.AddressStoreKey(hmTypes.AccAddressToHeimdallAddress(addr)), []byte(""))
 		require.Panics(t, func() {
-			querier(ctx, path, req)
+			_, err = querier(ctx, path, req)
+			require.NoError(t, err)
 		})
 	}
 }
@@ -161,7 +162,8 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		ctx := happ.BaseApp.NewContext(true, abci.Header{})
 		querier := auth.NewQuerier(happ.AccountKeeper)
 		require.Panics(t, func() {
-			querier(ctx, path, req)
+			_, err = querier(ctx, path, req)
+			require.NoError(t, err)
 		})
 	}
 }

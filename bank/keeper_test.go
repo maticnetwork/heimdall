@@ -63,9 +63,11 @@ func (suite *KeeperTestSuite) TestSendCoins() {
 	address := hmTypes.HexToHeimdallAddress("123")
 	to := hmTypes.HexToHeimdallAddress("456")
 	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount)))
-	keeper.SetCoins(ctx, address, coins)
 
-	err := keeper.SendCoins(ctx, address, to, coins)
+	err := keeper.SetCoins(ctx, address, coins)
+	require.NoError(t, err)
+
+	err = keeper.SendCoins(ctx, address, to, coins)
 	require.NoError(t, err)
 
 	fromAcc := keeper.GetCoins(ctx, address)

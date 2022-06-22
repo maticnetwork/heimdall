@@ -170,7 +170,8 @@ func (suite *KeeperTestSuite) TestGetPubKey() {
 
 	addr1 := hmTypes.AccAddressToHeimdallAddress(addr)
 	acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, addr1)
-	acc1.SetPubKey(pubkey)
+	err := acc1.SetPubKey(pubkey)
+	require.NoError(t, err)
 	app.AccountKeeper.SetAccount(ctx, acc1)
 	pubkey1, err := app.AccountKeeper.GetPubKey(ctx, addr1)
 	require.Nil(t, err)

@@ -36,10 +36,13 @@ func TestUpdateChanges(t *testing.T) {
 
 	v1new := v1.Copy()
 	v1new.VotingPower = 0
-	vset1.UpdateWithChangeSet([]*Validator{
+	err := vset1.UpdateWithChangeSet([]*Validator{
 		v1new,
 		v2.Copy(),
 	})
+	if err != nil {
+		t.Error(err)
+	}
 	vset1.IncrementProposerPriority(1)
 
 	if !vset1.GetProposer().Signer.Equals(v2.Signer) {

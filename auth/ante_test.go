@@ -86,7 +86,8 @@ func (suite *AnteTestSuite) TestGasLimit() {
 
 	// set default amount for one tx
 	amt, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	err := acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 
 	// get stored account
@@ -117,13 +118,15 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
 	amt1, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	err := acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress()) // get stored account
 
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
 	amt2, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc2.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt2)))
+	err = acc2.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt2)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 	acc2 = happ.AccountKeeper.GetAccount(ctx, acc2.GetAddress()) // get stored account
 
@@ -227,11 +230,13 @@ func (suite *AnteTestSuite) TestAccountNumbers() {
 
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc1.SetCoins(simulation.RandomFeeCoins())
+	err := acc1.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc1.SetAccountNumber(0))
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	acc2.SetCoins(simulation.RandomFeeCoins())
+	err = acc2.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc2.SetAccountNumber(1))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 
@@ -262,10 +267,12 @@ func (suite *AnteTestSuite) TestAccountNumbersAtBlockHeightZero() {
 
 	// set the accounts, we don't need the acc numbers as it is in the genesis block
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc1.SetCoins(simulation.RandomFeeCoins())
+	err := acc1.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	acc2.SetCoins(simulation.RandomFeeCoins())
+	err = acc2.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc2.SetAccountNumber(100))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 
