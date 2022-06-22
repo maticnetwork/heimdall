@@ -89,7 +89,9 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 			timestamp,
 		)
 
-		keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
+		err := keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
+		require.NoError(t, err)
+
 		keeper.UpdateACKCount(ctx)
 	}
 

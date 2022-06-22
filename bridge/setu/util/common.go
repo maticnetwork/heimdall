@@ -517,7 +517,7 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 	if event == nil {
 		return
 	}
-	timeElapsed := time.Now().Sub(startTime).Milliseconds()
+	timeElapsed := time.Since(startTime).Milliseconds()
 	var typedEvent statesender.StatesenderStateSynced
 
 	switch e := event.(type) {

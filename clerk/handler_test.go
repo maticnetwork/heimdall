@@ -92,7 +92,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 
 	t.Run("ExistingRecord", func(t *testing.T) {
 		// store event record in keeper
-		app.ClerkKeeper.SetEventRecord(ctx,
+		err := app.ClerkKeeper.SetEventRecord(ctx,
 			types.NewEventRecord(
 				msg.TxHash,
 				msg.LogIndex,
@@ -103,6 +103,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 				time.Now(),
 			),
 		)
+		require.NoError(t, err)
 
 		result := suite.handler(ctx, msg)
 		require.False(t, result.IsOK(), "should fail due to existent event record but succeeded")

@@ -81,6 +81,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
@@ -161,7 +162,9 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustCheckpointBuffer() {
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.SetCheckpointBuffer(ctx, checkpoint)
+
+	err := keeper.SetCheckpointBuffer(ctx, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,
@@ -187,7 +190,9 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsMsg(
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.AddCheckpoint(ctx, 1, checkpoint)
+
+	err := keeper.AddCheckpoint(ctx, 1, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,
@@ -225,6 +230,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
@@ -234,6 +240,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	require.True(t, res.IsOK(), "expected send-checkpoint to be  ok, got %v", res)
 
 	checkpointBuffer, err := keeper.GetCheckpointFromBuffer(ctx)
+	require.NoError(t, err)
 
 	// set time buffered checkpoint timestamp + checkpointBufferTime
 	newTime := checkpointBuffer.TimeStamp + uint64(checkpointBufferTime)
@@ -256,7 +263,9 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	chSim.LoadValidatorSet(2, t, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
@@ -266,6 +275,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
@@ -305,6 +315,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer

@@ -13,12 +13,12 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 		privKey1 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
 		if randomise {
-			startBlock := uint64(rand.Intn(10))
+			startBlock = uint64(rand.Intn(10))
 			// todo find a way to genrate non zero random number
 			if startBlock == 0 {
 				startBlock = 1
 			}
-			power := uint64(rand.Intn(100))
+			power = int64(rand.Intn(100))
 			if power == 0 {
 				power = 1
 			}

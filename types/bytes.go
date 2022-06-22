@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/maticnetwork/bor/common"
+	"github.com/maticnetwork/bor/common/hexutil"
 	"gopkg.in/yaml.v2"
 )
 
@@ -77,7 +78,7 @@ func (bz HexBytes) Bytes() []byte {
 }
 
 func (bz HexBytes) String() string {
-	return common.ToHex(bz)
+	return hexutil.Encode(bz)
 }
 
 // Format format bytes

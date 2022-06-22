@@ -30,7 +30,7 @@ func (da *DividendAccount) String() string {
 	}
 
 	return fmt.Sprintf("DividendAccount{%s %v}",
-		da.User.EthAddress,
+		da.User.EthAddress(),
 		da.FeeAmount)
 }
 

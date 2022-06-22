@@ -88,7 +88,7 @@ func (p Params) String() string {
   SlashFractionDowntime:   %s
   SlashFractionLimit:   %s
   JailFractionDowntime:   %s
-  EnableSlashing:   %s`,
+  EnableSlashing:   %t`,
 		p.SignedBlocksWindow, p.MinSignedPerWindow,
 		p.DowntimeJailDuration, p.SlashFractionDoubleSign, p.MaxEvidenceAge,
 		p.SlashFractionDowntime, p.SlashFractionLimit, p.JailFractionLimit, p.EnableSlashing)

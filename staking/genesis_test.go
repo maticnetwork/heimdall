@@ -44,7 +44,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	stakingSequence := make([]string, n)
 	accounts := simulation.RandomAccounts(r1, n)
 
-	for i, _ := range stakingSequence {
+	for i := range stakingSequence {
 		stakingSequence[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
 	}
 

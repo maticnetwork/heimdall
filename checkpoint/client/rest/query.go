@@ -120,7 +120,6 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -155,8 +154,18 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 
 			var params types.Params
-			json.Unmarshal(res, &params)
+			if err = json.Unmarshal(res, &params); err != nil {
+				RestLogger.Error("Unable to unmarshal params", "Start", start, "End", end, "Error", err)
+				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
+
 			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				RestLogger.Error("Unable to create contract caller", "Start", start, "End", end, "Error", err)
+				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+				return
+			}
 
 			// get headers
 			roothash, err := contractCallerObj.GetRootHash(uint64(start), uint64(end), params.MaxCheckpointLength)

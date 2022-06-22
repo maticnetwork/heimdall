@@ -274,8 +274,8 @@ func (suite *AnteTestSuite) TestAccountNumbersAtBlockHeightZero() {
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	msg2 := sdkAuth.NewTestMsg(addr2)
 
-	acc1 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc2 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
+	// acc1 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
+	// acc2 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
 	// accNumber1 := acc1.GetAccountNumber()
 	// accNumber2 := acc2.GetAccountNumber()
 

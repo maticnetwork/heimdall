@@ -93,7 +93,7 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 				return errors.New("No checkpoint buffer found")
 			}
 
-			fmt.Printf(string(res))
+			fmt.Println(string(res))
 			return nil
 		},
 	}
@@ -152,7 +152,7 @@ func GetCheckpointByNumber(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Printf(string(res))
+			fmt.Println(string(res))
 			return nil
 		},
 	}

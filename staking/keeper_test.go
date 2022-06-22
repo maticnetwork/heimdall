@@ -283,10 +283,10 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 
 	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
 
-	index, _ := currentValSet.GetByAddress(valToUpdate.Signer.Bytes())
+	index, val := currentValSet.GetByAddress(valToUpdate.Signer.Bytes())
 	require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
-	index, val := currentValSet.GetByAddress(newSigner[0].Signer.Bytes())
 
+	index, val = currentValSet.GetByAddress(newSigner[0].Signer.Bytes())
 	require.Equal(t, newSigner[0].Signer, val.Signer, "Signer address should change")
 	require.Equal(t, newSigner[0].PubKey, val.PubKey, "Signer pubkey should change")
 

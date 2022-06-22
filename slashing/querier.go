@@ -222,7 +222,7 @@ func querySlashingSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
+		return nil, sdk.ErrInternal(err.Error())
 	}
 
 	// get main tx receipt

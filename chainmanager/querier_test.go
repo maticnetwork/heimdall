@@ -86,7 +86,8 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		ctx := rapp.BaseApp.NewContext(true, abci.Header{})
 		querier := chainmanager.NewQuerier(rapp.ChainKeeper)
 		require.Panics(t, func() {
-			querier(ctx, path, req)
+			_, err = querier(ctx, path, req)
+			require.NoError(t, err)
 		})
 	}
 }

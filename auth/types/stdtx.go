@@ -6,6 +6,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/common"
+	"github.com/maticnetwork/bor/common/hexutil"
 	"github.com/maticnetwork/bor/rlp"
 )
 
@@ -144,7 +145,7 @@ func (ss StdSignature) String() string {
 		return ""
 	}
 
-	return common.ToHex(ss)
+	return hexutil.Encode(ss)
 }
 
 //
