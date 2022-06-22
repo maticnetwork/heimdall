@@ -2,15 +2,34 @@ package listener
 
 import (
 	"context"
+	"fmt"
 	"sync"
 	"time"
 
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
+)
+
+var (
+	stateSyncedCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "self_healing",
+		Subsystem: helper.NetworkName,
+		Name:      "StateSynced",
+		Help:      "The total number of missing StateSynced events",
+	}, []string{"id", "contract_address", "block_number", "tx_hash"})
+
+	stakeUpdateCounter = promauto.NewCounterVec(prometheus.CounterOpts{
+		Namespace: "self_healing",
+		Subsystem: helper.NetworkName,
+		Name:      "StakeUpdate",
+		Help:      "The total number of missing StakeUpdate events",
+	}, []string{"id", "nonce", "contract_address", "block_number", "tx_hash"})
 )
 
 // startSelfHealing starts self-healing processes for all required events
@@ -18,14 +37,15 @@ func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
 	stakeUpdateTicker := time.NewTicker(helper.GetConfig().SHStakeUpdateInterval)
 	stateSyncedTicker := time.NewTicker(helper.GetConfig().SHStateSyncedInterval)
 
+	rl.Logger.Info("Started self-healing")
 	for {
 		select {
 		case <-stakeUpdateTicker.C:
 			rl.processStakeUpdate(ctx)
 		case <-stateSyncedTicker.C:
-			rl.processStateSync(ctx)
+			rl.processStateSynced(ctx)
 		case <-ctx.Done():
-			rl.Logger.Info("Stopping stake update worker")
+			rl.Logger.Info("Stopping self-healing")
 			stakeUpdateTicker.Stop()
 			stateSyncedTicker.Stop()
 			return
@@ -76,6 +96,14 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 				return
 			}
 
+			stakeUpdateCounter.WithLabelValues(
+				stakeUpdate.ValidatorId.String(),
+				stakeUpdate.Nonce.String(),
+				stakeUpdate.Raw.Address.String(),
+				fmt.Sprintf("%d", stakeUpdate.Raw.BlockNumber),
+				stakeUpdate.Raw.TxHash.String(),
+			).Add(1)
+
 			if _, err = rl.processEvent(ctx, stakeUpdate.Raw); err != nil {
 				rl.Logger.Error("Error processing stake update for validator", "error", err, "id", id)
 			}
@@ -84,8 +112,8 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 	wg.Wait()
 }
 
-// processStateSync checks if chains are in sync, otherwise syncs them by broadcasting missing events
-func (rl *RootChainListener) processStateSync(ctx context.Context) {
+// processStateSynced checks if chains are in sync, otherwise syncs them by broadcasting missing events
+func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 	latestPolygonStateId, err := rl.getCurrentStateID(ctx)
 	if err != nil {
 		rl.Logger.Error("Unable to fetch latest state id from state receiver contract", "error", err)
@@ -118,6 +146,13 @@ func (rl *RootChainListener) processStateSync(ctx context.Context) {
 			rl.Logger.Error("Error getting state sync", "error", err, "id", i)
 			continue
 		}
+
+		stateSyncedCounter.WithLabelValues(
+			stateSynced.Id.String(),
+			stateSynced.Raw.Address.String(),
+			fmt.Sprintf("%d", stateSynced.Raw.BlockNumber),
+			stateSynced.Raw.TxHash.String(),
+		).Add(1)
 
 		var ignore bool
 		if ignore, err = rl.processEvent(ctx, stateSynced.Raw); err != nil {
