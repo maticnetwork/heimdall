@@ -30,7 +30,6 @@ type HandlerTestSuite struct {
 	app            *app.HeimdallApp
 	ctx            sdk.Context
 	cliCtx         context.CLIContext
-	querier        sdk.Querier
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller
 	chainParams    chainTypes.Params

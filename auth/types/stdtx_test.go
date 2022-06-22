@@ -82,7 +82,6 @@ func TestTxHash(t *testing.T) {
 	txBz, err := base64.StdEncoding.DecodeString(txStr)
 	require.NoError(t, err)
 
-	var tx tmTypes.Tx
-	tx = txBz
+	var tx tmTypes.Tx = txBz
 	require.Equal(t, txHashStr, hex.EncodeToString(tx.Hash()))
 }

@@ -104,17 +104,6 @@ func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmT
 	return false, nil
 }
 
-func convert(input []([32]byte)) [][]byte {
-	var output [][]byte
-	for _, in := range input {
-		newInput := make([]byte, len(in[:]))
-		copy(newInput, in[:])
-		output = append(output, newInput)
-
-	}
-	return output
-}
-
 func convertTo32(input []byte) (output [32]byte, err error) {
 	l := len(input)
 	if l > 32 || l == 0 {
@@ -123,6 +112,7 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	copy(output[32-l:], input[:])
 	return
 }
+
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
 	for _, v := range data {

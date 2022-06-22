@@ -162,8 +162,6 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 	type TestDataItem struct {
 		name        string
 		startblock  uint64
-		endblock    uint64
-		nonce       uint64
 		VotingPower int64
 		ackcount    uint64
 		result      bool
@@ -171,8 +169,22 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 	}
 
 	dataItems := []TestDataItem{
-		{"VotingPower zero", uint64(0), uint64(0), uint64(1), int64(0), uint64(1), false, "should not be current validator as VotingPower is zero."},
-		{"start epoch greater than ackcount", uint64(3), uint64(0), 0, int64(10), uint64(1), false, "should not be current validator as start epoch greater than ackcount."},
+		{
+			name:        "VotingPower zero",
+			startblock:  uint64(0),
+			VotingPower: int64(0),
+			ackcount:    uint64(1),
+			result:      false,
+			resultmsg:   "should not be current validator as VotingPower is zero.",
+		},
+		{
+			name:        "start epoch greater than ackcount",
+			startblock:  uint64(3),
+			VotingPower: int64(10),
+			ackcount:    uint64(1),
+			result:      false,
+			resultmsg:   "should not be current validator as start epoch greater than ackcount.",
+		},
 	}
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 

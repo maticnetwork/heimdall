@@ -202,7 +202,6 @@ func (AppModule) RandomizedParams(r *rand.Rand) []simTypes.ParamChange {
 
 // RegisterStoreDecoder registers a decoder for chainmanager module's types
 func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
-	return
 }
 
 // WeightedOperations doesn't return any chainmanager module operation.

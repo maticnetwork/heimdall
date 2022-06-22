@@ -335,6 +335,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer

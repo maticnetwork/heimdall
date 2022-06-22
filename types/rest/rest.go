@@ -199,16 +199,15 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx context.CLIContext, resp 
 		return
 	}
 
-	switch resp.(type) {
+	switch data := resp.(type) {
 	case []byte:
-		result = resp.([]byte)
-
+		result = data
 	default:
 		var err error
 		if cliCtx.Indent {
-			result, err = cliCtx.Codec.MarshalJSONIndent(resp, "", "  ")
+			result, err = cliCtx.Codec.MarshalJSONIndent(data, "", "  ")
 		} else {
-			result, err = cliCtx.Codec.MarshalJSON(resp)
+			result, err = cliCtx.Codec.MarshalJSON(data)
 		}
 
 		if err != nil {

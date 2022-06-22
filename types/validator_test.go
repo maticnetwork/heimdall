@@ -13,7 +13,6 @@ type valInput struct {
 	id         ValidatorID
 	startEpoch uint64
 	endEpoch   uint64
-	nonce      uint64
 	power      int64
 	pubKey     PubKey
 	signer     HeimdallAddress

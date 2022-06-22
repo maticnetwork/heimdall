@@ -58,7 +58,7 @@ func (suite *KeeperTestSuite) TestHasGetSetEventRecord() {
 	require.Nil(t, err)
 	require.Equal(t, (*respRecord).ID, testRecord1.ID)
 
-	respRecord, err = ck.GetEventRecord(ctx, testRecord1.ID+1)
+	_, err = ck.GetEventRecord(ctx, testRecord1.ID+1)
 	require.NotNil(t, err)
 
 	// HasEventRecord
