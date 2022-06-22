@@ -1,20 +1,41 @@
 name: CI
 
 on: [push, pull_request]
+
 jobs:
   build:
+    name: build and test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
+
       - name: Install Go
-        uses: actions/setup-go@v1
+        uses: actions/setup-go@v3
         with:
-          go-version: 1.13
+          go-version: 1.17.*
+
       - name: "Build binaries"
         run: make build
+
       - name: "Run tests"
         run: make tests
+
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v1
         with:
           file: ./cover.out
+
+  golangci:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.17.*
+
+      - name: Run linter
+        run: |
+          make lint
