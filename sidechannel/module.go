@@ -148,7 +148,9 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 		}
 
 		// set validators for height
-		am.keeper.SetValidators(ctx, height, validators)
+		if err := am.keeper.SetValidators(ctx, height, validators); err != nil {
+			am.keeper.Logger(ctx).Error("Failed to set validators", "Error", err)
+		}
 	}
 }
 

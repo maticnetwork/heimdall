@@ -114,7 +114,9 @@ func (keeper Keeper) GetValidators(ctx sdk.Context, height int64) (validators []
 
 	// marshal validators if exists
 	if keeper.HasValidators(ctx, height) {
-		keeper.cdc.UnmarshalBinaryBare(store.Get(types.ValidatorsKey(height)), &validators)
+		if err := keeper.cdc.UnmarshalBinaryBare(store.Get(types.ValidatorsKey(height)), &validators); err != nil {
+			keeper.Logger(ctx).Error("Failed to unmarshal binary bare", "Error", err)
+		}
 	}
 
 	return

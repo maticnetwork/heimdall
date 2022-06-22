@@ -89,7 +89,6 @@ $ <appcli> tx slashing unjail --from mykey
 }
 
 func GetCmdTick(cdc *codec.Codec) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "tick",
 		Short: "send slash tick when total slashedamount exceeds limit",
@@ -124,8 +123,12 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagSlashInfoBytes, "", "--slashinfo-bytes=<slashinfo-bytes>")
 	cmd.Flags().Uint64(FlagTickID, 1, "--tick-id=<tick-id>")
 
-	cmd.MarkFlagRequired(FlagSlashInfoBytes)
-	cmd.MarkFlagRequired(FlagTickID)
+	if err := cmd.MarkFlagRequired(FlagSlashInfoBytes); err != nil {
+		logger.Error("GetCmdTick | MarkFlagRequired | FlagSlashInfoBytes", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTickID); err != nil {
+		logger.Error("GetCmdTick | MarkFlagRequired | FlagTickID", "Error", err)
+	}
 
 	return cmd
 }
