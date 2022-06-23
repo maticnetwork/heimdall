@@ -210,5 +210,7 @@ func (bl *BaseListener) Stop() {
 	}
 
 	// cancel header process
-	bl.cancelHeaderProcess()
+	if bl.cancelHeaderProcess != nil {
+		bl.cancelHeaderProcess()
+	}
 }
