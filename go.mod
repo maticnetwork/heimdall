@@ -1,6 +1,6 @@
 module github.com/maticnetwork/heimdall
 
-go 1.12
+go 1.16
 
 require (
 	github.com/RichardKnop/machinery v1.7.4
@@ -17,6 +17,7 @@ require (
 	github.com/fatih/color v1.9.0 // indirect
 	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
+	github.com/go-kit/kit v0.9.0 // indirect
 	github.com/gogo/protobuf v1.3.0
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/gorilla/mux v1.7.3

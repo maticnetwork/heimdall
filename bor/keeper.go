@@ -228,7 +228,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 	// TODO remove old selection algorigthm
 	// select next producers using seed as blockheader hash
 	fn := SelectNextProducers
-	if ctx.BlockHeight() < helper.NewSelectionAlgoHeight {
+	if ctx.BlockHeight() < helper.GetNewSelectionAlgoHeight() {
 		fn = XXXSelectNextProducers
 	}
 
