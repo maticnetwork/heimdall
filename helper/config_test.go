@@ -12,6 +12,8 @@ import (
 
 //  Test - to check heimdall config
 func TestHeimdallConfig(t *testing.T) {
+	t.Parallel()
+
 	// cli context
 	tendermintNode := "tcp://localhost:26657"
 	viper.Set(TendermintNodeFlag, tendermintNode)

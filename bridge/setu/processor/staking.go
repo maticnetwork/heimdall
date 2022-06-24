@@ -29,10 +29,9 @@ type StakingProcessor struct {
 
 // NewStakingProcessor - add  abi to staking processor
 func NewStakingProcessor(stakingInfoAbi *abi.ABI) *StakingProcessor {
-	stakingProcessor := &StakingProcessor{
+	return &StakingProcessor{
 		stakingInfoAbi: stakingInfoAbi,
 	}
-	return stakingProcessor
 }
 
 // Start starts new block subscription
@@ -44,15 +43,19 @@ func (sp *StakingProcessor) Start() error {
 // RegisterTasks - Registers staking tasks with machinery
 func (sp *StakingProcessor) RegisterTasks() {
 	sp.Logger.Info("Registering staking related tasks")
+
 	if err := sp.queueConnector.Server.RegisterTask("sendValidatorJoinToHeimdall", sp.sendValidatorJoinToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendValidatorJoinToHeimdall", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendUnstakeInitToHeimdall", sp.sendUnstakeInitToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendUnstakeInitToHeimdall", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendStakeUpdateToHeimdall", sp.sendStakeUpdateToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendStakeUpdateToHeimdall", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendSignerChangeToHeimdall", sp.sendSignerChangeToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendSignerChangeToHeimdall", "error", err)
 	}
@@ -132,6 +135,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -202,6 +206,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -268,6 +273,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -343,6 +349,7 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -358,7 +365,9 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 		if diff > 10 {
 			diff = 10
 		}
+
 		sp.Logger.Error("Nonce for the given event not in order", "validatorId", validatorId, "currentNonce", currentNonce, "txnNonce", txnNonce, "delay", diff*uint64(defaultDelayDuration))
+
 		return false, diff, nil
 	}
 
@@ -405,5 +414,6 @@ func queryTxCount(cliCtx cliContext.CLIContext, validatorId uint64, currentHeigh
 			return searchResult.TotalCount, nil
 		}
 	}
+
 	return 0, nil
 }

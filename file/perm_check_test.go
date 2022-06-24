@@ -12,6 +12,7 @@ import (
 )
 
 func TestPermCheck(t *testing.T) {
+	t.Parallel()
 
 	tc := []struct {
 		filePath  string

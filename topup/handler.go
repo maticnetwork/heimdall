@@ -80,6 +80,7 @@ func HandleMsgWithdrawFee(ctx sdk.Context, k Keeper, msg types.MsgWithdrawFee) s
 	}
 
 	k.Logger(ctx).Debug("Fee amount", "fromAddress", msg.UserAddress, "balance", amount.BigInt().String())
+
 	if amount.IsZero() {
 		return types.ErrNoBalanceToWithdraw(k.Codespace()).Result()
 	}

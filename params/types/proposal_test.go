@@ -7,6 +7,8 @@ import (
 )
 
 func TestParameterChangeProposal(t *testing.T) {
+	t.Parallel()
+
 	pc1 := NewParamChange("sub", "foo", "baz")
 	pcp := NewParameterChangeProposal("test title", "test description", []ParamChange{pc1})
 

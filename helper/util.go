@@ -647,7 +647,7 @@ func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][
 }
 
 //
-// Inner funcitons
+// Inner functions
 //
 
 func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, addr []byte) (authTypes.TxBuilder, error) {

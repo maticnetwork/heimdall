@@ -8,6 +8,8 @@ import (
 )
 
 func TestNewParamChangeJSON(t *testing.T) {
+	t.Parallel()
+
 	pcj := NewParamChangeJSON("subspace", "key", json.RawMessage(`{}`))
 	require.Equal(t, "subspace", pcj.Subspace)
 	require.Equal(t, "key", pcj.Key)
@@ -15,6 +17,8 @@ func TestNewParamChangeJSON(t *testing.T) {
 }
 
 func TestToParamChanges(t *testing.T) {
+	t.Parallel()
+
 	pcj1 := NewParamChangeJSON("subspace", "key1", json.RawMessage(`{}`))
 	pcj2 := NewParamChangeJSON("subspace", "key2", json.RawMessage(`{}`))
 	pcjs := ParamChangesJSON{pcj1, pcj2}

@@ -195,8 +195,8 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			// header block -- checkpoint
 			checkpoint := HeaderBlockResult{
 				Proposer:   validatorSet.Proposer.Signer,
-				StartBlock: uint64(start),
-				EndBlock:   uint64(end),
+				StartBlock: start,
+				EndBlock:   end,
 				RootHash:   ethcmn.BytesToHash(roothash),
 			}
 
@@ -271,7 +271,6 @@ type stateDump struct {
 // get all state-dump of heimdall
 func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return

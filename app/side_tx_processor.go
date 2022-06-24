@@ -187,8 +187,8 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 	}
 
 	return abci.ResponseDeliverSideTx{
-		Code:      uint32(code),
-		Codespace: string(codespace),
+		Code:      code,
+		Codespace: codespace,
 		Data:      data,
 		Result:    result,
 	}

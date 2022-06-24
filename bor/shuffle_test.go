@@ -14,6 +14,8 @@ import (
 )
 
 func TestShuffleList(t *testing.T) {
+	t.Parallel()
+
 	var list1 []uint64
 	seed1 := [32]byte{1, 128, 12}
 	seed2 := [32]byte{2, 128, 12}
@@ -46,6 +48,8 @@ func TestShuffleList(t *testing.T) {
 }
 
 func TestValShuffle(t *testing.T) {
+	t.Parallel()
+
 	seedHash1 := common.HexToHash("0xc46afc66ad9f4b237414c23a0cf0c469aeb60f52176565990644a9ee36a17667")
 	initialVals := GenRandomVal(50, 0, 100, uint64(10), true, 1)
 

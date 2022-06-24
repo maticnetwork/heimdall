@@ -42,6 +42,7 @@ func (suite *HandlerTestSuite) SetupTest() {
 }
 
 func TestHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(HandlerTestSuite))
 }
 
@@ -427,7 +428,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	result := suite.SendNoAck()
 	require.True(t, result.IsOK(), "expected send-NoAck to be ok, got %v", got)
 	ackCount := keeper.GetACKCount(ctx)
-	require.Equal(t, uint64(0), uint64(ackCount), "Should not update state")
+	require.Equal(t, uint64(0), ackCount, "Should not update state")
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout() {

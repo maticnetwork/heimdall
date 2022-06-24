@@ -33,6 +33,7 @@ func (suite *HandlerTestSuite) SetupTest() {
 
 // TestHandlerTestSuite
 func TestHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(HandlerTestSuite))
 }
 

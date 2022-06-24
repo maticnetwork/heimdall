@@ -46,6 +46,7 @@ func (suite *HandlerTestSuite) SetupTest() {
 
 // TestHandlerTestSuite
 func TestHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(HandlerTestSuite))
 }
 
@@ -74,8 +75,8 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
 			fee,
 			txHash,
-			uint64(logIndex),
-			uint64(blockNumber),
+			logIndex,
+			blockNumber,
 		)
 
 		// handler

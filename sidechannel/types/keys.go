@@ -34,6 +34,7 @@ var (
 func TxStoreKey(height int64, hash []byte) []byte {
 	result := TxsStoreKey(height)
 	result = append(result, hash...)
+
 	return result
 }
 
@@ -56,5 +57,6 @@ func ValidatorsKey(height int64) []byte {
 	result := []byte{}
 	result = append(result, ValidatorsKeyPrefix...)
 	result = append(result, b...)
+
 	return result
 }

@@ -92,10 +92,9 @@ func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 	vptr.Set(reflect.ValueOf(newMsg).Elem())
 	// return vptr.Interface(), nil
 
-	result := StdTx{
+	return StdTx{
 		Msg:       vptr.Interface().(sdk.Msg),
 		Signature: txRaw.Signature,
 		Memo:      txRaw.Memo,
-	}
-	return result, nil
+	}, nil
 }

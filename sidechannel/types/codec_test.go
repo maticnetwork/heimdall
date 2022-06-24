@@ -9,5 +9,6 @@ import (
 )
 
 func TestCodec(t *testing.T) {
+	t.Parallel()
 	require.NotNil(t, types.ModuleCdc, "ModuleCdc shouldn't be nil")
 }

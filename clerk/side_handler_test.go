@@ -56,6 +56,7 @@ func (suite *SideHandlerTestSuite) SetupTest() {
 }
 
 func TestSideHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(SideHandlerTestSuite))
 }
 

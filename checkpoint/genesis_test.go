@@ -29,6 +29,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 
 // TestGenesisTestSuite
 func TestGenesisTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(GenesisTestSuite))
 }
 

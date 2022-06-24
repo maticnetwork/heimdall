@@ -21,6 +21,8 @@ var (
 )
 
 func TestStdTx(t *testing.T) {
+	t.Parallel()
+
 	msg := sdk.NewTestMsg(addr)
 	sig := StdSignature{}
 
@@ -33,6 +35,8 @@ func TestStdTx(t *testing.T) {
 }
 
 func TestTxValidateBasic(t *testing.T) {
+	t.Parallel()
+
 	ctx := sdk.NewContext(nil, abci.Header{ChainID: "mychainid"}, false, log.NewNopLogger())
 
 	// keys and addresses
@@ -50,6 +54,8 @@ func TestTxValidateBasic(t *testing.T) {
 }
 
 func TestDefaultTxEncoder(t *testing.T) {
+	t.Parallel()
+
 	cdc := codec.New()
 	sdk.RegisterCodec(cdc)
 	RegisterCodec(cdc)
@@ -69,6 +75,8 @@ func TestDefaultTxEncoder(t *testing.T) {
 }
 
 func TestTxDecode(t *testing.T) {
+	t.Parallel()
+
 	tx, err := base64.StdEncoding.DecodeString("wWhvHPg6AQHY1wEBlP+zHe/ZNZTQii57ULFjrJulHewY2NcBAZT/sx3v2TWU0Ioue1CxY6ybpR3sGICEXTLzJQ==")
 	require.NoError(t, err)
 	expected := "c1686f1cf83a0101d8d7010194ffb31defd93594d08a2e7b50b163ac9ba51dec18d8d7010194ffb31defd93594d08a2e7b50b163ac9ba51dec1880845d32f325"
@@ -76,6 +84,8 @@ func TestTxDecode(t *testing.T) {
 }
 
 func TestTxHash(t *testing.T) {
+	t.Parallel()
+
 	txStr := "AANQR/im+GCUHE8PBUoNahQVOC3A/YPGU1GIsiCAggP/oAUa5K2J62X6bWX065hIawNsvuv3z2qU4ObSU8l7Mgm0oMCuqfNQzHmirstq75vRV+hkFczlWh9VjSGNn8JQCo3YhF5C8VG4QZGyoPc937dVz4DrkdYdDRwnigW0qiIE+yMVS/Drcdt9FXol4Tzegb+1qIQbP+EXUnnFLFAuaeUF7A3Rs8WajjUBgA=="
 	txHashStr := "b4560c30b12ebae71977373bcca2b0b553ae510efc4b167b4ebe7925f6e98557"
 

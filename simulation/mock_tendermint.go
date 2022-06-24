@@ -79,7 +79,7 @@ func (vals mockValidators) randomProposer(r *rand.Rand) types.HexBytes {
 func updateValidators(tb testing.TB, r *rand.Rand, params Params,
 	current map[string]mockValidator, updates []abci.ValidatorUpdate,
 	event func(route, op, evResult string)) map[string]mockValidator {
-
+	tb.Helper()
 	for _, update := range updates {
 		str := fmt.Sprintf("%v", update.PubKey)
 

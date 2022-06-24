@@ -82,11 +82,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // AddCheckpoint adds checkpoint into final blocks
 func (k *Keeper) AddCheckpoint(ctx sdk.Context, checkpointNumber uint64, checkpoint hmTypes.Checkpoint) error {
 	key := GetCheckpointKey(checkpointNumber)
-	err := k.addCheckpoint(ctx, key, checkpoint)
-	if err != nil {
+	if err := k.addCheckpoint(ctx, key, checkpoint); err != nil {
 		return err
 	}
+
 	k.Logger(ctx).Info("Adding good checkpoint to state", "checkpoint", checkpoint, "checkpointNumber", checkpointNumber)
+
 	return nil
 }
 
@@ -96,6 +97,7 @@ func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, checkpoint hmTypes.Checkpo
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -112,6 +114,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 
 	// store in key provided
 	store.Set(key, out)
+
 	return nil
 }
 

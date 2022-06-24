@@ -483,6 +483,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 
 	// fetch side txs sigs
 	decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
+
 	stdTx, err := decoder(tx.Tx)
 	if err != nil {
 		cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
@@ -490,6 +491,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 	}
 
 	cmsg := stdTx.GetMsgs()[0]
+
 	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
 	if !ok {
 		cp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
@@ -535,16 +537,20 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 // fetchDividendAccountRoot - fetches dividend accountroothash
 func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmTypes.HeimdallHash, err error) {
 	cp.Logger.Info("Sending Rest call to Get Dividend AccountRootHash")
+
 	response, err := helper.FetchFromAPI(cp.cliCtx, helper.GetHeimdallServerEndpoint(util.DividendAccountRootURL))
 	if err != nil {
 		cp.Logger.Error("Error Fetching accountroothash from HeimdallServer ", "error", err)
 		return accountroothash, err
 	}
+
 	cp.Logger.Info("Divident account root fetched")
-	if err := json.Unmarshal(response.Result, &accountroothash); err != nil {
+
+	if err = json.Unmarshal(response.Result, &accountroothash); err != nil {
 		cp.Logger.Error("Error unmarshalling accountroothash received from Heimdall Server", "error", err)
 		return accountroothash, err
 	}
+
 	return accountroothash, nil
 }
 
@@ -572,6 +578,7 @@ func (cp *CheckpointProcessor) getLatestCheckpointTime(checkpointContext *Checkp
 		cp.Logger.Error("Error while fetching header block object", "error", err)
 		return 0, err
 	}
+
 	return int64(createdAt), nil
 }
 
@@ -623,6 +630,7 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(checkpointContext *Checkpo
 		cp.Logger.Debug("Cannot send multiple no-ack in short time", "timeDiff", currentTime.Sub(lastNoAckTime).Seconds(), "ExpectedDiff", checkpointParams.CheckpointBufferTime.Seconds())
 		return false, uint64(index)
 	}
+
 	return true, uint64(index)
 }
 
@@ -640,6 +648,7 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 	}
 
 	cp.Logger.Info("No-ack transaction sent successfully")
+
 	return nil
 }
 

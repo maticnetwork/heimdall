@@ -13,7 +13,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Parallel test - to check BroadcastToHeimdall syncronization
+// Parallel test - to check BroadcastToHeimdall synchronisation
 func TestBroadcastToHeimdall(t *testing.T) {
 	t.Parallel()
 	cdc := app.MakeCodec()
@@ -37,6 +37,8 @@ func TestBroadcastToHeimdall(t *testing.T) {
 
 	for index, test := range testData {
 		t.Run(strconv.Itoa(index), func(t *testing.T) {
+			t.Parallel()
+
 			// create and send checkpoint message
 			msg := checkpointTypes.NewMsgCheckpointBlock(
 				test.Proposer,

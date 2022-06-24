@@ -70,6 +70,8 @@ const testValidators = `[
 ]`
 
 func TestSelectNextProducers(t *testing.T) {
+	t.Parallel()
+
 	type producerSelectionTestCase struct {
 		seed            string
 		producerCount   uint64
@@ -78,12 +80,12 @@ func TestSelectNextProducers(t *testing.T) {
 	}
 
 	testcases := []producerSelectionTestCase{
-		producerSelectionTestCase{"0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a", 10, 5, 5},
-		producerSelectionTestCase{"0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a", 5, 5, 5},
-		producerSelectionTestCase{"0xe09cc356df20c7a2dd38cb85b680a16ec29bd8b3e1ecc1b20f2e5603d5e7ee85", 10, 5, 5},
-		producerSelectionTestCase{"0xe09cc356df20c7a2dd38cb85b680a16ec29bd8b3e1ecc1b20f2e5603d5e7ee85", 5, 5, 5},
-		producerSelectionTestCase{"0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a", 4, 4, 3},
-		producerSelectionTestCase{"0xe09cc356df20c7a2dd38cb85b680a16ec29bd8b3e1ecc1b20f2e5603d5e7ee85", 4, 4, 4},
+		{"0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a", 10, 5, 5},
+		{"0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a", 5, 5, 5},
+		{"0xe09cc356df20c7a2dd38cb85b680a16ec29bd8b3e1ecc1b20f2e5603d5e7ee85", 10, 5, 5},
+		{"0xe09cc356df20c7a2dd38cb85b680a16ec29bd8b3e1ecc1b20f2e5603d5e7ee85", 5, 5, 5},
+		{"0x8f5bab218b6bb34476f51ca588e9f4553a3a7ce5e13a66c660a5283e97e9a85a", 4, 4, 3},
+		{"0xe09cc356df20c7a2dd38cb85b680a16ec29bd8b3e1ecc1b20f2e5603d5e7ee85", 4, 4, 4},
 	}
 
 	var validators []hmTypes.Validator
@@ -132,6 +134,8 @@ func findValidatorByID(validators []hmTypes.Validator, id uint64) (val hmTypes.V
 }
 
 func Test_createWeightedRanges(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		vals []uint64
 	}
@@ -238,6 +242,8 @@ func SimulateSelectionDistributionCorrectness() {
 }
 
 func Test_binarySearch(t *testing.T) {
+	t.Parallel()
+
 	type args struct {
 		array  []uint64
 		search uint64

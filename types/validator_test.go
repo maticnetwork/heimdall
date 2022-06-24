@@ -61,6 +61,8 @@ func TestNewValidator(t *testing.T) {
 
 // TestSortValidatorByAddress am populating only the signer as that is the only value used in sorting
 func TestSortValidatorByAddress(t *testing.T) {
+	t.Parallel()
+
 	tc := []struct {
 		in  []Validator
 		out []Validator
@@ -68,14 +70,14 @@ func TestSortValidatorByAddress(t *testing.T) {
 	}{
 		{
 			in: []Validator{
-				Validator{Signer: BytesToHeimdallAddress([]byte("3"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("2"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("1"))},
+				{Signer: BytesToHeimdallAddress([]byte("3"))},
+				{Signer: BytesToHeimdallAddress([]byte("2"))},
+				{Signer: BytesToHeimdallAddress([]byte("1"))},
 			},
 			out: []Validator{
-				Validator{Signer: BytesToHeimdallAddress([]byte("1"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("2"))},
-				Validator{Signer: BytesToHeimdallAddress([]byte("3"))},
+				{Signer: BytesToHeimdallAddress([]byte("1"))},
+				{Signer: BytesToHeimdallAddress([]byte("2"))},
+				{Signer: BytesToHeimdallAddress([]byte("3"))},
 			},
 			msg: "reverse sorting of validator objects",
 		},
@@ -87,6 +89,8 @@ func TestSortValidatorByAddress(t *testing.T) {
 }
 
 func TestValidateBasic(t *testing.T) {
+	t.Parallel()
+
 	neg1, uNeg1 := uint64(1), uint64(0)
 	uNeg1 = uNeg1 - neg1
 	tc := []struct {

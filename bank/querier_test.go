@@ -38,6 +38,7 @@ func (suite *QuerierTestSuite) SetupTest() {
 }
 
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(QuerierTestSuite))
 }
 

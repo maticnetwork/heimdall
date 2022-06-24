@@ -32,6 +32,7 @@ func (suite *QuerierTestSuite) SetupTest() {
 
 // TestQuerierTestSuite
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -74,7 +75,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	err := json.Unmarshal(res, &params)
 	require.NoError(t, err)
 
-	// match reponse params
+	// match response params
 	require.Equal(t, defaultParams.MainchainTxConfirmations, params.MainchainTxConfirmations)
 	require.Equal(t, defaultParams.MaticchainTxConfirmations, params.MaticchainTxConfirmations)
 	require.Equal(t, defaultParams.ChainParams, params.ChainParams)

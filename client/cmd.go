@@ -31,6 +31,7 @@ func ValidateCmd(cmd *cobra.Command, args []string) error {
 				err += fmt.Sprintf("\t%v\n", s)
 			}
 		}
+
 		return errors.New(err)
 	}
 

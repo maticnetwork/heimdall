@@ -46,6 +46,7 @@ func (suite *SideTxProcessorTestSuite) SetupTest() {
 }
 
 func TestSideTxProcessorTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(SideTxProcessorTestSuite))
 }
 
@@ -560,5 +561,6 @@ func (msg msgSideCounter) ValidateBasic() sdk.Error {
 	if msg.Counter >= 0 {
 		return nil
 	}
+
 	return sdk.ErrInvalidSequence("counter should be a non-negative integer.")
 }

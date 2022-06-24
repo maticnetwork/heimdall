@@ -248,6 +248,7 @@ func ErrorSideTx(codespace sdk.CodespaceType, code CodeType) (res abci.ResponseD
 	res.Code = uint32(code)
 	res.Codespace = string(codespace)
 	res.Result = abci.SideTxResultType_Skip // skip side-tx vote in-case of error
+
 	return
 }
 
@@ -263,10 +264,8 @@ func CodeToDefaultMsg(code CodeType) string {
 	switch code {
 	// case CodeInvalidBlockInput:
 	// 	return "Invalid Block Input"
-
 	case CodeInvalidMsg:
 		return "Invalid Message"
-
 	case CodeInvalidProposerInput:
 		return "Proposer is not valid"
 	case CodeInvalidBlockInput:
@@ -337,6 +336,7 @@ func msgOrDefaultMsg(msg string, code CodeType) string {
 	if msg != "" {
 		return msg
 	}
+
 	return CodeToDefaultMsg(code)
 }
 

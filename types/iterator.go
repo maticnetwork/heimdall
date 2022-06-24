@@ -28,6 +28,7 @@ func KVStoreReversePrefixIteratorPaginated(kvs sdk.KVStore, prefix []byte, page,
 		limit:    limit,
 	}
 	pi.skip()
+
 	return pi
 }
 

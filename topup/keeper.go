@@ -90,6 +90,7 @@ func (keeper *Keeper) GetTopupSequences(ctx sdk.Context) (sequences []string) {
 		sequences = append(sequences, sequence)
 		return nil
 	})
+
 	return
 }
 
@@ -139,13 +140,14 @@ func (k *Keeper) AddDividendAccount(ctx sdk.Context, dividendAccount hmTypes.Div
 	}
 
 	store.Set(GetDividendAccountMapKey(dividendAccount.User.Bytes()), bz)
+
 	k.Logger(ctx).Debug("DividendAccount Stored", "key", hex.EncodeToString(GetDividendAccountMapKey(dividendAccount.User.Bytes())), "dividendAccount", dividendAccount.String())
+
 	return nil
 }
 
 // GetDividendAccountByAddress will return DividendAccount of user
 func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address hmTypes.HeimdallAddress) (dividendAccount hmTypes.DividendAccount, err error) {
-
 	// check if dividend account exists
 	if !k.CheckIfDividendAccountExists(ctx, address) {
 		return dividendAccount, errors.New("Dividend Account not found")
@@ -168,6 +170,7 @@ func (k *Keeper) GetDividendAccountByAddress(ctx sdk.Context, address hmTypes.He
 func (k *Keeper) CheckIfDividendAccountExists(ctx sdk.Context, userAddr hmTypes.HeimdallAddress) (ok bool) {
 	store := ctx.KVStore(k.key)
 	key := GetDividendAccountMapKey(userAddr.Bytes())
+
 	return store.Has(key)
 }
 
@@ -203,9 +206,11 @@ func (k *Keeper) AddFeeToDividendAccount(ctx sdk.Context, userAddress hmTypes.He
 	dividendAccount.FeeAmount = totalFee
 
 	k.Logger(ctx).Info("Dividend Account fee of validator ", "User", dividendAccount.User, "Fee", dividendAccount.FeeAmount)
+
 	if err := k.AddDividendAccount(ctx, dividendAccount); err != nil {
 		k.Logger(ctx).Error("AddFeeToDividendAccount | AddDividendAccount", "error", err)
 	}
+
 	return nil
 }
 

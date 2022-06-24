@@ -14,6 +14,8 @@ import (
 
 //  Test - to decode signers from checkpoint sigs data
 func TestCheckpointsigs(t *testing.T) {
+	t.Parallel()
+
 	tendermintNode := "tcp://localhost:26657"
 	viper.Set(TendermintNodeFlag, tendermintNode)
 	viper.Set("log_level", "info")

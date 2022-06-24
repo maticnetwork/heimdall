@@ -16,6 +16,7 @@ import (
 
 func TestBroadcastWhenTxInMempool(t *testing.T) {
 	t.Parallel()
+
 	cdc := app.MakeCodec()
 
 	tendermintNode := "http://localhost:26657"
@@ -63,11 +64,14 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
 	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, nil, "clerk", cp)
 
 	for index, tx := range testData {
 		t.Run(string(rune(index)), func(t *testing.T) {
+			t.Parallel()
+
 			inMempool, err := cp.checkTxAgainstMempool(tx, nil)
 			t.Log("Done checking tx against mempool", "in mempool", inMempool)
 			if err != nil {

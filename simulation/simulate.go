@@ -45,7 +45,7 @@ func SimulateFromSeed(
 ) (stopEarly bool, exportedParams Params, err error) {
 
 	// in case we have to end early, don't os.Exit so that we can run cleanup code.
-	testingMode, t, b := getTestingMode(tb)
+	testingMode, _, b := getTestingMode(tb)
 	fmt.Fprintf(w, "Starting SimulateFromSeed with randomness created with seed %d\n", int(config.Seed))
 
 	r := rand.New(rand.NewSource(config.Seed))
@@ -113,7 +113,7 @@ func SimulateFromSeed(
 	logWriter := NewLogWriter(testingMode)
 
 	blockSimulator := createBlockSimulator(
-		testingMode, tb, t, w, params, eventStats.Tally,
+		tb, testingMode, w, params, eventStats.Tally,
 		ops, operationQueue, timeOperationQueue, logWriter, config)
 
 	if !testingMode {
@@ -149,13 +149,13 @@ func SimulateFromSeed(
 
 		// Run queued operations. Ignores blocksize if blocksize is too small
 		numQueuedOpsRan := runQueuedOperations(
-			operationQueue, int(header.Height), tb, r, app, ctx, accs, logWriter,
+			tb, operationQueue, int(header.Height), r, app, ctx, accs, logWriter,
 			eventStats.Tally, config.Lean, config.ChainID,
 		)
 
 		numQueuedTimeOpsRan := runQueuedTimeOperations(
-			timeOperationQueue, int(header.Height), header.Time,
-			tb, r, app, ctx, accs, logWriter, eventStats.Tally,
+			tb, timeOperationQueue, int(header.Height), header.Time,
+			r, app, ctx, accs, logWriter, eventStats.Tally,
 			config.Lean, config.ChainID,
 		)
 
@@ -233,10 +233,11 @@ type blockSimFn func(r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context,
 
 // Returns a function to simulate blocks. Written like this to avoid constant
 // parameters being passed everytime, to minimize memory overhead.
-func createBlockSimulator(testingMode bool, tb testing.TB, t *testing.T, w io.Writer, params Params,
+func createBlockSimulator(tb testing.TB, testingMode bool, w io.Writer, params Params,
 	event func(route, op, evResult string), ops WeightedOperations,
 	operationQueue OperationQueue, timeOperationQueue []simulation.FutureOperation,
 	logWriter LogWriter, config simulation.Config) blockSimFn {
+	tb.Helper()
 
 	lastBlockSizeState := 0 // state for [4 * uniform distribution]
 	blocksize := 0
@@ -304,11 +305,11 @@ Comment: %s`,
 }
 
 // nolint: errcheck
-func runQueuedOperations(queueOps map[int][]simulation.Operation,
-	height int, tb testing.TB, r *rand.Rand, app *baseapp.BaseApp,
+func runQueuedOperations(tb testing.TB, queueOps map[int][]simulation.Operation,
+	height int, r *rand.Rand, app *baseapp.BaseApp,
 	ctx sdk.Context, accounts []simulation.Account, logWriter LogWriter,
 	event func(route, op, evResult string), lean bool, chainID string) (numOpsRan int) {
-
+	tb.Helper()
 	queuedOp, ok := queueOps[height]
 	if !ok {
 		return 0
@@ -334,12 +335,12 @@ func runQueuedOperations(queueOps map[int][]simulation.Operation,
 	return numOpsRan
 }
 
-func runQueuedTimeOperations(queueOps []simulation.FutureOperation,
-	height int, currentTime time.Time, tb testing.TB, r *rand.Rand,
+func runQueuedTimeOperations(tb testing.TB, queueOps []simulation.FutureOperation,
+	height int, currentTime time.Time, r *rand.Rand,
 	app *baseapp.BaseApp, ctx sdk.Context, accounts []simulation.Account,
 	logWriter LogWriter, event func(route, op, evResult string),
 	lean bool, chainID string) (numOpsRan int) {
-
+	tb.Helper()
 	numOpsRan = 0
 	for len(queueOps) > 0 && currentTime.After(queueOps[0].BlockTime) {
 

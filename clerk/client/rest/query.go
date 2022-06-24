@@ -62,9 +62,7 @@ func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func recordListHandlerFn(
-	cliCtx context.CLIContext,
-) http.HandlerFunc {
+func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
 

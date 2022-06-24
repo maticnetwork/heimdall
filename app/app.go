@@ -527,7 +527,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 		if validator.IsCurrentValidator(checkpointState.AckCount) {
 			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
-				Power:  int64(validator.VotingPower),
+				Power:  validator.VotingPower,
 				PubKey: validator.PubKey.ABCIPubKey(),
 			}
 			// Add validator to validator updated to be processed below
@@ -607,7 +607,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		// convert updates from map to array
 		for _, v := range setUpdates {
 			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
-				Power:  int64(v.VotingPower),
+				Power:  v.VotingPower,
 				PubKey: v.PubKey.ABCIPubKey(),
 			})
 		}

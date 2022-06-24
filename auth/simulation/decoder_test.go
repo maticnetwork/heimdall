@@ -27,6 +27,8 @@ func makeTestCodec() (cdc *codec.Codec) {
 }
 
 func TestDecodeStore(t *testing.T) {
+	t.Parallel()
+
 	cdc := makeTestCodec()
 	acc := types.NewBaseAccountWithAddress(delAddr1)
 	globalAccNumber := uint64(10)

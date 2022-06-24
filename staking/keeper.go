@@ -66,6 +66,7 @@ func NewKeeper(
 		chainKeeper:        chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
+
 	return keeper
 }
 
@@ -194,6 +195,7 @@ func (k *Keeper) GetTotalPower(ctx sdk.Context) (totalPower int64) {
 		totalPower += validator.VotingPower
 		return true
 	})
+
 	return
 }
 
@@ -289,6 +291,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
+
 	return nil
 }
 
@@ -367,11 +370,13 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorI
 	if !ok {
 		return validator, ok
 	}
+
 	// query for validator signer address
 	validator, err := k.GetValidatorInfo(ctx, signerAddr.Bytes())
 	if err != nil {
 		return validator, false
 	}
+
 	return validator, true
 }
 
@@ -451,11 +456,12 @@ func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validato
 func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
-	k.Logger(ctx).Debug("validator fetched", "validator", validator)
 	if !found {
 		k.Logger(ctx).Error("Unable to fetch valiator from store")
 		return errors.New("validator not found")
 	}
+
+	k.Logger(ctx).Debug("validator fetched", "validator", validator)
 
 	updatedPower := int64(0)
 	// calculate power after slash
@@ -475,6 +481,7 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	}
 
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
+
 	return nil
 }
 

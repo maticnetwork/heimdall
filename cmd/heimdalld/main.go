@@ -151,8 +151,7 @@ func main() {
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("/var/lib/heimdall"))
-	err := executor.Execute()
-	if err != nil {
+	if err := executor.Execute(); err != nil {
 		// Note: Handle with #870
 		panic(err)
 	}
@@ -505,6 +504,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 func totalValidators() int {
 	numValidators := viper.GetInt(flagNumValidators)
 	numNonValidators := viper.GetInt(flagNumNonValidators)
+
 	return numNonValidators + numValidators
 }
 
@@ -513,6 +513,7 @@ func nodeDir(i int) string {
 	outDir := viper.GetString(flagOutputDir)
 	nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
 	nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
+
 	return filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
 }
 
@@ -526,14 +527,17 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 	persistentPeers := make([]string, totalValidators())
 	for i := 0; i < totalValidators(); i++ {
 		config.SetRoot(nodeDir(i))
+
 		nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
 		if err != nil {
 			return
 		}
+
 		persistentPeers[i] = p2p.IDAddressString(nodeKey.ID(), fmt.Sprintf("%s:%d", hostnameOrIP(i), 26656))
 	}
 
 	persistentPeersList := strings.Join(persistentPeers, ",")
+
 	for i := 0; i < totalValidators(); i++ {
 		config.SetRoot(nodeDir(i))
 		config.P2P.PersistentPeers = persistentPeersList
@@ -546,11 +550,14 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
+
 	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
 	if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
 		logger.Error("getGenesisAccount | SetCoins", "Error", err)
 	}
+
 	result, _ := authTypes.NewGenesisAccountI(&acc)
+
 	return result
 }
 
@@ -579,7 +586,6 @@ func writeGenesisFile(genesisTime time.Time, genesisFile, chainID string, appSta
 func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
 ) {
-
 	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 	if err != nil {
 		return nodeID, valPubKey, priv, err
@@ -600,6 +606,7 @@ func InitializeNodeValidatorFiles(
 
 	FilePv := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
 	valPubKey = FilePv.GetPubKey()
+
 	return nodeID, valPubKey, FilePv.Key.PrivKey, nil
 }
 

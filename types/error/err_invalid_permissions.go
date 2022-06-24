@@ -22,8 +22,10 @@ func (e ErrInvalidPermissions) Error() string {
 	if e.detailed() {
 		errMsg += " for file " + e.File + " should be " + e.Perm.String()
 	}
+
 	if e.Err != nil {
 		errMsg += " \nerr: " + e.Err.Error()
 	}
+
 	return errMsg
 }

@@ -12,6 +12,8 @@ func StringToPubkey(pubkeyStr string) PubKey {
 }
 
 func TestUpdateChanges(t *testing.T) {
+	t.Parallel()
+
 	v1 := &Validator{
 		ID:          1,
 		StartEpoch:  0,

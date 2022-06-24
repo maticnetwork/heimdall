@@ -66,6 +66,8 @@ func testProposal(changes ...paramTypes.ParamChange) paramTypes.ParameterChangeP
 }
 
 func newTestInput(t *testing.T) testInput {
+	t.Helper()
+
 	cdc := codec.New()
 	types.RegisterCodec(cdc)
 

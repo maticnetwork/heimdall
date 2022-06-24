@@ -7,6 +7,8 @@ import (
 )
 
 func TestParamsEqual(t *testing.T) {
+	t.Parallel()
+
 	p1 := DefaultParams()
 	p2 := DefaultParams()
 	require.Equal(t, p1, p2)

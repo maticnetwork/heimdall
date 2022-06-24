@@ -85,8 +85,8 @@ func (s Subspace) transientStore(ctx sdk.Context) sdk.KVStore {
 func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
 	store := s.kvStore(ctx)
 	bz := store.Get(key)
-	err := s.cdc.UnmarshalJSON(bz, ptr)
-	if err != nil {
+
+	if err := s.cdc.UnmarshalJSON(bz, ptr); err != nil {
 		panic(err)
 	}
 }
@@ -98,13 +98,13 @@ func (s Subspace) GetIfExists(ctx sdk.Context, key []byte, ptr interface{}) {
 	if bz == nil {
 		return
 	}
-	err := s.cdc.UnmarshalJSON(bz, ptr)
-	if err != nil {
+
+	if err := s.cdc.UnmarshalJSON(bz, ptr); err != nil {
 		panic(err)
 	}
 }
 
-// Get raw bytes of parameter from store
+// GetRaw returns raw bytes of parameter from store
 func (s Subspace) GetRaw(ctx sdk.Context, key []byte) []byte {
 	store := s.kvStore(ctx)
 	return store.Get(key)
@@ -150,11 +150,11 @@ func (s Subspace) Set(ctx sdk.Context, key []byte, param interface{}) {
 	if err != nil {
 		panic(err)
 	}
+
 	store.Set(key, bz)
 
 	tstore := s.transientStore(ctx)
 	tstore.Set(key, []byte{})
-
 }
 
 // Update stores raw parameter bytes. It returns error if the stored parameter
@@ -168,9 +168,10 @@ func (s Subspace) Update(ctx sdk.Context, key []byte, param []byte) error {
 
 	ty := attr.ty
 	dest := reflect.New(ty).Interface()
+
 	s.GetIfExists(ctx, key, dest)
-	err := s.cdc.UnmarshalJSON(param, dest)
-	if err != nil {
+
+	if err := s.cdc.UnmarshalJSON(param, dest); err != nil {
 		return err
 	}
 

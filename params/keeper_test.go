@@ -12,6 +12,8 @@ import (
 )
 
 func TestKeeper(t *testing.T) {
+	t.Parallel()
+
 	kvs := []struct {
 		key   string
 		param int64

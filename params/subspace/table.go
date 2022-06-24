@@ -46,9 +46,11 @@ func (t KeyTable) RegisterType(key []byte, ty interface{}) KeyTable {
 	if len(key) == 0 {
 		panic("cannot register empty key")
 	}
+
 	if !isAlphaNumeric(key) {
 		panic("non alphanumeric parameter key")
 	}
+
 	keystr := string(key)
 	if _, ok := t.m[keystr]; ok {
 		panic("duplicate parameter key")
@@ -68,11 +70,12 @@ func (t KeyTable) RegisterType(key []byte, ty interface{}) KeyTable {
 	return t
 }
 
-// Register multiple pairs from ParamSet
+// RegisterParamSet registers multiple pairs from ParamSet
 func (t KeyTable) RegisterParamSet(ps ParamSet) KeyTable {
 	for _, kvp := range ps.ParamSetPairs() {
 		t = t.RegisterType(kvp.Key, kvp.Value)
 	}
+
 	return t
 }
 
@@ -83,5 +86,6 @@ func (t KeyTable) maxKeyLength() (res int) {
 			res = l
 		}
 	}
+
 	return
 }

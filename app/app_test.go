@@ -17,6 +17,8 @@ import (
 )
 
 func TestHeimdallAppExport(t *testing.T) {
+	t.Parallel()
+
 	db := db.NewMemDB()
 	happ := NewHeimdallApp(log.NewTMLogger(log.NewSyncWriter(os.Stdout)), db)
 	genesisState := NewDefaultGenesisState()
@@ -43,6 +45,8 @@ func TestHeimdallAppExport(t *testing.T) {
 }
 
 func TestHeimdallAppExportWithRand(t *testing.T) {
+	t.Parallel()
+
 	config, db, dir, logger, _, err := SetupSimulation("goleveldb-app-sim", "Simulation")
 	require.NoError(t, err)
 	require.NotEmpty(t, dir)
@@ -90,6 +94,8 @@ func TestHeimdallAppExportWithRand(t *testing.T) {
 }
 
 func TestSetup(t *testing.T) {
+	t.Parallel()
+
 	happ := Setup(false)
 	ctx := happ.BaseApp.NewContext(false, abci.Header{})
 
@@ -98,6 +104,8 @@ func TestSetup(t *testing.T) {
 }
 
 func TestSetupWithGenesisAccounts(t *testing.T) {
+	t.Parallel()
+
 	r := rand.New(rand.NewSource(42))          // seed = 42
 	accounts := simTypes.RandomAccounts(r, 10) // create 10 accounts
 
@@ -116,6 +124,8 @@ func TestSetupWithGenesisAccounts(t *testing.T) {
 }
 
 func TestValidateGenesis(t *testing.T) {
+	t.Parallel()
+
 	happ := Setup(false)
 
 	// not validate app state
@@ -130,6 +140,8 @@ func TestValidateGenesis(t *testing.T) {
 }
 
 func TestGetMaccPerms(t *testing.T) {
+	t.Parallel()
+
 	dup := GetMaccPerms()
 	require.Equal(t, maccPerms, dup, "duplicated module account permissions differed from actual module account permissions")
 }

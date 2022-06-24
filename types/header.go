@@ -39,6 +39,7 @@ func SortHeaders(headers []Checkpoint) []Checkpoint {
 	sort.Slice(headers, func(i, j int) bool {
 		return headers[i].TimeStamp < headers[j].TimeStamp
 	})
+
 	return headers
 }
 

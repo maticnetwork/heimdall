@@ -167,7 +167,8 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 		return err
 	}
 
-	Logger.Info("Submitted stake sucessfully", "txHash", tx.Hash().String())
+	Logger.Info("Submitted stake successfully", "txHash", tx.Hash().String())
+
 	return nil
 }
 
@@ -191,6 +192,7 @@ func (c *ContractCaller) ApproveTokens(amount *big.Int, stakeManager common.Addr
 		return err
 	}
 
-	Logger.Info("Sent approve tx sucessfully", "txHash", tx.Hash().String())
+	Logger.Info("Sent approve tx successfully", "txHash", tx.Hash().String())
+
 	return nil
 }

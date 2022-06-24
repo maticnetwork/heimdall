@@ -101,11 +101,11 @@ func (a *PubKey) UnmarshalJSON(data []byte) error {
 // UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
 func (a *PubKey) UnmarshalYAML(data []byte) error {
 	var s string
-	err := yaml.Unmarshal(data, &s)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	copy(a[:], common.FromHex(s))
+
 	return nil
 }

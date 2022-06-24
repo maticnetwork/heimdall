@@ -46,6 +46,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 }
 
 func TestGenesisTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(GenesisTestSuite))
 }
 
