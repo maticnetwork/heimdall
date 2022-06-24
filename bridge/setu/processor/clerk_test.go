@@ -539,7 +539,7 @@ func prepareMockData(b *testing.B) *gomock.Controller {
 func prepareClerkProcessor() (*ClerkProcessor, error) {
 	cdc := app.MakeCodec()
 
-	viper.Set(helper.NodeFlag, dummyTenderMintNode)
+	viper.Set(helper.TendermintNodeFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
 	configuration := helper.GetDefaultHeimdallConfig()
@@ -565,7 +565,7 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 func prepareRootChainListener() (*listener.RootChainListener, func(), error) {
 	cdc := app.MakeCodec()
 
-	viper.Set(helper.NodeFlag, dummyTenderMintNode)
+	viper.Set(helper.TendermintNodeURLFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
 	configuration := helper.GetDefaultHeimdallConfig()
