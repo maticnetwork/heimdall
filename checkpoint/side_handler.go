@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -80,6 +81,7 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+	fmt.Println("--------- KRISHNA -------------, Testing checkpoint side handler", msg.StartBlock)
 	// get params
 	params := k.GetParams(ctx)
 	maticTxConfirmations := k.ck.GetParams(ctx).MaticchainTxConfirmations
@@ -240,6 +242,7 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 
 // PostHandleMsgCheckpoint handles msg checkpoint
 func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, sideTxResult abci.SideTxResultType) sdk.Result {
+	fmt.Println("--------- KRISHNA -------------, Testing checkpoint post handler", msg.StartBlock)
 	logger := k.Logger(ctx)
 
 	// Skip handler if checkpoint is not approved

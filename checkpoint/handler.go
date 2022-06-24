@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
 	"time"
 
@@ -72,6 +73,7 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 
 // handleMsgCheckpoint Validates checkpoint transaction
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	fmt.Println("--------- KRISHNA -------------, Testing checkpoint handler", msg.StartBlock)
 	logger := k.Logger(ctx)
 
 	timeStamp := uint64(ctx.BlockTime().Unix())
