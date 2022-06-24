@@ -57,13 +57,14 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		if len(res) == 0 {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, errors.New("Span duration not found ").Error())
 			return
 		}
 
 		var spanDuration uint64
-		if err := json.Unmarshal(res, &spanDuration); err != nil {
+		if err = json.Unmarshal(res, &spanDuration); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

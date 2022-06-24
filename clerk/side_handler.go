@@ -85,6 +85,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 			"EventContractAddress", eventLog.ContractAddress.String(),
 			"MsgContractAddress", msg.ContractAddress.String(),
 		)
+
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
@@ -118,7 +119,6 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 }
 
 func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, sideTxResult abci.SideTxResultType) sdk.Result {
-
 	// Skip handler if clerk is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new clerk since side-tx didn't get yes votes")

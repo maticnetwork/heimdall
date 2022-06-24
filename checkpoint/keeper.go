@@ -66,6 +66,7 @@ func NewKeeper(
 		ck:                 chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
+
 	return keeper
 }
 
@@ -128,12 +129,12 @@ func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.
 		err := k.cdc.UnmarshalBinaryBare(store.Get(checkpointKey), &_checkpoint)
 		if err != nil {
 			return _checkpoint, err
-		} else {
-			return _checkpoint, nil
 		}
-	} else {
-		return _checkpoint, errors.New("Invalid checkpoint Index")
+
+		return _checkpoint, nil
 	}
+
+	return _checkpoint, errors.New("Invalid checkpoint Index")
 }
 
 // GetCheckpointList returns all checkpoints with params like page and limit

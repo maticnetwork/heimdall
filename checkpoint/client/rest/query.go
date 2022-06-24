@@ -330,11 +330,12 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// last no ack
 		var lastNoACKTime uint64
+
 		lastNoACKBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
 		if err == nil {
 			// check content
-			if ok := hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found"); ok {
-				if err := json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
+			if hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found") {
+				if err = json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing last no-ack time", "error", err)
 				}
@@ -357,8 +358,10 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
+
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
@@ -511,9 +514,10 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
 			return
 		}
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, resWithID)
 
+		cliCtx = cliCtx.WithHeight(height)
+
+		rest.PostProcessResponse(w, cliCtx, resWithID)
 	}
 }
 
@@ -557,7 +561,9 @@ func checkpointListhandlerFn(
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoints found"); !ok {
 			return
 		}
+
 		cliCtx = cliCtx.WithHeight(height)
+
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

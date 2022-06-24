@@ -39,6 +39,7 @@ func (ml *MaticChainListener) Start() error {
 	if err != nil {
 		// start go routine to poll for new header using client object
 		ml.Logger.Info("Start polling for header blocks", "pollInterval", helper.GetConfig().CheckpointerPollInterval)
+
 		go ml.StartPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription

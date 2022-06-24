@@ -272,9 +272,10 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	validator.VotingPower = validatorPower
 
 	// add updated validator to store with new key
-	if err := k.AddValidator(ctx, validator); err != nil {
+	if err = k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
 	}
+
 	return nil
 }
 

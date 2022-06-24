@@ -15,12 +15,14 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, ak auth.AccountKeeper, data typ
 	// manually set the total supply based on accounts if not provided
 	if data.Supply.Total.Empty() {
 		var totalSupply sdk.Coins
+
 		ak.IterateAccounts(ctx,
 			func(acc authTypes.Account) (stop bool) {
 				totalSupply = totalSupply.Add(acc.GetCoins())
 				return false
 			},
 		)
+
 		data.Supply.Total = totalSupply
 	}
 

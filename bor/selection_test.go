@@ -2,7 +2,6 @@ package bor
 
 import (
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"testing"
 
@@ -90,9 +89,10 @@ func TestSelectNextProducers(t *testing.T) {
 
 	for i, testcase := range testcases {
 		seed := common.HexToHash(testcase.seed)
+
 		producerIds, err := SelectNextProducers(seed, validators, testcase.producerCount)
-		fmt.Println("producerIds", producerIds)
 		require.NoError(t, err, "Error should be nil")
+
 		producers, slots := getSelectedValidatorsFromIDs(validators, producerIds)
 		require.Equal(t, testcase.resultSlots, slots, "Total slots should be %v (Testcase %v)", testcase.resultSlots, i+1)
 		require.Equal(t, int(testcase.resultProducers), len(producers), "Total producers should be %v (Testcase %v)", testcase.resultProducers, i+1)

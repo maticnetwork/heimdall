@@ -150,7 +150,9 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
+
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+
 	InitGenesis(ctx, am.keeper, genesisState)
 
 	return []abci.ValidatorUpdate{}
@@ -245,6 +247,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	// check all headers
 	for i, header := range state.Checkpoints {
 		ackCount := uint64(i + 1)
+
 		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount, rootChainInstance, childBlockInterval)
 		if err != nil {
 			return err

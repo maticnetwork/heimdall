@@ -42,6 +42,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			SendCheckpointAdjust(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 
@@ -387,5 +388,6 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+
 	return cmd
 }

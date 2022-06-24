@@ -98,6 +98,7 @@ func (k *Keeper) AddNewSpan(ctx sdk.Context, span hmTypes.Span) error {
 // AddNewRawSpan adds new span for bor to store
 func (k *Keeper) AddNewRawSpan(ctx sdk.Context, span hmTypes.Span) error {
 	store := ctx.KVStore(k.storeKey)
+
 	out, err := k.cdc.MarshalBinaryBare(span)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling span", "error", err)
@@ -178,8 +179,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 	if store.Has(LastSpanIDKey) {
 		// get last span id
 		var err error
-		lastSpanID, err = strconv.ParseUint(string(store.Get(LastSpanIDKey)), 10, 64)
-		if err != nil {
+		if lastSpanID, err = strconv.ParseUint(string(store.Get(LastSpanIDKey)), 10, 64); err != nil {
 			return nil, err
 		}
 	}
@@ -264,10 +264,12 @@ func (k *Keeper) UpdateLastSpan(ctx sdk.Context, id uint64) {
 // IncrementLastEthBlock increment last eth block
 func (k *Keeper) IncrementLastEthBlock(ctx sdk.Context) {
 	store := ctx.KVStore(k.storeKey)
+
 	lastEthBlock := big.NewInt(0)
 	if store.Has(LastProcessedEthBlock) {
 		lastEthBlock = lastEthBlock.SetBytes(store.Get(LastProcessedEthBlock))
 	}
+
 	store.Set(LastProcessedEthBlock, lastEthBlock.Add(lastEthBlock, big.NewInt(1)).Bytes())
 }
 

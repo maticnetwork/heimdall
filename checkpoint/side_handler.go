@@ -167,6 +167,7 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 			"Rootchain Checkpoint root hash", root,
 			"error", err,
 		)
+
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
 
@@ -241,10 +242,11 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 	//
 
 	// Add checkpoint to store
-	if err := k.AddCheckpoint(ctx, msg.HeaderIndex, checkpointObj); err != nil {
+	if err = k.AddCheckpoint(ctx, msg.HeaderIndex, checkpointObj); err != nil {
 		logger.Error("Error while adding checkpoint into store", "checkpointNumber", msg.HeaderIndex)
 		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
 	}
+
 	logger.Debug("Checkpoint updated to store", "checkpointNumber", msg.HeaderIndex)
 
 	// Emit event for checkpoints

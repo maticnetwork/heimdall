@@ -46,6 +46,7 @@ func (hl *HeimdallListener) Start() error {
 
 	hl.Logger.Info("Start polling for events", "pollInterval", pollInterval)
 	hl.StartPolling(headerCtx, pollInterval)
+
 	return nil
 }
 
@@ -215,7 +216,9 @@ func (hl *HeimdallListener) sendBlockTask(taskName string, eventBytes []byte, bl
 		},
 	}
 	signature.RetryCount = 3
+
 	hl.Logger.Info("Sending block level task", "taskName", taskName, "currentTime", time.Now(), "blockHeight", blockHeight)
+
 	// send task
 	_, err := hl.queueConnector.Server.SendTask(signature)
 	if err != nil {

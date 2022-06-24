@@ -158,6 +158,7 @@ func GetCheckpointByNumber(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().Uint64(FlagHeaderNumber, 0, "--header=<header-number>")
+
 	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
 		logger.Error("GetHeaderFromIndex | MarkFlagRequired | FlagHeaderNumber", "Error", err)
 	}

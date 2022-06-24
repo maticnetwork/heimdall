@@ -198,7 +198,6 @@ func (k Keeper) SendCoinsFromModuleToModule(
 	recipientModule string,
 	amt sdk.Coins,
 ) sdk.Error {
-
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
 		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
@@ -220,7 +219,6 @@ func (k Keeper) SendCoinsFromAccountToModule(
 	recipientModule string,
 	amt sdk.Coins,
 ) sdk.Error {
-
 	// create the account if it doesn't yet exist
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {

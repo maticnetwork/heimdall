@@ -76,6 +76,7 @@ type BaseListener struct {
 // NewBaseListener creates a new BaseListener.
 func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
 	logger := util.Logger().With("service", "listener", "module", name)
+
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
@@ -194,6 +195,7 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 				bl.Logger.Debug("Cancelling the subscription of listner")
 				bl.cancelSubscription()
 			}
+
 			return
 		case <-ctx.Done():
 			bl.Logger.Info("Subscription stopped")
