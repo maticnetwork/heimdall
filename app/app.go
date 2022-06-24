@@ -479,6 +479,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	app.Seal()
+
 	return app
 }
 
@@ -491,6 +492,7 @@ func MakeCodec() *codec.Codec {
 	ModuleBasics.RegisterCodec(cdc)
 
 	cdc.Seal()
+
 	return cdc
 }
 
@@ -549,6 +551,7 @@ func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock
 		ctx,
 		types.BytesToHeimdallAddress(req.Header.GetProposerAddress()),
 	)
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -704,5 +707,6 @@ func GetMaccPerms() map[string][]string {
 	for k, v := range maccPerms {
 		dupMaccPerms[k] = v
 	}
+
 	return dupMaccPerms
 }

@@ -1,17 +1,12 @@
 package bor
 
 import (
-	"encoding/binary"
 	"encoding/json"
 	"fmt"
-	"math/big"
 	"reflect"
-	"strconv"
 	"testing"
 
 	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/crypto"
-	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 )
@@ -173,71 +168,11 @@ func Test_createWeightedRanges(t *testing.T) {
 			if !reflect.DeepEqual(ranges, tt.ranges) {
 				t.Errorf("createWeightedRange() got ranges = %v, want %v", ranges, tt.ranges)
 			}
+
 			if totalWeight != tt.totalWeight {
 				t.Errorf("createWeightedRange() got totalWeight = %v, want %v", totalWeight, tt.totalWeight)
 			}
 		})
-	}
-}
-
-func SimulateSelectionDistributionCorrectness() {
-	var validators []hmTypes.Validator
-
-	validators = append(validators, hmTypes.Validator{ID: 1, VotingPower: 10})
-	validators = append(validators, hmTypes.Validator{ID: 2, VotingPower: 10})
-	validators = append(validators, hmTypes.Validator{ID: 3, VotingPower: 100})
-	validators = append(validators, hmTypes.Validator{ID: 4, VotingPower: 100})
-	validators = append(validators, hmTypes.Validator{ID: 5, VotingPower: 1000})
-	validators = append(validators, hmTypes.Validator{ID: 6, VotingPower: 1000})
-	validators = append(validators, hmTypes.Validator{ID: 7, VotingPower: 10000})
-	validators = append(validators, hmTypes.Validator{ID: 8, VotingPower: 10000})
-	validators = append(validators, hmTypes.Validator{ID: 9, VotingPower: 100000})
-	validators = append(validators, hmTypes.Validator{ID: 10, VotingPower: 100000})
-	validators = append(validators, hmTypes.Validator{ID: 11, VotingPower: 1000000})
-	validators = append(validators, hmTypes.Validator{ID: 12, VotingPower: 1000000})
-
-	perfectProbabilities := make(map[types.ValidatorID]*big.Float)
-	totalPower := int64(0)
-	for _, validator := range validators {
-		totalPower += validator.VotingPower
-	}
-
-	fmt.Printf("totalPower = %d\n", totalPower)
-
-	totalPowerStr := strconv.FormatUint(uint64(totalPower), 10)
-	totalPowerF, _ := new(big.Float).SetString(totalPowerStr)
-	votingPowerF := new(big.Float)
-	for _, validator := range validators {
-		votingPowerF, _ := votingPowerF.SetString(strconv.FormatUint(uint64(validator.VotingPower), 10))
-		perfectProbabilities[validator.ID] = new(big.Float).Quo(votingPowerF, totalPowerF)
-	}
-
-	producerSlots := uint64(7)
-	iterations := uint64(10000000)
-	i := uint64(0)
-	buffer := make([]byte, 8)
-	selectedTimes := make(map[types.ValidatorID]uint64)
-
-	for i < iterations {
-		i++
-		binary.BigEndian.PutUint64(buffer, i)
-		keccak := crypto.Keccak256(buffer)
-		var hash common.Hash
-		copy(hash[:], keccak)
-		producerIds, _ := SelectNextProducers(hash, validators, producerSlots)
-
-		for _, id := range producerIds {
-			selectedTimes[types.ValidatorID(id)]++
-		}
-	}
-
-	totalProducers, _ := new(big.Float).SetString(strconv.FormatUint(iterations*producerSlots, 10))
-	fmt.Printf("Total producers selected = %d\n", iterations*producerSlots)
-	for _, validator := range validators {
-		wasSelected, _ := new(big.Float).SetString(strconv.FormatUint(selectedTimes[validator.ID], 10))
-		prob := new(big.Float).Quo(wasSelected, totalProducers)
-		fmt.Printf("validator { ID = %d, Power = %d, Perfect Probability = %v%% } was selected %d times with %v%% probability\n",
-			validator.ID, validator.VotingPower, perfectProbabilities[validator.ID], selectedTimes[validator.ID], prob)
 	}
 }
 

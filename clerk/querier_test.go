@@ -167,7 +167,9 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	index = simulation.RandIntBetween(r1, 0, 100)
 	logIndex = uint64(index)
 	txHash = hmTypes.HexToHeimdallHash("1234")
+
 	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordSequenceParams("1234", logIndex)),

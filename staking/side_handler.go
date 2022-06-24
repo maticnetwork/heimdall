@@ -62,7 +62,6 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // SideHandleMsgValidatorJoin side msg validator join
 func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-
 	k.Logger(ctx).Debug("✅ Validating External call for validator join msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", uint64(msg.LogIndex),
@@ -142,6 +141,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for validator join msg")
+
 	result.Result = abci.SideTxResultType_Yes
 
 	return
@@ -194,6 +194,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 	}
 
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for stake update msg")
+
 	result.Result = abci.SideTxResultType_Yes
 
 	return
@@ -254,6 +255,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for signer update msg")
+
 	result.Result = abci.SideTxResultType_Yes
 
 	return
@@ -306,6 +308,7 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for validator exit msg")
+
 	result.Result = abci.SideTxResultType_Yes
 
 	return
@@ -521,6 +524,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		// Update signer in prev Validator
 		validator.Signer = hmTypes.HeimdallAddress(newSigner)
 		validator.PubKey = newPubKey
+
 		k.Logger(ctx).Debug("Updating new signer", "newSigner", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	} else {
 		k.Logger(ctx).Error("No signer change", "newSigner", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)

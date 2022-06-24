@@ -107,6 +107,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock,
 			)
+
 			return common.ErrOldCheckpoint(k.Codespace()).Result()
 		}
 
@@ -115,6 +116,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 			logger.Error("Checkpoint not in countinuity",
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
+
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
@@ -216,6 +218,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 			"rootExpected", headerBlock.RootHash.String(),
 			"rootRecieved", msg.RootHash.String(),
 		)
+
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
 

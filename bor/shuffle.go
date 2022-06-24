@@ -8,40 +8,16 @@ import (
 	"sync"
 )
 
-const seedSize = int8(32)
-const roundSize = int8(1)
-const positionWindowSize = int8(4)
-const pivotViewSize = seedSize + roundSize
-const totalSize = seedSize + roundSize + positionWindowSize
-const ShuffleRoundCount = 90
+const (
+	seedSize           = int8(32)
+	roundSize          = int8(1)
+	positionWindowSize = int8(4)
+	pivotViewSize      = seedSize + roundSize
+	totalSize          = seedSize + roundSize + positionWindowSize
+	ShuffleRoundCount  = 90
+)
 
 var maxShuffleListSize uint64 = 1 << 40
-
-// SplitIndices splits a list into n pieces.
-func SplitIndices(l []uint64, n uint64) [][]uint64 {
-	var divided [][]uint64
-	var lSize = uint64(len(l))
-	for i := uint64(0); i < n; i++ {
-		start := SplitOffset(lSize, n, i)
-		end := SplitOffset(lSize, n, i+1)
-		divided = append(divided, l[start:end])
-	}
-	return divided
-}
-
-// ShuffledIndex returns `p(index)` in a pseudorandom permutation `p` of `0...list_size - 1` with ``seed`` as entropy.
-// We utilize 'swap or not' shuffling in this implementation; we are allocating the memory with the seed that stays
-// constant between iterations instead of reallocating it each iteration as in the spec. This implementation is based
-// on the original implementation from protolambda, https://github.com/protolambda/eth2-shuffle
-func ShuffledIndex(index uint64, indexCount uint64, seed [32]byte) (uint64, error) {
-	return innerShuffledIndex(index, indexCount, seed, true /* shuffle */)
-}
-
-// UnShuffledIndex returns the inverse of ShuffledIndex. This implementation is based
-// on the original implementation from protolambda, https://github.com/protolambda/eth2-shuffle
-func UnShuffledIndex(index uint64, indexCount uint64, seed [32]byte) (uint64, error) {
-	return innerShuffledIndex(index, indexCount, seed, false /* un-shuffle */)
-}
 
 // Spec pseudocode definition:
 //   def compute_shuffled_index(index: ValidatorIndex, index_count: uint64, seed: Hash) -> ValidatorIndex:
@@ -239,14 +215,16 @@ func swapOrNot(buf []byte, byteV byte, i uint64, input []uint64, j uint64, sourc
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(j>>8))
 		source = sha256Hash(buf)
 	}
+
 	if j&0x7 == 0x7 {
 		byteV = source[(j&0xff)>>3]
 	}
-	bitV := (byteV >> (j & 0x7)) & 0x1
 
+	bitV := (byteV >> (j & 0x7)) & 0x1
 	if bitV == 1 {
 		input[i], input[j] = input[j], input[i]
 	}
+
 	return byteV, source
 }
 
@@ -259,8 +237,10 @@ func ToBytes(x uint64, length int) []byte {
 	if length < 8 {
 		makeLength = 8
 	}
+
 	bytes := make([]byte, makeLength)
 	binary.LittleEndian.PutUint64(bytes, x)
+
 	return bytes[:length]
 }
 

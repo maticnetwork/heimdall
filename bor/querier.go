@@ -42,6 +42,7 @@ func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
+
 		return bz, nil
 	}
 
@@ -96,6 +97,7 @@ func handleQuerySpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -114,13 +116,14 @@ func handleQuerySpanList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
 func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var defaultSpan hmTypes.Span
+
 	spans := keeper.GetAllSpans(ctx)
-	// if this is the first span return empty span
 	if len(spans) == 0 {
 		// json record
 		bz, err := json.Marshal(defaultSpan)
@@ -146,6 +149,7 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -164,6 +168,7 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -179,5 +184,6 @@ func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }

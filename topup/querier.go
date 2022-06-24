@@ -86,6 +86,7 @@ func handleQueryDividendAccount(ctx sdk.Context, req abci.RequestQuery, keeper K
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -105,7 +106,6 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	// 1. Fetch AccountRoot a1 present on RootChainContract
 	// 2. Fetch AccountRoot a2 from current account
 	// 3. if a1 == a2, Calculate merkle path using GetAllDividendAccounts
-
 	var params types.QueryAccountProofParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))

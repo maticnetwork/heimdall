@@ -80,7 +80,9 @@ func (ml *MaticChainListener) sendTaskWithDelay(taskName string, headerBytes []b
 	// add delay for task so that multiple validators won't send same transaction at same time
 	eta := time.Now().Add(delay)
 	signature.ETA = &eta
+
 	ml.Logger.Debug("Sending task", "taskname", taskName, "currentTime", time.Now(), "delayTime", eta)
+
 	_, err := ml.queueConnector.Server.SendTask(signature)
 	if err != nil {
 		ml.Logger.Error("Error sending task", "taskName", taskName, "error", err)

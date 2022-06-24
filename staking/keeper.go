@@ -387,6 +387,7 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (upd
 	if !ok {
 		return "", false
 	}
+
 	return validator.LastUpdated, true
 }
 
@@ -423,6 +424,7 @@ func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []string) {
 		sequences = append(sequences, sequence)
 		return nil
 	})
+
 	return
 }
 

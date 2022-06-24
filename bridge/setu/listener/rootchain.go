@@ -75,11 +75,13 @@ func (rl *RootChainListener) Start() error {
 	if err != nil {
 		// start go routine to poll for new header using client object
 		rl.Logger.Info("Start polling for rootchain header blocks", "pollInterval", helper.GetConfig().SyncerPollInterval)
+
 		go rl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
 	} else {
 		// start go routine to listen new header using subscription
 		go rl.StartSubscription(ctx, subscription)
 	}
+
 	rl.Logger.Info("Subscribed to new head")
 
 	// Start self-healing process
@@ -120,7 +122,9 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 			rl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
 			return
 		}
+
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
+
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
 			if result >= newHeader.Number.Uint64() {
 				return

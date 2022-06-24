@@ -55,6 +55,7 @@ func NewKeeper(
 		codespace:   codespace,
 		chainKeeper: chainKeeper,
 	}
+
 	return keeper
 }
 
@@ -71,6 +72,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // SetEventRecordWithTime sets event record id with time
 func (k *Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecord) error {
 	key := GetEventRecordKeyWithTime(record.ID, record.RecordTime)
+
 	value, err := k.cdc.MarshalBinaryBare(record.ID)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling record", "error", err)
@@ -83,6 +85,7 @@ func (k *Keeper) SetEventRecordWithTime(ctx sdk.Context, record types.EventRecor
 // SetEventRecordWithID adds record to store with ID
 func (k *Keeper) SetEventRecordWithID(ctx sdk.Context, record types.EventRecord) error {
 	key := GetEventRecordKey(record.ID)
+
 	value, err := k.cdc.MarshalBinaryBare(record)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling record", "error", err)
@@ -124,8 +127,7 @@ func (k *Keeper) GetEventRecord(ctx sdk.Context, stateID uint64) (*types.EventRe
 	// check store has data
 	if store.Has(key) {
 		var _record types.EventRecord
-		err := k.cdc.UnmarshalBinaryBare(store.Get(key), &_record)
-		if err != nil {
+		if err := k.cdc.UnmarshalBinaryBare(store.Get(key), &_record); err != nil {
 			return nil, err
 		}
 
@@ -140,6 +142,7 @@ func (k *Keeper) GetEventRecord(ctx sdk.Context, stateID uint64) (*types.EventRe
 func (k *Keeper) HasEventRecord(ctx sdk.Context, stateID uint64) bool {
 	store := ctx.KVStore(k.storeKey)
 	key := GetEventRecordKey(stateID)
+
 	return store.Has(key)
 }
 
@@ -184,6 +187,7 @@ func (k *Keeper) GetEventRecordList(ctx sdk.Context, page uint64, limit uint64) 
 // GetEventRecordListWithTime returns all records with params like fromTime and toTime
 func (k *Keeper) GetEventRecordListWithTime(ctx sdk.Context, fromTime, toTime time.Time, page, limit uint64) ([]types.EventRecord, error) {
 	var iterator sdk.Iterator
+
 	store := ctx.KVStore(k.storeKey)
 
 	// create records
@@ -211,6 +215,7 @@ func (k *Keeper) GetEventRecordListWithTime(ctx sdk.Context, fromTime, toTime ti
 				k.Logger(ctx).Error("GetEventRecordListWithTime | GetEventRecord", "error", err)
 				continue
 			}
+
 			records = append(records, *record)
 		}
 	}
@@ -278,6 +283,7 @@ func (k *Keeper) GetRecordSequences(ctx sdk.Context) (sequences []string) {
 		sequences = append(sequences, sequence)
 		return nil
 	})
+
 	return
 }
 

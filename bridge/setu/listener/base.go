@@ -75,7 +75,6 @@ type BaseListener struct {
 
 // NewBaseListener creates a new BaseListener.
 func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
-
 	logger := util.Logger().With("service", "listener", "module", name)
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
@@ -140,9 +139,10 @@ func (bl *BaseListener) String() string {
 	return bl.name
 }
 
-// startHeaderProcess starts header process when they get new header
+// StartHeaderProcess starts header process when they get new header
 func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	bl.Logger.Info("Starting header process")
+
 	for {
 		select {
 		case newHeader := <-bl.HeaderChannel:
@@ -175,6 +175,7 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 		case <-ctx.Done():
 			bl.Logger.Info("Polling stopped")
 			ticker.Stop()
+
 			return
 		}
 	}
@@ -201,9 +202,8 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 	}
 }
 
-// OnStop stops all necessary go routines
+// Stop stops all necessary go routines
 func (bl *BaseListener) Stop() {
-
 	// cancel subscription if any
 	if bl.cancelSubscription != nil {
 		bl.cancelSubscription()

@@ -135,6 +135,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 		case <-ctx.Done():
 			hl.Logger.Info("Polling stopped")
 			ticker.Stop()
+
 			return
 		}
 	}
@@ -150,6 +151,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		hl.Logger.Error("Error while fetching heimdall node status", "error", err)
 		return fromBlock, toBlock, err
 	}
+
 	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
 
 	// fromBlock - get last block from storage
@@ -167,15 +169,18 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
 			toBlock = 0
+
 			return fromBlock, toBlock, err
 		}
 	}
+
 	return fromBlock, toBlock, err
 }
 
 // ProcessBlockEvent - process Blockevents (BeginBlock, EndBlock events) from heimdall.
 func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight int64) {
 	hl.Logger.Info("Received block event from Heimdall", "eventType", event.Type)
+
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
 		hl.Logger.Error("Error while parsing block event", "eventType", event.Type, "error", err)

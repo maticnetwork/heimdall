@@ -23,6 +23,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, ak auth.AccountKeeper, data typ
 		)
 		data.Supply.Total = totalSupply
 	}
+
 	keeper.SetSupply(ctx, data.Supply)
 }
 
