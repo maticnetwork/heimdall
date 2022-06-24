@@ -628,6 +628,8 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 }
 
 func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Logger) error {
+	const logErrMsg = "Unable to read flag."
+
 	// get endpoint for ethereum chain from viper/cobra
 	stringConfgValue := v.GetString(MainRPCUrlFlag)
 	if stringConfgValue != "" {
@@ -659,8 +661,7 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 	}
 
 	// need this error for parsing Duration values
-	var err error = nil
-	var logErrMsg string = "Unable to read flag."
+	var err error
 
 	// get check point pull interval from viper/cobra
 	stringConfgValue = v.GetString(CheckpointerPollIntervalFlag)

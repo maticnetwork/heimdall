@@ -87,18 +87,19 @@ func Logger() log.Logger {
 	loggerOnce.Do(func() {
 		defaultLevel := "info"
 		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-		logLevel := viper.GetString("log_level")
-		option, err := log.AllowLevel(logLevel)
+		option, err := log.AllowLevel(viper.GetString("log_level"))
 		if err != nil {
 			// cosmos sdk is using different style of log format
 			// and levels don't map well, config.toml
 			// see: https://github.com/cosmos/cosmos-sdk/pull/8072
 			logger.Error("Unable to parse logging level", "Error", err)
 			logger.Info("Using default log level")
-			logLevel = defaultLevel
+			option, err = log.AllowLevel(defaultLevel)
+			if err != nil {
+				logger.Error("failed to allow default log level", "Level", defaultLevel, "Error", err)
+			}
 		}
 
-		option, _ = log.AllowLevel(logLevel)
 		logger = log.NewFilter(logger, option)
 
 		// set no-op logger if log level is not debug for machinery

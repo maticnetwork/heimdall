@@ -3,6 +3,12 @@ package processor
 import (
 	"bytes"
 	"encoding/json"
+	"io/ioutil"
+	"math/rand"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/golang/mock/gomock"
@@ -18,11 +24,6 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	helperMocks "github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/spf13/viper"
-	"io/ioutil"
-	"math/rand"
-	"net/http"
-	"testing"
-	"time"
 )
 
 const (
@@ -539,7 +540,7 @@ func prepareMockData(b *testing.B) *gomock.Controller {
 func prepareClerkProcessor() (*ClerkProcessor, error) {
 	cdc := app.MakeCodec()
 
-	viper.Set(helper.NodeFlag, dummyTenderMintNode)
+	viper.Set(helper.TendermintNodeFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
 	configuration := helper.GetDefaultHeimdallConfig()
@@ -565,7 +566,7 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 func prepareRootChainListener() (*listener.RootChainListener, func(), error) {
 	cdc := app.MakeCodec()
 
-	viper.Set(helper.NodeFlag, dummyTenderMintNode)
+	viper.Set(helper.TendermintNodeFlag, dummyTenderMintNode)
 	viper.Set("log_level", "debug")
 
 	configuration := helper.GetDefaultHeimdallConfig()

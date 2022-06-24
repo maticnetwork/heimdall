@@ -27,7 +27,6 @@ import (
 	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
 	restServer "github.com/maticnetwork/heimdall/server"
 	"github.com/maticnetwork/heimdall/version"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -166,13 +165,6 @@ func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, sto
 		// create new heimdall app
 		return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 	}
-}
-
-func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
-	// init heimdall config
-	helper.InitHeimdallConfig("")
-	// create new heimdall app
-	return app.NewHeimdallApp(logger, db, baseapp.SetHaltHeight(cast.ToUint64(viper.GetString("halt-height"))), baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {
