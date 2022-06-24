@@ -11,6 +11,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	tendermintLogger "github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/version"
@@ -30,8 +31,9 @@ var (
 
 // rootCmd represents the base command when called without any subcommands
 var rootCmd = &cobra.Command{
-	Use:   "heimdall-bridge",
-	Short: "Heimdall bridge deamon",
+	Use:     "heimdall-bridge",
+	Aliases: []string{"bridge"},
+	Short:   "Heimdall bridge deamon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if cmd.Use != version.Cmd.Use {
 			// initialize tendermint viper config
@@ -49,30 +51,51 @@ var rootCmd = &cobra.Command{
 	},
 }
 
-// initTendermintViperConfig sets global viper configuration needed to heimdall
-func initTendermintViperConfig(cmd *cobra.Command) {
-	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
-	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
-	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
-	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
-	borChainIDValue, _ := cmd.Flags().GetString(borChainIDFlag)
-	logsTypeValue, _ := cmd.Flags().GetString(logsTypeFlag)
+// BridgeCommands returns command for bridge service
+func BridgeCommands(v *viper.Viper, loggerInstance tendermintLogger.Logger, caller string) *cobra.Command {
+	DecorateWithBridgeRootFlags(rootCmd, v, loggerInstance, caller)
+	return rootCmd
+}
 
-	// bridge-db directory (default storage)
-	if bridgeDBValue == "" {
-		bridgeDBValue = filepath.Join(homeValue, "bridge", "storage")
+// function is called when bridge flags needs to be added to command
+func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInstance tendermintLogger.Logger, caller string) {
+	cmd.PersistentFlags().StringP(helper.TendermintNodeFlag, "n", helper.DefaultTendermintNode, "Node to connect to")
+	if err := v.BindPFlag(helper.TendermintNodeFlag, cmd.PersistentFlags().Lookup(helper.TendermintNodeFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, helper.TendermintNodeFlag), "Error", err)
 	}
 
-	// set to viper
-	viper.Set(helper.NodeFlag, tendermintNode)
-	viper.Set(helper.HomeFlag, homeValue)
-	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
-	viper.Set(bridgeDBFlag, bridgeDBValue)
-	viper.Set(borChainIDFlag, borChainIDValue)
-	viper.Set(logsTypeFlag, logsTypeValue)
+	cmd.PersistentFlags().String(helper.HomeFlag, helper.DefaultNodeHome, "directory for config and data")
+	if err := v.BindPFlag(helper.HomeFlag, cmd.PersistentFlags().Lookup(helper.HomeFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, helper.HomeFlag), "Error", err)
+	}
 
-	// start heimdall config
-	helper.InitHeimdallConfig("")
+	// bridge storage db
+	cmd.PersistentFlags().String(
+		bridgeDBFlag,
+		"",
+		"Bridge db path (default <home>/bridge/storage)",
+	)
+	if err := v.BindPFlag(bridgeDBFlag, cmd.PersistentFlags().Lookup(bridgeDBFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, bridgeDBFlag), "Error", err)
+	}
+
+	// bridge chain id
+	cmd.PersistentFlags().String(
+		borChainIDFlag,
+		helper.DefaultBorChainID,
+		"Bor chain id",
+	)
+
+	// bridge logging type
+	cmd.PersistentFlags().String(
+		logsTypeFlag,
+		helper.DefaultLogsType,
+		"Use json logger",
+	)
+
+	if err := v.BindPFlag(borChainIDFlag, cmd.PersistentFlags().Lookup(borChainIDFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, borChainIDFlag), "Error", err)
+	}
 }
 
 // initMetrics initializes metrics server with the default handler
@@ -91,45 +114,35 @@ func initMetrics() {
 	}()
 }
 
-// Execute adds all child commands to the root command and sets flags appropriately.
-// This is called by main.main(). It only needs to happen once to the rootCmd.
-func Execute() {
-	if err := rootCmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(1)
+// function is called to set appropriate bridge db path
+func AdjustBridgeDBValue(cmd *cobra.Command, v *viper.Viper) {
+	tendermintNode, _ := cmd.Flags().GetString(helper.TendermintNodeFlag)
+	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
+	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
+	bridgeDBValue, _ := cmd.Flags().GetString(bridgeDBFlag)
+	borChainIDValue, _ := cmd.Flags().GetString(borChainIDFlag)
+	logsTypeValue, _ := cmd.Flags().GetString(logsTypeFlag)
+
+	// bridge-db directory (default storage)
+	if bridgeDBValue == "" {
+		bridgeDBValue = filepath.Join(homeValue, "bridge", "storage")
 	}
+
+	// set to viper
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
+	viper.Set(helper.HomeFlag, homeValue)
+	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
+	viper.Set(bridgeDBFlag, bridgeDBValue)
+	viper.Set(borChainIDFlag, borChainIDValue)
+	viper.Set(logsTypeFlag, logsTypeValue)
 }
 
-func init() {
-	rootCmd.AddCommand(version.Cmd)
-	rootCmd.PersistentFlags().StringP(helper.NodeFlag, "n", "tcp://localhost:26657", "Node to connect to")
-	rootCmd.PersistentFlags().String(helper.HomeFlag, os.ExpandEnv("$HOME/.heimdalld"), "directory for config and data")
-	rootCmd.PersistentFlags().String(
-		helper.WithHeimdallConfigFlag,
-		"",
-		"Heimdall config file path (default <home>/config/heimdall-config.json)",
-	)
-	// bridge storage db
-	rootCmd.PersistentFlags().String(
-		bridgeDBFlag,
-		"",
-		"Bridge db path (default <home>/bridge/storage)",
-	)
-	// bridge chain id
-	rootCmd.PersistentFlags().String(
-		borChainIDFlag,
-		helper.DefaultBorChainID,
-		"Bor chain id",
-	)
-	// bridge logging type
-	rootCmd.PersistentFlags().String(
-		logsTypeFlag,
-		helper.DefaultLogsType,
-		"Use json logger",
-	)
+// initTendermintViperConfig sets global viper configuration needed to heimdall
+func initTendermintViperConfig(cmd *cobra.Command) {
 
-	// bind all flags with viper
-	if err := viper.BindPFlags(rootCmd.Flags()); err != nil {
-		logger.Error("init | BindPFlag | rootCmd.Flags", "Error", err)
-	}
+	// set appropriate bridge DB
+	AdjustBridgeDBValue(cmd, viper.GetViper())
+
+	// start heimdall config
+	helper.InitHeimdallConfig("")
 }

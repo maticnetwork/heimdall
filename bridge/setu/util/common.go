@@ -9,6 +9,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -84,8 +85,20 @@ var loggerOnce sync.Once
 // Logger returns logger singleton instance
 func Logger() log.Logger {
 	loggerOnce.Do(func() {
-		logger = helper.Logger
-		option, _ := log.AllowLevel(viper.GetString("log_level"))
+		defaultLevel := "info"
+		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+		logLevel := viper.GetString("log_level")
+		option, err := log.AllowLevel(logLevel)
+		if err != nil {
+			// cosmos sdk is using different style of log format
+			// and levels don't map well, config.toml
+			// see: https://github.com/cosmos/cosmos-sdk/pull/8072
+			logger.Error("Unable to parse logging level", "Error", err)
+			logger.Info("Using default log level")
+			logLevel = defaultLevel
+		}
+
+		option, _ = log.AllowLevel(logLevel)
 		logger = log.NewFilter(logger, option)
 
 		// set no-op logger if log level is not debug for machinery
@@ -237,8 +250,8 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
 }
 
-//CreateURLWithQuery receives the uri and parameters in key value form
-//it will return the new url with the given query from the parameter
+// CreateURLWithQuery receives the uri and parameters in key value form
+// it will return the new url with the given query from the parameter
 func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error) {
 	urlObj, err := url.Parse(uri)
 	if err != nil {
@@ -486,7 +499,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 	defer LogElapsedTimeForStateSyncedEvent(event, "GetUnconfirmedTxnCount", time.Now())
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
-	resp, err := http.Get(endpoint)
+	resp, err := helper.Client.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)
 		return 0

@@ -1,8 +1,8 @@
 package broadcaster
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/maticnetwork/heimdall/app"
@@ -19,7 +19,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	cdc := app.MakeCodec()
 	// cli context
 	tendermintNode := "tcp://localhost:26657"
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
 	viper.Set("log_level", "info")
 	// cliCtx := cliContext.NewCLIContext().WithCodec(cdc)
 	// cliCtx.BroadcastMode = client.BroadcastSync
@@ -36,7 +36,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	}
 
 	for index, test := range testData {
-		t.Run(fmt.Sprint(index), func(t *testing.T) {
+		t.Run(strconv.Itoa(index), func(t *testing.T) {
 			// create and send checkpoint message
 			msg := checkpointTypes.NewMsgCheckpointBlock(
 				test.Proposer,
@@ -44,7 +44,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 				test.EndBlock,
 				test.RootHash,
 				test.AccountRootHash,
-				"1234",
+				test.BorChainID,
 			)
 
 			err := _txBroadcaster.BroadcastToHeimdall(msg, nil)
