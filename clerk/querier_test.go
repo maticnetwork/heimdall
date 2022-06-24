@@ -154,6 +154,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	txreceipt := &ethTypes.Receipt{
 		BlockNumber: big.NewInt(10),
 	}
+
 	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(nil, errors.New("err confirmed txn receipt"))
 
 	req = abci.RequestQuery{
@@ -180,7 +181,9 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	ck.SetRecordSequence(ctx, testSeq)
 	logIndex = uint64(10)
 	txHash = hmTypes.HexToHeimdallHash("12345")
+
 	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordSequenceParams("12345", logIndex)),

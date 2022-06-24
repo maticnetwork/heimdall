@@ -104,11 +104,13 @@ func (suite *KeeperTestSuite) TestGetEventRecordList() {
 
 func (suite *KeeperTestSuite) TestGetEventRecordListTime() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
+
 	var i uint64
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
 	ck := app.ClerkKeeper
+
 	for i = 0; i < 30; i++ {
 		testRecord := types.NewEventRecord(hHash, i, i, hAddr, make([]byte, 0), "1", time.Unix(int64(i), 0))
 		err := ck.SetEventRecord(ctx, testRecord)

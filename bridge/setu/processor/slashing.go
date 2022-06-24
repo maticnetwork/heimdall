@@ -143,6 +143,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 
 	sp.Logger.Info("processing tick confirmation event", "eventtype", event.Type, "slashInfoBytes", slashInfoBytes.String(), "proposer", proposerAddr)
 	// TODO - slashing...who should submit tick to rootchain??
+
 	isCurrentProposer, err := util.IsCurrentProposer(sp.cliCtx)
 	if err != nil {
 		sp.Logger.Error("Error checking isCurrentProposer", "error", err)
@@ -164,6 +165,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 	}
 
 	var txHash string
+
 	for _, attr := range event.Attributes {
 		if attr.Key == hmTypes.AttributeKeyTxHash {
 			txHash = attr.Value
@@ -171,15 +173,14 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 	}
 
 	if isValidSlashInfo && isCurrentProposer {
-		txHash := common.FromHex(txHash)
-		if err := sp.createAndSendTickToRootchain(blockHeight, txHash, tickSlashInfoList, proposerAddr); err != nil {
+		txHashStr := common.FromHex(txHash)
+		if err = sp.createAndSendTickToRootchain(blockHeight, txHashStr, tickSlashInfoList, proposerAddr); err != nil {
 			sp.Logger.Error("Error sending tick to rootchain", "error", err)
 			return err
 		}
-	} else {
-		sp.Logger.Info("I am not the current proposer or tick already sent or invalid tick data... Ignoring", "eventType", event.Type)
-		return nil
 	}
+
+	sp.Logger.Info("I am not the current proposer or tick already sent or invalid tick data... Ignoring", "eventType", event.Type)
 
 	return nil
 }
@@ -312,6 +313,7 @@ func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash [
 	}
 
 	cmsg := stdTx.GetMsgs()[0]
+
 	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
 	if !ok {
 		sp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
@@ -396,6 +398,7 @@ func (sp *SlashingProcessor) fetchTickCount() (tickCount uint64, err error) {
 // fetchTickSlashInfoList - fetches tick slash Info list
 func (sp *SlashingProcessor) fetchTickSlashInfoList() (slashInfoList []*hmTypes.ValidatorSlashingInfo, err error) {
 	sp.Logger.Info("Sending Rest call to Get Tick SlashInfo list")
+
 	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.TickSlashInfoListURL))
 	if err != nil {
 		sp.Logger.Error("Error Fetching Tick slashInfoList from HeimdallServer ", "error", err)

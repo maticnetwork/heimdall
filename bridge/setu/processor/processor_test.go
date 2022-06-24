@@ -19,11 +19,11 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 
 	cdc := app.MakeCodec()
 
-	tendermintNode := "http://localhost:26657"
-	viper.Set(helper.TendermintNodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, "http://localhost:26657")
 	viper.Set("log_level", "info")
 
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
 	_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 
 	defaultMessage := clerkTypes.MsgEventRecord{
@@ -38,8 +38,10 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 	}
 
 	// adding clerk messages and errors for testing
-	var testData []clerkTypes.MsgEventRecord
-	var expectedStatus []bool
+	var (
+		testData       []clerkTypes.MsgEventRecord
+		expectedStatus []bool
+	)
 
 	// keep the first 2 messages same (default)
 	testData = append(testData, defaultMessage)

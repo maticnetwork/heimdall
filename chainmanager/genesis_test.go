@@ -42,5 +42,4 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 
 	actualParams := chainmanager.ExportGenesis(ctx, app.ChainKeeper)
 	require.Equal(t, genesisState, actualParams)
-
 }

@@ -81,5 +81,4 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	require.Equal(t, genesisState.LastNoACK, actualParams.LastNoACK)
 	require.Equal(t, genesisState.Params, actualParams.Params)
 	require.LessOrEqual(t, len(actualParams.Checkpoints), len(genesisState.Checkpoints))
-
 }

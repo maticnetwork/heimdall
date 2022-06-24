@@ -119,6 +119,7 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 	)
 	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
 	require.NoError(t, err)
+
 	req := abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryDividendAccountParams(dividendAccount.User)),
@@ -156,6 +157,7 @@ func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
 
 func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+
 	var accountRoot [32]byte
 
 	path := []string{types.QueryAccountProof}
@@ -168,6 +170,7 @@ func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 	)
 	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
 	require.NoError(t, err)
+
 	dividendAccounts := app.TopupKeeper.GetAllDividendAccounts(ctx)
 
 	accRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)

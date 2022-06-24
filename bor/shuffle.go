@@ -66,21 +66,26 @@ func innerShuffledIndex(index uint64, indexCount uint64, seed [32]byte, shuffle 
 	if ShuffleRoundCount == 0 {
 		return index, nil
 	}
+
 	if index >= indexCount {
 		return 0, fmt.Errorf("input index %d out of bounds: %d",
 			index, indexCount)
 	}
+
 	if indexCount > maxShuffleListSize {
 		return 0, fmt.Errorf("list size %d out of bounds",
 			indexCount)
 	}
+
 	rounds := uint8(ShuffleRoundCount)
 	round := uint8(0)
+
 	if !shuffle {
 		// Starting last round and iterating through the rounds in reverse, un-swaps everything,
 		// effectively un-shuffling the list.
 		round = rounds - 1
 	}
+
 	buf := make([]byte, totalSize)
 	// Seed is always the first 32 bytes of the hash input, we never have to change this part of the buffer.
 	copy(buf[:32], seed[:])
@@ -91,25 +96,31 @@ func innerShuffledIndex(index uint64, indexCount uint64, seed [32]byte, shuffle 
 		hash8Int := FromBytes8(hash8)
 		pivot := hash8Int % indexCount
 		flip := (pivot + indexCount - index) % indexCount
+
 		// Consider every pair only once by picking the highest pair index to retrieve randomness.
 		position := index
 		if flip > position {
 			position = flip
 		}
+
 		// Add position except its last byte to []buf for randomness,
 		// it will be used later to select a bit from the resulting hash.
 		position4bytes := ToBytes(position>>8, 4)
 		copy(buf[pivotViewSize:], position4bytes[:])
 		source := sha256Hash(buf)
+
 		// Effectively keep the first 5 bits of the byte value of the position,
 		// and use it to retrieve one of the 32 (= 2^5) bytes of the hash.
 		byteV := source[(position&0xff)>>3]
+
 		// Using the last 3 bits of the position-byte, determine which bit to get from the hash-byte (note: 8 bits = 2^3)
 		bitV := (byteV >> (position & 0x7)) & 0x1
+
 		// index = flip if bit else index
 		if bitV == 1 {
 			index = flip
 		}
+
 		if shuffle {
 			round++
 			if round == rounds {
@@ -122,6 +133,7 @@ func innerShuffledIndex(index uint64, indexCount uint64, seed [32]byte, shuffle 
 			round--
 		}
 	}
+
 	return index, nil
 }
 
@@ -156,30 +168,30 @@ func ShuffleList(input []uint64, seed [32]byte) ([]uint64, error) {
 	return innerShuffleList(input, seed, true /* shuffle */)
 }
 
-// UnshuffleList un-shuffles the list by running backwards through the round count.
-func UnshuffleList(input []uint64, seed [32]byte) ([]uint64, error) {
-	return innerShuffleList(input, seed, false /* un-shuffle */)
-}
-
 // shuffles or unshuffles, shuffle=false to un-shuffle.
 func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, error) {
 	if len(input) <= 1 {
 		return input, nil
 	}
+
 	if uint64(len(input)) > maxShuffleListSize {
 		return nil, fmt.Errorf("list size %d out of bounds",
 			len(input))
 	}
+
 	rounds := uint8(ShuffleRoundCount)
 	if rounds == 0 {
 		return input, nil
 	}
+
 	listSize := uint64(len(input))
 	buf := make([]byte, totalSize)
 	r := uint8(0)
+
 	if !shuffle {
 		r = rounds - 1
 	}
+
 	copy(buf[:seedSize], seed[:])
 	for {
 		buf[seedSize] = r
@@ -192,6 +204,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		for i, j := uint64(0), pivot; i < mirror; i, j = i+1, j-1 {
 			byteV, source = swapOrNot(buf, byteV, i, input, j, source)
 		}
+
 		// Now repeat, but for the part after the pivot.
 		mirror = (pivot + listSize + 1) >> 1
 		end := listSize - 1
@@ -201,6 +214,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		for i, j := pivot+1, end; i < mirror; i, j = i+1, j-1 {
 			byteV, source = swapOrNot(buf, byteV, i, input, j, source)
 		}
+
 		if shuffle {
 			r++
 			if r == rounds {
@@ -213,6 +227,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 			r--
 		}
 	}
+
 	return input, nil
 }
 

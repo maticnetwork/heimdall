@@ -45,6 +45,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	for i := range topupSequences {
 		topupSequences[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
 	}
+
 	genesisState := types.GenesisState{
 		TopupSequences: topupSequences,
 	}

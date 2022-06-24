@@ -160,6 +160,7 @@ func StartBridge(isStandAlone bool) {
 		for range catchSignal {
 			// stop processes
 			logger.Info("Received stop signal - Stopping all services")
+
 			for _, service := range services {
 				if err := service.Stop(); err != nil {
 					logger.Error("GetStartCmd | service.Stop", "Error", err)

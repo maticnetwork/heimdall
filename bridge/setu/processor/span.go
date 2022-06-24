@@ -105,9 +105,8 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		// log new span
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
-		//Get NextSpanSeed from HeimdallServer
-		var seed common.Hash
-		if seed, err = sp.fetchNextSpanSeed(); err != nil {
+		seed, err := sp.fetchNextSpanSeed()
+		if err != nil {
 			sp.Logger.Info("Error while fetching next span seed from HeimdallServer", "err", err)
 			return
 		}

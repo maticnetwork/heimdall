@@ -144,8 +144,10 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 // DeliverSideTxHandler runs for each side tx
 func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abci.RequestDeliverSideTx) (res abci.ResponseDeliverSideTx) {
-	var code uint32
-	var codespace string
+	var (
+		code      uint32
+		codespace string
+	)
 
 	result := abci.SideTxResultType_Skip
 	data := make([]byte, 0)
@@ -156,6 +158,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 		// match message route
 		msgRoute := msg.Route()
 		handlers := app.sideRouter.GetRoute(msgRoute)
+
 		if handlers != nil && handlers.SideTxHandler != nil && isSideTxMsg {
 			// Create a new context based off of the existing context with a cache wrapped multi-store (for state-less execution)
 			runMsgCtx, _ := app.cacheTxContext(ctx, req.Tx)
@@ -171,6 +174,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 				codespace = msgResult.Codespace
 				// skip side-tx if result is error
 				result = abci.SideTxResultType_Skip
+
 				break
 			}
 
@@ -201,6 +205,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci.SideTxResultType) (result sdk.Result) {
 	// get decoder
 	decoder := authTypes.DefaultTxDecoder(app.cdc)
+
 	tx, err := decoder(txBytes)
 	if err != nil {
 		return
@@ -260,6 +265,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 			if !msgResult.IsOK() {
 				code = msgResult.Code
 				codespace = msgResult.Codespace
+
 				break
 			}
 		}

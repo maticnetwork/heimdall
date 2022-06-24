@@ -39,12 +39,6 @@ func TestShuffleList(t *testing.T) {
 	if reflect.DeepEqual(list1, list2) {
 		t.Errorf("2 shuffled lists shouldn't be equal")
 	}
-	// if !reflect.DeepEqual(list1, []uint64{0, 7, 8, 6, 3, 9, 4, 5, 2, 1}) {
-	// 	t.Errorf("list 1 was incorrectly shuffled got: %v", list1)
-	// }
-	// if !reflect.DeepEqual(list2, []uint64{0, 5, 2, 1, 6, 8, 7, 3, 4, 9}) {
-	// 	t.Errorf("list 2 was incorrectly shuffled got: %v", list2)
-	// }
 }
 
 func TestValShuffle(t *testing.T) {
@@ -66,6 +60,7 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 			startBlock = generateRandNumber(10)
 			power = int64(generateRandNumber(100))
 		}
+
 		newVal := types.Validator{
 			ID:               types.NewValidatorID(startID + uint64(i)),
 			StartEpoch:       startBlock,
@@ -77,6 +72,7 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 		}
 		validators = append(validators, newVal)
 	}
+
 	return
 }
 

@@ -26,12 +26,14 @@ func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log
 			return err
 		}
 	}
+
 	var indexed abi.Arguments
 	for _, arg := range abiObject.Events[event].Inputs {
 		if arg.Indexed {
 			indexed = append(indexed, arg)
 		}
 	}
+
 	return parseTopics(out, indexed, log.Topics[1:])
 }
 
@@ -95,7 +97,6 @@ func parseTopics(out interface{}, fields abi.Arguments, topics []common.Hash) er
 			switch field.Type() {
 			case reflectHash: // Also covers all dynamic types
 				field.Set(reflect.ValueOf(topics[0]))
-
 			case reflectAddress:
 				var addr common.Address
 				copy(addr[:], topics[0][common.HashLength-common.AddressLength:])
@@ -116,8 +117,10 @@ func parseTopics(out interface{}, fields abi.Arguments, topics []common.Hash) er
 				}
 			}
 		}
+
 		topics = topics[1:]
 	}
+
 	return nil
 }
 
@@ -126,9 +129,11 @@ func capitalise(input string) string {
 	for len(input) > 0 && input[0] == '_' {
 		input = input[1:]
 	}
+
 	if len(input) == 0 {
 		return ""
 	}
+
 	return toCamelCase(strings.ToUpper(input[:1]) + input[1:])
 }
 
@@ -141,17 +146,15 @@ func toCamelCase(input string) string {
 		switch {
 		case k == 0:
 			result = strings.ToUpper(string(input[0]))
-
 		case toupper:
 			result += strings.ToUpper(string(v))
 			toupper = false
-
 		case v == '_':
 			toupper = true
-
 		default:
 			result += string(v)
 		}
 	}
+
 	return result
 }

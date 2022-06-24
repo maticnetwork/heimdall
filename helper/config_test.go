@@ -25,7 +25,9 @@ func TestHeimdallConfig(t *testing.T) {
 	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 
 	fmt.Println("Address", GetAddress())
+
 	pubKey := GetPubKey()
+
 	fmt.Println("PublicKey", pubKey.String())
 	// fmt.Println("CryptoPublicKey", pubKey.CryptoPubKey().String())
 }

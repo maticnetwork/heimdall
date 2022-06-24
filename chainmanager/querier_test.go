@@ -59,6 +59,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
 	var params types.Params
+
 	defaultParams := types.DefaultParams()
 
 	path := []string{types.QueryParams}

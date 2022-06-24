@@ -58,6 +58,7 @@ func (suite *KeeperTestSuite) TestDividendAccount() {
 	}
 	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
 	require.NoError(t, err)
+
 	ok := app.TopupKeeper.CheckIfDividendAccountExists(ctx, dividendAccount.User)
 	require.Equal(t, ok, true)
 }
@@ -68,6 +69,7 @@ func (suite *KeeperTestSuite) TestAddFeeToDividendAccount() {
 	amount, _ := big.NewInt(0).SetString("0", 10)
 	err := app.TopupKeeper.AddFeeToDividendAccount(ctx, address, amount)
 	require.NoError(t, err)
+
 	dividentAccount, _ := app.TopupKeeper.GetDividendAccountByAddress(ctx, address)
 	actualResult, ok := big.NewInt(0).SetString(dividentAccount.FeeAmount, 10)
 	require.Equal(t, ok, true)

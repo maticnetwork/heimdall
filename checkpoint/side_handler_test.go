@@ -175,7 +175,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	require.NoError(t, err)
+
 	borChainId := "1234"
+
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 
@@ -256,6 +258,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 
 	header, _ := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	headerId := uint64(1)
+
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 
@@ -346,6 +349,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
 	borChainId := "1234"
+
 	suite.Run("Failure", func() {
 		// create checkpoint msg
 		msgCheckpoint := types.NewMsgCheckpointBlock(

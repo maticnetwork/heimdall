@@ -29,10 +29,9 @@ type ClerkProcessor struct {
 
 // NewClerkProcessor - add statesender abi to clerk processor
 func NewClerkProcessor(stateSenderAbi *abi.ABI) *ClerkProcessor {
-	clerkProcessor := &ClerkProcessor{
+	return &ClerkProcessor{
 		stateSenderAbi: stateSenderAbi,
 	}
-	return clerkProcessor
 }
 
 // Start starts new block subscription

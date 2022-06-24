@@ -34,6 +34,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 
 	// genesis accounts
 	var genesisAccs authTypes.GenesisAccounts
+
 	for _, acc := range accounts {
 		bacc := types.NewBaseAccountWithAddress(acc.Address)
 		gacc, _ := types.NewGenesisAccountI(&bacc)

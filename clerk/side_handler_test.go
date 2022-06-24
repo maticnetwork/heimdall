@@ -226,7 +226,6 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgEventRecord() {
 		require.Nil(t, storedEventRecord)
 		require.Error(t, err)
 	})
-
 }
 
 func (suite *SideHandlerTestSuite) TestPostHandler() {

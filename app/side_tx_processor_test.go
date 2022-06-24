@@ -540,6 +540,7 @@ func (msg msgCounter) ValidateBasic() sdk.Error {
 	if msg.Counter >= 0 {
 		return nil
 	}
+
 	return sdk.ErrInvalidSequence("counter should be a non-negative integer.")
 }
 

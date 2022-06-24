@@ -86,6 +86,7 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 
 	// fetch balance
 	var balance sdk.Coins
+
 	require.NoError(t, json.Unmarshal(res, &balance))
 	require.True(t, balance.IsZero())
 

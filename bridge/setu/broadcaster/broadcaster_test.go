@@ -16,6 +16,7 @@ import (
 // Parallel test - to check BroadcastToHeimdall synchronisation
 func TestBroadcastToHeimdall(t *testing.T) {
 	t.Parallel()
+
 	cdc := app.MakeCodec()
 	// cli context
 	tendermintNode := "tcp://localhost:26657"
@@ -26,6 +27,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	// cliCtx.TrustNode = true
 
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
 	_txBroadcaster := NewTxBroadcaster(cdc)
 
 	testData := []checkpointTypes.MsgCheckpoint{

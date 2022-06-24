@@ -193,8 +193,9 @@ func (suite *KeeperTestSuite) TestGetAllAccounts() {
 func (suite *KeeperTestSuite) TestIterateAccounts() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	newAccounts := 10
 	beforeAccounts := app.AccountKeeper.GetAllAccounts(ctx) // current accounts
+
+	newAccounts := 10
 	for i := 0; i < newAccounts; i++ {
 		addr := hmTypes.BytesToHeimdallAddress([]byte(fmt.Sprintf("address-%v", i)))
 		acc := app.AccountKeeper.NewAccountWithAddress(ctx, addr)
@@ -202,14 +203,17 @@ func (suite *KeeperTestSuite) TestIterateAccounts() {
 		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc)
 	}
+
 	afterAccounts := app.AccountKeeper.GetAllAccounts(ctx) // current accounts
 	require.Equal(t, newAccounts, len(afterAccounts)-len(beforeAccounts))
 
 	var filteredAccounts []types.Account
+
 	app.AccountKeeper.IterateAccounts(ctx, func(acc types.Account) bool {
 		filteredAccounts = append(filteredAccounts, acc)
 		return acc.GetAccountNumber() > 5
 	})
+
 	require.Equal(t, 5, len(filteredAccounts))
 }
 

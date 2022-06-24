@@ -118,6 +118,7 @@ func (suite *ModuleTestSuite) TestExportGenesis() {
 
 	// get genesis data
 	var gs3 sidechannelTypes.GenesisState
+
 	actualParams := module.ExportGenesis(ctx)
 	err := sidechannelTypes.ModuleCdc.UnmarshalJSON(actualParams, &gs3)
 	require.Nil(t, err)

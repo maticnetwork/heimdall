@@ -13,6 +13,8 @@ import (
 )
 
 func TestGetSimulationLog(t *testing.T) {
+	t.Parallel()
+
 	cdc := MakeCodec()
 
 	decoders := make(hmModule.StoreDecoderRegistry)

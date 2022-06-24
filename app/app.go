@@ -429,6 +429,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 			}
 		}
 	}
+
 	app.sideRouter.Seal()
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
@@ -499,8 +500,7 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 // InitChainer initializes chain
 func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	err := json.Unmarshal(req.AppStateBytes, &genesisState)
-	if err != nil {
+	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
 
@@ -557,6 +557,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	// transfer fees to current proposer
 	if proposer, ok := app.AccountKeeper.GetBlockProposer(ctx); ok {
 		moduleAccount := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName)
+
 		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
 		if !amount.IsZero() {
 			coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}

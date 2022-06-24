@@ -47,9 +47,11 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	if mainChainMaxGasPrice <= 0 {
 		mainChainMaxGasPrice = DefaultMainchainMaxGasPrice
 	}
+
 	if gasprice.Cmp(big.NewInt(mainChainMaxGasPrice)) == 1 {
 		Logger.Error("Gas price is more than max gas price", "gasprice", gasprice)
 		err = fmt.Errorf("gas price is more than max_gas_price, gasprice = %v, maxGasPrice = %d", gasprice, mainChainMaxGasPrice)
+
 		return
 	}
 
@@ -102,7 +104,9 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs [][3]*big.Int, r
 		Logger.Error("Error while submitting checkpoint", "error", err)
 		return err
 	}
+
 	Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
+
 	return
 }
 

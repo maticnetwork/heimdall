@@ -17,6 +17,7 @@ import (
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context) {
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
+
 	return app, ctx
 }
 

@@ -243,20 +243,6 @@ func RegisterRoutes(ctx client.CLIContext, mux *mux.Router) {
 
 	// register rest routes
 	app.ModuleBasics.RegisterRESTRoutes(ctx, mux)
-
-	// list all paths
-	// rs.Mux.Walk(func(route *mux.Route, router *mux.Router, ancestors []*mux.Route) error {
-	// 	t, err := route.GetPathTemplate()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	r, err := route.GetMethods()
-	// 	if err != nil {
-	// 		return err
-	// 	}
-	// 	fmt.Println(strings.Join(r, ","), t)
-	// 	return nil
-	// })
 }
 
 func registerSwaggerUI(mux *mux.Router) {

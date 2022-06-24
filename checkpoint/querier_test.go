@@ -68,6 +68,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
 	var params types.Params
+
 	defaultParams := types.DefaultParams()
 
 	path := []string{types.QueryParams}
@@ -107,7 +108,6 @@ func (suite *QuerierTestSuite) TestQueryAckCount() {
 
 	actualAckcount, _ := strconv.ParseUint(string(res), 0, 64)
 	require.Equal(t, actualAckcount, ackCount)
-
 }
 
 func (suite *QuerierTestSuite) TestQueryCheckpoint() {
@@ -209,7 +209,6 @@ func (suite *QuerierTestSuite) TestQueryLastNoAck() {
 
 	actualRes, _ := strconv.ParseUint(string(res), 10, 64)
 	require.Equal(t, actualRes, noAck)
-
 }
 
 func (suite *QuerierTestSuite) TestQueryCheckpointList() {

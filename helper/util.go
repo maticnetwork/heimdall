@@ -143,6 +143,7 @@ func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1
 func GetPubObjects(pubkey crypto.PubKey) secp256k1.PubKeySecp256k1 {
 	var pubObject secp256k1.PubKeySecp256k1
 	cdc.MustUnmarshalBinaryBare(pubkey.Bytes(), &pubObject)
+
 	return pubObject
 }
 
@@ -153,6 +154,7 @@ func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
 	if err != nil {
 		return pubkeyBytes, err
 	}
+
 	// copy
 	copy(pubkeyBytes[:], _pubkey)
 
@@ -163,6 +165,7 @@ func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
 func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
 	copy(pubkeyBytes[:], pubKey)
+
 	return pubkeyBytes
 }
 
@@ -183,6 +186,7 @@ func GetVoteSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 	for _, vote := range votes {
 		sigs = append(sigs, vote.Signature...)
 	}
+
 	return
 }
 
@@ -228,7 +232,6 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 						}
 					}
 				}
-				// break
 			}
 		}
 	}
@@ -245,6 +248,7 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 			if err != nil {
 				return nil, err
 			}
+
 			sigs = append(sigs, [3]*big.Int{R, S, V})
 		}
 	}
@@ -395,6 +399,7 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", json)
 
 		buf := bufio.NewReader(os.Stdin)
+
 		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
 		if err != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
@@ -487,6 +492,7 @@ func PrepareTxBuilder(cliCtx context.CLIContext, txBldr authTypes.TxBuilder) (au
 		if txbldrAccNum == 0 {
 			txBldr = txBldr.WithAccountNumber(num)
 		}
+
 		if txbldrAccSeq == 0 {
 			txBldr = txBldr.WithSequence(seq)
 		}
@@ -514,9 +520,7 @@ func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, m
 // SignStdTx appends a signature to a StdTx and returns a copy of it. If appendSig
 // is false, it replaces the signatures already attached with the new signature.
 // Don't perform online validation or lookups if offline is true.
-func SignStdTx(
-	cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool, offline bool,
-) (authTypes.StdTx, error) {
+func SignStdTx(cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool, offline bool) (authTypes.StdTx, error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
 	var signedStdTx authTypes.StdTx
@@ -576,9 +580,11 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 // BroadcastTxBytes sends request to tendermint using CLI
 func BroadcastTxBytes(cliCtx context.CLIContext, txBytes []byte, mode string) (sdk.TxResponse, error) {
 	Logger.Debug("Broadcasting tx bytes to Tendermint", "txBytes", hex.EncodeToString(txBytes), "txHash", hex.EncodeToString(tmTypes.Tx(txBytes).Hash()))
+
 	if mode != "" {
 		cliCtx.BroadcastMode = mode
 	}
+
 	return cliCtx.BroadcastTx(txBytes)
 }
 
@@ -589,7 +595,7 @@ func TendermintTxDecode(txString string) ([]byte, error) {
 		return nil, err
 	}
 
-	return []byte(decodedTx), nil
+	return decodedTx, nil
 }
 
 // GetMerkleProofList return proof array
@@ -597,6 +603,7 @@ func TendermintTxDecode(txString string) ([]byte, error) {
 func GetMerkleProofList(proof *merkle.SimpleProof) [][]byte {
 	result := [][]byte{}
 	computeHashFromAunts(proof.Index, proof.Total, proof.LeafHash, proof.Aunts, &result)
+
 	return result
 }
 
@@ -606,6 +613,7 @@ func AppendBytes(data ...[]byte) []byte {
 	for _, v := range data {
 		result = append(result, v[:]...)
 	}
+
 	return result
 }
 
@@ -616,6 +624,7 @@ func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][
 	if index >= total || index < 0 || total <= 0 {
 		return nil
 	}
+
 	switch total {
 	case 0:
 		panic("Cannot call computeHashFromAunts() with 0 total")
@@ -689,10 +698,12 @@ func getSplitPoint(length int) int {
 	}
 	uLength := uint(length)
 	bitlen := bits.Len(uLength)
+
 	k := 1 << uint(bitlen-1)
 	if k == length {
 		k >>= 1
 	}
+
 	return k
 }
 
@@ -715,19 +726,8 @@ func innerHash(left []byte, right []byte) []byte {
 func ToBytes32(x []byte) [32]byte {
 	var y [32]byte
 	copy(y[:], x)
+
 	return y
-}
-
-// GetReceiptLogData get receipt log data
-func GetReceiptLogData(log *ethTypes.Log) []byte {
-	var result []byte
-	for i, topic := range log.Topics {
-		if i > 0 {
-			result = append(result, topic.Bytes()...)
-		}
-	}
-
-	return append(result, log.Data...)
 }
 
 // GetPowerFromAmount returns power from amount -- note that this will polute amount object
@@ -744,16 +744,8 @@ func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 func GetAmountFromPower(power int64) (*big.Int, error) {
 	pow := big.NewInt(0).SetInt64(power)
 	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
-	return pow.Mul(pow, decimals18), nil
-}
 
-// GetAmountFromString converts string to its big Int
-func GetAmountFromString(amount string) (*big.Int, error) {
-	amountInDecimals, ok := big.NewInt(0).SetString(amount, 10)
-	if !ok {
-		return nil, errors.New("cannot convert string to big int")
-	}
-	return amountInDecimals, nil
+	return pow.Mul(pow, decimals18), nil
 }
 
 // UnpackSigAndVotes Unpacks Sig and Votes from Tx Payload
@@ -770,6 +762,7 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 	sigs = inputDataMap["sigs"].([]byte)
 	checkpointData = inputDataMap["txData"].([]byte)
 	votes = inputDataMap["vote"].([]byte)
+
 	return
 }
 
@@ -780,6 +773,7 @@ func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 			return &event
 		}
 	}
+
 	return nil
 }
 
@@ -787,6 +781,7 @@ func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 func GetHeimdallServerEndpoint(endpoint string) string {
 	u, _ := url.Parse(GetConfig().HeimdallServerURL)
 	u.Path = path.Join(u.Path, endpoint)
+
 	return u.String()
 }
 
@@ -796,6 +791,7 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 	if err != nil {
 		return result, err
 	}
+
 	defer resp.Body.Close()
 
 	// response

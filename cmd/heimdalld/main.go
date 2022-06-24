@@ -91,7 +91,9 @@ type ValidatorAccountFormatter struct {
 // GetSignerInfo returns signer information
 func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAccountFormatter {
 	var privObject secp256k1.PrivKeySecp256k1
+
 	cdc.MustUnmarshalBinaryBare(priv, &privObject)
+
 	return ValidatorAccountFormatter{
 		Address: ethCommon.BytesToAddress(pub.Address().Bytes()).String(),
 		PubKey:  CryptoKeyToPubkey(pub).String(),
@@ -525,6 +527,7 @@ func hostnameOrIP(i int) string {
 // populate persistent peers in config
 func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 	persistentPeers := make([]string, totalValidators())
+
 	for i := 0; i < totalValidators(); i++ {
 		config.SetRoot(nodeDir(i))
 
@@ -592,6 +595,7 @@ func InitializeNodeValidatorFiles(
 	}
 
 	nodeID = string(nodeKey.ID())
+
 	server.UpgradeOldPrivValFile(config)
 
 	pvKeyFile := config.PrivValidatorKeyFile()

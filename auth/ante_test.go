@@ -96,6 +96,7 @@ func (suite *AnteTestSuite) TestGasLimit() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// get params
@@ -133,6 +134,7 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// test good tx from one signer
@@ -149,8 +151,6 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	// test good tx from one signer
 	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0))
 	_, result, _ = checkValidTx(t, anteHandler, ctx, tx, false)
-	// check gas wanted for checkpoint msg
-	// require.Equal(t, uint64(10000000), uint64(result.GasWanted))
 }
 
 func (suite *AnteTestSuite) TestStdTx() {
@@ -243,6 +243,7 @@ func (suite *AnteTestSuite) TestAccountNumbers() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// test good tx from one signer
@@ -279,6 +280,7 @@ func (suite *AnteTestSuite) TestAccountNumbersAtBlockHeightZero() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	msg2 := sdkAuth.NewTestMsg(addr2)
 
@@ -329,6 +331,7 @@ func (suite *AnteTestSuite) TestSequences() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	msg2 := sdkAuth.NewTestMsg(addr2)
 
@@ -371,6 +374,7 @@ func (suite *AnteTestSuite) TestFees() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	acc1 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
 	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0))
@@ -405,6 +409,7 @@ func (suite *AnteTestSuite) TestFees() {
 // run the tx through the anteHandler and ensure its valid
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, sdk.Result, bool) {
 	t.Helper()
+
 	newCtx, result, abort := anteHandler(ctx, tx, simulate)
 	require.Equal(t, "", result.Log)
 	require.False(t, abort)

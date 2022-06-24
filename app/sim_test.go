@@ -42,6 +42,7 @@ func TestFullAppSimulation(t *testing.T) {
 	if skip {
 		t.Skip("skipping application simulation")
 	}
+
 	require.NoError(t, err, "simulation setup failed")
 	require.NotNil(t, db, "DB should not be nil")
 
@@ -153,10 +154,11 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	t.Parallel()
 
 	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	require.NoError(t, err, "simulation setup failed")
+
 	if skip {
 		t.Skip("skipping application simulation after import")
 	}
-	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
 		db.Close()
@@ -208,6 +210,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	newApp.InitChain(abci.RequestInitChain{
 		AppStateBytes: appState,
 	})
+
 	stopEarly, _, err = simulation.SimulateFromSeed(
 		t, os.Stdout, newApp.BaseApp, AppStateFn(app.Codec(), app.SimulationManager()),
 		SimulationOperations(newApp, newApp.Codec(), config),
@@ -252,10 +255,9 @@ func TestAppStateDeterminism(t *testing.T) {
 
 			// app := NewSimApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, interBlockCacheOpt())
 			app := NewHeimdallApp(logger, db, nil)
+
 			err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-			if err != nil {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
 			require.Equal(t, AppName, app.Name())
 
 			fmt.Printf(

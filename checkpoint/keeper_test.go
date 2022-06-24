@@ -111,9 +111,12 @@ func (suite *KeeperTestSuite) TestHasStoreValue() {
 
 func (suite *KeeperTestSuite) TestFlushCheckpointBuffer() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
+
 	keeper := app.CheckpointKeeper
 	key := checkpoint.BufferCheckpointKey
+
 	keeper.FlushCheckpointBuffer(ctx)
+
 	result := keeper.HasStoreValue(ctx, key)
 	require.False(t, result)
 }

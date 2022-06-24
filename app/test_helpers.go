@@ -15,9 +15,11 @@ import (
 func Setup(isCheckTx bool) *HeimdallApp {
 	db := dbm.NewMemDB()
 	app := NewHeimdallApp(log.NewNopLogger(), db)
+
 	if !isCheckTx {
 		// init chain must be called to stop deliverState from being nil
 		genesisState := NewDefaultGenesisState()
+
 		stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 		if err != nil {
 			panic(err)

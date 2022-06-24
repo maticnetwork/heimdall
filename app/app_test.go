@@ -50,6 +50,7 @@ func TestHeimdallAppExportWithRand(t *testing.T) {
 	config, db, dir, logger, _, err := SetupSimulation("goleveldb-app-sim", "Simulation")
 	require.NoError(t, err)
 	require.NotEmpty(t, dir)
+
 	defer func() {
 		db.Close()
 		require.NoError(t, os.RemoveAll(dir))

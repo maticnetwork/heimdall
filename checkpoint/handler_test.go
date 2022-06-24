@@ -90,7 +90,9 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 	dividendAccounts := topupKeeper.GetAllDividendAccounts(ctx)
 	accRootHash, err := types.GetAccountRootHash(dividendAccounts)
 	require.NoError(t, err)
+
 	accountRoot := hmTypes.BytesToHeimdallHash(accRootHash)
+
 	suite.Run("Success", func() {
 		msgCheckpoint := types.NewMsgCheckpointBlock(
 			header.Proposer,
@@ -230,6 +232,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	// generate proposer for validator set
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
+
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
 	if err == nil {
 		start = start + lastCheckpoint.EndBlock + 1
@@ -275,6 +278,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
+
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
 	if err == nil {
 		start = start + lastCheckpoint.EndBlock + 1
@@ -336,6 +340,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 
 	// send ack
 	headerId := uint64(1)
+
 	suite.Run("success", func() {
 		msgCheckpointAck := types.NewMsgCheckpointAck(
 			hmTypes.HexToHeimdallAddress("123"),
@@ -477,6 +482,7 @@ func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.Checkpoint) (res sd
 	dividendAccounts := topupKeeper.GetAllDividendAccounts(ctx)
 	accRootHash, err := types.GetAccountRootHash(dividendAccounts)
 	require.NoError(t, err)
+
 	accountRoot := hmTypes.BytesToHeimdallHash(accRootHash)
 
 	borChainId := "1234"
@@ -497,6 +503,7 @@ func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.Checkpoint) (res sd
 	result := suite.handler(ctx, msgCheckpoint)
 	sideResult := suite.sideHandler(ctx, msgCheckpoint)
 	suite.postHandler(ctx, msgCheckpoint, sideResult.Result)
+
 	return result
 }
 
@@ -507,5 +514,6 @@ func (suite *HandlerTestSuite) SendNoAck() (res sdk.Result) {
 	result := suite.handler(ctx, msgNoAck)
 	sideResult := suite.sideHandler(ctx, msgNoAck)
 	suite.postHandler(ctx, msgNoAck, sideResult.Result)
+
 	return result
 }
