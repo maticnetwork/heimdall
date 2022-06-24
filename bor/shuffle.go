@@ -65,6 +65,7 @@ func innerShuffledIndex(index uint64, indexCount uint64, seed [32]byte, shuffle 
 	buf := make([]byte, totalSize)
 	// Seed is always the first 32 bytes of the hash input, we never have to change this part of the buffer.
 	copy(buf[:32], seed[:])
+
 	for {
 		buf[seedSize] = round
 		hash := sha256Hash(buf[:pivotViewSize])
@@ -169,6 +170,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 	}
 
 	copy(buf[:seedSize], seed[:])
+
 	for {
 		buf[seedSize] = r
 		ph := sha256Hash(buf[:pivotViewSize])
@@ -176,6 +178,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		mirror := (pivot + 1) >> 1
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(pivot>>8))
 		source := sha256Hash(buf)
+
 		byteV := source[(pivot&0xff)>>3]
 		for i, j := uint64(0), pivot; i < mirror; i, j = i+1, j-1 {
 			byteV, source = swapOrNot(buf, byteV, i, input, j, source)
@@ -186,6 +189,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		end := listSize - 1
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(end>>8))
 		source = sha256Hash(buf)
+
 		byteV = source[(end&0xff)>>3]
 		for i, j := pivot+1, end; i < mirror; i, j = i+1, j-1 {
 			byteV, source = swapOrNot(buf, byteV, i, input, j, source)

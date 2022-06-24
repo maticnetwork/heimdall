@@ -30,6 +30,7 @@ func AppStateFn(cdc *codec.Codec, simManager *module.SimulationManager) simtypes
 		}
 
 		chainID = config.ChainID
+
 		switch {
 		case config.ParamsFile != "" && config.GenesisFile != "":
 			panic("cannot provide both a genesis file and a params file")

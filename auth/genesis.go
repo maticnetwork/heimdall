@@ -32,6 +32,7 @@ func ExportGenesis(ctx sdk.Context, ak AccountKeeper) authTypes.GenesisState {
 	params := ak.GetParams(ctx)
 
 	var genAccounts authTypes.GenesisAccounts
+
 	ak.IterateAccounts(ctx, func(acc authTypes.Account) bool {
 		account, err := authTypes.NewGenesisAccountI(acc)
 		if err != nil {

@@ -94,6 +94,7 @@ func binarySearch(array []uint64, search uint64) int {
 	if len(array) == 0 {
 		return -1
 	}
+
 	l := 0
 	r := len(array) - 1
 

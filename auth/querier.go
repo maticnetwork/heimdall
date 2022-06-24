@@ -30,6 +30,7 @@ func queryParams(ctx sdk.Context, req abci.RequestQuery, keeper AccountKeeper) (
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 

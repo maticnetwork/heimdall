@@ -72,6 +72,7 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		page := uint64(1) // default page
+
 		if vars.Get("page") != "" {
 			_page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
 			if !ok {
@@ -82,6 +83,7 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		limit := uint64(50) // default limit
+
 		if vars.Get("limit") != "" {
 			_limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
 			if !ok {
@@ -153,6 +155,7 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
+
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return

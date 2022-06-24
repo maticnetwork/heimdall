@@ -105,6 +105,7 @@ func (keeper Keeper) SetValidators(ctx sdk.Context, height int64, validators []a
 	}
 
 	store.Set(types.ValidatorsKey(height), bz)
+
 	return nil
 }
 

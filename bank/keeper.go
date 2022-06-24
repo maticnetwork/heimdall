@@ -100,7 +100,6 @@ func (keeper Keeper) SetCoins(
 func (keeper Keeper) SubtractCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Coins, sdk.Error) {
-
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}
@@ -182,7 +181,9 @@ func (keeper Keeper) SendCoins(
 // nolint: errcheck
 func (keeper Keeper) GetSendEnabled(ctx sdk.Context) bool {
 	var enabled bool
+
 	keeper.paramSpace.Get(ctx, types.ParamStoreKeySendEnabled, &enabled)
+
 	return enabled
 }
 

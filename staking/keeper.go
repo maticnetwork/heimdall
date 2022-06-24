@@ -97,11 +97,6 @@ func GetStakingSequenceKey(sequence string) []byte {
 
 // AddValidator adds validator indexed with address
 func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) error {
-	// TODO uncomment
-	//if ok:=validator.ValidateBasic(); !ok{
-	//	// return error
-	//}
-
 	store := ctx.KVStore(k.storeKey)
 
 	bz, err := hmTypes.MarshallValidator(k.cdc, validator)
@@ -111,6 +106,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) erro
 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
+
 	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
 	// add validator to validator ID => SignerAddress map

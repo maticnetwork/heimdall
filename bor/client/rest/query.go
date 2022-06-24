@@ -269,13 +269,12 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, validatorSetBytes, "No current validator set found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, validatorSetBytes, "No current validator set found") {
 			return
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		err = json.Unmarshal(validatorSetBytes, &_validatorSet)
-		if err != nil {
+		if err = json.Unmarshal(validatorSetBytes, &_validatorSet); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall JSON").Error())
 			return
 		}

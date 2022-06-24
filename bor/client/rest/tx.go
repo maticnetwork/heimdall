@@ -35,7 +35,6 @@ type ProposeSpanReq struct {
 
 func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		// read req from request
 		var req ProposeSpanReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
@@ -74,11 +73,12 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		var seed common.Hash
-		if err := json.Unmarshal(res, &seed); err != nil {
+		if err = json.Unmarshal(res, &seed); err != nil {
 			return
 		}
 

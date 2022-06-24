@@ -161,6 +161,7 @@ func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTy
 
 	// loop through validators to get valid validators
 	var spans []hmTypes.Span
+
 	for ; iterator.Valid(); iterator.Next() {
 		var span hmTypes.Span
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err == nil {
@@ -176,6 +177,7 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	var lastSpanID uint64
+
 	if store.Has(LastSpanIDKey) {
 		// get last span id
 		var err error

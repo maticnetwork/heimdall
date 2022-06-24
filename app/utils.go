@@ -61,6 +61,7 @@ func SimulationOperations(app App, cdc *codec.Codec, config simTypes.Config) []s
 
 	simState.ParamChanges = app.SimulationManager().GenerateParamChanges(config.Seed)
 	simState.Contents = app.SimulationManager().GetProposalContents(simState)
+
 	return app.SimulationManager().WeightedOperations(simState)
 }
 

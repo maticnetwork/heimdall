@@ -158,11 +158,13 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	}
 
 	logger.Debug("Fetched proposers list", "numberOfProposers", count)
+
 	for _, proposer := range proposers {
 		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
@@ -181,10 +183,12 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 	}
 
 	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.Validators))
+
 	for i, validator := range validatorSet.Validators {
 		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
 			valPosition = i + 1
 			isCurrentValidator = true
+
 			break
 		}
 	}
@@ -208,6 +212,7 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 // IsCurrentProposer checks if we are current proposer
 func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposer hmtypes.Validator
+
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentProposerURL))
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
@@ -242,11 +247,11 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 		return false
 	}
 
-	err = json.Unmarshal(result.Result, &validator)
-	if err != nil {
+	if err = json.Unmarshal(result.Result, &validator); err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
+
 	logger.Debug("Current event sender received", "validator", validator.String())
 
 	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
@@ -266,6 +271,7 @@ func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error
 	}
 
 	urlObj.RawQuery = query.Encode()
+
 	return urlObj.String(), nil
 }
 
@@ -312,21 +318,25 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 	if err != nil {
 		return true
 	}
+
 	return resp.SyncInfo.CatchingUp
 }
 
 // GetAccount returns heimdall auth account
 func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (account authTypes.Account, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
+
 	// call account rest api
 	response, err := helper.FetchFromAPI(cliCtx, url)
 	if err != nil {
 		return
 	}
+
 	if err = cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
 		logger.Error("Error unmarshalling account details", "url", url)
 		return
 	}
+
 	return
 }
 
@@ -543,6 +553,7 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 		if e == nil {
 			return
 		}
+
 		typedEvent = *e
 	default:
 		return

@@ -525,6 +525,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// check if validator is current validator
 	// add to val updates else skip
 	var valUpdates []abci.ValidatorUpdate
+
 	for _, validator := range stakingState.Validators {
 		if validator.IsCurrentValidator(checkpointState.AckCount) {
 			// convert to Validator Update

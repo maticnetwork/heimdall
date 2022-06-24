@@ -110,6 +110,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -150,6 +151,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				RestLogger.Error("Unable to get checkpoint params", "Error", err)
+
 				return
 			}
 
@@ -174,6 +176,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err != nil {
 				RestLogger.Error("Unable to get roothash", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 				return
 			}
 
@@ -188,6 +191,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				if err != nil {
 					hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 					RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
+
 					return
 				}
 			}
@@ -204,6 +208,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err != nil {
 				RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 				return
 			}
 		} else {
@@ -252,6 +257,7 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("Error while sending last ack time").Error())
+
 			return
 		}
 
@@ -297,6 +303,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		//
 
 		var _checkpoint *hmTypes.Checkpoint
+
 		checkpointBufferBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
 		if err == nil {
 			if len(checkpointBufferBytes) != 0 {
@@ -313,6 +320,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		//
 
 		var validatorSet hmTypes.ValidatorSet
+
 		validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 		if err == nil {
 			if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {

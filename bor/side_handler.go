@@ -65,6 +65,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 			"msgSeed", msg.Seed.String(),
 			"mainchainSeed", nextSpanSeed.String(),
 		)
+
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 

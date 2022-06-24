@@ -250,6 +250,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 
 		// match message route
 		msgRoute := msg.Route()
+
 		handler := app.sideRouter.GetRoute(msgRoute)
 		if handler != nil && handler.PostTxHandler != nil && isSideTxMsg {
 			msgResult := handler.PostTxHandler(ctx, msg, sideTxResult)

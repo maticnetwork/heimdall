@@ -91,6 +91,7 @@ func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractC
 	}
 
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for topup msg")
+
 	result.Result = abci.SideTxResultType_Yes
 
 	return

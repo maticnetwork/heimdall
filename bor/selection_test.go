@@ -101,12 +101,14 @@ func TestSelectNextProducers(t *testing.T) {
 
 func getSelectedValidatorsFromIDs(validators []hmTypes.Validator, producerIds []uint64) ([]hmTypes.Validator, int64) {
 	var vals []hmTypes.Validator
+
 	IDToPower := make(map[uint64]uint64)
 	for _, ID := range producerIds {
 		IDToPower[ID] = IDToPower[ID] + 1
 	}
 
 	var slots int64
+
 	for key, value := range IDToPower {
 		if val, ok := findValidatorByID(validators, key); ok {
 			val.VotingPower = int64(value)
@@ -134,6 +136,7 @@ func Test_createWeightedRanges(t *testing.T) {
 	type args struct {
 		vals []uint64
 	}
+
 	tests := []struct {
 		name        string
 		args        args
@@ -162,6 +165,7 @@ func Test_createWeightedRanges(t *testing.T) {
 			totalWeight: 34,
 		},
 	}
+
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			ranges, totalWeight := createWeightedRanges(tt.args.vals)

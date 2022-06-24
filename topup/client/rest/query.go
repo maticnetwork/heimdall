@@ -184,6 +184,7 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching merkle proof", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -224,11 +225,12 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while verifying merkle proof", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		var accountProofStatus bool
-		if err := json.Unmarshal(res, &accountProofStatus); err != nil {
+		if err = json.Unmarshal(res, &accountProofStatus); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

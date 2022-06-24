@@ -19,6 +19,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 			if len(path) == 1 {
 				return queryParams(ctx, nil, req, keeper)
 			}
+
 			return queryParams(ctx, path[1:], req, keeper)
 		case types.QuerySpan:
 			return handleQuerySpan(ctx, req, keeper)
@@ -52,24 +53,28 @@ func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
+
 		return bz, nil
 	case types.ParamSprint:
 		bz, err := json.Marshal(keeper.GetParams(ctx).SprintDuration)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
+
 		return bz, nil
 	case types.ParamProducerCount:
 		bz, err := json.Marshal(keeper.GetParams(ctx).ProducerCount)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
+
 		return bz, nil
 	case types.ParamLastEthBlock:
 		bz, err := json.Marshal(keeper.GetLastEthBlock(ctx))
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
+
 		return bz, nil
 	default:
 		return nil, sdk.ErrUnknownRequest(fmt.Sprintf("%s is not a valid query request path", req.Path))
@@ -130,6 +135,7 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
+
 		return bz, nil
 	}
 
