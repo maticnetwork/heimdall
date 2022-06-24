@@ -148,9 +148,10 @@ issues:
     - path: test\.go
       linters:
         - gosec
-        - unused
-        - deadcode
         - gocritic
+    - path: checkpoint/simulation/header.go
+      linters:
+        - gosec
   max-issues-per-linter: 0
   max-same-issues: 0
   #new: true

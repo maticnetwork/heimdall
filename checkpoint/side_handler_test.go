@@ -8,6 +8,11 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	borCommon "github.com/maticnetwork/bor/common"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -18,11 +23,6 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 // SideHandlerTestSuite integrate test suite context object
@@ -330,7 +330,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -413,7 +413,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	params := keeper.GetParams(ctx)
 	header, _ := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	// generate proposer for validator set
-	LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10)
 	app.StakingKeeper.IncrementAccum(ctx, 1)
 
 	// send ack

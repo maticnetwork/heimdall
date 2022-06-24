@@ -9,27 +9,24 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	ethTypes "github.com/maticnetwork/bor/core/types"
-	errs "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/staking/types"
-	topupTypes "github.com/maticnetwork/heimdall/topup/types"
-
-	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
-	stakingSim "github.com/maticnetwork/heimdall/staking/simulation"
-
-	"github.com/maticnetwork/heimdall/topup"
-
-	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/helper/mocks"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/maticnetwork/heimdall/app"
+	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
+	errs "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/helper/mocks"
+	"github.com/maticnetwork/heimdall/staking"
+	stakingSim "github.com/maticnetwork/heimdall/staking/simulation"
+	"github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/topup"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 type HandlerTestSuite struct {
@@ -112,7 +109,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := suite.app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	// vals := oldValSet.(*Validators)
@@ -163,7 +160,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	chainParams := app.ChainKeeper.GetParams(ctx)
@@ -209,7 +206,7 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	keeper := app.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 

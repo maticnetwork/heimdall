@@ -9,11 +9,10 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
-	"github.com/maticnetwork/heimdall/checkpoint/types"
-	errs "github.com/maticnetwork/heimdall/common"
-
 	"github.com/maticnetwork/heimdall/checkpoint"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
+	"github.com/maticnetwork/heimdall/checkpoint/types"
+	errs "github.com/maticnetwork/heimdall/common"
 
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -73,7 +72,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -228,7 +227,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	require.NoError(t, err)
 
 	// generate proposer for validator set
-	LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
 	if err == nil {
@@ -273,7 +272,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
 	require.NoError(t, err)
 
-	LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
 	if err == nil {
@@ -313,7 +312,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -405,7 +404,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -448,7 +447,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
