@@ -57,7 +57,7 @@ lint:
 ifndef LINT_COMMAND
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 endif
-	golangci-lint run
+	golangci-lint run --config ./.golangci.yml
 
 #
 # docker commands

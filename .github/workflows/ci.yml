@@ -3,13 +3,13 @@ name: CI
 on:
   push:
     branches:
-      - develop
-      - master
-    paths:
-      - '**'
+      - "master"
+      - "qa"
+      - "develop"
   pull_request:
-    paths:
-      - '**'
+    branches:
+      - "**"
+    types: [opened, synchronize, edited]
 
 jobs:
   build:
