@@ -221,7 +221,7 @@ func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
 	keeper := app.StakingKeeper
 
 	// load 4 validators to state
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	initValSet := keeper.GetValidatorSet(ctx)
 
 	currentValSet := initValSet.Copy()
@@ -254,7 +254,7 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 	keeper := app.StakingKeeper
 
 	// load 4 validators to state
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	initValSet := keeper.GetValidatorSet(ctx)
 
 	validators := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
@@ -281,7 +281,7 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	keeper := app.StakingKeeper
 
 	// load 4 validators to state
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	initValSet := keeper.GetValidatorSet(ctx)
 
 	keeper.IncrementAccum(ctx, 2)
@@ -321,7 +321,7 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	validators := keeper.GetCurrentValidators(ctx)
 	activeValidatorInfo, err := keeper.GetActiveValidatorInfo(ctx, validators[0].Signer.Bytes())
 	require.NoError(t, err)
@@ -331,7 +331,7 @@ func (suite *KeeperTestSuite) TestGetCurrentValidators() {
 func (suite *KeeperTestSuite) TestGetCurrentProposer() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	currentValSet := keeper.GetValidatorSet(ctx)
 	currentProposer := keeper.GetCurrentProposer(ctx)
 	require.Equal(t, currentValSet.GetProposer(), currentProposer)
@@ -340,7 +340,7 @@ func (suite *KeeperTestSuite) TestGetCurrentProposer() {
 func (suite *KeeperTestSuite) TestGetNextProposer() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	nextProposer := keeper.GetNextProposer(ctx)
 	require.NotNil(t, nextProposer)
@@ -349,7 +349,7 @@ func (suite *KeeperTestSuite) TestGetNextProposer() {
 func (suite *KeeperTestSuite) TestGetValidatorFromValID() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	validators := keeper.GetCurrentValidators(ctx)
 
 	valInfo, ok := keeper.GetValidatorFromValID(ctx, validators[0].ID)
@@ -360,7 +360,7 @@ func (suite *KeeperTestSuite) TestGetValidatorFromValID() {
 func (suite *KeeperTestSuite) TestGetLastUpdated() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	validators := keeper.GetCurrentValidators(ctx)
 
 	lastUpdated, ok := keeper.GetLastUpdated(ctx, validators[0].ID)
@@ -371,7 +371,7 @@ func (suite *KeeperTestSuite) TestGetLastUpdated() {
 func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 
 	// Test ActCount = 0
 	app.CheckpointKeeper.UpdateACKCountWithValue(ctx, 0)
