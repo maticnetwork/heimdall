@@ -214,16 +214,17 @@ func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		return false, err
 	}
 
-	err = json.Unmarshal(result.Result, &proposer)
-	if err != nil {
+	if err = json.Unmarshal(result.Result, &proposer); err != nil {
 		logger.Error("error unmarshalling validator", "error", err)
 		return false, err
 	}
+
 	logger.Debug("Current proposer fetched", "validator", proposer.String())
 
 	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 		return true, nil
 	}
+
 	logger.Debug("We are not the current proposer")
 
 	return false, nil
@@ -531,6 +532,7 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 	if event == nil {
 		return
 	}
+
 	timeElapsed := time.Since(startTime).Milliseconds()
 	var typedEvent statesender.StatesenderStateSynced
 
@@ -545,6 +547,7 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 	default:
 		return
 	}
+
 	logger.Info("StateSyncedEvent: "+functionName,
 		"stateSyncId", typedEvent.Id,
 		"timeElapsed", timeElapsed)

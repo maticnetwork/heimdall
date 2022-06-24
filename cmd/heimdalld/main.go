@@ -102,6 +102,7 @@ func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAc
 func main() {
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
+
 	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -228,6 +229,7 @@ which accepts a path for the resulting pprof file.
 	)
 
 	cmd.PersistentFlags().String(helper.LogLevel, ctx.Config.LogLevel, "Log level")
+
 	if err := viper.BindPFlag(helper.LogLevel, cmd.PersistentFlags().Lookup(helper.LogLevel)); err != nil {
 		logger.Error("main | BindPFlag | helper.LogLevel", "Error", err)
 	}
@@ -255,6 +257,7 @@ which accepts a path for the resulting pprof file.
 
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
+
 	return cmd
 }
 
@@ -271,6 +274,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		clientHome:  viper.GetString(helper.FlagClientHome),
 		forceInit:   false,
 	}
+
 	err := heimdallInit(ctx, cdc, initConfig, cfg)
 	if err != nil {
 		return err
@@ -280,6 +284,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 	if err != nil {
 		return err
 	}
+
 	traceWriter, err := openTraceWriter(traceWriterFile)
 	if err != nil {
 		return err
@@ -310,7 +315,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 	}
 
 	// start Tendermint node here
-	if err := tmNode.Start(); err != nil {
+	if err = tmNode.Start(); err != nil {
 		return err
 	}
 
@@ -323,7 +328,8 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		}
 
 		ctx.Logger.Info("starting CPU profiler", "profile", cpuProfile)
-		if err := pprof.StartCPUProfile(f); err != nil {
+
+		if err = pprof.StartCPUProfile(f); err != nil {
 			return err
 		}
 
@@ -340,9 +346,11 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 	// start rest
 	if startRestServer {
 		waitForREST := make(chan struct{})
+
 		g.Go(func() error {
 			return restServer.StartRestServer(gCtx, cdc, restServer.RegisterRoutes, waitForREST)
 		})
+
 		// hang here for a while, and wait for REST server to start
 		<-waitForREST
 	}
@@ -386,20 +394,19 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 
 func openDB(rootDir string) (dbm.DB, error) {
 	dataDir := filepath.Join(rootDir, "data")
-	db, err := sdk.NewLevelDB("application", dataDir)
-	return db, err
+	return sdk.NewLevelDB("application", dataDir)
 }
 
-func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
+func openTraceWriter(traceWriterFile string) (io.Writer, error) {
 	if traceWriterFile != "" {
-		w, err = os.OpenFile(
-			traceWriterFile,
-			os.O_WRONLY|os.O_APPEND|os.O_CREATE,
-			0666,
-		)
-		return
+		return nil, nil
 	}
-	return
+
+	return os.OpenFile(
+		traceWriterFile,
+		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+		0666,
+	)
 }
 
 func showAccountCmd() *cobra.Command {

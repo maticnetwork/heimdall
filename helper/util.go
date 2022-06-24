@@ -804,14 +804,17 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		if err != nil {
 			return result, err
 		}
+
 		// unmarshall data from buffer
 		var response rest.ResponseWithHeight
 		if err = cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
 			return result, err
 		}
+
 		return response, nil
 	}
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
+
 	return result, fmt.Errorf("error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }

@@ -255,6 +255,7 @@ func FromBytes8(x []byte) uint64 {
 	if len(x) < 8 {
 		return 0
 	}
+
 	return binary.LittleEndian.Uint64(x)
 }
 
@@ -268,6 +269,7 @@ func sha256Hash(data []byte) [32]byte {
 	if !ok {
 		h = sha256.New()
 	}
+
 	defer sha256Pool.Put(h)
 	h.Reset()
 

@@ -172,8 +172,7 @@ func (keeper Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmTypes
 		heightBytes := iterator.Key()[prefixLength : 8+prefixLength]
 
 		var height uint64
-		buf := bytes.NewBuffer(heightBytes)
-		if err := binary.Read(buf, binary.BigEndian, &height); err != nil {
+		if err := binary.Read(bytes.NewBuffer(heightBytes), binary.BigEndian, &height); err != nil {
 			return
 		}
 
@@ -204,8 +203,7 @@ func (keeper Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(int64, 
 		heightBytes := iterator.Key()[prefixLength : 8+prefixLength]
 
 		var height uint64
-		buf := bytes.NewBuffer(heightBytes)
-		if err := binary.Read(buf, binary.BigEndian, &height); err != nil {
+		if err := binary.Read(bytes.NewBuffer(heightBytes), binary.BigEndian, &height); err != nil {
 			return
 		}
 

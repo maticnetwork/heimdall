@@ -17,10 +17,12 @@ func WriteGenesisFile(chain string, filePath string, cdc *codec.Codec) (bool, er
 	switch chain {
 	case "mumbai", "mainnet":
 		fn := fmt.Sprintf("allocs/%s.json", chain)
+
 		genDoc, err := readPrealloc(fn, cdc)
 		if err == nil {
 			err = genDoc.SaveAs(filePath)
 		}
+
 		return err == nil, err
 	default:
 		return false, nil
@@ -34,10 +36,13 @@ func readPrealloc(filename string, cdc *codec.Codec) (result tmTypes.GenesisDoc,
 		return
 	}
 	defer f.Close()
+
 	buf := bytes.NewBuffer(nil)
+
 	_, err = buf.ReadFrom(f)
 	if err == nil {
 		err = cdc.UnmarshalJSON(buf.Bytes(), &result)
 	}
+
 	return
 }

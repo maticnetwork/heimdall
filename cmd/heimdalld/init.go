@@ -142,6 +142,7 @@ func heimdallInit(ctx *server.Context, cdc *codec.Codec, initConfig *initHeimdal
 	}
 
 	fmt.Fprintf(os.Stderr, "%s\n", string(out))
+
 	return writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON)
 }
 

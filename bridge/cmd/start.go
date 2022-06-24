@@ -33,8 +33,6 @@ const (
 // StartBridgeWithCtx starts bridge service and is able to shutdow gracefully
 // returns service errors, if any
 func StartBridgeWithCtx(shutdownCtx context.Context) error {
-	var logger = helper.Logger.With("module", "bridge/cmd/")
-
 	// create codec
 	cdc := app.MakeCodec()
 	// queue connector & http client
@@ -72,6 +70,7 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 		case <-time.After(waitDuration):
 			if !util.IsCatchingUp(cliCtx) {
 				logger.Info("Node up to date, starting bridge services")
+
 				loop = false
 			} else {
 				logger.Info("Waiting for heimdall to be synced")
@@ -80,10 +79,12 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 	}
 
 	// start services
-	g := new(errgroup.Group)
+	var g errgroup.Group
+
 	for _, service := range services {
 		// loop variable must be captured
 		srv := service
+
 		g.Go(func() error {
 			if err := srv.Start(); err != nil {
 				logger.Error("GetStartCmd | serv.Start", "Error", err)
@@ -131,8 +132,6 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 
 // StartBridge starts bridge service, isStandAlone prevents os.Exit if the bridge started as side service
 func StartBridge(isStandAlone bool) {
-	var logger = helper.Logger.With("module", "bridge/cmd/")
-
 	// create codec
 	cdc := app.MakeCodec()
 	// queue connector & http client
@@ -155,6 +154,7 @@ func StartBridge(isStandAlone bool) {
 	// go routine to catch signal
 	catchSignal := make(chan os.Signal, 1)
 	signal.Notify(catchSignal, os.Interrupt, syscall.SIGTERM)
+
 	go func() {
 		// sig is a ^C, handle it
 		for range catchSignal {
@@ -200,6 +200,7 @@ func StartBridge(isStandAlone bool) {
 		} else {
 			logger.Info("Waiting for heimdall to be synced")
 		}
+
 		time.Sleep(waitDuration)
 	}
 
@@ -211,9 +212,11 @@ func StartBridge(isStandAlone bool) {
 			if err := serv.Start(); err != nil {
 				logger.Error("GetStartCmd | serv.Start", "Error", err)
 			}
+
 			<-serv.Quit()
 		}(service)
 	}
+
 	// wait for all processes
 	wg.Add(len(services))
 	wg.Wait()
@@ -221,7 +224,6 @@ func StartBridge(isStandAlone bool) {
 
 // GetStartCmd returns the start command to start bridge
 func GetStartCmd() *cobra.Command {
-	var logger = helper.Logger.With("module", "bridge/cmd/")
 	startCmd := &cobra.Command{
 		Use:   "start",
 		Short: "Start bridge server",
@@ -231,19 +233,23 @@ func GetStartCmd() *cobra.Command {
 
 	// log level
 	startCmd.Flags().String(helper.LogLevel, "info", "Log level for bridge")
+
 	if err := viper.BindPFlag(helper.LogLevel, startCmd.Flags().Lookup(helper.LogLevel)); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | logLevel", "Error", err)
 	}
 
 	startCmd.Flags().Bool("all", false, "start all bridge services")
+
 	if err := viper.BindPFlag("all", startCmd.Flags().Lookup("all")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | all", "Error", err)
 	}
 
 	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
+
 	if err := viper.BindPFlag("only", startCmd.Flags().Lookup("only")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
 	}
+
 	return startCmd
 }
 

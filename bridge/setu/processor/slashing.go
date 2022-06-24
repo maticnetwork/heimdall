@@ -48,22 +48,26 @@ func (sp *SlashingProcessor) Start() error {
 // RegisterTasks - Registers slashing related tasks with machinery
 func (sp *SlashingProcessor) RegisterTasks() {
 	sp.Logger.Info("Registering slashing related tasks")
+
 	if err := sp.queueConnector.Server.RegisterTask("sendTickToHeimdall", sp.sendTickToHeimdall); err != nil {
 		sp.Logger.Error("Failed to register sendTickToHeimdall task", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendTickToRootchain", sp.sendTickToRootchain); err != nil {
 		sp.Logger.Error("Failed to register sendTickToRootchain task", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendTickAckToHeimdall", sp.sendTickAckToHeimdall); err != nil {
 		sp.Logger.Error("Failed to register sendTickAckToHeimdall task", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendUnjailToHeimdall", sp.sendUnjailToHeimdall); err != nil {
 		sp.Logger.Error("Failed to register sendUnjailToHeimdall task", "error", err)
 	}
 }
 
 // processSlashLimitEvent - processes slash limit event
-func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight int64) (err error) {
+func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight int64) error {
 	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 	var event = sdk.StringEvent{}
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
@@ -101,10 +105,11 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 	)
 
 	// return broadcast to heimdall
-	if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+	if err = sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 		sp.Logger.Error("Error while broadcasting Tick msg to heimdall", "error", err)
 		return err
 	}
+
 	return nil
 }
 

@@ -57,7 +57,7 @@ lint:
 ifndef LINT_COMMAND
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 endif
-	golangci-lint run --timeout 10m --skip-dirs gov --skip-dirs slashing
+	golangci-lint run
 
 #
 # docker commands

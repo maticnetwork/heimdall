@@ -1,9 +1,7 @@
 package listener
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"math/big"
 	"strconv"
 	"time"
@@ -15,8 +13,6 @@ import (
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
-	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -175,9 +171,6 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 		rl.Logger.Debug("New logs found", "numberOfLogs", len(logs))
 	}
 
-	pubkey := helper.GetPubKey()
-	pubkeyBytes := pubkey[1:]
-
 	// Process filtered log
 	for _, vLog := range logs {
 		topic := vLog.Topics[0].Bytes()
@@ -186,104 +179,8 @@ func (rl *RootChainListener) queryAndBroadcastEvents(rootchainContext *RootChain
 			if selectedEvent == nil {
 				continue
 			}
-			rl.handleLog(vLog, selectedEvent, pubkeyBytes)
-		}
-	}
-}
 
-// handleLog handles the given log
-func (rl *RootChainListener) handleLog(vLog types.Log, selectedEvent *abi.Event, pubkeyBytes []byte) {
-	logBytes, _ := json.Marshal(vLog)
-
-	rl.Logger.Debug("ReceivedEvent", "eventname", selectedEvent.Name)
-	switch selectedEvent.Name {
-	case "NewHeaderBlock":
-		if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
-			rl.SendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
-		}
-	case "Staked":
-		event := new(stakinginfo.StakinginfoStaked)
-		if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-			rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-		}
-		if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
-			// topup has to be processed first before validator join. so adding delay.
-			delay := util.TaskDelayBetweenEachVal
-			rl.SendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay, event)
-		} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-			// topup has to be processed first before validator join. so adding delay.
-			delay = delay + util.TaskDelayBetweenEachVal
-			rl.SendTaskWithDelay("sendValidatorJoinToHeimdall", selectedEvent.Name, logBytes, delay, event)
-		}
-
-	case "StakeUpdate":
-		event := new(stakinginfo.StakinginfoStakeUpdate)
-		if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-			rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-		}
-		if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-			rl.SendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, 0, event)
-		} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-			rl.SendTaskWithDelay("sendStakeUpdateToHeimdall", selectedEvent.Name, logBytes, delay, event)
-		}
-
-	case "SignerChange":
-		event := new(stakinginfo.StakinginfoSignerChange)
-		if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-			rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-		}
-		if bytes.Equal(event.SignerPubkey, pubkeyBytes) {
-			rl.SendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0, event)
-		} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-			rl.SendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay, event)
-		}
-
-	case "UnstakeInit":
-		event := new(stakinginfo.StakinginfoUnstakeInit)
-		if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-			rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-		}
-		if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-			rl.SendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, 0, event)
-		} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-			rl.SendTaskWithDelay("sendUnstakeInitToHeimdall", selectedEvent.Name, logBytes, delay, event)
-		}
-
-	case "StateSynced":
-		event := new(statesender.StatesenderStateSynced)
-		if err := helper.UnpackLog(rl.stateSenderAbi, event, selectedEvent.Name, &vLog); err != nil {
-			rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-		}
-		rl.Logger.Info("StateSyncedEvent: detected", "stateSyncId", event.Id)
-		if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-			rl.SendTaskWithDelay("sendStateSyncedToHeimdall", selectedEvent.Name, logBytes, delay, event)
-		}
-
-	case "TopUpFee":
-		event := new(stakinginfo.StakinginfoTopUpFee)
-		if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-			rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-		}
-		if bytes.Equal(event.User.Bytes(), helper.GetAddress()) {
-			rl.SendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, 0, event)
-		} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-			rl.SendTaskWithDelay("sendTopUpFeeToHeimdall", selectedEvent.Name, logBytes, delay, event)
-		}
-
-	case "Slashed":
-		if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
-			rl.SendTaskWithDelay("sendTickAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
-		}
-
-	case "UnJailed":
-		event := new(stakinginfo.StakinginfoUnJailed)
-		if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
-			rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
-		}
-		if util.IsEventSender(rl.cliCtx, event.ValidatorId.Uint64()) {
-			rl.SendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, 0, event)
-		} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
-			rl.SendTaskWithDelay("sendUnjailToHeimdall", selectedEvent.Name, logBytes, delay, event)
+			rl.handleLog(vLog, selectedEvent)
 		}
 	}
 }

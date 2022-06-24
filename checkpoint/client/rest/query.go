@@ -157,6 +157,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err = json.Unmarshal(res, &params); err != nil {
 				RestLogger.Error("Unable to unmarshal params", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 				return
 			}
 
@@ -164,6 +165,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err != nil {
 				RestLogger.Error("Unable to create contract caller", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 				return
 			}
 

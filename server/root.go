@@ -39,6 +39,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	cliCtx := context.NewCLIContext().WithCodec(cdc)
 	router := mux.NewRouter()
 	logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+
 	registerRoutesFn(cliCtx, router)
 
 	// server configuration
@@ -116,7 +117,6 @@ func recoverAndLog(handler http.Handler, logger tmLog.Logger) func(w http.Respon
 			// Without this, Chrome & Firefox were retrying aborted ajax requests,
 			// at least to my localhost.
 			if e := recover(); e != nil {
-
 				// If RPCResponse
 				if res, ok := e.(rpctypes.RPCResponse); ok {
 					rpcserver.WriteRPCResponseHTTP(rww, res)
@@ -130,11 +130,12 @@ func recoverAndLog(handler http.Handler, logger tmLog.Logger) func(w http.Respon
 				}
 			}
 
-			// Finally, log.
 			durationMS := time.Since(begin).Nanoseconds() / 1000000
+
 			if rww.Status == -1 {
 				rww.Status = 200
 			}
+
 			logger.Info("Served RPC HTTP response",
 				"method", r.Method, "url", r.URL,
 				"status", rww.Status, "duration", durationMS,

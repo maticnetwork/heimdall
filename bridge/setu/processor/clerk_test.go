@@ -2,9 +2,10 @@ package processor
 
 import (
 	"bytes"
+	"crypto/rand"
 	"encoding/json"
 	"io/ioutil"
-	"math/rand"
+	"math/big"
 	"net/http"
 	"testing"
 	"time"
@@ -333,7 +334,6 @@ func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
 	b.StopTimer()
 
 	for i := 0; i < b.N; i++ {
-
 		func() {
 			b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
@@ -345,6 +345,7 @@ func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
 			if err != nil {
 				b.Fatal("Error initializing test clerk processor")
 			}
+
 			dlb, err := prepareDummyLogBytes()
 			if err != nil {
 				b.Fatal("Error creating test data")
@@ -352,17 +353,15 @@ func BenchmarkSendStateSyncedToHeimdall(b *testing.B) {
 
 			// when
 			b.StartTimer()
-			err = cp.sendStateSyncedToHeimdall("StateSynced", dlb.String())
-			b.StopTimer()
 
-			// then
-			if err != nil {
+			if err = cp.sendStateSyncedToHeimdall("StateSynced", dlb.String()); err != nil {
 				b.Fatal(err)
 			}
 
+			b.StopTimer()
+
 			b.Log("StateSynced sent to heimdall successfully")
 		}()
-
 	}
 }
 
@@ -372,7 +371,6 @@ func BenchmarkIsOldTx(b *testing.B) {
 	b.StopTimer()
 
 	for i := 0; i < b.N; i++ {
-
 		func() {
 			b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
@@ -387,15 +385,15 @@ func BenchmarkIsOldTx(b *testing.B) {
 
 			// when
 			b.StartTimer()
+
 			status, err := cp.isOldTx(
 				cp.cliCtx, "0x6d428739815d7c84cf89db055158861b089e0fd649676a0243a2a2d204c1d854",
 				0, util.ClerkEvent, nil)
-			b.StopTimer()
-
-			// then
 			if err != nil {
 				b.Fatal(err)
 			}
+
+			b.StopTimer()
 
 			b.Logf("isTxOld tested successfully with result: '%t'", status)
 		}()
@@ -405,7 +403,7 @@ func BenchmarkIsOldTx(b *testing.B) {
 func BenchmarkSendTaskWithDelay(b *testing.B) {
 	ts := make([]time.Duration, 0, b.N)
 	for i := 0; i < b.N; i++ {
-		ts = append(ts, time.Duration(rand.Intn(60)))
+		ts = append(ts, time.Duration(generateRandNumber(60)))
 	}
 
 	b.ReportAllocs()
@@ -413,7 +411,6 @@ func BenchmarkSendTaskWithDelay(b *testing.B) {
 	b.StopTimer()
 
 	for i := 0; i < b.N; i++ {
-
 		func() {
 			b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
@@ -427,10 +424,11 @@ func BenchmarkSendTaskWithDelay(b *testing.B) {
 			}
 
 			rcl, stopFn, err := prepareRootChainListener()
-			defer stopFn()
 			if err != nil {
 				b.Fatal("Error initializing test listener")
 			}
+
+			defer stopFn()
 
 			// when
 			b.StartTimer()
@@ -448,13 +446,11 @@ func BenchmarkSendTaskWithDelay(b *testing.B) {
 }
 
 func BenchmarkCalculateTaskDelay(b *testing.B) {
-
 	b.ReportAllocs()
 	b.ResetTimer()
 	b.StopTimer()
 
 	for i := 0; i < b.N; i++ {
-
 		func() {
 			b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
@@ -469,13 +465,10 @@ func BenchmarkCalculateTaskDelay(b *testing.B) {
 
 			// when
 			b.StartTimer()
-			isCurrentValidator, timeDuration := util.CalculateTaskDelay(cp.cliCtx, nil)
-			b.StopTimer()
 
-			// then
-			if err != nil {
-				b.Fatal(err)
-			}
+			isCurrentValidator, timeDuration := util.CalculateTaskDelay(cp.cliCtx, nil)
+
+			b.StopTimer()
 
 			b.Logf("CalculateTaskDelay tested successfully. Results: isCurrentValidator: '%t', timeDuration: '%s'",
 				isCurrentValidator, timeDuration.String())
@@ -489,7 +482,6 @@ func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
 	b.StopTimer()
 
 	for i := 0; i < b.N; i++ {
-
 		func() {
 			b.Logf("Executing iteration '%d' out of '%d'", i, b.N)
 
@@ -498,10 +490,11 @@ func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
 			defer mockCtrl.Finish()
 
 			_, stopFn, err := prepareRootChainListener()
-			defer stopFn()
 			if err != nil {
 				b.Fatal("Error initializing test listener")
 			}
+
+			defer stopFn()
 
 			// when
 			b.StartTimer()
@@ -512,10 +505,11 @@ func BenchmarkGetUnconfirmedTxnCount(b *testing.B) {
 			b.Logf("GetUnconfirmedTxnCount tested successfully")
 		}()
 	}
-
 }
 
 func prepareMockData(b *testing.B) *gomock.Controller {
+	b.Helper()
+
 	mockCtrl := gomock.NewController(b)
 
 	mockHttpClient := helperMocks.NewMockHTTPClient(mockCtrl)
@@ -551,10 +545,12 @@ func prepareClerkProcessor() (*ClerkProcessor, error) {
 	txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 	txBroadcaster.CliCtx.Simulate = true
 	txBroadcaster.CliCtx.SkipConfirm = true
+
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		return nil, err
 	}
+
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
 	cp.cliCtx.Simulate = true
 	cp.cliCtx.SkipConfirm = true
@@ -589,9 +585,11 @@ func prepareRootChainListener() (*listener.RootChainListener, func(), error) {
 
 	stopFn = func() {
 		rcl.Stop()
+
 		if helper.GetMainClient() != nil {
 			helper.GetMainClient().Close()
 		}
+
 		rcl.BaseListener.Stop()
 	}
 
@@ -615,9 +613,9 @@ func prepareDummyLogBytes() (*bytes.Buffer, error) {
 		Index:       0,
 		Removed:     false,
 	}
+
 	reqBodyBytes := new(bytes.Buffer)
-	err := json.NewEncoder(reqBodyBytes).Encode(log)
-	if err != nil {
+	if err := json.NewEncoder(reqBodyBytes).Encode(log); err != nil {
 		return nil, err
 	}
 
@@ -644,7 +642,7 @@ func prepareResponse(body string) *http.Response {
 }
 
 func getTestServer() (*machinery.Server, error) {
-	server, err := machinery.NewServer(&config.Config{
+	return machinery.NewServer(&config.Config{
 		Broker:        "amqp://guest:guest@localhost:5672/",
 		DefaultQueue:  "machinery_tasks",
 		ResultBackend: "redis://127.0.0.1:6379",
@@ -655,8 +653,13 @@ func getTestServer() (*machinery.Server, error) {
 			PrefetchCount: 1,
 		},
 	})
+}
+
+func generateRandNumber(max int64) uint64 {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(max))
 	if err != nil {
-		return nil, err
+		return 1
 	}
-	return server, nil
+
+	return nBig.Uint64()
 }
