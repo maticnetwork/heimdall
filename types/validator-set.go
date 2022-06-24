@@ -208,10 +208,12 @@ func validatorListCopy(valsList []*Validator) []*Validator {
 	if valsList == nil {
 		return nil
 	}
+
 	valsCopy := make([]*Validator, len(valsList))
 	for i, val := range valsList {
 		valsCopy[i] = val.Copy()
 	}
+
 	return valsCopy
 }
 
@@ -230,6 +232,7 @@ func (vals *ValidatorSet) HasAddress(address []byte) bool {
 	idx := sort.Search(len(vals.Validators), func(i int) bool {
 		return bytes.Compare(address, vals.Validators[i].Signer.Bytes()) <= 0
 	})
+
 	return idx < len(vals.Validators) && bytes.Equal(vals.Validators[idx].Signer.Bytes(), address)
 }
 
@@ -267,7 +270,6 @@ func (vals *ValidatorSet) Size() int {
 
 // Force recalculation of the set's total voting power.
 func (vals *ValidatorSet) updateTotalVotingPower() {
-
 	sum := int64(0)
 	for _, val := range vals.Validators {
 		// mind overflow
@@ -302,8 +304,8 @@ func (vals *ValidatorSet) GetProposer() (proposer *Validator) {
 
 	if vals.Proposer == nil {
 		vals.Proposer = vals.findProposer()
-
 	}
+
 	return vals.Proposer.Copy()
 }
 
@@ -324,10 +326,12 @@ func (vals *ValidatorSet) Hash() []byte {
 	if len(vals.Validators) == 0 {
 		return nil
 	}
+
 	bzs := make([][]byte, len(vals.Validators))
 	for i, val := range vals.Validators {
 		bzs[i] = val.Bytes()
 	}
+
 	return merkle.SimpleHashFromByteSlices(bzs)
 }
 
@@ -363,22 +367,27 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 			err = fmt.Errorf("duplicate entry %v in %v", valUpdate, changes)
 			return nil, nil, err
 		}
+
 		if valUpdate.VotingPower < 0 {
 			err = fmt.Errorf("voting power can't be negative: %v", valUpdate)
 			return nil, nil, err
 		}
+
 		if valUpdate.VotingPower > MaxTotalVotingPower {
 			err = fmt.Errorf("to prevent clipping/ overflow, voting power can't be higher than %v: %v ",
 				MaxTotalVotingPower, valUpdate)
 			return nil, nil, err
 		}
+
 		if valUpdate.VotingPower == 0 {
 			removals = append(removals, valUpdate)
 		} else {
 			updates = append(updates, valUpdate)
 		}
+
 		prevAddr = valUpdate.Signer
 	}
+
 	return updates, removals, err
 }
 
@@ -394,7 +403,6 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 // by processChanges for duplicates and invalid values.
 // No changes are made to the validator set 'vals'.
 func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVotingPower int64, numNewValidators int, err error) {
-
 	updatedTotalVotingPower = vals.TotalVotingPower()
 
 	for _, valUpdate := range updates {
@@ -426,7 +434,6 @@ func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVoting
 // 'updates' parameter must be a list of unique validators to be added or updated.
 // No changes are made to the validator set 'vals'.
 func computeNewPriorities(updates []*Validator, vals *ValidatorSet, updatedTotalVotingPower int64) {
-
 	for _, valUpdate := range updates {
 		address := valUpdate.Signer.Bytes()
 		_, val := vals.GetByAddress(address)
@@ -444,7 +451,6 @@ func computeNewPriorities(updates []*Validator, vals *ValidatorSet, updatedTotal
 			valUpdate.ProposerPriority = val.ProposerPriority
 		}
 	}
-
 }
 
 // Merges the vals' validator list with the updates list.
@@ -452,7 +458,6 @@ func computeNewPriorities(updates []*Validator, vals *ValidatorSet, updatedTotal
 // Expects updates to be a list of updates sorted by address with no duplicates or errors,
 // must have been validated with verifyUpdates() and priorities computed with computeNewPriorities().
 func (vals *ValidatorSet) applyUpdates(updates []*Validator) {
-
 	existing := vals.Validators
 	merged := make([]*Validator, len(existing)+len(updates))
 	i := 0
@@ -498,16 +503,17 @@ func verifyRemovals(deletes []*Validator, vals *ValidatorSet) error {
 			return fmt.Errorf("failed to find validator %X to remove", address)
 		}
 	}
+
 	if len(deletes) > len(vals.Validators) {
 		panic("more deletes than validators")
 	}
+
 	return nil
 }
 
 // Removes the validators specified in 'deletes' from validator set 'vals'.
 // Should not fail as verification has been done before.
 func (vals *ValidatorSet) applyRemovals(deletes []*Validator) {
-
 	existing := vals.Validators
 
 	merged := make([]*Validator, len(existing)-len(deletes))
@@ -538,7 +544,6 @@ func (vals *ValidatorSet) applyRemovals(deletes []*Validator) {
 // are not allowed and will trigger an error if present in 'changes'.
 // The 'allowDeletes' flag is set to false by NewValidatorSet() and to true by UpdateWithChangeSet().
 func (vals *ValidatorSet) updateWithChangeSet(changes []*Validator, allowDeletes bool) error {
-
 	if len(changes) == 0 {
 		return nil
 	}
@@ -554,7 +559,7 @@ func (vals *ValidatorSet) updateWithChangeSet(changes []*Validator, allowDeletes
 	}
 
 	// Verify that applying the 'deletes' against 'vals' will not result in error.
-	if err := verifyRemovals(deletes, vals); err != nil {
+	if err = verifyRemovals(deletes, vals); err != nil {
 		return err
 	}
 
@@ -612,11 +617,13 @@ func (vals *ValidatorSet) StringIndented(indent string) string {
 	if vals == nil {
 		return "nil-ValidatorSet"
 	}
+
 	var valStrings []string
 	vals.Iterate(func(index int, val *Validator) bool {
 		valStrings = append(valStrings, val.String())
 		return false
 	})
+
 	return fmt.Sprintf(`ValidatorSet{
 %s  Proposer: %v
 %s  Validators:
@@ -658,6 +665,7 @@ func safeAdd(a, b int64) (int64, bool) {
 	} else if b < 0 && a < math.MinInt64-b {
 		return -1, true
 	}
+
 	return a + b, false
 }
 
@@ -667,6 +675,7 @@ func safeSub(a, b int64) (int64, bool) {
 	} else if b < 0 && a > math.MaxInt64+b {
 		return -1, true
 	}
+
 	return a - b, false
 }
 
@@ -678,6 +687,7 @@ func safeAddClip(a, b int64) int64 {
 		}
 		return math.MaxInt64
 	}
+
 	return c
 }
 
@@ -689,5 +699,6 @@ func safeSubClip(a, b int64) int64 {
 		}
 		return math.MaxInt64
 	}
+
 	return c
 }
