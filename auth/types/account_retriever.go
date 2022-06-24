@@ -3,8 +3,6 @@ package types
 import (
 	"fmt"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -21,10 +19,6 @@ type NodeQuerier interface {
 	QueryWithData(path string, data []byte) ([]byte, int64, error)
 }
 
-func init() {
-	NQuerier = &cliContext.CLIContext{}
-}
-
 // AccountRetriever defines the properties of a type that can be used to
 // retrieve accounts.
 type AccountRetriever struct {
@@ -33,6 +27,7 @@ type AccountRetriever struct {
 
 // NewAccountRetriever initialises a new AccountRetriever instance.
 func NewAccountRetriever(querier NodeQuerier) AccountRetriever {
+	NQuerier = querier
 	return AccountRetriever{querier: querier}
 }
 
