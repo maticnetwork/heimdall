@@ -138,11 +138,11 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	}
 
 	// init proposers
-	var proposers []hmTypes.Validator
+	proposers := make([]hmTypes.Validator, times)
 
 	// get proposers
 	for index := 0; index < times; index++ {
-		proposers = append(proposers, *(validatorSet.GetProposer()))
+		proposers[index] = *(validatorSet.GetProposer())
 		validatorSet.IncrementProposerPriority(1)
 	}
 

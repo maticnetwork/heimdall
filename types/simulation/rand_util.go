@@ -120,7 +120,7 @@ func DeriveRand(r *rand.Rand) *rand.Rand {
 		ms[i] = rand.NewSource(r.Int63())
 	}
 
-	return rand.New(ms)
+	return rand.New(ms) //nolint
 }
 
 // RandHex generates random hex string of given length

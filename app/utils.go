@@ -80,7 +80,7 @@ func CheckExportSimulation(app App, config simTypes.Config, params simTypes.Para
 			return err
 		}
 
-		if err = ioutil.WriteFile(config.ExportStatePath, []byte(appState), 0644); err != nil {
+		if err = ioutil.WriteFile(config.ExportStatePath, appState, 0644); err != nil { //nolint
 			return err
 		}
 	}
@@ -93,7 +93,7 @@ func CheckExportSimulation(app App, config simTypes.Config, params simTypes.Para
 			return err
 		}
 
-		if err = ioutil.WriteFile(config.ExportParamsPath, paramsBz, 0644); err != nil {
+		if err = ioutil.WriteFile(config.ExportParamsPath, paramsBz, 0644); err != nil { //nolint
 			return err
 		}
 	}

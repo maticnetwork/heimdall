@@ -25,7 +25,7 @@ func TestPermCheck(t *testing.T) {
 			filePath:  "/tmp/heimdall_test/test.json",
 			perm:      0777,
 			validPerm: 0600,
-			expErr:    types.ErrInvalidPermissions{File: "/tmp/heimdall_test/test.json", Perm: 0600},
+			expErr:    types.InvalidPermissionsError{File: "/tmp/heimdall_test/test.json", Perm: 0600},
 			msg:       "test for invalid permission",
 		},
 		{

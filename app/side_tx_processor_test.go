@@ -522,10 +522,11 @@ func registerTestCodec(cdc *codec.Codec) {
 const (
 	routeMsgCounter     = "msgCounter"
 	routeMsgSideCounter = "msgSideCounter"
+	routeMsgType        = "counter1"
 )
 
 // ValidateBasic() fails on negative counters.
-// Otherwise it's up to the handlers
+// Otherwise, it's up to the handlers
 type msgCounter struct {
 	Counter       int64
 	FailOnHandler bool
@@ -533,7 +534,7 @@ type msgCounter struct {
 
 // Implements Msg
 func (msg msgCounter) Route() string                { return routeMsgCounter }
-func (msg msgCounter) Type() string                 { return "counter1" }
+func (msg msgCounter) Type() string                 { return routeMsgType }
 func (msg msgCounter) GetSignBytes() []byte         { return nil }
 func (msg msgCounter) GetSigners() []sdk.AccAddress { return nil }
 func (msg msgCounter) ValidateBasic() sdk.Error {

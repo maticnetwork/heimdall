@@ -70,7 +70,7 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
 	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, nil, "clerk", cp)
 
-	for index, tx := range testData {
+	for index, tx := range testData { //nolint
 		index := index
 		tx := tx
 

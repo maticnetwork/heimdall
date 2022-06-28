@@ -42,12 +42,14 @@ func SimulateFromSeed(
 	appStateFn simulation.AppStateFn, ops WeightedOperations,
 	blackListedAccs map[string]bool, config simulation.Config,
 ) (stopEarly bool, exportedParams Params, err error) {
+	tb.Helper()
+
 	// in case we have to end early, don't os.Exit so that we can run cleanup code.
 	testingMode, _, b := getTestingMode(tb)
 
 	fmt.Fprintf(w, "Starting SimulateFromSeed with randomness created with seed %d\n", int(config.Seed))
 
-	r := rand.New(rand.NewSource(config.Seed))
+	r := rand.New(rand.NewSource(config.Seed)) //nolint
 	params := RandomParams(r)
 
 	fmt.Fprintf(w, "Randomized simulation params: \n%s\n", mustMarshalJSONIndent(params))

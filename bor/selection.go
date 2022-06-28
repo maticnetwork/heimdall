@@ -118,11 +118,11 @@ func randomRangeInclusive(min uint64, max uint64) uint64 {
 
 	rangeLength := max - min + 1
 	maxAllowedValue := math.MaxUint64 - math.MaxUint64%rangeLength - 1
-	randomValue := rand.Uint64()
+	randomValue := rand.Uint64() //nolint
 
 	// reject anything that is beyond the reminder to avoid bias
 	for randomValue >= maxAllowedValue {
-		randomValue = rand.Uint64()
+		randomValue = rand.Uint64() //nolint
 	}
 
 	return min + randomValue%rangeLength

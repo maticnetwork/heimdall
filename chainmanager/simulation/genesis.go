@@ -19,16 +19,16 @@ const (
 	MaticchainTxConfirmations = "maticchain_tx_confirmations"
 
 	BorChainID            = "bor_chain_id"
-	MaticTokenAddress     = "matic_token_address"
-	StakingManagerAddress = "staking_manager_address"
-	SlashManagerAddress   = "slash_manager_address"
-	RootChainAddress      = "root_chain_address"
-	StakingInfoAddress    = "staking_info_address"
-	StateSenderAddress    = "state_sender_address"
+	MaticTokenAddress     = "matic_token_address"     //nolint
+	StakingManagerAddress = "staking_manager_address" //nolint
+	SlashManagerAddress   = "slash_manager_address"   //nolint
+	RootChainAddress      = "root_chain_address"      //nolint
+	StakingInfoAddress    = "staking_info_address"    //nolint
+	StateSenderAddress    = "state_sender_address"    //nolint
 
 	// Bor Chain Contracts
-	StateReceiverAddress = "state_receiver_address"
-	ValidatorSetAddress  = "validator_set_address"
+	StateReceiverAddress = "state_receiver_address" //nolint
+	ValidatorSetAddress  = "validator_set_address"  //nolint
 )
 
 func GenMainchainTxConfirmations(r *rand.Rand) uint64 {

@@ -28,15 +28,15 @@ linters:
     - durationcheck
     - errchkjson
     - errname
-    - exhaustive
+    # - exhaustive
     - exportloopref
-    - gocognit
+    # - gocognit
     - gofmt
     # - gomnd
     #- gomoddirectives
     - gosec
     - makezero
-    - nestif
+    #- nestif
     - nilerr
     - nilnil
     - noctx
@@ -153,6 +153,9 @@ issues:
     - path: checkpoint/simulation/header.go
       linters:
         - gosec
+    - path: simulation/simulate.go
+      linters:
+        - prealloc
   max-issues-per-linter: 0
   max-same-issues: 0
   #new: true

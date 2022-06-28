@@ -19,7 +19,7 @@ func InitGenesis(ctx sdk.Context, ak AccountKeeper, processors []authTypes.Accou
 
 		// execute account processors
 		for _, p := range processors {
-			acc = p(&gacc, d)
+			acc = p(&gacc, d) //nolint
 		}
 
 		acc = ak.NewAccount(ctx, acc)

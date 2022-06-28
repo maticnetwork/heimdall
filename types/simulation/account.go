@@ -92,7 +92,7 @@ func RandomFees(r *rand.Rand, ctx sdk.Context, spendableCoins sdk.Coins) (sdk.Co
 // RandomFeeCoins returns random fee coins
 func RandomFeeCoins() sdk.Coins {
 	base, _ := big.NewInt(0).SetString("1000000000000000000", 10)
-	amt := big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(rand.Intn(1000000))), base)
+	amt := big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(rand.Intn(1000000))), base) //nolint
 
 	return sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(amt)}}
 }
