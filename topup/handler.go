@@ -34,7 +34,7 @@ func HandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCalle
 		"User", msg.User,
 		"Fee", msg.Fee,
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 

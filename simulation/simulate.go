@@ -340,7 +340,9 @@ func runQueuedOperations(tb testing.TB, queueOps map[int][]simulation.Operation,
 			tb.FailNow()
 		}
 	}
+
 	delete(queueOps, height)
+
 	return numOpsRan
 }
 

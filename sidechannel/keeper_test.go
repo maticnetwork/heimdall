@@ -146,8 +146,10 @@ func (suite *KeeperTestSuite) TestTx() {
 func (suite *KeeperTestSuite) TestValidators() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	var height1 int64 = 10
-	var height2 int64 = 24
+	var (
+		height1 int64 = 10
+		height2 int64 = 24
+	)
 
 	validators := make([]abci.Validator, 10)
 	for i := 0; i < 10; i++ {

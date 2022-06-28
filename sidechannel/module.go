@@ -53,6 +53,7 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 			return err
 		}
 	}
+
 	return types.ValidateGenesis(data)
 }
 

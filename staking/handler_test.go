@@ -142,6 +142,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	result := suite.handler(ctx, msg)
 
 	require.True(t, result.IsOK(), "expected validator update to be ok, got %v", result)
+
 	newValidators := keeper.GetCurrentValidators(ctx)
 	require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 
@@ -235,6 +236,7 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 
 	got := suite.handler(ctx, msg)
 	require.True(t, got.IsOK(), "expected validator stake update to be ok, got %v", got)
+
 	updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 	require.Empty(t, err, "unable to fetch validator info %v-", err)
 	require.NotEqual(t, stakinginfoStakeUpdate.NewAmount.Int64(), updatedVal.VotingPower, "Validator VotingPower should not be updated to %v", stakinginfoStakeUpdate.NewAmount.Uint64())

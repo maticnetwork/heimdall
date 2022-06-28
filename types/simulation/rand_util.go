@@ -84,6 +84,7 @@ func RandSubsetCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
 	}
 
 	subset := sdk.Coins{sdk.NewCoin(coin.Denom, amt)}
+
 	for i, c := range coins {
 		// skip denom that we already chose earlier
 		if i == denomIdx {
@@ -137,6 +138,7 @@ func (ms multiSource) Int63() (r int64) {
 	for _, source := range ms {
 		r ^= source.Int63()
 	}
+
 	return r
 }
 

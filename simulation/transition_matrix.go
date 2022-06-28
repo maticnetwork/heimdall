@@ -49,8 +49,10 @@ func (t TransitionMatrix) NextState(r *rand.Rand, i int) int {
 		if randNum < t.weights[row][i] {
 			return row
 		}
+
 		randNum -= t.weights[row][i]
 	}
+
 	// This line should never get executed
 	return -1
 }
@@ -60,9 +62,11 @@ func (t TransitionMatrix) NextState(r *rand.Rand, i int) int {
 func GetMemberOfInitialState(r *rand.Rand, weights []int) int {
 	n := len(weights)
 	total := 0
+
 	for i := 0; i < n; i++ {
 		total += weights[i]
 	}
+
 	randNum := r.Intn(total)
 
 	for state := 0; state < n; state++ {

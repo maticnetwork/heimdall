@@ -40,8 +40,10 @@ func TestUnpackSigAndVotes(t *testing.T) {
 		require.Empty(t, err, "Error while recovering pubkey from signature. voteSignBytes = %v, Signature=%v ", voteSignBytes, hex.EncodeToString(inputSigs[i:i+signatureLen]))
 		pKey := types.NewPubKey(pubKey)
 		signerAddress := pKey.Address().Bytes()
+
 		t.Log("Pubkey Recovered", hex.EncodeToString(pubKey))
 		t.Log("Signer Address", hex.EncodeToString(signerAddress))
+
 		require.Equal(t, signerAddresses[i], hex.EncodeToString(signerAddress), "Signer Address Doesn't match")
 	}
 }

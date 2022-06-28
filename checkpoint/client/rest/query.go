@@ -188,6 +188,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			//
 
 			var validatorSet hmTypes.ValidatorSet
+
 			validatorSetBytes, height, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 			if err == nil {
 				if err = json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {

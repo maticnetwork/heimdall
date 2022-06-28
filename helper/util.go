@@ -144,6 +144,7 @@ func GetPubObjects(pubkey crypto.PubKey) secp256k1.PubKeySecp256k1 {
 // GetVoteSigs returns sigs bytes from vote
 func GetVoteSigs(unFilteredVotes []*tmTypes.CommitSig) (sigs []byte) {
 	votes := make([]*tmTypes.CommitSig, 0)
+
 	for _, item := range unFilteredVotes {
 		if item != nil {
 			votes = append(votes, item)
@@ -179,9 +180,11 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 	}
 
 	// draft signed data
-	signedData := sideTxResultWithData.GetBytes()
+	var (
+		signedData = sideTxResultWithData.GetBytes()
+		sideTxSigs = make([]*sideTxSig, 0)
+	)
 
-	sideTxSigs := make([]*sideTxSig, 0)
 	for _, vote := range unFilteredVotes {
 		if vote != nil {
 			// iterate through all side-tx results

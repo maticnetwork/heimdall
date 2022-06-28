@@ -50,6 +50,7 @@ func newMockValidators(r *rand.Rand, abciVals []abci.ValidatorUpdate, params Par
 func (vals mockValidators) getKeys() []string {
 	keys := make([]string, len(vals))
 	i := 0
+
 	for key := range vals {
 		keys[i] = key
 		i++
@@ -128,6 +129,7 @@ func RandomRequestBeginBlock(r *rand.Rand, params Params,
 	}
 
 	voteInfos := make([]abci.VoteInfo, len(validators))
+
 	for i, key := range validators.getKeys() {
 		mVal := validators[key]
 		mVal.livenessState = params.LivenessTransitionMatrix().NextState(r, mVal.livenessState)
@@ -175,6 +177,7 @@ func RandomRequestBeginBlock(r *rand.Rand, params Params,
 
 	// TODO: Determine capacity before allocation
 	evidence := make([]abci.Evidence, 0)
+
 	for r.Float64() < params.EvidenceFraction() {
 		height := header.Height
 		time := header.Time

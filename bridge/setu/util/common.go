@@ -113,8 +113,10 @@ func Logger() log.Logger {
 
 // IsProposer  checks if we are proposer
 func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
-	var proposers []hmtypes.Validator
-	count := uint64(1)
+	var (
+		proposers []hmtypes.Validator
+		count     = uint64(1)
+	)
 
 	result, err := helper.FetchFromAPI(cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
@@ -546,8 +548,10 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 		return
 	}
 
-	timeElapsed := time.Since(startTime).Milliseconds()
-	var typedEvent statesender.StatesenderStateSynced
+	var (
+		typedEvent  statesender.StatesenderStateSynced
+		timeElapsed = time.Since(startTime).Milliseconds()
+	)
 
 	switch e := event.(type) {
 	case statesender.StatesenderStateSynced:

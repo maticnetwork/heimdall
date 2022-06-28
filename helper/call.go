@@ -467,8 +467,8 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash, requiredConfirmations uin
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmations uint64) (*ethTypes.Receipt, error) {
 	var receipt *ethTypes.Receipt
-	receiptCache, ok := c.ReceiptCache.Get(tx.String())
 
+	receiptCache, ok := c.ReceiptCache.Get(tx.String())
 	if !ok {
 		var err error
 
@@ -699,9 +699,11 @@ func (c *ContractCaller) DecodeSlashedEvent(contractAddress common.Address, rece
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "Slashed", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}

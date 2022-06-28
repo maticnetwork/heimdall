@@ -109,8 +109,8 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
 			accounts[i].Address,
 		)
-		err := app.StakingKeeper.AddValidator(ctx, *validators[i])
-		if err != nil {
+
+		if err := app.StakingKeeper.AddValidator(ctx, *validators[i]); err != nil {
 			t.Error("Error while adding validator to store", err)
 		}
 	}
@@ -195,6 +195,7 @@ func (suite *KeeperTestSuite) TestCurrentValidator() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
 	stakingKeeper, checkpointKeeper := app.StakingKeeper, app.CheckpointKeeper
+
 	for i, item := range dataItems {
 		suite.Run(item.name, func() {
 			// Create a Validator [startEpoch, endEpoch, VotingPower]
@@ -296,6 +297,7 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	initValSet := keeper.GetValidatorSet(ctx)
 
 	keeper.IncrementAccum(ctx, 2)
+
 	prevValSet := initValSet.Copy()
 	currentValSet := keeper.GetValidatorSet(ctx)
 

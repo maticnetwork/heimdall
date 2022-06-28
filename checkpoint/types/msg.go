@@ -202,7 +202,6 @@ func NewMsgCheckpointAck(
 	txHash types.HeimdallHash,
 	logIndex uint64,
 ) MsgCheckpointAck {
-
 	return MsgCheckpointAck{
 		From:       from,
 		Number:     number,

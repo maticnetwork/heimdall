@@ -50,6 +50,7 @@ func GenBorChainId(r *rand.Rand) string {
 
 func RandomizedGenState(simState *module.SimulationState) {
 	var mainchainTxConfirmations uint64
+
 	simState.AppParams.GetOrGenerate(simState.Cdc, MainchainTxConfirmations, &mainchainTxConfirmations, simState.Rand,
 		func(r *rand.Rand) { mainchainTxConfirmations = GenMainchainTxConfirmations(r) },
 	)

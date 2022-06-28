@@ -46,18 +46,17 @@ func (lw *StandardLogWriter) PrintLogs() {
 }
 
 func createLogFile() *os.File {
-	var f *os.File
 	fileName := fmt.Sprintf("%s.log", time.Now().Format("2006-01-02_15:04:05"))
 
 	folderPath := os.ExpandEnv("$HOME/.simapp/simulations")
 	filePath := path.Join(folderPath, fileName)
 
-	err := os.MkdirAll(folderPath, os.ModePerm)
-	if err != nil {
+	if err := os.MkdirAll(folderPath, os.ModePerm); err != nil {
 		panic(err)
 	}
 
-	f, _ = os.Create(filePath)
+	f, _ := os.Create(filePath)
+
 	fmt.Printf("Logs to writing to %s\n", filePath)
 
 	return f

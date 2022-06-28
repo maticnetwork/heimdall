@@ -80,11 +80,11 @@ func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error
 
 		// if --signature-only is on, then override --append
 		var newTx types.StdTx
+
 		generateSignatureOnly := viper.GetBool(flagSigOnly)
-
 		appendSig := viper.GetBool(flagAppend) && !generateSignatureOnly
-		newTx, err = helper.SignStdTx(cliCtx, stdTx, appendSig, offline)
 
+		newTx, err = helper.SignStdTx(cliCtx, stdTx, appendSig, offline)
 		if err != nil {
 			return err
 		}

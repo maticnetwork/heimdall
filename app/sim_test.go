@@ -205,6 +205,7 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	newApp := NewHeimdallApp(logger, newDB)
+
 	require.Equal(t, AppName, app.Name())
 
 	newApp.InitChain(abci.RequestInitChain{

@@ -31,6 +31,7 @@ func TestCheckpointsigs(t *testing.T) {
 
 	txHashStr := "0x9c2a9e20e1fecdae538f72b01dd0fd5008cc90176fd603b92b59274d754cbbd8"
 	txHash := common.HexToHash(txHashStr)
+
 	voteSignBytes, sigs, txData, err := contractCallerObj.GetCheckpointSign(txHash)
 	if err != nil {
 		fmt.Println("Error fetching checkpoint tx input args")
