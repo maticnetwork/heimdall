@@ -291,6 +291,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 
 	nextID := fromID
 	toTimeObj := time.Unix(toTime, 0)
+
 	for nextID-fromID < limit {
 		if found, ok := rangeMapping[nextID]; ok {
 			result = append(result, found)

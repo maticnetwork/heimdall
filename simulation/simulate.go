@@ -22,7 +22,6 @@ func initChain(
 	r *rand.Rand, params Params, accounts []simulation.Account, app *baseapp.BaseApp,
 	appStateFn simulation.AppStateFn, config simulation.Config,
 ) (mockValidators, time.Time, []simulation.Account, string) {
-
 	appState, accounts, chainID, genesisTimestamp := appStateFn(r, accounts, config)
 
 	req := abci.RequestInitChain{
@@ -43,13 +42,14 @@ func SimulateFromSeed(
 	appStateFn simulation.AppStateFn, ops WeightedOperations,
 	blackListedAccs map[string]bool, config simulation.Config,
 ) (stopEarly bool, exportedParams Params, err error) {
-
 	// in case we have to end early, don't os.Exit so that we can run cleanup code.
 	testingMode, _, b := getTestingMode(tb)
+
 	fmt.Fprintf(w, "Starting SimulateFromSeed with randomness created with seed %d\n", int(config.Seed))
 
 	r := rand.New(rand.NewSource(config.Seed))
 	params := RandomParams(r)
+
 	fmt.Fprintf(w, "Randomized simulation params: \n%s\n", mustMarshalJSONIndent(params))
 
 	timeDiff := maxTimePerBlock - minTimePerBlock
@@ -72,6 +72,7 @@ func SimulateFromSeed(
 
 	// remove module account address if they exist in accs
 	var tmpAccs []simulation.Account
+
 	for _, acc := range accs {
 		if !blackListedAccs[acc.Address.String()] {
 			tmpAccs = append(tmpAccs, acc)
@@ -93,6 +94,7 @@ func SimulateFromSeed(
 	// Setup code to catch SIGTERM's
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, os.Interrupt, syscall.SIGTERM, syscall.SIGINT)
+
 	go func() {
 		receivedSignal := <-c
 		fmt.Fprintf(w, "\nExiting early due to %s, on block %d, operation %d\n", receivedSignal, header.Height, opCount)
@@ -100,8 +102,10 @@ func SimulateFromSeed(
 		stopEarly = true
 	}()
 
-	var pastTimes []time.Time
-	var pastVoteInfos [][]abci.VoteInfo
+	var (
+		pastTimes     []time.Time
+		pastVoteInfos [][]abci.VoteInfo
+	)
 
 	request := RandomRequestBeginBlock(r, params,
 		validators, pastTimes, pastVoteInfos, eventStats.Tally, header)
@@ -136,7 +140,6 @@ func SimulateFromSeed(
 
 	// TODO: split up the contents of this for loop into new functions
 	for height := config.InitialBlockHeight; height < config.NumBlocks+config.InitialBlockHeight && !stopEarly; height++ {
-
 		// Log the header time for future lookup
 		pastTimes = append(pastTimes, header.Time)
 		pastVoteInfos = append(pastVoteInfos, request.LastCommitInfo.Votes)
@@ -170,6 +173,7 @@ func SimulateFromSeed(
 		header.Time = header.Time.Add(
 			time.Duration(int64(r.Intn(int(timeDiff)))) * time.Second)
 		header.ProposerAddress = validators.randomProposer(r)
+
 		logWriter.AddEntry(EndBlockEntry(int64(height)))
 
 		if config.Commit {
@@ -178,7 +182,9 @@ func SimulateFromSeed(
 
 		if header.ProposerAddress == nil {
 			fmt.Fprintf(w, "\nSimulation stopped early as all validators have been unbonded; nobody left to propose a block!\n")
+
 			stopEarly = true
+
 			break
 		}
 
@@ -246,7 +252,6 @@ func createBlockSimulator(tb testing.TB, testingMode bool, w io.Writer, params P
 	return func(
 		r *rand.Rand, app *baseapp.BaseApp, ctx sdk.Context, accounts []simulation.Account, header abci.Header,
 	) (opCount int) {
-
 		_, _ = fmt.Fprintf(
 			w, "\rSimulating... block %d/%d, operation %d/%d.",
 			header.Height, config.NumBlocks, opCount, blocksize,
@@ -310,22 +315,26 @@ func runQueuedOperations(tb testing.TB, queueOps map[int][]simulation.Operation,
 	ctx sdk.Context, accounts []simulation.Account, logWriter LogWriter,
 	event func(route, op, evResult string), lean bool, chainID string) (numOpsRan int) {
 	tb.Helper()
+
 	queuedOp, ok := queueOps[height]
+
 	if !ok {
 		return 0
 	}
 
 	numOpsRan = len(queuedOp)
-	for i := 0; i < numOpsRan; i++ {
 
+	for i := 0; i < numOpsRan; i++ {
 		// For now, queued operations cannot queue more operations.
 		// If a need arises for us to support queued messages to queue more messages, this can
 		// be changed.
 		opMsg, _, err := queuedOp[i](r, app, ctx, accounts, chainID)
 		opMsg.LogEvent(event)
+
 		if !lean || opMsg.OK {
 			logWriter.AddEntry((QueuedMsgEntry(int64(height), opMsg)))
 		}
+
 		if err != nil {
 			logWriter.PrintLogs()
 			tb.FailNow()
@@ -341,17 +350,20 @@ func runQueuedTimeOperations(tb testing.TB, queueOps []simulation.FutureOperatio
 	logWriter LogWriter, event func(route, op, evResult string),
 	lean bool, chainID string) (numOpsRan int) {
 	tb.Helper()
-	numOpsRan = 0
-	for len(queueOps) > 0 && currentTime.After(queueOps[0].BlockTime) {
 
+	numOpsRan = 0
+
+	for len(queueOps) > 0 && currentTime.After(queueOps[0].BlockTime) {
 		// For now, queued operations cannot queue more operations.
 		// If a need arises for us to support queued messages to queue more messages, this can
 		// be changed.
 		opMsg, _, err := queueOps[0].Op(r, app, ctx, accounts, chainID)
 		opMsg.LogEvent(event)
+
 		if !lean || opMsg.OK {
 			logWriter.AddEntry(QueuedMsgEntry(int64(height), opMsg))
 		}
+
 		if err != nil {
 			logWriter.PrintLogs()
 			tb.FailNow()
@@ -360,5 +372,6 @@ func runQueuedTimeOperations(tb testing.TB, queueOps []simulation.FutureOperatio
 		queueOps = queueOps[1:]
 		numOpsRan++
 	}
+
 	return numOpsRan
 }

@@ -13,8 +13,10 @@ import (
 // RandomPastCommits returns random past commits value
 func RandomPastCommits(r *rand.Rand, n int, txsN int, validatorsN int) []types.PastCommit {
 	result := make([]types.PastCommit, n)
+
 	for i := 0; i < n; i++ {
 		txs := make([]tmTypes.Tx, txsN)
+
 		for j := 0; j < txsN; j++ {
 			s := fmt.Sprintf("test-transaction %v", j)
 			txs[j] = []byte(s)

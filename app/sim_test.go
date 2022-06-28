@@ -15,7 +15,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/maticnetwork/heimdall/app/helpers"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	paramTypes "github.com/maticnetwork/heimdall/params/types"
@@ -78,6 +77,7 @@ func TestAppImportExport(t *testing.T) {
 	if skip {
 		t.Skip("skipping application import/export simulation")
 	}
+
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
@@ -234,7 +234,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	config.ExportParamsPath = ""
 	config.OnOperation = false
 	config.AllInvariants = false
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	numSeeds := 3
 	numTimesToRunPerSeed := 5

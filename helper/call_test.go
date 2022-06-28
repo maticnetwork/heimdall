@@ -12,12 +12,15 @@ import (
 	"github.com/spf13/viper"
 )
 
+const (
+	testTendermintNode = "tcp://localhost:26657"
+)
+
 //  Test - to decode signers from checkpoint sigs data
 func TestCheckpointsigs(t *testing.T) {
 	t.Parallel()
 
-	tendermintNode := "tcp://localhost:26657"
-	viper.Set(TendermintNodeFlag, tendermintNode)
+	viper.Set(TendermintNodeFlag, testTendermintNode)
 	viper.Set("log_level", "info")
 	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 
@@ -52,7 +55,7 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 	for i := 0; i < len(sigInput); i += sigLength {
 		signature := sigInput[i : i+sigLength]
 
-		pKey, err := authTypes.RecoverPubkey(voteBytes, []byte(signature))
+		pKey, err := authTypes.RecoverPubkey(voteBytes, signature)
 		if err != nil {
 			fmt.Println("Error Recovering PubKey", "Error", err)
 			return nil, err

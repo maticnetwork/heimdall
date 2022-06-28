@@ -127,7 +127,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		}
 
 		// return broadcast to heimdall
-		if err := cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		if err = cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			cp.Logger.Error("Error while broadcasting clerk Record to heimdall", "error", err)
 			return err
 		}

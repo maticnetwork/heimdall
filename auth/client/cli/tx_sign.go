@@ -60,6 +60,7 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 		if err := cmd.MarkFlagRequired(client.FlagAccountNumber); err != nil {
 			logger.Error("preSignCmd | MarkFlagRequired | FlagAccountNumber", "Error", err)
 		}
+
 		if err := cmd.MarkFlagRequired(client.FlagSequence); err != nil {
 			logger.Error("preSignCmd | MarkFlagRequired | FlagSequence", "Error", err)
 		}
@@ -69,6 +70,7 @@ func preSignCmd(cmd *cobra.Command, _ []string) {
 func makeSignCmd(cdc *amino.Codec) func(cmd *cobra.Command, args []string) error {
 	return func(cmd *cobra.Command, args []string) (err error) {
 		cliCtx := context.NewCLIContext().WithCodec(cdc)
+
 		stdTx, err := helper.ReadStdTxFromFile(cliCtx.Codec, args[0])
 		if err != nil {
 			return err

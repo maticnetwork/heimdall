@@ -73,7 +73,6 @@ func NewBaseReq(
 	from, memo, chainID string, gas, gasAdjustment string, accNumber, seq uint64,
 	fees sdk.Coins, gasPrices sdk.DecCoins, simulate bool,
 ) BaseReq {
-
 	return BaseReq{
 		From:          strings.TrimSpace(from),
 		Memo:          strings.TrimSpace(memo),
@@ -167,6 +166,7 @@ func WriteErrorResponse(w http.ResponseWriter, status int, err string) {
 // response for transactions simulations.
 func WriteSimulationResponse(w http.ResponseWriter, cdc *codec.Codec, gas uint64) {
 	gasEst := GasEstimateResponse{GasEstimate: gas}
+
 	resp, err := cdc.MarshalJSON(gasEst)
 	if err != nil {
 		WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -243,13 +243,14 @@ func PostProcessResponse(w http.ResponseWriter, cliCtx context.CLIContext, resp 
 // default limit can be provided.
 func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, page, limit int, err error) {
 	tags = make([]string, 0, len(r.Form))
+
 	for key, values := range r.Form {
 		if key == "page" || key == "limit" {
 			continue
 		}
+
 		var value string
-		value, err = url.QueryUnescape(values[0])
-		if err != nil {
+		if value, err = url.QueryUnescape(values[0]); err != nil {
 			return tags, page, limit, err
 		}
 
@@ -259,6 +260,7 @@ func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, p
 		} else {
 			tag = fmt.Sprintf("%s='%s'", key, value)
 		}
+
 		tags = append(tags, tag)
 	}
 

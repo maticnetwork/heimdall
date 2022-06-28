@@ -31,6 +31,7 @@ type mockValidators map[string]mockValidator
 // get mockValidators from abci validators
 func newMockValidators(r *rand.Rand, abciVals []abci.ValidatorUpdate, params Params) mockValidators {
 	validators := make(mockValidators)
+
 	for _, validator := range abciVals {
 		str := fmt.Sprintf("%v", validator.PubKey)
 		liveliness := GetMemberOfInitialState(r,
@@ -53,7 +54,9 @@ func (vals mockValidators) getKeys() []string {
 		keys[i] = key
 		i++
 	}
+
 	sort.Strings(keys)
+
 	return keys
 }
 
@@ -65,12 +68,15 @@ func (vals mockValidators) randomProposer(r *rand.Rand) types.HexBytes {
 	if len(keys) == 0 {
 		return nil
 	}
+
 	key := keys[r.Intn(len(keys))]
 	proposer := vals[key].val
+
 	pk, err := tmtypes.PB2TM.PubKey(proposer.PubKey)
 	if err != nil {
 		panic(err)
 	}
+
 	return pk.Address().Bytes()
 }
 
@@ -80,6 +86,7 @@ func updateValidators(tb testing.TB, r *rand.Rand, params Params,
 	current map[string]mockValidator, updates []abci.ValidatorUpdate,
 	event func(route, op, evResult string)) map[string]mockValidator {
 	tb.Helper()
+
 	for _, update := range updates {
 		str := fmt.Sprintf("%v", update.PubKey)
 
@@ -87,9 +94,9 @@ func updateValidators(tb testing.TB, r *rand.Rand, params Params,
 			if _, ok := current[str]; !ok {
 				tb.Fatalf("tried to delete a nonexistent validator")
 			}
+
 			event("end_block", "validator_updates", "kicked")
 			delete(current, str)
-
 		} else if mVal, ok := current[str]; ok {
 			// validator already exists
 			mVal.val = update
@@ -114,7 +121,6 @@ func RandomRequestBeginBlock(r *rand.Rand, params Params,
 	validators mockValidators, pastTimes []time.Time,
 	pastVoteInfos [][]abci.VoteInfo,
 	event func(route, op, evResult string), header abci.Header) abci.RequestBeginBlock {
-
 	if len(validators) == 0 {
 		return abci.RequestBeginBlock{
 			Header: header,
@@ -147,6 +153,7 @@ func RandomRequestBeginBlock(r *rand.Rand, params Params,
 		if err != nil {
 			panic(err)
 		}
+
 		voteInfos[i] = abci.VoteInfo{
 			Validator: abci.Validator{
 				Address: pubkey.Address(),
@@ -169,7 +176,6 @@ func RandomRequestBeginBlock(r *rand.Rand, params Params,
 	// TODO: Determine capacity before allocation
 	evidence := make([]abci.Evidence, 0)
 	for r.Float64() < params.EvidenceFraction() {
-
 		height := header.Height
 		time := header.Time
 		vals := voteInfos
@@ -180,6 +186,7 @@ func RandomRequestBeginBlock(r *rand.Rand, params Params,
 			time = pastTimes[height-1]
 			vals = pastVoteInfos[height-1]
 		}
+
 		validator := vals[r.Intn(len(vals))].Validator
 
 		var totalVotingPower int64
@@ -196,6 +203,7 @@ func RandomRequestBeginBlock(r *rand.Rand, params Params,
 				TotalVotingPower: totalVotingPower,
 			},
 		)
+
 		event("begin_block", "evidence", "ok")
 	}
 

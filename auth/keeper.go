@@ -69,6 +69,7 @@ func (ak AccountKeeper) NewAccount(ctx sdk.Context, acc types.Account) types.Acc
 	if err := acc.SetAccountNumber(ak.GetNextAccountNumber(ctx)); err != nil {
 		panic(err)
 	}
+
 	return acc
 }
 
@@ -236,5 +237,6 @@ func (ak AccountKeeper) decodeAccount(bz []byte) (acc types.Account) {
 	if err != nil {
 		panic(err)
 	}
+
 	return
 }

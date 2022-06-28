@@ -13,6 +13,7 @@ import (
 
 func TestDefaultGenesisState(t *testing.T) {
 	t.Parallel()
+
 	genesis := types.DefaultGenesisState()
 	require.NotNil(t, genesis, "DefaultGenesisState should not return nil response")
 	require.Equal(t, 0, len(genesis.PastCommits), "DefaultGenesisState should have no pre-commits")
@@ -20,6 +21,7 @@ func TestDefaultGenesisState(t *testing.T) {
 
 func TestNewGenesisState(t *testing.T) {
 	t.Parallel()
+
 	genesis := types.NewGenesisState([]types.PastCommit{{Height: 2}})
 	require.NotNil(t, genesis, "NewGenesisState should not return nil response")
 	require.Equal(t, 1, len(genesis.PastCommits), "NewGenesisState should create proper pastcommits")

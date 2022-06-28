@@ -14,6 +14,7 @@ func (e ErrInvalidPermissions) detailed() (valid bool) {
 	if e.File != "" && e.Perm != 0 {
 		valid = true
 	}
+
 	return
 }
 

@@ -63,7 +63,6 @@ func fetchNextSpanSeedHandlerFn(
 
 		// return result
 		rest.PostProcessResponse(w, cliCtx, res)
-
 	}
 }
 

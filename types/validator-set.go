@@ -84,6 +84,7 @@ func (vals *ValidatorSet) IncrementProposerPriority(times int) {
 	if vals.IsNilOrEmpty() {
 		panic("empty validator set")
 	}
+
 	if times <= 0 {
 		panic("Cannot call IncrementProposerPriority with non-positive times")
 	}
@@ -120,6 +121,7 @@ func (vals *ValidatorSet) RescalePriorities(diffMax int64) {
 	// NOTE: This may make debugging priority issues easier as well.
 	diff := computeMaxMinPriorityDiff(vals)
 	ratio := (diff + diffMax - 1) / diffMax
+
 	if diff > diffMax {
 		for _, val := range vals.Validators {
 			val.ProposerPriority /= ratio
@@ -167,10 +169,12 @@ func computeMaxMinPriorityDiff(vals *ValidatorSet) int64 {
 
 	max := int64(math.MinInt64)
 	min := int64(math.MaxInt64)
+
 	for _, v := range vals.Validators {
 		if v.ProposerPriority < min {
 			min = v.ProposerPriority
 		}
+
 		if v.ProposerPriority > max {
 			max = v.ProposerPriority
 		}
@@ -197,7 +201,9 @@ func (vals *ValidatorSet) shiftByAvgProposerPriority() {
 	if vals.IsNilOrEmpty() {
 		panic("empty validator set")
 	}
+
 	avgProposerPriority := vals.computeAvgProposerPriority()
+
 	for _, val := range vals.Validators {
 		val.ProposerPriority = safeSubClip(val.ProposerPriority, avgProposerPriority)
 	}
@@ -359,7 +365,10 @@ func processChanges(origChanges []*Validator) (updates, removals []*Validator, e
 
 	removals = make([]*Validator, 0, len(changes))
 	updates = make([]*Validator, 0, len(changes))
-	var prevAddr HeimdallAddress
+
+	var (
+		prevAddr HeimdallAddress
+	)
 
 	// Scan changes by address and append valid validators to updates or removals lists.
 	for _, valUpdate := range changes {
@@ -407,6 +416,7 @@ func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVoting
 
 	for _, valUpdate := range updates {
 		address := valUpdate.Signer.Bytes()
+
 		_, val := vals.GetByAddress(address)
 		if val == nil {
 			// New validator, add its voting power the the total.
@@ -416,11 +426,13 @@ func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVoting
 			// Updated validator, add the difference in power to the total.
 			updatedTotalVotingPower += valUpdate.VotingPower - val.VotingPower
 		}
+
 		overflow := updatedTotalVotingPower > MaxTotalVotingPower
 		if overflow {
 			err = fmt.Errorf(
 				"failed to add/update validator %v, total voting power would exceed the max allowed %v",
 				valUpdate, MaxTotalVotingPower)
+
 			return 0, 0, err
 		}
 	}
@@ -436,6 +448,7 @@ func verifyUpdates(updates []*Validator, vals *ValidatorSet) (updatedTotalVoting
 func computeNewPriorities(updates []*Validator, vals *ValidatorSet, updatedTotalVotingPower int64) {
 	for _, valUpdate := range updates {
 		address := valUpdate.Signer.Bytes()
+
 		_, val := vals.GetByAddress(address)
 		if val == nil {
 			// add val
@@ -498,6 +511,7 @@ func (vals *ValidatorSet) applyUpdates(updates []*Validator) {
 func verifyRemovals(deletes []*Validator, vals *ValidatorSet) error {
 	for _, valUpdate := range deletes {
 		address := valUpdate.Signer
+
 		_, val := vals.GetByAddress(address.Bytes())
 		if val == nil {
 			return fmt.Errorf("failed to find validator %X to remove", address)
@@ -527,6 +541,7 @@ func (vals *ValidatorSet) applyRemovals(deletes []*Validator) {
 			merged[i] = existing[0]
 			i++
 		}
+
 		existing = existing[1:]
 	}
 
@@ -619,6 +634,7 @@ func (vals *ValidatorSet) StringIndented(indent string) string {
 	}
 
 	var valStrings []string
+
 	vals.Iterate(func(index int, val *Validator) bool {
 		valStrings = append(valStrings, val.String())
 		return false
@@ -633,7 +649,6 @@ func (vals *ValidatorSet) StringIndented(indent string) string {
 		indent,
 		indent, strings.Join(valStrings, "\n"+indent+"    "),
 		indent)
-
 }
 
 //-------------------------------------
@@ -685,6 +700,7 @@ func safeAddClip(a, b int64) int64 {
 		if b < 0 {
 			return math.MinInt64
 		}
+
 		return math.MaxInt64
 	}
 
@@ -697,6 +713,7 @@ func safeSubClip(a, b int64) int64 {
 		if b > 0 {
 			return math.MinInt64
 		}
+
 		return math.MaxInt64
 	}
 

@@ -430,8 +430,10 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	// set time lastCheckpoint timestamp + checkpointBufferTime
 	newTime := lastCheckpoint.TimeStamp + uint64(checkpointBufferTime)
 	suite.ctx = ctx.WithBlockTime(time.Unix(0, int64(newTime)))
+
 	result := suite.SendNoAck()
 	require.True(t, result.IsOK(), "expected send-NoAck to be ok, got %v", got)
+
 	ackCount := keeper.GetACKCount(ctx)
 	require.Equal(t, uint64(0), ackCount, "Should not update state")
 }

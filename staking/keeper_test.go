@@ -33,6 +33,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func TestKeeperTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(KeeperTestSuite))
 }
 
@@ -123,6 +125,7 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 	newPrivKey := secp256k1.GenPrivKey()
 	newPubKey := types.NewPubKey(newPrivKey.PubKey().Bytes())
 	newSigner := types.HexToHeimdallAddress(newPubKey.Address().String())
+
 	err = app.StakingKeeper.UpdateSigner(ctx, newSigner, newPubKey, valInfo.Signer)
 	if err != nil {
 		t.Error("Error while updating Signer Address -", err)
@@ -133,6 +136,7 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 	if err != nil {
 		t.Error("Error while fetching Validator Info for Prev Signer - ", err)
 	}
+
 	require.Equal(t, int64(0), prevSginerValInfo.VotingPower, "VotingPower of Prev Signer should be zero")
 
 	// Check Validator Info of Updated Signer
@@ -140,6 +144,7 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 	if err != nil {
 		t.Error("Error while fetching Validator Info for Updater Signer", err)
 	}
+
 	require.Equal(t, validators[0].VotingPower, updatedSignerValInfo.VotingPower, "VotingPower of updated signer should match with prev signer VotingPower")
 
 	// Check If ValidatorId is mapped To Updated Signer
@@ -147,6 +152,7 @@ func (suite *KeeperTestSuite) TestUpdateSigner() {
 	if !isMapped {
 		t.Error("Validator Id is not mapped to Signer Address", err)
 	}
+
 	require.Equal(t, newSigner, types.HexToHeimdallAddress(signerAddress.Hex()), "Validator ID should be mapped to Updated Signer Address")
 
 	// Check total Validators
@@ -245,7 +251,6 @@ func (suite *KeeperTestSuite) TestRemoveValidatorSetChange() {
 			require.Fail(t, "Validator is not removed from updatedvalidator set")
 		}
 	}
-
 }
 
 func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
@@ -271,10 +276,16 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 	require.NoError(t, err)
 	require.Equal(t, len(prevValSet.Validators)+1, len(currentValSet.Validators), "Number of validators should be increased by 1")
 	require.Equal(t, true, currentValSet.HasAddress(valToBeAdded.Signer.Bytes()), "New Validator should be added")
-	require.Equal(t, prevValSet.TotalVotingPower()+int64(valToBeAdded.VotingPower), currentValSet.TotalVotingPower(), "Total VotingPower should be increased")
-
+	require.Equal(t, prevValSet.TotalVotingPower()+valToBeAdded.VotingPower, currentValSet.TotalVotingPower(), "Total VotingPower should be increased")
 }
 
+/* Validator Set changes When
+	1. When ackCount changes
+	2. When new validator joins
+	3. When validator updates stake
+	4. When signer is updatedctx
+	5. When Validator Exits
+**/
 func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	// create sub test to check if validator remove
 	t, app, ctx := suite.T(), suite.app, suite.ctx
@@ -308,14 +319,6 @@ func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	require.Equal(t, newSigner[0].PubKey, newVal.PubKey, "Signer pubkey should change")
 
 	require.Equal(t, prevValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total VotingPower should not change")
-
-	/* Validator Set changes When
-		1. When ackCount changes
-		2. When new validator joins
-		3. When validator updates stake
-		4. When signer is updatedctx
-		5. When Validator Exits
-	**/
 }
 
 func (suite *KeeperTestSuite) TestGetCurrentValidators() {

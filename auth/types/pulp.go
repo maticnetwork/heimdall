@@ -5,7 +5,6 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/bor/crypto"
@@ -20,24 +19,6 @@ const (
 // Pulp codec for RLP
 type Pulp struct {
 	typeInfos map[string]reflect.Type
-}
-
-var once sync.Once
-var pulp *Pulp
-
-// GetPulpInstance gets new pulp codec
-func GetPulpInstance() *Pulp {
-	once.Do(func() {
-		pulp = NewPulp()
-	})
-	return pulp
-}
-
-// NewPulp creates new pulp codec
-func NewPulp() *Pulp {
-	p := &Pulp{}
-	p.typeInfos = make(map[string]reflect.Type)
-	return p
 }
 
 // GetPulpHash returns string hash
@@ -55,12 +36,14 @@ func (p *Pulp) RegisterConcrete(msg sdk.Msg) {
 // GetMsgTxInstance get new instance associated with base tx
 func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 	rtype := p.typeInfos[hex.EncodeToString(hash[:PulpHashLength])]
+
 	return reflect.New(rtype).Elem().Interface().(sdk.Msg)
 }
 
 // EncodeToBytes encodes msg to bytes
 func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
 	msg := tx.GetMsgs()[0]
+
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err

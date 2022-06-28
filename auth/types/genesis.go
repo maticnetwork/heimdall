@@ -76,8 +76,8 @@ func SanitizeGenesisAccounts(genAccs GenesisAccounts) GenesisAccounts {
 // ValidateGenAccounts validates an array of GenesisAccounts and checks for duplicates
 func ValidateGenAccounts(accounts GenesisAccounts) error {
 	addrMap := make(map[string]bool, len(accounts))
-	for _, acc := range accounts {
 
+	for _, acc := range accounts {
 		// check for duplicated accounts
 		addrStr := acc.Address.String()
 		if _, ok := addrMap[addrStr]; ok {

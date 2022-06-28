@@ -50,6 +50,7 @@ func (s Subspace) WithKeyTable(table KeyTable) Subspace {
 	if table.m == nil {
 		panic("SetKeyTable() called with nil KeyTable")
 	}
+
 	if len(s.table.m) != 0 {
 		panic("SetKeyTable() called on already initialized Subspace")
 	}
@@ -94,6 +95,7 @@ func (s Subspace) Get(ctx sdk.Context, key []byte, ptr interface{}) {
 // GetIfExists do not modify ptr if the stored parameter is nil
 func (s Subspace) GetIfExists(ctx sdk.Context, key []byte, ptr interface{}) {
 	store := s.kvStore(ctx)
+
 	bz := store.Get(key)
 	if bz == nil {
 		return
@@ -129,6 +131,7 @@ func (s Subspace) checkType(store sdk.KVStore, key []byte, param interface{}) {
 	}
 
 	ty := attr.ty
+
 	pty := reflect.TypeOf(param)
 	if pty.Kind() == reflect.Ptr {
 		pty = pty.Elem()

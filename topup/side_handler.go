@@ -49,7 +49,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 func SideHandleMsgTopup(ctx sdk.Context, k Keeper, msg types.MsgTopup, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for topup msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 

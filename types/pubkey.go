@@ -23,7 +23,9 @@ var ZeroPubKey = PubKey{}
 // NewPubKey from byte array
 func NewPubKey(data []byte) PubKey {
 	var key PubKey
+
 	copy(key[:], data[:])
+
 	return key
 }
 
@@ -55,7 +57,9 @@ func (a PubKey) Address() common.Address {
 // CryptoPubKey returns crypto pub key for tendermint
 func (a PubKey) CryptoPubKey() crypto.PubKey {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
+
 	copy(pubkeyBytes[:], a[:])
+
 	return pubkeyBytes
 }
 
@@ -89,12 +93,12 @@ func (a PubKey) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (a *PubKey) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
-	if err != nil {
+	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	copy(a[:], common.FromHex(s))
+
 	return nil
 }
 

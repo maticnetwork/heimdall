@@ -46,6 +46,7 @@ func TxsStoreKey(height int64) []byte {
 	result := []byte{}
 	result = append(result, TxsKeyPrefix...)
 	result = append(result, b...)
+
 	return result
 }
 

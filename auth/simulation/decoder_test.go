@@ -23,6 +23,7 @@ func makeTestCodec() (cdc *codec.Codec) {
 	sdk.RegisterCodec(cdc)
 	codec.RegisterCrypto(cdc)
 	types.RegisterCodec(cdc)
+
 	return
 }
 
@@ -48,7 +49,6 @@ func TestDecodeStore(t *testing.T) {
 	}
 
 	for i, tt := range tests {
-		i, tt := i, tt
 		t.Run(tt.name, func(t *testing.T) {
 			switch i {
 			case len(tests) - 1:

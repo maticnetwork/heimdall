@@ -38,6 +38,7 @@ func isAlphaNumeric(key []byte) bool {
 			return false
 		}
 	}
+
 	return true
 }
 

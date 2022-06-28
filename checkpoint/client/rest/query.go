@@ -39,7 +39,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/checkpoints/list", checkpointListhandlerFn(cliCtx)).Methods("GET")
 
 	r.HandleFunc("/checkpoints/{number}", checkpointByNumberHandlerFunc(cliCtx)).Methods("GET")
-
 }
 
 // HTTP request handler to query the auth params values
@@ -51,6 +50,7 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
+
 		res, height, err := cliCtx.QueryWithData(route, nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -89,6 +89,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		RestLogger.Debug("Fetching number of checkpoints from state")
+
 		ackCountBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -129,9 +130,11 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// Get params
 		params := r.URL.Query()
 
-		var result []byte
-		var height int64
-		var validatorSetBytes []byte
+		var (
+			result            []byte
+			height            int64
+			validatorSetBytes []byte
+		)
 
 		// get start and start
 		if params.Get("start") != "" && params.Get("end") != "" {
@@ -172,7 +175,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 
 			// get headers
-			roothash, err := contractCallerObj.GetRootHash(uint64(start), uint64(end), params.MaxCheckpointLength)
+			roothash, err := contractCallerObj.GetRootHash(start, end, params.MaxCheckpointLength)
 			if err != nil {
 				RestLogger.Error("Unable to get roothash", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -187,8 +190,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			var validatorSet hmTypes.ValidatorSet
 			validatorSetBytes, height, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 			if err == nil {
-				err := json.Unmarshal(validatorSetBytes, &validatorSet)
-				if err != nil {
+				if err = json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 					hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 					RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
 
@@ -287,11 +289,12 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		//
 
 		var ackCountInt uint64
+
 		ackCountBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 		if err == nil {
 			// check content
-			if ok := hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found"); ok {
-				if err := json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
+			if hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found") {
+				if err = json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing no-ack count", "error", err)
 				}
@@ -449,9 +452,10 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found") {
 			return
 		}
+
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, resWithID)
 	}

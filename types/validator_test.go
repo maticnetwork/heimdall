@@ -19,10 +19,8 @@ type valInput struct {
 }
 
 func TestNewValidator(t *testing.T) {
-
 	// valCase created so as to pass it to assertPanics func,
 	// ideally would like to get rid of this and pass the function directly
-
 	tc := []struct {
 		in  valInput
 		out *Validator
@@ -137,6 +135,7 @@ func TestValidateBasic(t *testing.T) {
 			msg: "Valid basic validator test",
 		},
 	}
+
 	for _, c := range tc {
 		out := c.in.ValidateBasic()
 		assert.Equal(t, c.out, out, c.msg)

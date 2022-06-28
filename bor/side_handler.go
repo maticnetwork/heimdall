@@ -96,6 +96,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 	}
 
 	k.Logger(ctx).Debug("✅ Succesfully validated External call for span msg")
+
 	result.Result = abci.SideTxResultType_Yes
 
 	return

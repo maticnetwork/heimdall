@@ -123,11 +123,11 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.Checkpoint, error) {
 	store := ctx.KVStore(k.storeKey)
 	checkpointKey := GetCheckpointKey(number)
+
 	var _checkpoint hmTypes.Checkpoint
 
 	if store.Has(checkpointKey) {
-		err := k.cdc.UnmarshalBinaryBare(store.Get(checkpointKey), &_checkpoint)
-		if err != nil {
+		if err := k.cdc.UnmarshalBinaryBare(store.Get(checkpointKey), &_checkpoint); err != nil {
 			return _checkpoint, err
 		}
 

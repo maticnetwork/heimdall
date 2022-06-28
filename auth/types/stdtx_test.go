@@ -47,6 +47,7 @@ func TestTxValidateBasic(t *testing.T) {
 	tx := NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0))
 
 	require.NotNil(t, msg1)
+
 	err := tx.ValidateBasic()
 	require.Nil(t, err)
 	require.NoError(t, err)
@@ -79,6 +80,7 @@ func TestTxDecode(t *testing.T) {
 
 	tx, err := base64.StdEncoding.DecodeString("wWhvHPg6AQHY1wEBlP+zHe/ZNZTQii57ULFjrJulHewY2NcBAZT/sx3v2TWU0Ioue1CxY6ybpR3sGICEXTLzJQ==")
 	require.NoError(t, err)
+
 	expected := "c1686f1cf83a0101d8d7010194ffb31defd93594d08a2e7b50b163ac9ba51dec18d8d7010194ffb31defd93594d08a2e7b50b163ac9ba51dec1880845d32f325"
 	require.Equal(t, expected, hex.EncodeToString(tx), "Tx encoding should match")
 }

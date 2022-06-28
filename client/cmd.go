@@ -9,8 +9,10 @@ import (
 
 // ValidateCmd returns unknown command error or Help display if help flag set
 func ValidateCmd(cmd *cobra.Command, args []string) error {
-	var cmds []string
-	var help bool
+	var (
+		cmds []string
+		help bool
+	)
 
 	// construct array of commands and search for help flag
 	for _, arg := range args {

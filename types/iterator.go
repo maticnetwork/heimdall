@@ -65,6 +65,7 @@ func (pi *PaginatedIterator) Next() {
 	if !pi.Valid() {
 		panic(fmt.Sprintf("PaginatedIterator reached limit %d", pi.limit))
 	}
+
 	pi.Iterator.Next()
 	pi.iterated++
 }
@@ -74,5 +75,6 @@ func (pi *PaginatedIterator) Valid() bool {
 	if pi.iterated >= pi.limit {
 		return false
 	}
+
 	return pi.Iterator.Valid()
 }

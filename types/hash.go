@@ -69,14 +69,14 @@ func (aa *HeimdallHash) UnmarshalJSON(data []byte) error {
 	}
 
 	*aa = HexToHeimdallHash(s)
+
 	return nil
 }
 
 // UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
 func (aa *HeimdallHash) UnmarshalYAML(data []byte) error {
 	var s string
-	err := yaml.Unmarshal(data, &s)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return err
 	}
 

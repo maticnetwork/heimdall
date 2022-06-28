@@ -22,6 +22,7 @@ func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result 
 
 	if result.IsOK() {
 		anySideMsg := false
+
 		for _, msg := range tx.GetMsgs() {
 			if _, ok := msg.(types.SideTxMsg); ok {
 				anySideMsg = true

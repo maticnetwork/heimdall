@@ -10,9 +10,13 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/maticnetwork/heimdall/app/helpers"
 	"github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
+)
+
+// SimAppChainID hardcoded chainID for simulation
+const (
+	SimAppChainID = "simulation-app"
 )
 
 // SetupSimulation creates the config, db (levelDB), temporary directory and logger for
@@ -20,7 +24,7 @@ import (
 // Returns error on an invalid db intantiation or temp dir creation.
 func SetupSimulation(dirPrefix, dbName string) (simTypes.Config, dbm.DB, string, log.Logger, bool, error) {
 	config := NewConfigFromFlags()
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	var lggr log.Logger
 	if FlagVerboseValue {

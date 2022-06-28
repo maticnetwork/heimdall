@@ -47,8 +47,10 @@ func (suite *KeeperTestSuite) TestTx() {
 	tx3 := tmTypes.Tx([]byte("transaction-3"))
 	tx4 := tmTypes.Tx([]byte("transaction-4"))
 
-	var height1 int64 = 10
-	var height2 int64 = 24
+	var (
+		height1 int64 = 10
+		height2 int64 = 24
+	)
 
 	t.Run("SetTx", func(t *testing.T) {
 		app.SidechannelKeeper.SetTx(ctx, height1, tx1)

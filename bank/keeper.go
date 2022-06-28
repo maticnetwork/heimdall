@@ -198,6 +198,7 @@ func (keeper Keeper) GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk
 	if acc == nil {
 		return sdk.NewCoins()
 	}
+
 	return acc.GetCoins()
 }
 

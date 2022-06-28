@@ -49,6 +49,8 @@ func (suite *HandlerTestSuite) SetupTest() {
 }
 
 func TestHandlerTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(HandlerTestSuite))
 }
 
@@ -117,7 +119,9 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
 	newSigner[0].ID = oldSigner.ID
 	newSigner[0].VotingPower = oldSigner.VotingPower
+
 	t.Log("To be Updated ===>", "Validator", newSigner[0].String())
+
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
 	// gen msg
@@ -142,8 +146,10 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 
 	setUpdates := helper.GetUpdatedValidators(&oldValSet, keeper.GetAllValidators(ctx), 5)
+
 	err := oldValSet.UpdateWithChangeSet(setUpdates)
 	require.NoError(t, err)
+
 	_ = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
 
 	ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)
@@ -211,6 +217,7 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	oldVal := oldValSet.Validators[0]
 
 	t.Log("To be Updated ===>", "Validator", oldVal.String())
+
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
@@ -363,5 +370,4 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 
 	result := suite.handler(ctx, msgValJoin)
 	require.True(t, result.IsOK(), "expected validator stake update to be ok, got %v", result)
-
 }

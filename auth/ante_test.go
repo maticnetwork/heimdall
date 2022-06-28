@@ -445,6 +445,8 @@ func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, 
 // Test checkpoint
 //
 
+const testCheckpointMsgVal = "checkpoint"
+
 var _ sdk.Msg = (*TestCheckpointMsg)(nil)
 
 // msg type for testing
@@ -452,5 +454,5 @@ type TestCheckpointMsg struct {
 	sdk.TestMsg
 }
 
-func (msg *TestCheckpointMsg) Route() string { return "checkpoint" }
-func (msg *TestCheckpointMsg) Type() string  { return "checkpoint" }
+func (msg *TestCheckpointMsg) Route() string { return testCheckpointMsgVal }
+func (msg *TestCheckpointMsg) Type() string  { return testCheckpointMsgVal }

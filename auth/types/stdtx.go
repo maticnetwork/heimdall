@@ -64,8 +64,11 @@ func (tx StdTx) ValidateBasic() sdk.Error {
 // in the order they appear in tx.GetMsgs().
 // Duplicate addresses will be omitted.
 func (tx StdTx) GetSigners() []sdk.AccAddress {
-	seen := map[string]bool{}
-	var signers []sdk.AccAddress
+	var (
+		signers []sdk.AccAddress
+		seen    = map[string]bool{}
+	)
+
 	for _, msg := range tx.GetMsgs() {
 		for _, addr := range msg.GetSigners() {
 			if !seen[addr.String()] {
@@ -74,6 +77,7 @@ func (tx StdTx) GetSigners() []sdk.AccAddress {
 			}
 		}
 	}
+
 	return signers
 }
 
@@ -125,12 +129,12 @@ func (ss StdSignature) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (ss *StdSignature) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
-	if err != nil {
+	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*ss = common.FromHex(s)
+
 	return nil
 }
 
@@ -177,10 +181,12 @@ func (fee StdFee) Bytes() []byte {
 	if len(fee.Amount) == 0 {
 		fee.Amount = sdk.NewCoins()
 	}
+
 	bz, err := ModuleCdc.MarshalJSON(fee) // TODO
 	if err != nil {
 		panic(err)
 	}
+
 	return bz
 }
 

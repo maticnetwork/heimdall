@@ -31,13 +31,16 @@ func RandStringOfLength(r *rand.Rand, n int) string {
 		if remain == 0 {
 			cache, remain = r.Int63(), letterIdxMax
 		}
+
 		if idx := int(cache & letterIdxMask); idx < len(letterBytes) {
 			b[i] = letterBytes[idx]
 			i--
 		}
+
 		cache >>= letterIdxBits
 		remain--
 	}
+
 	return string(b)
 }
 
@@ -46,38 +49,10 @@ func RandPositiveInt(r *rand.Rand, max sdk.Int) (sdk.Int, error) {
 	if !max.GTE(sdk.OneInt()) {
 		return sdk.Int{}, errors.New("max too small")
 	}
+
 	max = max.Sub(sdk.OneInt())
+
 	return sdk.NewIntFromBigInt(new(big.Int).Rand(r, max.BigInt())).Add(sdk.OneInt()), nil
-}
-
-// RandomAmount generates a random amount
-// Note: The range of RandomAmount includes max, and is, in fact, biased to return max as well as 0.
-func RandomAmount(r *rand.Rand, max sdk.Int) sdk.Int {
-	var randInt = big.NewInt(0)
-	switch r.Intn(10) {
-	case 0:
-		// randInt = big.NewInt(0)
-	case 1:
-		randInt = max.BigInt()
-	default: // NOTE: there are 10 total cases.
-		randInt = big.NewInt(0).Rand(r, max.BigInt()) // up to max - 1
-	}
-	return sdk.NewIntFromBigInt(randInt)
-}
-
-// RandomDecAmount generates a random decimal amount
-// Note: The range of RandomDecAmount includes max, and is, in fact, biased to return max as well as 0.
-func RandomDecAmount(r *rand.Rand, max sdk.Dec) sdk.Dec {
-	var randInt = big.NewInt(0)
-	switch r.Intn(10) {
-	case 0:
-		// randInt = big.NewInt(0)
-	case 1:
-		randInt = max.Int // the underlying big int with all precision bits.
-	default: // NOTE: there are 10 total cases.
-		randInt = big.NewInt(0).Rand(r, max.Int)
-	}
-	return sdk.NewDecFromBigIntWithPrec(randInt, sdk.Precision)
 }
 
 // RandTimestamp generates a random timestamp
@@ -107,6 +82,7 @@ func RandSubsetCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
 	if err != nil {
 		return sdk.Coins{}
 	}
+
 	subset := sdk.Coins{sdk.NewCoin(coin.Denom, amt)}
 	for i, c := range coins {
 		// skip denom that we already chose earlier
@@ -120,12 +96,13 @@ func RandSubsetCoins(r *rand.Rand, coins sdk.Coins) sdk.Coins {
 		}
 
 		amt, err := RandPositiveInt(r, c.Amount)
-		// ignore errors and try another denom
 		if err != nil {
 			continue
 		}
+
 		subset = append(subset, sdk.NewCoin(c.Denom, amt))
 	}
+
 	return subset.Sort()
 }
 
@@ -140,6 +117,7 @@ func DeriveRand(r *rand.Rand) *rand.Rand {
 	for i := 0; i < num; i++ {
 		ms[i] = rand.NewSource(r.Int63())
 	}
+
 	return rand.New(ms)
 }
 
@@ -149,6 +127,7 @@ func RandHex(length int) []byte {
 	if _, err := cRand.Read(bytes); err != nil {
 		logger.Error("RandHex | Read", "Error", err)
 	}
+
 	return bytes
 }
 

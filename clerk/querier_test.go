@@ -180,7 +180,9 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 
 	testSeq := "1000010"
 	ck := app.ClerkKeeper
+
 	ck.SetRecordSequence(ctx, testSeq)
+
 	logIndex = uint64(10)
 	txHash = hmTypes.HexToHeimdallHash("12345")
 

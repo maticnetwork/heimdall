@@ -56,6 +56,8 @@ func (suite *SideHandlerTestSuite) SetupTest() {
 }
 
 func TestSideHandlerTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(SideHandlerTestSuite))
 }
 
@@ -1247,7 +1249,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	blockNumber := big.NewInt(10)

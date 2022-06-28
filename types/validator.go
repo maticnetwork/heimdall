@@ -53,6 +53,7 @@ func SortValidatorByAddress(a []Validator) []Validator {
 	sort.Slice(a, func(i, j int) bool {
 		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
 	})
+
 	return a
 }
 
@@ -122,6 +123,7 @@ func (v *Validator) CompareProposerPriority(other *Validator) *Validator {
 		return other
 	default:
 		result := bytes.Compare(v.Signer.Bytes(), other.Signer.Bytes())
+
 		switch {
 		case result < 0:
 			return v
@@ -152,6 +154,7 @@ func (v *Validator) String() string {
 // which changes every round.
 func (v *Validator) Bytes() []byte {
 	result := make([]byte, 64)
+
 	copy(result[12:], v.Signer.Bytes())
 	copy(result[32:], new(big.Int).SetInt64(v.VotingPower).Bytes())
 
@@ -210,20 +213,4 @@ type MinimalVal struct {
 	ID          ValidatorID     `json:"ID"`
 	VotingPower uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	Signer      HeimdallAddress `json:"signer"`
-}
-
-// SortMinimalValByAddress sorts validators
-func SortMinimalValByAddress(a []MinimalVal) []MinimalVal {
-	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
-	})
-	return a
-}
-
-// ValToMinVal converts array of validators to minimal validators
-func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
-	for _, val := range vals {
-		minVals = append(minVals, val.MinimalVal())
-	}
-	return
 }

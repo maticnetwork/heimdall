@@ -30,16 +30,20 @@ func RandomizeGenState(simState *module.SimulationState) {
 	n := 5
 	accounts := simulation.RandomAccounts(r1, n)
 
-	var sequences []string
-	dividendAccounts := make([]hmTypes.DividendAccount, 5)
+	var (
+		sequences        []string
+		dividendAccounts = make([]hmTypes.DividendAccount, 5)
+	)
 
 	for i := 0; i < 5; i++ {
 		var sequenceNumber string
+
 		simState.AppParams.GetOrGenerate(simState.Cdc, SequenceNumber, &sequenceNumber, simState.Rand,
 			func(r *rand.Rand) {
 				sequenceNumber = GenSequenceNumber(r)
 			},
 		)
+
 		sequences = append(sequences, sequenceNumber)
 
 		// create dividend account for validator

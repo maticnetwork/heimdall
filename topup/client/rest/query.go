@@ -41,6 +41,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
+
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -107,6 +108,7 @@ func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 		if err != nil {
 			RestLogger.Error("Error while fetching Dividend account", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -135,22 +137,26 @@ func dividendAccountRootHandlerFn(
 		if err != nil {
 			RestLogger.Error("Error while calculating dividend AccountRoot  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "Dividend AccountRoot not found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, res, "Dividend AccountRoot not found") {
 			RestLogger.Error("AccountRoot not found ", "Error", err.Error())
+
 			return
 		}
 
 		var accountRootHash = hmTypes.BytesToHeimdallHash(res)
+
 		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
 		result, err := json.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 

@@ -64,7 +64,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for validator join msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -204,7 +204,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for signer update msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 

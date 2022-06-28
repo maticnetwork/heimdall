@@ -115,10 +115,10 @@ func Logger() log.Logger {
 func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposers []hmtypes.Validator
 	count := uint64(1)
+
 	result, err := helper.FetchFromAPI(cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
-
 	if err != nil {
 		logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
 		return false, err
@@ -140,6 +140,7 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
@@ -430,6 +431,7 @@ func AppendPrefix(signerPubKey []byte) []byte {
 	prefix := make([]byte, 1)
 	prefix[0] = byte(0x04)
 	signerPubKey = append(prefix[:], signerPubKey[:]...)
+
 	return signerPubKey
 }
 
@@ -511,6 +513,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 	defer LogElapsedTimeForStateSyncedEvent(event, "GetUnconfirmedTxnCount", time.Now())
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
+
 	resp, err := helper.Client.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)

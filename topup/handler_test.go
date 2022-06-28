@@ -90,8 +90,8 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
 			fee,
 			txHash,
-			uint64(logIndex),
-			uint64(blockNumber),
+			logIndex,
+			blockNumber,
 		)
 
 		// sequence id

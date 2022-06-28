@@ -29,12 +29,15 @@ func CreateTransitionMatrix(weights [][]int) (simulation.TransitionMatrix, error
 				fmt.Errorf("transition matrix: non-square matrix provided, error on row %d", i)
 		}
 	}
+
 	totals := make([]int, n)
+
 	for row := 0; row < n; row++ {
 		for col := 0; col < n; col++ {
 			totals[col] += weights[row][col]
 		}
 	}
+
 	return TransitionMatrix{weights, totals, n}, nil
 }
 
@@ -61,12 +64,15 @@ func GetMemberOfInitialState(r *rand.Rand, weights []int) int {
 		total += weights[i]
 	}
 	randNum := r.Intn(total)
+
 	for state := 0; state < n; state++ {
 		if randNum < weights[state] {
 			return state
 		}
+
 		randNum -= weights[state]
 	}
+
 	// This line should never get executed
 	return -1
 }

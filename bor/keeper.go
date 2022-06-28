@@ -218,9 +218,6 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 	// spanEligibleVals are current validators who are not getting deactivated in between next span
 	spanEligibleVals := k.sk.GetSpanEligibleValidators(ctx)
 	producerCount := k.GetParams(ctx).ProducerCount
-	if err != nil {
-		return vals, err
-	}
 
 	// if producers to be selected is more than current validators no need to select/shuffle
 	if len(spanEligibleVals) <= int(producerCount) {

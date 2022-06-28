@@ -131,6 +131,7 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 
 	slashInfoBytes := hmTypes.HexBytes{}
 	proposerAddr := hmTypes.ZeroHeimdallAddress
+
 	for _, attr := range event.Attributes {
 		if attr.Key == slashingTypes.AttributeKeyProposer {
 			proposerAddr = hmTypes.HexToHeimdallAddress(attr.Value)

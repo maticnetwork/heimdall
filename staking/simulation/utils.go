@@ -13,6 +13,7 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(privKey1.PubKey().Bytes())
+
 		if randomise {
 			startBlock = generateRandNumber(10)
 			power = int64(generateRandNumber(100))
@@ -29,6 +30,7 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 		}
 		validators = append(validators, newVal)
 	}
+
 	return
 }
 
