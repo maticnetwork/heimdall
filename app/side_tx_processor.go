@@ -69,6 +69,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 	for _, sideTxResult := range req.SideTxResults {
 		txHash := sideTxResult.TxHash
+
 		// get tx from the store
 		tx := app.SidechannelKeeper.GetTx(ctx, targetHeight, txHash)
 		if tx != nil {

@@ -71,6 +71,9 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, nil, "clerk", cp)
 
 	for index, tx := range testData {
+		index := index
+		tx := tx
+
 		t.Run(string(rune(index)), func(t *testing.T) {
 			t.Parallel()
 
@@ -79,6 +82,7 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			assert.Equal(t, inMempool, expectedStatus[index])
 			if !inMempool {
 				t.Log("Tx not in mempool, broadcasting")

@@ -16,13 +16,14 @@ import (
 func TestShuffleList(t *testing.T) {
 	t.Parallel()
 
-	var list1 []uint64
-
-	seed1 := [32]byte{1, 128, 12}
-	seed2 := [32]byte{2, 128, 12}
+	var (
+		seed1 = [32]byte{1, 128, 12}
+		seed2 = [32]byte{2, 128, 12}
+		list1 = make([]uint64, 10)
+	)
 
 	for i := 0; i < 10; i++ {
-		list1 = append(list1, uint64(i))
+		list1[i] = uint64(i)
 	}
 
 	list2 := make([]uint64, len(list1))

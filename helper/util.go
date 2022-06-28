@@ -715,12 +715,13 @@ func innerHash(left []byte, right []byte) []byte {
 // than 32 bytes.
 func ToBytes32(x []byte) [32]byte {
 	var y [32]byte
+
 	copy(y[:], x)
 
 	return y
 }
 
-// GetPowerFromAmount returns power from amount -- note that this will polute amount object
+// GetPowerFromAmount returns power from amount -- note that this will populate amount object
 func GetPowerFromAmount(amount *big.Int) (*big.Int, error) {
 	decimals18 := big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil)
 	if amount.Cmp(decimals18) == -1 {

@@ -95,5 +95,6 @@ func TestTxHash(t *testing.T) {
 	require.NoError(t, err)
 
 	var tx tmTypes.Tx = txBz
+
 	require.Equal(t, txHashStr, hex.EncodeToString(tx.Hash()))
 }

@@ -317,6 +317,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
+
 	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		log.Fatal(err)
 	}
@@ -439,6 +440,7 @@ func GetECDSAPrivKey() *ecdsa.PrivateKey {
 
 	// create ecdsa private key
 	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
+
 	return ecdsaPrivateKey
 }
 

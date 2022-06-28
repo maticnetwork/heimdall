@@ -136,7 +136,7 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			res, err = rangeQuery(cliCtx, page, limit)
 		}
 
-		// send internal server error if error occured during the query
+		// send internal server error if error occurred during the query
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return

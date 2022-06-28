@@ -66,6 +66,7 @@ func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 
 	rtype := p.typeInfos[hex.EncodeToString(data[:PulpHashLength])]
 	newMsg := reflect.New(rtype).Interface()
+
 	if err := rlp.DecodeBytes(txRaw.Msg[:], newMsg); err != nil {
 		return nil, err
 	}

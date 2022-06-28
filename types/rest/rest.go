@@ -250,6 +250,7 @@ func ParseHTTPArgsWithLimit(r *http.Request, defaultLimit int) (tags []string, p
 		}
 
 		var value string
+
 		if value, err = url.QueryUnescape(values[0]); err != nil {
 			return tags, page, limit, err
 		}

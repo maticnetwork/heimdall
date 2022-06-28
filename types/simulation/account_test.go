@@ -26,7 +26,11 @@ func TestRandomAccounts(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			got := simulation.RandomAccounts(r, tt.n)
 			require.Equal(t, tt.want, len(got))
 			if tt.n == 0 {
@@ -69,7 +73,11 @@ func TestRandomFees(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			got, err := simulation.RandomFees(r, sdk.Context{}, tt.spendableCoins)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("RandomFees() error = %v, wantErr %v", err, tt.wantErr)

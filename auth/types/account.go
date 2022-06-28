@@ -75,7 +75,9 @@ func (acc BaseAccount) String() string {
 	if acc.PubKey != nil {
 		// pubkey = sdk.MustBech32ifyAccPub(acc.PubKey)
 		var pubObject secp256k1.PubKeySecp256k1
+
 		cdc.MustUnmarshalBinaryBare(acc.PubKey.Bytes(), &pubObject)
+
 		pubkey = "0x" + hex.EncodeToString(pubObject[:])
 	}
 

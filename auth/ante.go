@@ -229,16 +229,21 @@ func processSig(
 
 	if !simulate {
 		var pk secp256k1.PubKeySecp256k1
+
 		p, err := authTypes.RecoverPubkey(signBytes, sig.Bytes())
+		if err != nil {
+			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
+		}
+
 		copy(pk[:], p[:])
 
-		if err != nil || !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
+		if !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
 		if acc.GetPubKey() == nil {
 			var cryptoPk crypto.PubKey = pk
-			if err := acc.SetPubKey(cryptoPk); err != nil {
+			if err = acc.SetPubKey(cryptoPk); err != nil {
 				return nil, sdk.ErrUnauthorized("error while updating account pubkey").Result()
 			}
 		}

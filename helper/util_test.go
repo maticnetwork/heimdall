@@ -38,6 +38,7 @@ func TestUnpackSigAndVotes(t *testing.T) {
 	for i, j := 0, 0; i < len(signerAddresses); i, j = i+1, j+signatureLen {
 		pubKey, err := authTypes.RecoverPubkey(voteSignBytes, inputSigs[j:j+signatureLen])
 		require.Empty(t, err, "Error while recovering pubkey from signature. voteSignBytes = %v, Signature=%v ", voteSignBytes, hex.EncodeToString(inputSigs[i:i+signatureLen]))
+
 		pKey := types.NewPubKey(pubKey)
 		signerAddress := pKey.Address().Bytes()
 

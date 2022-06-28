@@ -28,6 +28,7 @@ func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log
 	}
 
 	var indexed abi.Arguments
+
 	for _, arg := range abiObject.Events[event].Inputs {
 		if arg.Indexed {
 			indexed = append(indexed, arg)
@@ -52,6 +53,7 @@ func parseTopics(out interface{}, fields abi.Arguments, topics []common.Hash) er
 		if !arg.Indexed {
 			return errors.New("non-indexed field in topic reconstruction")
 		}
+
 		field := reflect.ValueOf(out).Elem().FieldByName(capitalise(arg.Name))
 
 		// Try to parse the topic back into the fields based on primitive types
@@ -91,7 +93,9 @@ func parseTopics(out interface{}, fields abi.Arguments, topics []common.Hash) er
 				field.Set(reflect.ValueOf(topics[0]))
 			case reflectAddress:
 				var addr common.Address
+
 				copy(addr[:], topics[0][common.HashLength-common.AddressLength:])
+
 				field.Set(reflect.ValueOf(addr))
 			case reflectBigInt:
 				num := new(big.Int).SetBytes(topics[0][:])

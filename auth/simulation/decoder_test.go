@@ -49,7 +49,12 @@ func TestDecodeStore(t *testing.T) {
 	}
 
 	for i, tt := range tests {
+		i := i
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			switch i {
 			case len(tests) - 1:
 				require.Panics(t, func() { DecodeStore(cdc, kvPairs[i], kvPairs[i]) }, tt.name)

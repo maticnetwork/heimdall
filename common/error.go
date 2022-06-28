@@ -290,7 +290,6 @@ func CodeToDefaultMsg(code CodeType) string {
 		return "Checkpoint not in countinuity"
 	case CodeNoCheckpointBuffer:
 		return "Checkpoint buffer Not Found"
-
 	case CodeOldValidator:
 		return "Start Epoch behind Current Epoch"
 	case CodeNoValidator:

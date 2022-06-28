@@ -167,7 +167,11 @@ func Test_createWeightedRanges(t *testing.T) {
 	}
 
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			ranges, totalWeight := createWeightedRanges(tt.args.vals)
 			if !reflect.DeepEqual(ranges, tt.ranges) {
 				t.Errorf("createWeightedRange() got ranges = %v, want %v", ranges, tt.ranges)
@@ -229,8 +233,13 @@ func Test_binarySearch(t *testing.T) {
 			want: 3,
 		},
 	}
+
 	for _, tt := range tests {
+		tt := tt
+
 		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
 			if got := binarySearch(tt.args.array, tt.args.search); got != tt.want {
 				t.Errorf("binarySearch() = %v, want %v", got, tt.want)
 			}

@@ -38,6 +38,9 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	}
 
 	for index, test := range testData {
+		index := index
+		test := test
+
 		t.Run(strconv.Itoa(index), func(t *testing.T) {
 			t.Parallel()
 

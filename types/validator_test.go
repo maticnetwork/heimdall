@@ -19,6 +19,8 @@ type valInput struct {
 }
 
 func TestNewValidator(t *testing.T) {
+	t.Parallel()
+
 	// valCase created so as to pass it to assertPanics func,
 	// ideally would like to get rid of this and pass the function directly
 	tc := []struct {

@@ -193,7 +193,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for stake update msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for stake update msg")
 
 	result.Result = abci.SideTxResultType_Yes
 
