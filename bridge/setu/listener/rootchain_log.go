@@ -43,7 +43,6 @@ func (rl *RootChainListener) handleNewHeaderBlockLog(vLog types.Log, selectedEve
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
@@ -55,13 +54,12 @@ func (rl *RootChainListener) handleStakedLog(vLog types.Log, selectedEvent *abi.
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	pubkey := helper.GetPubKey()
 
 	event := new(stakinginfo.StakinginfoStaked)
-	if err := helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
+	if err = helper.UnpackLog(rl.stakingInfoAbi, event, selectedEvent.Name, &vLog); err != nil {
 		rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 	}
 
@@ -80,7 +78,6 @@ func (rl *RootChainListener) handleStakeUpdateLog(vLog types.Log, selectedEvent 
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	event := new(stakinginfo.StakinginfoStakeUpdate)
@@ -99,7 +96,6 @@ func (rl *RootChainListener) handleSignerChangeLog(vLog types.Log, selectedEvent
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	pubkey := helper.GetPubKey()
@@ -120,7 +116,6 @@ func (rl *RootChainListener) handleUnstakeInitLog(vLog types.Log, selectedEvent 
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	event := new(stakinginfo.StakinginfoUnstakeInit)
@@ -139,7 +134,6 @@ func (rl *RootChainListener) handleStateSyncedLog(vLog types.Log, selectedEvent 
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	event := new(statesender.StatesenderStateSynced)
@@ -158,7 +152,6 @@ func (rl *RootChainListener) handleTopUpFeeLog(vLog types.Log, selectedEvent *ab
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	event := new(stakinginfo.StakinginfoTopUpFee)
@@ -177,7 +170,6 @@ func (rl *RootChainListener) handleSlashedLog(vLog types.Log, selectedEvent *abi
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
@@ -189,7 +181,6 @@ func (rl *RootChainListener) handleUnJailedLog(vLog types.Log, selectedEvent *ab
 	logBytes, err := json.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
-		return
 	}
 
 	event := new(stakinginfo.StakinginfoUnJailed)
