@@ -322,6 +322,7 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cmsg := stdTx.GetMsgs()[0] // get first message
+
 		sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
 		if !ok {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid side-tx msg")
@@ -366,5 +367,6 @@ func formattedSigs(sigs [][3]*big.Int) (result [][3]string) {
 	for _, s := range sigs {
 		result = append(result, [3]string{s[0].String(), s[1].String(), s[2].String()})
 	}
+
 	return result
 }

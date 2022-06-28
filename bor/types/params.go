@@ -61,16 +61,19 @@ func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 func (p Params) Equal(p2 Params) bool {
 	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
 	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+
 	return bytes.Equal(bz1, bz2)
 }
 
 // String implements the stringer interface.
 func (p Params) String() string {
 	var sb strings.Builder
+
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("SprintDuration: %d\n", p.SprintDuration))
 	sb.WriteString(fmt.Sprintf("SpanDuration: %d\n", p.SpanDuration))
 	sb.WriteString(fmt.Sprintf("ProducerCount: %d\n", p.ProducerCount))
+
 	return sb.String()
 }
 

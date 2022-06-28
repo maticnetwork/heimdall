@@ -133,6 +133,7 @@ var cdc = amino.NewCodec()
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
+
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
@@ -326,6 +327,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	GenesisDoc = *genDoc
 
 	// load pv file, unmarshall and set to privObject
@@ -333,6 +335,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	if err != nil {
 		Logger.Error(err.Error())
 	}
+
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)

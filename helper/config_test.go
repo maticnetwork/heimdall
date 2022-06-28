@@ -29,7 +29,6 @@ func TestHeimdallConfig(t *testing.T) {
 	pubKey := GetPubKey()
 
 	fmt.Println("PublicKey", pubKey.String())
-	// fmt.Println("CryptoPublicKey", pubKey.CryptoPubKey().String())
 }
 
 func TestHeimdallConfigNewSelectionAlgoHeight(t *testing.T) {

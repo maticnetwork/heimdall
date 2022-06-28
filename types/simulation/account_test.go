@@ -13,6 +13,7 @@ import (
 
 func TestRandomAccounts(t *testing.T) {
 	t.Parallel()
+
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	tests := []struct {
 		name string
@@ -23,6 +24,7 @@ func TestRandomAccounts(t *testing.T) {
 		{"0-accounts", 1, 1},
 		{"0-accounts", 1_000, 1_000},
 	}
+
 	for _, tt := range tests {
 		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
@@ -42,6 +44,7 @@ func TestRandomAccounts(t *testing.T) {
 
 func TestFindAccountEmptySlice(t *testing.T) {
 	t.Parallel()
+
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	accs := simulation.RandomAccounts(r, 1)
 	require.Equal(t, 1, len(accs))
@@ -54,6 +57,7 @@ func TestFindAccountEmptySlice(t *testing.T) {
 
 func TestRandomFees(t *testing.T) {
 	t.Parallel()
+
 	r := rand.New(rand.NewSource(time.Now().Unix()))
 	tests := []struct {
 		name           string
@@ -64,6 +68,7 @@ func TestRandomFees(t *testing.T) {
 		{"0 coins", sdk.Coins{}, true, false},
 		{"0 coins", sdk.NewCoins(sdk.NewInt64Coin("aaa", 10), sdk.NewInt64Coin("bbb", 5)), false, false},
 	}
+
 	for _, tt := range tests {
 		tt := tt
 

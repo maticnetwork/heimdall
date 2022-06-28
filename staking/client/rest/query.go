@@ -354,6 +354,7 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			return
 		}
+
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }

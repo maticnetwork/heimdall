@@ -109,11 +109,13 @@ func GetUpdatedValidators(
 	ackCount uint64,
 ) []*hmTypes.Validator {
 	updates := make([]*hmTypes.Validator, 0)
+
 	for _, v := range validators {
 		// create copy of validator
 		validator := v.Copy()
 
 		address := validator.Signer.Bytes()
+
 		_, val := currentSet.GetByAddress(address)
 		if val != nil && !validator.IsCurrentValidator(ackCount) {
 			// remove validator
@@ -130,43 +132,13 @@ func GetUpdatedValidators(
 	return updates
 }
 
-// GetPkObjects from crypto priv key
-func GetPkObjects(privKey crypto.PrivKey) (secp256k1.PrivKeySecp256k1, secp256k1.PubKeySecp256k1) {
-	var privObject secp256k1.PrivKeySecp256k1
-	var pubObject secp256k1.PubKeySecp256k1
-	cdc.MustUnmarshalBinaryBare(privKey.Bytes(), &privObject)
-	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
-	return privObject, pubObject
-}
-
 // GetPubObjects returns PubKeySecp256k1 public key
 func GetPubObjects(pubkey crypto.PubKey) secp256k1.PubKeySecp256k1 {
 	var pubObject secp256k1.PubKeySecp256k1
+
 	cdc.MustUnmarshalBinaryBare(pubkey.Bytes(), &pubObject)
 
 	return pubObject
-}
-
-// StringToPubkey converts string to Pubkey
-func StringToPubkey(pubkeyStr string) (secp256k1.PubKeySecp256k1, error) {
-	var pubkeyBytes secp256k1.PubKeySecp256k1
-	_pubkey, err := hex.DecodeString(pubkeyStr)
-	if err != nil {
-		return pubkeyBytes, err
-	}
-
-	// copy
-	copy(pubkeyBytes[:], _pubkey)
-
-	return pubkeyBytes, nil
-}
-
-// BytesToPubkey converts bytes to Pubkey
-func BytesToPubkey(pubKey []byte) secp256k1.PubKeySecp256k1 {
-	var pubkeyBytes secp256k1.PubKeySecp256k1
-	copy(pubkeyBytes[:], pubKey)
-
-	return pubkeyBytes
 }
 
 // GetVoteSigs returns sigs bytes from vote
@@ -259,6 +231,7 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 // GetVoteBytes returns vote bytes
 func GetVoteBytes(unFilteredVotes []*tmTypes.CommitSig, chainID string) []byte {
 	var vote *tmTypes.CommitSig
+
 	for _, item := range unFilteredVotes {
 		if item != nil {
 			vote = item
@@ -303,6 +276,7 @@ func BroadcastTx(cliCtx context.CLIContext, tx authTypes.StdTx, mode string) (re
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
 	var txBytes []byte
+
 	txBytes, err = txBldr.GetStdTxBytes(tx)
 	if err == nil {
 		res, err = BroadcastTxBytes(cliCtx, txBytes, mode)
@@ -450,6 +424,7 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 		_, _ = fmt.Fprintf(os.Stderr, "%s\n\n", json)
 
 		buf := bufio.NewReader(os.Stdin)
+
 		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
 		if err != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
@@ -514,6 +489,7 @@ func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, m
 	}
 
 	_, _ = fmt.Fprintf(cliCtx.Output, "%s\n", json)
+
 	return nil
 }
 
@@ -523,10 +499,12 @@ func PrintUnsignedStdTx(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, m
 func SignStdTx(cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool, offline bool) (authTypes.StdTx, error) {
 	txBldr := authTypes.NewTxBuilderFromCLI().WithTxEncoder(GetTxEncoder(cliCtx.Codec))
 
-	var signedStdTx authTypes.StdTx
+	var (
+		signedStdTx authTypes.StdTx
+		addr        []byte
+	)
 
 	fromName := cliCtx.GetFromName()
-	var addr []byte
 	if fromName == "" {
 		addr = GetAddress()
 	} else {
@@ -540,8 +518,7 @@ func SignStdTx(cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool,
 
 	if !offline {
 		var err error
-		txBldr, err = populateAccountFromState(txBldr, cliCtx, addr)
-		if err != nil {
+		if txBldr, err = populateAccountFromState(txBldr, cliCtx, addr); err != nil {
 			return signedStdTx, err
 		}
 	}
@@ -567,6 +544,7 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 	} else {
 		bytes, err = ioutil.ReadFile(filename)
 	}
+
 	if err != nil {
 		return
 	}
@@ -574,6 +552,7 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 	if err = cdc.UnmarshalJSON(bytes, &stdTx); err != nil {
 		return
 	}
+
 	return
 }
 
@@ -632,25 +611,32 @@ func computeHashFromAunts(index int, total int, leafHash []byte, innerHashes [][
 		if len(innerHashes) != 0 {
 			return nil
 		}
+
 		return leafHash
 	default:
 		if len(innerHashes) == 0 {
 			return nil
 		}
+
 		numLeft := getSplitPoint(total)
 		if index < numLeft {
 			leftHash := computeHashFromAunts(index, numLeft, leafHash, innerHashes[:len(innerHashes)-1], newInnerHashes)
 			if leftHash == nil {
 				return nil
 			}
+
 			*newInnerHashes = append(*newInnerHashes, append(rightPrefix, innerHashes[len(innerHashes)-1]...))
+
 			return innerHash(leftHash, innerHashes[len(innerHashes)-1])
 		}
+
 		rightHash := computeHashFromAunts(index-numLeft, total-numLeft, leafHash, innerHashes[:len(innerHashes)-1], newInnerHashes)
 		if rightHash == nil {
 			return nil
 		}
+
 		*newInnerHashes = append(*newInnerHashes, append(leftPrefix, innerHashes[len(innerHashes)-1]...))
+
 		return innerHash(innerHashes[len(innerHashes)-1], rightHash)
 	}
 }
@@ -696,6 +682,7 @@ func getSplitPoint(length int) int {
 	if length < 1 {
 		panic("Trying to split a tree with size < 1")
 	}
+
 	uLength := uint(length)
 	bitlen := bits.Len(uLength)
 
@@ -759,6 +746,7 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 	if err != nil {
 		return
 	}
+
 	sigs = inputDataMap["sigs"].([]byte)
 	checkpointData = inputDataMap["txData"].([]byte)
 	votes = inputDataMap["vote"].([]byte)

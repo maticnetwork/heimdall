@@ -692,7 +692,9 @@ func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginf
 
 	if err != nil {
 		Logger.Error("Unable to get current account state roor", "error", err)
+
 		var emptyArr [32]byte
+
 		return emptyArr, err
 	}
 
@@ -757,6 +759,7 @@ func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
 func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
+
 	return c.getTxReceipt(ctx, c.MainChainClient, txHash)
 }
 
@@ -764,6 +767,7 @@ func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt
 func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
+
 	return c.getTxReceipt(ctx, c.MaticChainClient, txHash)
 }
 
@@ -785,6 +789,7 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	defer cancel()
 
 	mainChainClient := GetMainClient()
+
 	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
 	if err != nil {
 		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
@@ -795,5 +800,6 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 
 	payload := transaction.Data()
 	abi := c.RootChainABI
+
 	return UnpackSigAndVotes(payload, abi)
 }

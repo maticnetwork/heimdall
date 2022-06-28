@@ -134,7 +134,9 @@ func (c *ContractCaller) SendTick(signedData []byte, sigs []byte, slashManagerAd
 		Logger.Error("Error while submitting tick", "error", err)
 		return err
 	}
+
 	Logger.Info("Submitted new tick to slashmanager successfully", "txHash", tx.Hash().String())
+
 	return
 }
 

@@ -63,8 +63,12 @@ func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.Mer
 func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress) ([]byte, uint64, error) {
 	// Sort the dividendAccounts by user address
 	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
-	var list []merkletree.Content
-	var account hmTypes.DividendAccount
+
+	var (
+		list    []merkletree.Content
+		account hmTypes.DividendAccount
+	)
+
 	index := uint64(0)
 	for i := 0; i < len(dividendAccounts); i++ {
 		list = append(list, dividendAccounts[i])
@@ -83,6 +87,7 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmType
 
 	// concatenate branch array
 	proof := appendBytes32(branchArray...)
+
 	return proof, index, err
 }
 
@@ -106,17 +111,21 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	if l > 32 || l == 0 {
 		return
 	}
+
 	copy(output[32-l:], input[:])
+
 	return
 }
 
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
+
 	for _, v := range data {
 		paddedV, err := convertTo32(v)
 		if err == nil {
 			result = append(result, paddedV[:]...)
 		}
 	}
+
 	return result
 }

@@ -32,12 +32,14 @@ func TestCheckpointsigs(t *testing.T) {
 	if err != nil {
 		fmt.Println("Error fetching checkpoint tx input args")
 	}
+
 	fmt.Println("checkpoint args", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
 	signerList, err := FetchSigners(voteSignBytes, sigs)
 	if err != nil {
 		fmt.Println("Error fetching signer list from tx input args")
 	}
+
 	fmt.Println("signers list", signerList)
 }
 
@@ -49,6 +51,7 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 	// Calculate total stake Power of all Signers.
 	for i := 0; i < len(sigInput); i += sigLength {
 		signature := sigInput[i : i+sigLength]
+
 		pKey, err := authTypes.RecoverPubkey(voteBytes, []byte(signature))
 		if err != nil {
 			fmt.Println("Error Recovering PubKey", "Error", err)
@@ -59,5 +62,6 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 		signerAddress := pubKey.Address().String()
 		signersList = append(signersList, signerAddress)
 	}
+
 	return signersList, nil
 }

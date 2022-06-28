@@ -101,11 +101,9 @@ func parseTopics(out interface{}, fields abi.Arguments, topics []common.Hash) er
 				var addr common.Address
 				copy(addr[:], topics[0][common.HashLength-common.AddressLength:])
 				field.Set(reflect.ValueOf(addr))
-
 			case reflectBigInt:
 				num := new(big.Int).SetBytes(topics[0][:])
 				field.Set(reflect.ValueOf(num))
-
 			default:
 				// Ran out of custom types, try the crazies
 				switch {
@@ -140,8 +138,8 @@ func capitalise(input string) string {
 // toCamelCase converts an under-score string to a camel-case string
 func toCamelCase(input string) string {
 	toupper := false
-
 	result := ""
+
 	for k, v := range input {
 		switch {
 		case k == 0:

@@ -54,24 +54,30 @@ func RandomizedGenState(simState *module.SimulationState) {
 		func(r *rand.Rand) { mainchainTxConfirmations = GenMainchainTxConfirmations(r) },
 	)
 
-	var maticchainTxConfirmations uint64
+	var (
+		maticchainTxConfirmations uint64
+		borChainID                string
+	)
+
 	simState.AppParams.GetOrGenerate(simState.Cdc, MaticchainTxConfirmations, &maticchainTxConfirmations, simState.Rand,
 		func(r *rand.Rand) { maticchainTxConfirmations = GenMaticchainTxConfirmations(r) },
 	)
 
-	var borChainID string
 	simState.AppParams.GetOrGenerate(simState.Cdc, BorChainID, &borChainID, simState.Rand,
 		func(r *rand.Rand) { borChainID = GenBorChainId(r) },
 	)
 
-	var maticTokenAddress = GenHeimdallAddress()
-	var stakingManagerAddress = GenHeimdallAddress()
-	var slashManagerAddress = GenHeimdallAddress()
-	var rootChainAddress = GenHeimdallAddress()
-	var stakingInfoAddress = GenHeimdallAddress()
-	var stateSenderAddress = GenHeimdallAddress()
-	var stateReceiverAddress = GenHeimdallAddress()
-	var validatorSetAddress = GenHeimdallAddress()
+	var (
+		maticTokenAddress     = GenHeimdallAddress()
+		stakingManagerAddress = GenHeimdallAddress()
+		slashManagerAddress   = GenHeimdallAddress()
+		rootChainAddress      = GenHeimdallAddress()
+		stakingInfoAddress    = GenHeimdallAddress()
+		stateSenderAddress    = GenHeimdallAddress()
+		stateReceiverAddress  = GenHeimdallAddress()
+		validatorSetAddress   = GenHeimdallAddress()
+	)
+
 	chainParams := types.ChainParams{
 		BorChainID:            borChainID,
 		MaticTokenAddress:     maticTokenAddress,

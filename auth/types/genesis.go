@@ -36,6 +36,7 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 	if appState[ModuleName] != nil {
 		ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
+
 	return genesisState
 }
 
@@ -45,6 +46,7 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, accounts Gen
 	authState.Accounts = accounts
 
 	appState[ModuleName] = ModuleCdc.MustMarshalJSON(authState)
+
 	return appState, nil
 }
 
@@ -89,5 +91,6 @@ func ValidateGenAccounts(accounts GenesisAccounts) error {
 			return fmt.Errorf("invalid account found in genesis state; address: %s, error: %s", addrStr, err.Error())
 		}
 	}
+
 	return nil
 }
