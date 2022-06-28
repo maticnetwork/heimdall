@@ -10,6 +10,7 @@ run:
   skip-dirs:
     - slashing
     - gov
+    - params
   skip-files:
     - gen_.*.go
     - .*_gen.go

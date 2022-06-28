@@ -49,8 +49,9 @@ func TestCheckpointsigs(t *testing.T) {
 
 // CalculateSignerRewards calculates new rewards for signers
 func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
-	signersList := []string{}
 	const sigLength = 65
+
+	signersList := make([]string, len(sigInput))
 
 	// Calculate total stake Power of all Signers.
 	for i := 0; i < len(sigInput); i += sigLength {
@@ -62,9 +63,7 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 			return nil, err
 		}
 
-		pubKey := types.NewPubKey(pKey)
-		signerAddress := pubKey.Address().String()
-		signersList = append(signersList, signerAddress)
+		signersList[i] = types.NewPubKey(pKey).Address().String()
 	}
 
 	return signersList, nil

@@ -45,10 +45,10 @@ func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, err
 func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.MerkleTree, error) {
 	// Sort the dividendAccounts by ID
 	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
-	var list []merkletree.Content
+	list := make([]merkletree.Content, len(dividendAccounts))
 
 	for i := 0; i < len(dividendAccounts); i++ {
-		list = append(list, dividendAccounts[i])
+		list[i] = dividendAccounts[i]
 	}
 
 	tree, err := merkletree.NewTreeWithHashStrategy(list, sha3.NewLegacyKeccak256)
@@ -65,14 +65,14 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmType
 	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
 
 	var (
-		list    []merkletree.Content
+		list    = make([]merkletree.Content, len(dividendAccounts))
 		account hmTypes.DividendAccount
 	)
 
 	index := uint64(0)
 
 	for i := 0; i < len(dividendAccounts); i++ {
-		list = append(list, dividendAccounts[i])
+		list[i] = dividendAccounts[i]
 
 		if dividendAccounts[i].User.Equals(userAddr) {
 			account = dividendAccounts[i]

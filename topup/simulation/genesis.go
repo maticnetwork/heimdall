@@ -31,7 +31,7 @@ func RandomizeGenState(simState *module.SimulationState) {
 	accounts := simulation.RandomAccounts(r1, n)
 
 	var (
-		sequences        []string
+		sequences        = make([]string, 5)
 		dividendAccounts = make([]hmTypes.DividendAccount, 5)
 	)
 
@@ -44,7 +44,7 @@ func RandomizeGenState(simState *module.SimulationState) {
 			},
 		)
 
-		sequences = append(sequences, sequenceNumber)
+		sequences[i] = sequenceNumber
 
 		// create dividend account for validator
 		dividendAccounts[i] = hmTypes.NewDividendAccount(
