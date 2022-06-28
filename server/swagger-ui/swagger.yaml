@@ -1,384 +1,2170 @@
----
 swagger: "2.0"
-info:
-  version: "1.0"
-  title: Heimdall
-  description: A REST interface for state queries, transaction generation and broadcasting.
-tags:
-  - name: Staking
-    description: Stake module APIs
-  - name: Checkpoint
-    description: Checkpoint module APIs
-  - name: Span
-    description: Span module APIs
 schemes:
-  - http
+- http
 host: localhost:1317
-securityDefinitions:
-  kms:
-    type: basic
-paths:
-  /staking/signer/{address}:
-    parameters:
-      - in: path
-        name: address
-        description: Signer Address of Validator
-        required: true
-        type: string
-        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-    get:
-      summary: Query the information from a single validator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Validator"
-        400:
-          description: Invalid signer address
-        500:
-          description: Internal Server Error
-          
-  /staking/validator-status/{address}:
-    parameters:
-      - in: path
-        name: address
-        description: Signer Address of Validator
-        required: true
-        type: string
-        x-example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-    get:
-      summary: Query the Status Info of Validator
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              status:
-                type: boolean
-        400:
-          description: Invalid signer address
-        500:
-          description: Internal Server Error
-          
-  /staking/validator/{id}:
-    parameters:
-      - in: path
-        name: id
-        description: Get Validator by val ID
-        required: true
-        type: integer
-        x-example: 1
-    get:
-      summary: Query the Validator by val ID
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Validator"
-        400:
-          description: Invalid Validator ID
-        500:
-          description: Internal Server Error  
-  /staking/current-proposer:
-    get:
-      summary: Query the Current Block Proposer
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Validator"
-        500:
-          description: Internal Server Error  
-  /staking/validator-set:
-    get:
-      summary: Query the Current Validator Set
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/ValidatorSet"
-        500:
-          description: Internal Server Error  
-  
-  /staking/checkpoint-reward:
-    get:
-      summary: Query the checkpoint reward
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              result:
-                type: integer
-        500:
-          description: Internal Server Error  
-          
-  /staking/proposer-bonus-percent:
-    get:
-      summary: Query the proposer bonus percent
-      tags:
-        - Staking
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              result:
-                type: integer
-        500:
-          description: Internal Server Error  
-
-  /checkpoint/count:
-    get:
-      summary: Query number of checkpoints
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            type: object
-            properties:
-              result:
-                type: integer
-        500:
-          description: Internal Server Error  
-  
-  /checkpoint/latest-checkpoint:
-    get:
-      summary: Query the Latest checkpoint
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error    
-  /checkpoint/buffer:
-    get:
-      summary: Query the checkpoint in the buffer
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error  
-          
-  /checkpoint/headers/{headerBlockIndex}:
-    parameters:
-      - in: path
-        name: headerBlockIndex
-        description: header Block Index
-        required: true
-        type: integer
-        x-example: 123    
-    get:
-      summary: Query the checkpoint by header block index
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error    
-          
-  /checkpoint/{checkpointNumber}:
-    parameters:
-      - in: path
-        name: checkpointNumber
-        description: checkpoint Number
-        required: true
-        type: integer
-        x-example: 10 
-    get:
-      summary: Query the checkpoint by checkpoint Number
-      tags:
-        - Checkpoint
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Checkpoint"
-        500:
-          description: Internal Server Error   
-          
-  /bor/span/{id}:
-    parameters:
-      - in: path
-        name: id
-        description: span number
-        required: true
-        type: integer
-        x-example: 10 
-    get:
-      summary: Query the span by id
-      tags:
-        - Span
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Span"
-        500:
-          description: Internal Server Error             
-  /bor/latest-span:
-    get:
-      summary: Query the latest span
-      tags:
-        - Span
-      produces:
-        - application/json
-      responses:
-        200:
-          description: OK
-          schema:
-            $ref: "#/definitions/Span"
-        500:
-          description: Internal Server Error    
+info:
+  title: Heimdall APIs
+  description: Package classification HiemdallRest API
+  version: 0.0.1
+basePath: /
+consumes:
+- application/json
 definitions:
-  Address:
-    type: string
-    description: hex address
-    example: 0x6c468cf8c9879006e22ec4029696e005c2319c9d
-  ValidatorAddress:
-    type: string
-    description: hex address
-    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-  HeimdallAddress:
-    type: string
-    description: hex address
-    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-  
-  HeimdallHash:
-    type: string
-    description: common.Hash
-    example: "0x6c468cf8c9879006e22ec4029696e005c2319c9d"
-  
-  Validator:
+  ContractAddresses:
+    properties:
+      BorChainId:
+        type: string
+      matic_token_address:
+        type: string
+        x-go-name: MaticChainAddress
+      root_chain_address:
+        type: string
+        x-go-name: RootChainAddress
+      slash_manager_address:
+        type: string
+        x-go-name: SlashManagerAddress
+      staking_info_address:
+        type: string
+        x-go-name: StalkignInfoAddress
+      staking_manager_address:
+        type: string
+        x-go-name: StalkingManagerAddress
+      state_receiver_address:
+        type: string
+        x-go-name: StateReceiverAddress
+      state_sender_address:
+        type: string
+        x-go-name: StateSenderAddress
+      validator_set_address:
+        type: string
+        x-go-name: ValidatorSetAddress
     type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/chainmanager/client/rest
+  DividendAccount:
+    properties:
+      feeAmount:
+        type: string
+        x-go-name: FeeAmount
+      user:
+        type: string
+        x-go-name: User
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  DividendAccountProof:
+    properties:
+      accountProof:
+        type: string
+        x-go-name: Proof
+      index:
+        format: uint64
+        type: integer
+        x-go-name: Index
+      user:
+        type: string
+        x-go-name: User
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  TallyResult:
+    properties:
+      abstain:
+        type: string
+        x-go-name: Abstain
+      "no":
+        type: string
+        x-go-name: "No"
+      no_with_veto:
+        type: string
+        x-go-name: NoWithVeto
+      "yes":
+        type: string
+        x-go-name: "Yes"
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  ValidatorSlashingInfo:
     properties:
       ID:
+        format: int64
         type: integer
-        example: 1
-      startEpoch:
+      IsJailed:
+        type: boolean
+      SlashedAmount:
+        format: int64
         type: integer
-        example: 0
-      EndEpoch:
-        type: integer
-        example: 0
-      VotingPower:
-        type: integer
-        example: 10
-      PubKey:
-        type: string
-        example : "0x04b12d8b2f6e3d45a7ace12c4b2158f79b95e4c28ebe5ad54c439be9431d7fc9dc1164210bf6a5c3b8523528b931e772c86a307e8cff4b725e6b4a77d21417bf19"
-      signer:
-        $ref: "#/definitions/Address"
-      LastUpdated:
-        type: integer
-        example: 0
-      accum:
-        type: integer
-        example: 0
-  PublicKey:
     type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  bankBalance:
     properties:
-      value:
-        type: string 
-  ValidatorSet:
+      amount:
+        description: Amount of token in the bank
+        type: string
+        x-go-name: Amount
+      denom:
+        description: Denomination of the token
+        type: string
+        x-go-name: Denom
     type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bank/client/rest
+  bankBalanceByAddress:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/bankBalance'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bank/client/rest
+  borSpan:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/span'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  borSpanList:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/span'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  borSpanParams:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/spanParams'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  chainManager:
+    properties:
+      chain_params:
+        $ref: '#/definitions/ContractAddresses'
+      mainchain_tx_confirmations:
+        format: int64
+        type: integer
+        x-go-name: MainChainConfirmation
+      maticchain_tx_confirmations:
+        format: int64
+        type: integer
+        x-go-name: MaticChainConfirmation
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/chainmanager/client/rest
+  chainManagerParams:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/chainManager'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/chainmanager/client/rest
+  change:
+    properties:
+      Subspace:
+        type: string
+      key:
+        type: string
+        x-go-name: Key
+      value:
+        type: string
+        x-go-name: Value
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  checkpoint:
+    properties:
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainId
+      end_block:
+        format: int64
+        type: integer
+        x-go-name: EndBlock
+      proposer:
+        type: string
+        x-go-name: Proposer
+      root_hash:
+        type: string
+        x-go-name: RootHash
+      start_block:
+        format: int64
+        type: integer
+        x-go-name: StartBlock
+      timestamp:
+        format: int64
+        type: integer
+        x-go-name: Timestamp
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointCount:
+    properties:
+      result:
+        format: int64
+        type: integer
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointCountResponseStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/checkpointCount'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointListStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/checkpoint'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointParams:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/params'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/checkpoint'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  clerkEventById:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/event'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  clerkEventList:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/event'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  content:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/value'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  deposit:
+    properties:
+      amount:
+        type: string
+        x-go-name: Account
+      denom:
+        type: string
+        x-go-name: Denom
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  deposited:
+    properties:
+      amount:
+        items:
+          $ref: '#/definitions/deposit'
+        type: array
+        x-go-name: Amount
+      depositor:
+        type: string
+        x-go-name: Depositor
+      proposal_id:
+        format: int64
+        type: integer
+        x-go-name: ProposalId
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  event:
+    properties:
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainId
+      contract:
+        type: string
+        x-go-name: Contract
+      data:
+        type: string
+        x-go-name: Data
+      id:
+        format: int64
+        type: integer
+        x-go-name: Id
+      log_index:
+        format: int64
+        type: integer
+        x-go-name: LogIndex
+      record_time:
+        type: string
+        x-go-name: RecoedTime
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  govDepositStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/deposited'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govDepositsStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/deposited'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govParameterDeposit:
+    properties:
+      max_deposit_period:
+        type: string
+        x-go-name: MaxDepositPeriod
+      min_deposit:
+        $ref: '#/definitions/deposit'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govParameterDepositStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/govParameterDeposit'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govParameterTallying:
+    properties:
+      quorum:
+        type: string
+        x-go-name: Quorum
+      threshold:
+        type: string
+        x-go-name: Threshold
+      veto:
+        type: string
+        x-go-name: Veto
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govParameterTallyingStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/govParameterTallying'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govParameterVoting:
+    properties:
+      voting_period:
+        type: string
+        x-go-name: VotingPeriod
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govParameterVotingStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/govParameterVoting'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govProposalsStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/proposal'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govProposerStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/proposer'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govVoteStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/vote'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govVotesStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/vote'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  isOldTx:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        type: boolean
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  lastNoAck:
+    properties:
+      result:
+        format: int64
+        type: integer
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  lastNoAckResponseStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/lastNoAck'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  overview:
+    properties:
+      ack_count:
+        format: int64
+        type: integer
+        x-go-name: AckCount
+      checkpoint_buffer:
+        $ref: '#/definitions/checkpoint'
+      last_noack_time:
+        type: string
+        x-go-name: LastNoAckTime
+      validator_Count:
+        format: int64
+        type: integer
+        x-go-name: ValidatorCount
+      validator_set:
+        $ref: '#/definitions/validatorSet'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  overviewResponseStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/overview'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  params:
+    properties:
+      downtime_jail_duration:
+        format: int64
+        type: integer
+        x-go-name: DowntimeJailDuration
+      enable_slashing:
+        type: boolean
+        x-go-name: EnableSlashing
+      jail_fraction_limit:
+        type: string
+        x-go-name: JailFractionLimit
+      max_evidence_age:
+        type: string
+        x-go-name: MaxEvidenceAge
+      min_signed_per_window:
+        type: string
+        x-go-name: MinSignedPerWindow
+      signed_blocks_window:
+        format: int64
+        type: integer
+        x-go-name: SignedBlockWindow
+      slash_fraction_double_sign:
+        type: string
+        x-go-name: SlashFunctionDoubleSign
+      slash_fraction_downtime:
+        type: string
+        x-go-name: SlashFractionDowntime
+      slash_fraction_limit:
+        type: string
+        x-go-name: SlashFractionLimit
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  proposal:
+    properties:
+      content:
+        $ref: '#/definitions/content'
+      deposit_end_time:
+        type: string
+        x-go-name: DepositEndTime
+      final_tally_result:
+        $ref: '#/definitions/TallyResult'
+      id:
+        type: string
+        x-go-name: Id
+      proposal_status:
+        type: string
+        x-go-name: ProposalStatus
+      submit_time:
+        type: string
+        x-go-name: SubmitTime
+      total_deposit:
+        $ref: '#/definitions/deposit'
+      voting_end_time:
+        type: string
+        x-go-name: VotingEndTime
+      voting_start_time:
+        type: string
+        x-go-name: VotingStartTime
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  proposer:
+    properties:
+      proposal_id:
+        type: string
+        x-go-name: ProposalId
+      proposer:
+        type: string
+        x-go-name: Proposer
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  slashingCountStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        format: int64
+        type: integer
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingInfosBytesStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        type: string
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingInfosStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/slashingSigningInfo'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingLatestInfoByIdStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/ValidatorSlashingInfo'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingLatestInfosStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/ValidatorSlashingInfo'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingParametersStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/params'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingSigningInfo:
+    properties:
+      indexOffset:
+        format: int64
+        type: integer
+        x-go-name: IndexOffset
+      startHeight:
+        format: int64
+        type: integer
+        x-go-name: StartHeight
+      valID:
+        format: int64
+        type: integer
+        x-go-name: ValID
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingSigningInfoByIdStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/slashingSigningInfo'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  span:
+    properties:
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainId
+      end_block:
+        format: int64
+        type: integer
+        x-go-name: EndBlock
+      selected_producer:
+        items:
+          $ref: '#/definitions/validator'
+        type: array
+        x-go-name: SelectedProducers
+      span_id:
+        format: int64
+        type: integer
+        x-go-name: SpanID
+      start_block:
+        format: int64
+        type: integer
+        x-go-name: StartBlock
+      validator_set:
+        $ref: '#/definitions/validatorSet'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  spanParams:
+    properties:
+      producer_count:
+        description: type:integer
+        format: int64
+        type: integer
+        x-go-name: ProducerCount
+      span_duration:
+        description: type:integer
+        format: int64
+        type: integer
+        x-go-name: SpanDuration
+      sprint_duration:
+        description: type:integer
+        format: int64
+        type: integer
+        x-go-name: SprintDuration
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  spanSeed:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        type: string
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  stakingProposerByTimeStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          $ref: '#/definitions/validator'
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingTotalPower:
+    properties:
+      result:
+        format: int64
+        type: integer
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingTotalPowerStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/stakingTotalPower'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorSetStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/validators'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStatus:
+    properties:
+      result:
+        type: boolean
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStatusStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/stakingValidatorStatus'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/validator'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  topupDividendAccountProofStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/DividendAccountProof'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupDividendAccountProofVerifyStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        type: boolean
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupDividendAccountRootStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        items:
+          format: uint8
+          type: integer
+        type: array
+        x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupDividendAccountStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/DividendAccount'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  validator:
+    properties:
+      ID:
+        format: int64
+        type: integer
+      accum:
+        format: int64
+        type: integer
+        x-go-name: Accum
+      endEpoch:
+        format: int64
+        type: integer
+        x-go-name: EndEpoch
+      jailed:
+        type: boolean
+        x-go-name: Jailed
+      last_updated:
+        type: string
+        x-go-name: Last_Updated
+      nonce:
+        format: int64
+        type: integer
+        x-go-name: Nonce
+      power:
+        format: int64
+        type: integer
+        x-go-name: Power
+      pubKey:
+        type: string
+        x-go-name: PubKey
+      signer:
+        type: string
+        x-go-name: Signer
+      startEpoch:
+        format: int64
+        type: integer
+        x-go-name: StartEpoch
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  validatorSet:
+    properties:
+      proposer:
+        $ref: '#/definitions/validator'
+      validators:
+        items:
+          $ref: '#/definitions/validator'
+        type: array
+        x-go-name: Validators
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  validators:
     properties:
       validators:
-        type: array
         items:
-          $ref: "#/definitions/Validator"
-      proposer:
-          $ref: "#/definitions/Validator"
-  Checkpoint:
-    type: object
-    properties:
-      Proposer:
-        $ref: "#/definitions/HeimdallAddress"
-      StartBlock:
-        type: integer
-        example: 0
-      EndBlock:
-        type: integer
-        example: 0
-      RootHash:
-        $ref: "#/definitions/HeimdallHash"
-      RewardRootHash:
-        $ref: "#/definitions/HeimdallHash"
-      TimeStamp:
-        type: integer
-        example: 0
-  Span:
-    type: object
-    properties:
-      ID:
-        type: integer
-        example: 2
-      StartBlock:
-        type: integer
-        example: 0
-      EndBlock:
-        type: integer
-        example: 0
-      ValidatorSet:
-        $ref: "#/definitions/ValidatorSet"
-      SelectedProducers:
+          $ref: '#/definitions/validator'
         type: array
+        x-go-name: Validators
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  value:
+    properties:
+      change:
         items:
-          $ref: "#/definitions/Validator"
-      ChainID:
+          $ref: '#/definitions/change'
+        type: array
+        x-go-name: Changes
+      description:
         type: string
-        example: "heimdall-P5rXwg"
-        
+        x-go-name: Description
+      title:
+        type: string
+        x-go-name: Title
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  vote:
+    properties:
+      option:
+        type: string
+        x-go-name: Option
+      proposal_id:
+        type: string
+        x-go-name: ProposalId
+      voter:
+        type: string
+        x-go-name: Voter
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+
+paths:
+  /bank/balances/{address}:
+    get:
+      description: It returns the matic balance of particular address
+      operationId: bankBalanceByAddress
+      parameters:
+      - description: Address of the account
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      - description: Address of the account
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/bankBalanceByAddressResponse'
+      tags:
+      - bank
+  /bor/latest-span:
+    get:
+      description: It returns the list of Bor Span
+      operationId: borSpanLatest
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/borSpanResponse'
+      tags:
+      - bor
+  /bor/next-span-seed:
+    get:
+      description: It returns the seed for the next span
+      operationId: borNextSpanSeed
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/borNextSpanSeedRespose'
+      tags:
+      - bor
+  /bor/params:
+    get:
+      description: It returns the list of Bor Span
+      operationId: borSpanParams
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/borSpanParamsResponse'
+      tags:
+      - bor
+  /bor/prepare-next-span:
+    get:
+      description: It returns the list of Bor Span
+      operationId: borPrepareNextSpan
+      parameters:
+      - description: Start Block
+        format: int64
+        in: query
+        name: start_block
+        required: true
+        type: integer
+        x-go-name: StartBlock
+      - description: Span ID of the span
+        format: int64
+        in: query
+        name: span_id
+        required: true
+        type: integer
+        x-go-name: SpanId
+      - description: Chain ID of the network
+        format: int64
+        in: query
+        name: chain_id
+        required: true
+        type: integer
+        x-go-name: ChainId
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/borSpanResponse'
+      tags:
+      - bor
+  /bor/span/{id}:
+    get:
+      description: It returns the list of Bor Span
+      operationId: borSpanById
+      parameters:
+      - description: Id number of the span
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: Id
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/borSpanResponse'
+      tags:
+      - bor
+  /bor/span/list:
+    get:
+      description: It returns the list of Bor Span
+      operationId: borSpanList
+      parameters:
+      - description: Page Number
+        format: int64
+        in: query
+        name: page
+        required: true
+        type: integer
+        x-go-name: Page
+      - description: Limit
+        format: int64
+        in: query
+        name: limit
+        required: true
+        type: integer
+        x-go-name: Limit
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/borSpanListResponse'
+      tags:
+      - bor
+  /chainmanager/params:
+    get:
+      description: It returns the chain-manager parameters
+      operationId: chainManagerParams
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/chainManagerParamsResponse'
+      tags:
+      - chain-manager
+  /checkpoints/{id}:
+    get:
+      description: It returns the checkpoint by ID
+      operationId: checkpointById
+      parameters:
+      - description: ID of the checkpoint
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: Id
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/checkpointResponse'
+      tags:
+      - checkpoint
+  /checkpoints/buffer:
+    get:
+      description: It returns the checkpoint buffer
+      operationId: checkpointBuffer
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/checkpointResponse'
+      tags:
+      - checkpoint
+  /checkpoints/count:
+    get:
+      description: It returns the checkpoint counts
+      operationId: checkpointCount
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/checkpointCountResponse'
+      tags:
+      - checkpoint
+  /checkpoints/last-no-ack:
+    get:
+      description: It returns the last no ack
+      operationId: checkpointLastNoAck
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/lastNoAckResponse'
+      tags:
+      - checkpoint
+  /checkpoints/latest:
+    get:
+      description: It returns the last checkpoint from the store
+      operationId: checkpointLatest
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/checkpointResponse'
+      tags:
+      - checkpoint
+  /checkpoints/list:
+    get:
+      description: It returns the checkpoints list
+      operationId: checkpointList
+      parameters:
+      - description: Page number
+        format: int64
+        in: query
+        name: page
+        required: true
+        type: integer
+        x-go-name: Page
+      - description: Limit per page
+        format: int64
+        in: query
+        name: limit
+        required: true
+        type: integer
+        x-go-name: Limit
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/checkpointListResponse'
+      tags:
+      - checkpoint
+  /checkpoints/params:
+    get:
+      description: It returns the checkpoint parameters
+      operationId: checkpointParams
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/checkpointParamsResponse'
+      tags:
+      - checkpoint
+  /checkpoints/prepare:
+    get:
+      description: It returns the prepared checkpoint
+      operationId: checkpointPrepare
+      parameters:
+      - description: Start Block
+        format: int64
+        in: query
+        name: start
+        required: true
+        type: integer
+        x-go-name: Start
+      - description: End Block
+        format: int64
+        in: query
+        name: end
+        required: true
+        type: integer
+        x-go-name: End
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/checkpointPrepareResponse'
+      tags:
+      - checkpoint
+  /clerk/event-record/{recordID}:
+    get:
+      description: It returns the clerk events list
+      operationId: clerkEventById
+      parameters:
+      - description: ID of the checkpoint
+        format: int64
+        in: path
+        name: recordID
+        required: true
+        type: integer
+        x-go-name: Id
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/clerkEventByIdResponse'
+      tags:
+      - clerk
+  /clerk/event-record/list:
+    get:
+      description: It returns the clerk events list
+      operationId: clerkEventList
+      parameters:
+      - description: Page number
+        format: int64
+        in: query
+        name: page
+        required: true
+        type: integer
+        x-go-name: Page
+      - description: Limit per page
+        format: int64
+        in: query
+        name: limit
+        required: true
+        type: integer
+        x-go-name: Limit
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/clerkEventListResponse'
+      tags:
+      - clerk
+  /clerk/isoldtx:
+    get:
+      operationId: clerkIsOldTx
+      parameters:
+      - description: Log Index of the transaction
+        format: int64
+        in: query
+        name: logindex
+        required: true
+        type: integer
+        x-go-name: LogIndex
+      - description: Hash of the transaction
+        in: query
+        name: txhash
+        required: true
+        type: string
+        x-go-name: Txhash
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/clerkIsOldTxResponse'
+      summary: It checks for wheter the transaction is old or new.
+      tags:
+      - clerk
+  /gov/parameters/deposit:
+    get:
+      description: It returns the gov deposit parameters
+      operationId: govParametersDeposit
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/govParametersDepositResponse'
+      tags:
+      - gov
+  /gov/parameters/tallying:
+    get:
+      description: It returns the gov tallying parameters
+      operationId: govParametersTallying
+      responses:
+        "200":
+          $ref: '#/responses/govParametersTallyingResponse'
+      tags:
+      - gov
+  /gov/parameters/voting:
+    get:
+      description: It returns the gov voting parameters
+      operationId: govParametersVoting
+      responses:
+        "200":
+          $ref: '#/responses/govParametersVotingResponse'
+      tags:
+      - gov
+  /gov/proposals:
+    get:
+      description: It returns the gov proposals
+      operationId: govProposals
+      parameters:
+      - description: Proposal Status [DepositPeriod,Passed,Rejected,Failed,VotingPeriod]
+        in: query
+        name: status
+        type: string
+        x-go-name: Status
+      - description: Limit
+        format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      - description: Voter ID
+        format: int64
+        in: query
+        name: voter
+        type: integer
+        x-go-name: Voter
+      - description: Depositor ID
+        format: int64
+        in: query
+        name: depositor
+        type: integer
+        x-go-name: Depositor
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/govProposalsResponse'
+      tags:
+      - gov
+  /gov/proposals/{proposal-id}:
+    get:
+      description: It returns the proposal based on the proposal Id
+      operationId: govProposalById
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      responses:
+        "200":
+          $ref: '#/responses/govProposalResponse'
+      tags:
+      - gov
+  /gov/proposals/{proposal-id}/deposits:
+    get:
+      description: It returns the gov deposit parameters
+      operationId: govDepositByProposalId
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      responses:
+        "200":
+          $ref: '#/responses/govDepositsResponse'
+      tags:
+      - gov
+  /gov/proposals/{proposal-id}/deposits/{depositor}:
+    get:
+      description: It returns the deposit for a particular proposal based on depositor
+        Id
+      operationId: govDepositBasedOnDepositor
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      - description: Depositor ID
+        format: int64
+        in: path
+        name: depositor
+        required: true
+        type: integer
+        x-go-name: Depositor
+      responses:
+        "200":
+          $ref: '#/responses/govDepositResponse'
+      tags:
+      - gov
+  /gov/proposals/{proposal-id}/proposer:
+    get:
+      operationId: govProposerByProposalId
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      responses:
+        "200":
+          $ref: '#/responses/govProposerResponse'
+      summary: It returns the proposer based on the proposal.
+      tags:
+      - gov
+  /gov/proposals/{proposal-id}/tally:
+    get:
+      description: It returns the tally on the proposal ID
+      operationId: govTallyByProposalId
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      responses:
+        "200":
+          $ref: '#/responses/govTallyResponse'
+      tags:
+      - gov
+  /gov/proposals/{proposal-id}/votes:
+    get:
+      description: It returns the proposal votes based on proposal id
+      operationId: govProposalVotesByProposalId
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      responses:
+        "200":
+          $ref: '#/responses/govVotesResponse'
+      tags:
+      - gov
+  /gov/proposals/{proposal-id}/votes/{voter}:
+    get:
+      operationId: govVotesBasedOnVoterId
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      - description: Voter ID
+        format: int64
+        in: path
+        name: voter
+        required: true
+        type: integer
+        x-go-name: Voter
+      responses:
+        "200":
+          $ref: '#/responses/govVoteResponse'
+      summary: It returns the votes on the specific proposal Id based on voter Id.
+      tags:
+      - gov
+  /overview:
+    get:
+      description: It returns the complete overview
+      operationId: overview
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/overviewResponse'
+      tags:
+      - checkpoint
+  /slashing/isoldtx:
+    get:
+      description: It returns whether the transaction is old
+      operationId: slashingIsOldTx
+      parameters:
+      - description: Log Index of the transaction
+        format: int64
+        in: query
+        name: logindex
+        required: true
+        type: integer
+        x-go-name: LogIndex
+      - description: Hash of the transaction
+        in: query
+        name: txhash
+        required: true
+        type: string
+        x-go-name: Txhash
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingIsOldTxResponse'
+      tags:
+      - slashing
+  /slashing/latest_slash_info_bytes:
+    get:
+      description: It returns the latest signing info byte
+      operationId: slashingLatestSlashInfoBytes
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingInfosBytesResponse'
+      tags:
+      - slashing
+  /slashing/latest_slash_infos:
+    get:
+      description: It returns the latest signing infos
+      operationId: slashingLatestInfos
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingLatestInfosResponse'
+      tags:
+      - slashing
+  /slashing/parameters:
+    get:
+      description: It returns the slashing parameters
+      operationId: slashingParameters
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingParametersResponse'
+      tags:
+      - slashing
+  /slashing/signing_infos:
+    get:
+      operationId: slashingInfos
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingInfosResponse'
+      summary: It returns the signing infos.
+      tags:
+      - slashing
+  /slashing/tick-count:
+    get:
+      description: It returns the slashing tick count
+      operationId: slashingTickCount
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingCountResponse'
+      tags:
+      - slashing
+  /slashing/tick_slash_infos:
+    get:
+      description: It returns the signing infos of the validator based on Id
+      operationId: slashingTickInfos
+      parameters:
+      - description: Page number
+        format: int64
+        in: query
+        name: page
+        required: true
+        type: integer
+        x-go-name: Page
+      - description: Limit per page
+        format: int64
+        in: query
+        name: limit
+        required: true
+        type: integer
+        x-go-name: Limit
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingLatestInfosResponse'
+      tags:
+      - slashing
+  /slashing/validators/{id}/latest_slash_info:
+    get:
+      description: It returns the latest signing infos of the validator based on Id
+      operationId: slashingLatestInfoById
+      parameters:
+      - description: ID of the validator
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: Id
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingLatestInfoByIdResponse'
+      tags:
+      - slashing
+  /slashing/validators/{id}/signing_info:
+    get:
+      description: It returns the signing infos of the validator based on Id
+      operationId: slashingSigningInfoById
+      parameters:
+      - description: ID of the validator
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: Id
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/slashingSigningInfoByIdResponse'
+      tags:
+      - slashing
+  /staking/current-proposer:
+    get:
+      description: It returns proposer for current validator set
+      operationId: stakingCurrentProposer
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorResponse'
+      tags:
+      - staking
+  /staking/isoldtx:
+    get:
+      description: It returns status of the transaction
+      operationId: stakingIsOldTx
+      parameters:
+      - description: Log Index of the transaction
+        format: int64
+        in: query
+        name: logindex
+        required: true
+        type: integer
+        x-go-name: LogIndex
+      - description: Hash of the transaction
+        in: query
+        name: txhash
+        required: true
+        type: string
+        x-go-name: Txhash
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingIsOldTxResponse'
+      tags:
+      - staking
+  /staking/proposer/{times}:
+    get:
+      description: It returns proposer for current validator set by time
+      operationId: stakingProposerByTime
+      parameters:
+      - description: time
+        format: int64
+        in: path
+        name: times
+        required: true
+        type: integer
+        x-go-name: Times
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingProposerByTimeResponse'
+      tags:
+      - staking
+  /staking/signer/{address}:
+    get:
+      description: It returns the signer by address
+      operationId: stakingSignerByAddress
+      parameters:
+      - description: Address of the signer
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorResponse'
+      tags:
+      - staking
+  /staking/totalpower:
+    get:
+      description: It returns the total power of all the validators
+      operationId: stakingTotalPower
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingTotalPowerResponse'
+      tags:
+      - staking
+  /staking/validator-set:
+    get:
+      description: It returns the current validator set
+      operationId: stakingValidatorSet
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorSetResponse'
+      tags:
+      - staking
+  /staking/validator-status/{address}:
+    get:
+      description: It returns the status of the validator
+      operationId: stakingValidatorStatus
+      parameters:
+      - description: Address of the validator
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorStatusResponse'
+      tags:
+      - staking
+  /staking/validator/{id}:
+    get:
+      description: It returns the staking validator information by id
+      operationId: stakingValidatorById
+      parameters:
+      - description: ID of the validator
+        format: int64
+        in: path
+        name: id
+        required: true
+        type: integer
+        x-go-name: Id
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorResponse'
+      tags:
+      - staking
+  /topup/account-proof/{address}:
+    get:
+      description: It returns the Dividend Account information by User Address
+      operationId: topupDividendAccountProofByAddress
+      parameters:
+      - description: Address
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/topupDividendAccountProofResponse'
+      tags:
+      - topup
+  /topup/account-proof/{address}/verify:
+    get:
+      description: It returns true if given Merkle path for dividendAccountID is valid
+      operationId: topupDividendAccountProofVerify
+      parameters:
+      - description: Address
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/topupDividendAccountProofVerifyResponse'
+      tags:
+      - topup
+  /topup/dividend-account-root:
+    get:
+      description: It returns the genesis accountroothash
+      operationId: topupDividendAccountRoot
+      parameters:
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/topupDividendAccountRootResponse'
+      tags:
+      - topup
+  /topup/dividend-account/{address}:
+    get:
+      description: It returns the Dividend Account information by User Address
+      operationId: topupDividendAccountByAddress
+      parameters:
+      - description: Address
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/topupDividendAccountResponse'
+      tags:
+      - topup
+  /topup/isoldtx:
+    get:
+      description: It returns whether the transaction is old
+      operationId: topupIsOldTx
+      parameters:
+      - description: Log Index of the transaction
+        format: int64
+        in: query
+        name: logindex
+        required: true
+        type: integer
+        x-go-name: LogIndex
+      - description: Hash of the transaction
+        in: query
+        name: txhash
+        required: true
+        type: string
+        x-go-name: Txhash
+      - description: Block Height
+        in: query
+        name: height
+        type: string
+        x-go-name: Height
+      responses:
+        "200":
+          $ref: '#/responses/topupIsOldTxResponse'
+      tags:
+      - topup
+produces:
+- application/json
+responses:
+  bankBalanceByAddressResponse:
+    description: It represents the bank balance of particluar account
+    schema:
+      $ref: '#/definitions/bankBalanceByAddress'
+  borNextSpanSeedRespose:
+    description: It represents the next span seed
+    schema:
+      $ref: '#/definitions/spanSeed'
+  borSpanListResponse:
+    description: It represents the list of spans
+    schema:
+      $ref: '#/definitions/borSpanList'
+  borSpanParamsResponse:
+    description: It represents the bor span parameters
+    schema:
+      $ref: '#/definitions/borSpanParams'
+  borSpanResponse:
+    description: It represents the spans
+    schema:
+      $ref: '#/definitions/borSpan'
+  chainManagerParamsResponse:
+    description: It represents the bank balance of particluar account
+    schema:
+      $ref: '#/definitions/chainManagerParams'
+  checkpointCountResponse:
+    description: It represents the checkpoint count
+    schema:
+      $ref: '#/definitions/checkpointCountResponseStructure'
+  checkpointListResponse:
+    description: It represents the checkpoint list
+    schema:
+      $ref: '#/definitions/checkpointListStructure'
+  checkpointParamsResponse:
+    description: It represents the checkpoint parameters
+    schema:
+      $ref: '#/definitions/checkpointParams'
+  checkpointPrepareResponse:
+    description: It represents the checkpoint prepare
+    schema:
+      $ref: '#/definitions/checkpointParams'
+  checkpointResponse:
+    description: It represents the checkpoint
+    schema:
+      $ref: '#/definitions/checkpointStructure'
+  clerkEventByIdResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/clerkEventById'
+  clerkEventListResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/clerkEventList'
+  clerkIsOldTxResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/isOldTx'
+  govDepositResponse:
+    description: It represents the vote response
+    schema:
+      $ref: '#/definitions/govDepositStructure'
+  govDepositsResponse:
+    description: It represents the vote response
+    schema:
+      $ref: '#/definitions/govDepositsStructure'
+  govParametersDepositResponse:
+    description: It represents the gov deposit parameters
+    schema:
+      $ref: '#/definitions/govParameterDepositStructure'
+  govParametersTallyingResponse:
+    description: It represents the gov tallying parameters
+    schema:
+      $ref: '#/definitions/govParameterTallyingStructure'
+  govParametersVotingResponse:
+    description: It represents the gov voting parameters
+    schema:
+      $ref: '#/definitions/govParameterVotingStructure'
+  govProposalResponse:
+    description: It represents the gov proposal
+    schema:
+      $ref: '#/definitions/govProposalsStructure'
+  govProposalsResponse:
+    description: It represents the gov proposals
+    schema:
+      $ref: '#/definitions/govProposalsStructure'
+  govProposerResponse:
+    description: It represents the gov proposer
+    schema:
+      $ref: '#/definitions/govProposerStructure'
+  govTallyResponse:
+    description: It represents the gov Tally based on Id
+    schema:
+      $ref: '#/definitions/govProposalsStructure'
+  govVoteResponse:
+    description: It represents the vote response
+    schema:
+      $ref: '#/definitions/govVoteStructure'
+  govVotesResponse:
+    description: It represents the votes responses
+    schema:
+      $ref: '#/definitions/govVotesStructure'
+  lastNoAckResponse:
+    description: It represents the last-no-ack
+    schema:
+      $ref: '#/definitions/lastNoAckResponseStructure'
+  overviewResponse:
+    description: It represents the overview
+    schema:
+      $ref: '#/definitions/overviewResponseStructure'
+  slashingCountResponse:
+    description: It represents the slashing count
+    schema:
+      $ref: '#/definitions/slashingCountStructure'
+  slashingInfosBytesResponse:
+    description: It represents the slashing count
+    schema:
+      $ref: '#/definitions/slashingInfosBytesStructure'
+  slashingInfosResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/slashingInfosStructure'
+  slashingIsOldTxResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/isOldTx'
+  slashingLatestInfoByIdResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/slashingLatestInfoByIdStructure'
+  slashingLatestInfosResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/slashingLatestInfosStructure'
+  slashingParametersResponse:
+    description: It represents the slashing parameters
+    schema:
+      $ref: '#/definitions/slashingParametersStructure'
+  slashingSigningInfoByIdResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/slashingSigningInfoByIdStructure'
+  stakingIsOldTxResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/isOldTx'
+  stakingProposerByTimeResponse:
+    description: It represents the proposer based on time
+    schema:
+      $ref: '#/definitions/stakingProposerByTimeStructure'
+  stakingTotalPowerResponse:
+    description: It represents the staking total power
+    schema:
+      $ref: '#/definitions/stakingTotalPowerStructure'
+  stakingValidatorResponse:
+    description: It represents the signer by address or id
+    schema:
+      $ref: '#/definitions/stakingValidatorStructure'
+  stakingValidatorSetResponse:
+    description: It represents the validator set
+    schema:
+      $ref: '#/definitions/stakingValidatorSetStructure'
+  stakingValidatorStatusResponse:
+    description: It represents the validor status
+    schema:
+      $ref: '#/definitions/stakingValidatorStatusStructure'
+  topupDividendAccountProofResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/topupDividendAccountProofStructure'
+  topupDividendAccountProofVerifyResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/topupDividendAccountProofVerifyStructure'
+  topupDividendAccountResponse:
+    description: It represents the dividend account information
+    schema:
+      $ref: '#/definitions/topupDividendAccountStructure'
+  topupDividendAccountRootResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/topupDividendAccountRootStructure'
+  topupIsOldTxResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/isOldTx'
+

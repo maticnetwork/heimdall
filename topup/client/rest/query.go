@@ -14,6 +14,73 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
+//swagger:response topupIsOldTxResponse
+type topupIsOldTxResponse struct {
+	//in:body
+	Output isOldTx `json:"output"`
+}
+
+type isOldTx struct {
+	Height string `json:"height"`
+	Result bool   `json:"result"`
+}
+
+//It represents the dividend account information
+//swagger:response topupDividendAccountResponse
+type topupDividendAccountResponse struct {
+	//in:body
+	Output topupDividendAccountStructure `json:"output"`
+}
+
+type topupDividendAccountStructure struct {
+	Height string          `json:"height"`
+	Result DividendAccount `json:"result"`
+}
+
+type DividendAccount struct {
+	User      string `json:"user"`
+	FeeAmount string `json:"feeAmount"`
+}
+
+//swagger:response topupDividendAccountRootResponse
+type topupDividendAccountRootResponse struct {
+	//in:body
+	Output topupDividendAccountRootStructure `json:"output"`
+}
+
+type topupDividendAccountRootStructure struct {
+	Height string `json:"height"`
+	Result []byte `json:"result"`
+}
+
+//swagger:response topupDividendAccountProofVerifyResponse
+type topupDividendAccountProofVerifyResponse struct {
+	//in:body
+	Output topupDividendAccountProofVerifyStructure `json:"output"`
+}
+
+type topupDividendAccountProofVerifyStructure struct {
+	Height string `json:"height"`
+	Result bool   `json:"result"`
+}
+
+//swagger:response topupDividendAccountProofResponse
+type topupDividendAccountProofResponse struct {
+	//in:body
+	Output topupDividendAccountProofStructure `json:"output"`
+}
+
+type topupDividendAccountProofStructure struct {
+	Height string               `json:"height"`
+	Result DividendAccountProof `json:"result"`
+}
+
+type DividendAccountProof struct {
+	User  string `json:"user"`
+	Proof string `json:"accountProof"`
+	Index uint64 `json:"index"`
+}
+
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/topup/isoldtx",
@@ -37,6 +104,23 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	).Methods("GET")
 }
 
+//swagger:parameters topupIsOldTx
+type topupTxParams struct {
+	//Log Index of the transaction
+	//required:true
+	//in:query
+	LogIndex int64 `json:"logindex"`
+
+	//Hash of the transaction
+	//required:true
+	//in:query
+	Txhash string `json:"txhash"`
+}
+
+// swagger:route GET /topup/isoldtx topup topupIsOldTx
+// It returns whether the transaction is old
+// responses:
+//   200: topupIsOldTxResponse
 // Returns topup tx status information
 func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -83,6 +167,18 @@ func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters topupDividendAccountProofByAddress topupDividendAccountProofVerify topupDividendAccountByAddress
+type topupAddress struct {
+	//Address
+	//required:true
+	//in:path
+	Address string `json:"address"`
+}
+
+// swagger:route GET /topup/dividend-account/{address} topup topupDividendAccountByAddress
+// It returns the Dividend Account information by User Address
+// responses:
+//   200: topupDividendAccountResponse
 // Returns Dividend Account information by User Address
 func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -121,6 +217,10 @@ func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 	}
 }
 
+// swagger:route GET /topup/dividend-account-root topup topupDividendAccountRoot
+// It returns the genesis accountroothash
+// responses:
+//   200: topupDividendAccountRootResponse
 // dividendAccountRootHandlerFn returns genesis accountroothash
 func dividendAccountRootHandlerFn(
 	cliCtx context.CLIContext,
@@ -160,6 +260,10 @@ func dividendAccountRootHandlerFn(
 	}
 }
 
+// swagger:route GET /topup/account-proof/{address} topup topupDividendAccountProofByAddress
+// It returns the Dividend Account information by User Address
+// responses:
+//   200: topupDividendAccountProofResponse
 // Returns Merkle path for dividendAccountID using dividend Account Tree
 func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -198,6 +302,10 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /topup/account-proof/{address}/verify topup topupDividendAccountProofVerify
+// It returns true if given Merkle path for dividendAccountID is valid
+// responses:
+//   200: topupDividendAccountProofVerifyResponse
 // VerifyAccountProofHandlerFn - Returns true if given Merkle path for dividendAccountID is valid
 func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -243,4 +351,12 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
+}
+
+//swagger:parameters topupDividendAccountProofVerify topupDividendAccountProofByAddress topupDividendAccountRoot topupDividendAccountByAddress topupIsOldTx
+type Height struct {
+
+	//Block Height
+	//in:query
+	Height string `json:"height"`
 }

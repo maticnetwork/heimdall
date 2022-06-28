@@ -15,6 +15,101 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
+//It represents the staking total power
+//swagger:response stakingTotalPowerResponse
+type stakingTotalPowerResponse struct {
+	//in:body
+	Output stakingTotalPowerStructure `json:"output"`
+}
+
+type stakingTotalPowerStructure struct {
+	Height string            `json:"height"`
+	Result stakingTotalPower `json:"result"`
+}
+
+type stakingTotalPower struct {
+	Result int64 `json:"result"`
+}
+
+//It represents the signer by address or id
+//swagger:response stakingValidatorResponse
+type stakingValidatorResponse struct {
+	//in:body
+	Output stakingValidatorStructure `json:"output"`
+}
+
+type stakingValidatorStructure struct {
+	Height string    `json:"height"`
+	Result validator `json:"result"`
+}
+
+type validator struct {
+	ID           int    `json:"ID"`
+	StartEpoch   int    `json:"startEpoch"`
+	EndEpoch     int    `json:"endEpoch"`
+	Nonce        int    `json:"nonce"`
+	Power        int    `json:"power"`
+	PubKey       string `json:"pubKey"`
+	Signer       string `json:"signer"`
+	Last_Updated string `json:"last_updated"`
+	Jailed       bool   `json:"jailed"`
+	Accum        int    `json:"accum"`
+}
+
+//It represents the validor status
+//swagger:response stakingValidatorStatusResponse
+type stakingValidatorStatusResponse struct {
+	//in:body
+	Output stakingValidatorStatusStructure `json:"output"`
+}
+
+type stakingValidatorStatusStructure struct {
+	Height string                 `json:"height"`
+	Result stakingValidatorStatus `json:"result"`
+}
+type stakingValidatorStatus struct {
+	Result bool `json:"result"`
+}
+
+//It represents the validator set
+//swagger:response stakingValidatorSetResponse
+type stakingValidatorSetResponse struct {
+	//in:body
+	Output stakingValidatorSetStructure `json:"output"`
+}
+
+type stakingValidatorSetStructure struct {
+	Height string     `json:"height"`
+	Result validators `json:"result"`
+}
+
+type validators struct {
+	Validators []validator `json:"validators"`
+}
+
+//swagger:response stakingIsOldTxResponse
+type stakingIsOldTxResponse struct {
+	//in:body
+	Output isOldTx `json:"output"`
+}
+
+type isOldTx struct {
+	Height string `json:"height"`
+	Result bool   `json:"result"`
+}
+
+//It represents the proposer based on time
+//swagger:response stakingProposerByTimeResponse
+type stakingProposerByTimeResponse struct {
+	//in:body
+	Output stakingProposerByTimeStructure `json:"output"`
+}
+
+type stakingProposerByTimeStructure struct {
+	Height string      `json:"height"`
+	Result []validator `json:"result"`
+}
+
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/staking/totalpower",
@@ -54,6 +149,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	).Methods("GET")
 }
 
+// swagger:route GET /staking/totalpower staking stakingTotalPower
+// It returns the total power of all the validators
+// responses:
+//   200: stakingTotalPowerResponse
 // Returns total power of current validator set
 func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -94,6 +193,19 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 
 }
 
+//swagger:parameters stakingSignerByAddress
+type signerAddrees struct {
+
+	//Address of the signer
+	//required:true
+	//in:path
+	Address string `json:"address"`
+}
+
+// swagger:route GET /staking/signer/{address} staking stakingSignerByAddress
+// It returns the signer by address
+// responses:
+//   200: stakingValidatorResponse
 // Returns validator information by signer address
 func validatorByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -130,7 +242,19 @@ func validatorByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-// Returns validator status information by signer address
+//swagger:parameters stakingValidatorStatus
+type validatorAddrees struct {
+
+	//Address of the validator
+	//required:true
+	//in:path
+	Address string `json:"address"`
+}
+
+// swagger:route GET /staking/validator-status/{address} staking stakingValidatorStatus
+// It returns the status of the validator
+// responses:
+//   200: stakingValidatorStatusResponse
 func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -178,6 +302,19 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 	}
 }
 
+//swagger:parameters stakingValidatorById
+type validatorID struct {
+
+	//ID of the validator
+	//required:true
+	//in:path
+	Id int64 `json:"id"`
+}
+
+// swagger:route GET /staking/validator/{id} staking stakingValidatorById
+// It returns the staking validator information by id
+// responses:
+//   200: stakingValidatorResponse
 // Returns validator information by val ID
 func validatorByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -219,6 +356,10 @@ func validatorByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /staking/validator-set staking stakingValidatorSet
+// It returns the current validator set
+// responses:
+//   200: stakingValidatorSetResponse
 // get current validator set
 func validatorSetHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -245,6 +386,19 @@ func validatorSetHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters stakingProposerByTime
+type Times struct {
+
+	//time
+	//required:true
+	//in:path
+	Times int64 `json:"times"`
+}
+
+// swagger:route GET /staking/proposer/{times} staking stakingProposerByTime
+// It returns proposer for current validator set by time
+// responses:
+//   200: stakingProposerByTimeResponse
 // get proposer for current validator set
 func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -286,6 +440,10 @@ func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /staking/current-proposer staking stakingCurrentProposer
+// It returns proposer for current validator set
+// responses:
+//   200: stakingValidatorResponse
 // currentProposerHandlerFn get proposer for current validator set
 func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -350,6 +508,24 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters stakingIsOldTx
+type stalkingTxParams struct {
+
+	//Log Index of the transaction
+	//required:true
+	//in:query
+	LogIndex int64 `json:"logindex"`
+
+	//Hash of the transaction
+	//required:true
+	//in:query
+	Txhash string `json:"txhash"`
+}
+
+// swagger:route GET /staking/isoldtx staking stakingIsOldTx
+// It returns status of the transaction
+// responses:
+//   200: stakingIsOldTxResponse
 // Returns staking tx status information
 func StakingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -397,4 +573,12 @@ func StakingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
+}
+
+//swagger:parameters stakingIsOldTx stakingProposerByTime stakingCurrentProposer stakingValidatorSet stakingValidatorById stakingValidatorStatus stakingSignerByAddress stakingTotalPower
+type Height struct {
+
+	//Block Height
+	//in:query
+	Height string `json:"height"`
 }
