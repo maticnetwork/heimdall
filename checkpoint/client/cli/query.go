@@ -93,7 +93,7 @@ func GetCheckpointBuffer(cdc *codec.Codec) *cobra.Command {
 				return errors.New("No checkpoint buffer found")
 			}
 
-			fmt.Printf(string(res))
+			fmt.Println(string(res))
 			return nil
 		},
 	}
@@ -152,12 +152,13 @@ func GetCheckpointByNumber(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Printf(string(res))
+			fmt.Println(string(res))
 			return nil
 		},
 	}
 
 	cmd.Flags().Uint64(FlagHeaderNumber, 0, "--header=<header-number>")
+
 	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
 		logger.Error("GetHeaderFromIndex | MarkFlagRequired | FlagHeaderNumber", "Error", err)
 	}

@@ -37,6 +37,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			PostSendProposeSpanTx(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 
@@ -131,9 +132,11 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagSpanId, "", "--span-id=<span-id>")
 	cmd.Flags().String(FlagBorChainId, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().String(FlagStartBlock, "", "--start-block=<start-block-number>")
+
 	if err := cmd.MarkFlagRequired(FlagBorChainId); err != nil {
 		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagBorChainId", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagStartBlock); err != nil {
 		cliLogger.Error("PostSendProposeSpanTx | MarkFlagRequired | FlagStartBlock", "Error", err)
 	}

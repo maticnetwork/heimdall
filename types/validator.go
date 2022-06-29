@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"sort"
 	"strconv"
-	"strings"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 )
@@ -54,6 +53,7 @@ func SortValidatorByAddress(a []Validator) []Validator {
 	sort.Slice(a, func(i, j int) bool {
 		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
 	})
+
 	return a
 }
 
@@ -75,9 +75,11 @@ func (v *Validator) ValidateBasic() bool {
 	if bytes.Equal(v.PubKey.Bytes(), ZeroPubKey.Bytes()) {
 		return false
 	}
+
 	if bytes.Equal(v.Signer.Bytes(), []byte("")) {
 		return false
 	}
+
 	return true
 }
 
@@ -87,17 +89,17 @@ func MarshallValidator(cdc *codec.Codec, validator Validator) (bz []byte, err er
 	if err != nil {
 		return bz, err
 	}
+
 	return bz, nil
 }
 
 // amono unmarshall validator
 func UnmarshallValidator(cdc *codec.Codec, value []byte) (Validator, error) {
 	var validator Validator
-	// unmarshall validator and return
-	err := cdc.UnmarshalBinaryBare(value, &validator)
-	if err != nil {
+	if err := cdc.UnmarshalBinaryBare(value, &validator); err != nil {
 		return validator, err
 	}
+
 	return validator, nil
 }
 
@@ -108,11 +110,12 @@ func (v *Validator) Copy() *Validator {
 	return &vCopy
 }
 
-// Returns the one with higher ProposerPriority.
+// CompareProposerPriority returns the one with higher ProposerPriority.
 func (v *Validator) CompareProposerPriority(other *Validator) *Validator {
 	if v == nil {
 		return other
 	}
+
 	switch {
 	case v.ProposerPriority > other.ProposerPriority:
 		return v
@@ -120,6 +123,7 @@ func (v *Validator) CompareProposerPriority(other *Validator) *Validator {
 		return other
 	default:
 		result := bytes.Compare(v.Signer.Bytes(), other.Signer.Bytes())
+
 		switch {
 		case result < 0:
 			return v
@@ -135,6 +139,7 @@ func (v *Validator) String() string {
 	if v == nil {
 		return "nil-Validator"
 	}
+
 	return fmt.Sprintf("Validator{%v %v %v VP:%v A:%v}",
 		v.ID,
 		v.Signer,
@@ -143,24 +148,16 @@ func (v *Validator) String() string {
 		v.ProposerPriority)
 }
 
-// ValidatorListString returns a prettified validator list for logging purposes.
-func ValidatorListString(vals []*Validator) string {
-	chunks := make([]string, len(vals))
-	for i, val := range vals {
-		chunks[i] = fmt.Sprintf("%s:%d", val.Signer, val.VotingPower)
-	}
-
-	return strings.Join(chunks, ",")
-}
-
 // Bytes computes the unique encoding of a validator with a given voting power.
 // These are the bytes that gets hashed in consensus. It excludes address
 // as its redundant with the pubkey. This also excludes ProposerPriority
 // which changes every round.
 func (v *Validator) Bytes() []byte {
 	result := make([]byte, 64)
+
 	copy(result[12:], v.Signer.Bytes())
 	copy(result[32:], new(big.Int).SetInt64(v.VotingPower).Bytes())
+
 	return result
 }
 
@@ -216,20 +213,4 @@ type MinimalVal struct {
 	ID          ValidatorID     `json:"ID"`
 	VotingPower uint64          `json:"power"` // TODO add 10^-18 here so that we dont overflow easily
 	Signer      HeimdallAddress `json:"signer"`
-}
-
-// SortMinimalValByAddress sorts validators
-func SortMinimalValByAddress(a []MinimalVal) []MinimalVal {
-	sort.Slice(a, func(i, j int) bool {
-		return bytes.Compare(a[i].Signer.Bytes(), a[j].Signer.Bytes()) < 0
-	})
-	return a
-}
-
-// ValToMinVal converts array of validators to minimal validators
-func ValToMinVal(vals []Validator) (minVals []MinimalVal) {
-	for _, val := range vals {
-		minVals = append(minVals, val.MinimalVal())
-	}
-	return
 }

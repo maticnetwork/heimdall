@@ -15,7 +15,6 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/maticnetwork/heimdall/app/helpers"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	paramTypes "github.com/maticnetwork/heimdall/params/types"
@@ -35,17 +34,14 @@ type StoreKeysPrefixes struct {
 	Prefixes [][]byte
 }
 
-// fauxMerkleModeOpt returns a BaseApp option to use a dbStoreAdapter instead of
-// an IAVLStore for faster simulation speed.
-func fauxMerkleModeOpt(bapp *baseapp.BaseApp) {
-	bapp.SetFauxMerkleMode()
-}
-
 func TestFullAppSimulation(t *testing.T) {
+	t.Parallel()
+
 	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
 	if skip {
 		t.Skip("skipping application simulation")
 	}
+
 	require.NoError(t, err, "simulation setup failed")
 	require.NotNil(t, db, "DB should not be nil")
 
@@ -75,10 +71,13 @@ func TestFullAppSimulation(t *testing.T) {
 }
 
 func TestAppImportExport(t *testing.T) {
+	t.Parallel()
+
 	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
 	if skip {
 		t.Skip("skipping application import/export simulation")
 	}
+
 	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
@@ -152,11 +151,14 @@ func TestAppImportExport(t *testing.T) {
 }
 
 func TestAppSimulationAfterImport(t *testing.T) {
+	t.Parallel()
+
 	config, db, dir, logger, skip, err := SetupSimulation("leveldb-app-sim", "Simulation")
+	require.NoError(t, err, "simulation setup failed")
+
 	if skip {
 		t.Skip("skipping application simulation after import")
 	}
-	require.NoError(t, err, "simulation setup failed")
 
 	defer func() {
 		db.Close()
@@ -203,11 +205,13 @@ func TestAppSimulationAfterImport(t *testing.T) {
 	}()
 
 	newApp := NewHeimdallApp(logger, newDB)
+
 	require.Equal(t, AppName, app.Name())
 
 	newApp.InitChain(abci.RequestInitChain{
 		AppStateBytes: appState,
 	})
+
 	stopEarly, _, err = simulation.SimulateFromSeed(
 		t, os.Stdout, newApp.BaseApp, AppStateFn(app.Codec(), app.SimulationManager()),
 		SimulationOperations(newApp, newApp.Codec(), config),
@@ -220,6 +224,8 @@ func TestAppSimulationAfterImport(t *testing.T) {
 // TODO: Make another test for the fuzzer itself, which just has noOp txs
 // and doesn't depend on the application.
 func TestAppStateDeterminism(t *testing.T) {
+	t.Parallel()
+
 	if !FlagEnabledValue {
 		t.Skip("skipping application simulation")
 	}
@@ -229,7 +235,7 @@ func TestAppStateDeterminism(t *testing.T) {
 	config.ExportParamsPath = ""
 	config.OnOperation = false
 	config.AllInvariants = false
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
@@ -250,10 +256,9 @@ func TestAppStateDeterminism(t *testing.T) {
 
 			// app := NewSimApp(logger, db, nil, true, map[int64]bool{}, DefaultNodeHome, FlagPeriodValue, interBlockCacheOpt())
 			app := NewHeimdallApp(logger, db, nil)
+
 			err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-			if err != nil {
-				require.NoError(t, err)
-			}
+			require.NoError(t, err)
 			require.Equal(t, AppName, app.Name())
 
 			fmt.Printf(

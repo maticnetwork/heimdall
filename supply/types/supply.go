@@ -34,6 +34,7 @@ func (supply Supply) String() string {
 	if err != nil {
 		panic(err)
 	}
+
 	return string(b)
 }
 
@@ -42,5 +43,6 @@ func (supply Supply) ValidateBasic() error {
 	if !supply.Total.IsValid() {
 		return fmt.Errorf("invalid total supply: %s", supply.Total.String())
 	}
+
 	return nil
 }

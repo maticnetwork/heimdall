@@ -30,7 +30,6 @@ type HandlerTestSuite struct {
 	app            *app.HeimdallApp
 	ctx            sdk.Context
 	cliCtx         context.CLIContext
-	querier        sdk.Querier
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller
 	chainParams    chainTypes.Params
@@ -47,6 +46,7 @@ func (suite *HandlerTestSuite) SetupTest() {
 
 // TestHandlerTestSuite
 func TestHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(HandlerTestSuite))
 }
 
@@ -75,8 +75,8 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
 			fee,
 			txHash,
-			uint64(logIndex),
-			uint64(blockNumber),
+			logIndex,
+			blockNumber,
 		)
 
 		// handler
@@ -90,8 +90,8 @@ func (suite *HandlerTestSuite) TestHandleMsgTopup() {
 			hmTypes.BytesToHeimdallAddress(addr.Bytes()),
 			fee,
 			txHash,
-			uint64(logIndex),
-			uint64(blockNumber),
+			logIndex,
+			blockNumber,
 		)
 
 		// sequence id
@@ -128,7 +128,8 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
-		acc1.SetCoins(coins)
+		err := acc1.SetCoins(coins)
+		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc1)
 
 		// check if coins > 0
@@ -150,7 +151,8 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
-		acc1.SetCoins(coins)
+		err := acc1.SetCoins(coins)
+		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc1)
 
 		// check if coins > 0
@@ -179,7 +181,8 @@ func (suite *HandlerTestSuite) TestHandleMsgWithdrawFee() {
 		// set coins
 		coins := simulation.RandomFeeCoins()
 		acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
-		acc1.SetCoins(coins)
+		err := acc1.SetCoins(coins)
+		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc1)
 
 		m, _ := sdk.NewIntFromString("1")

@@ -25,6 +25,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	// get all txs
 	txMap := make(map[int64]tmTypes.Txs)
+
 	keeper.IterateTxsAndApplyFn(ctx, func(height int64, tx tmTypes.Tx) error {
 		if _, ok := txMap[height]; !ok {
 			txMap[height] = make(tmTypes.Txs, 0)
@@ -34,6 +35,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	})
 
 	result := make([]types.PastCommit, 0)
+
 	for height, txs := range txMap {
 		p := types.PastCommit{
 			Height: height,

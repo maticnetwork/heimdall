@@ -32,6 +32,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			SendTxCmd(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 

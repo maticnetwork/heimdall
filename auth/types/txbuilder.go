@@ -42,7 +42,6 @@ func NewTxBuilder(
 	fees sdk.Coins,
 	gasPrices sdk.DecCoins,
 ) TxBuilder {
-
 	return TxBuilder{
 		txEncoder:          txEncoder,
 		keybase:            nil,
@@ -65,6 +64,7 @@ func NewTxBuilderFromCLI() TxBuilder {
 	if err != nil {
 		panic(err)
 	}
+
 	txbldr := TxBuilder{
 		keybase:            kb,
 		accountNumber:      uint64(viper.GetInt64(client.FlagAccountNumber)),
@@ -139,6 +139,7 @@ func (bldr TxBuilder) WithFees(fees string) TxBuilder {
 	}
 
 	bldr.fees = parsedFees
+
 	return bldr
 }
 
@@ -150,6 +151,7 @@ func (bldr TxBuilder) WithGasPrices(gasPrices string) TxBuilder {
 	}
 
 	bldr.gasPrices = parsedGasPrices
+
 	return bldr
 }
 
@@ -247,6 +249,7 @@ func (bldr TxBuilder) BuildTxForSim(msgs []sdk.Msg) ([]byte, error) {
 
 	// the ante handler will populate with a sentinel pubkey
 	sig := StdSignature{}
+
 	return bldr.txEncoder(NewStdTx(signMsg.Msg, sig, signMsg.Memo))
 }
 
@@ -269,6 +272,7 @@ func (bldr TxBuilder) SignStdTxWithPassphrase(name, passphrase string, stdTx Std
 	}
 
 	signedStdTx = NewStdTx(stdTx.GetMsgs()[0], stdSignature, stdTx.GetMemo())
+
 	return
 }
 
@@ -293,6 +297,7 @@ func (bldr TxBuilder) SignStdTx(privKey secp256k1.PrivKeySecp256k1, stdTx StdTx,
 	}
 
 	signedStdTx = NewStdTx(signMsg.Msg, sig, signMsg.Memo)
+
 	return
 }
 
@@ -331,5 +336,6 @@ func MakeSignatureWithKeybase(
 	if err != nil {
 		return
 	}
+
 	return sigBytes, nil
 }

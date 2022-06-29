@@ -33,8 +33,7 @@ jobs:
         uses: docker/setup-qemu-action@v1
 
       - name: Run GoReleaser
-        run: |
-            make release
+        run: make release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           VERSION: ${{ steps.prepare.outputs.tag_name }}

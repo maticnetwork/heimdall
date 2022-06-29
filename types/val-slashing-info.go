@@ -15,7 +15,6 @@ type ValidatorSlashingInfo struct {
 }
 
 func NewValidatorSlashingInfo(id ValidatorID, slashedAmount uint64, isJailed bool) ValidatorSlashingInfo {
-
 	return ValidatorSlashingInfo{
 		ID:            id,
 		SlashedAmount: slashedAmount,
@@ -43,16 +42,16 @@ func MarshallValSlashingInfo(cdc *codec.Codec, valSlashingInfo ValidatorSlashing
 	if err != nil {
 		return bz, err
 	}
+
 	return bz, nil
 }
 
 // amono unmarshall validator slashing info
 func UnmarshallValSlashingInfo(cdc *codec.Codec, value []byte) (ValidatorSlashingInfo, error) {
 	var valSlashingInfo ValidatorSlashingInfo
-	// unmarshall validator and return
-	err := cdc.UnmarshalBinaryBare(value, &valSlashingInfo)
-	if err != nil {
+	if err := cdc.UnmarshalBinaryBare(value, &valSlashingInfo); err != nil {
 		return valSlashingInfo, err
 	}
+
 	return valSlashingInfo, nil
 }

@@ -17,16 +17,19 @@ func XXXSelectNextProducers(blkHash common.Hash, spanEligibleVals []hmTypes.Vali
 		for _, val := range spanEligibleVals {
 			selectedIDs = append(selectedIDs, uint64(val.ID))
 		}
+
 		return
 	}
 
 	// extract seed from hash
 	seed := helper.ToBytes32(blkHash.Bytes()[:32])
 	validatorIndices := convertToSlots(spanEligibleVals)
+
 	selectedIDs, err = ShuffleList(validatorIndices, seed)
 	if err != nil {
 		return
 	}
+
 	return selectedIDs[:producerCount], nil
 }
 
@@ -39,6 +42,7 @@ func convertToSlots(vals []hmTypes.Validator) (validatorIndices []uint64) {
 			val.VotingPower = val.VotingPower - types.SlotCost
 		}
 	}
+
 	return validatorIndices
 }
 
@@ -90,8 +94,10 @@ func binarySearch(array []uint64, search uint64) int {
 	if len(array) == 0 {
 		return -1
 	}
+
 	l := 0
 	r := len(array) - 1
+
 	for l < r {
 		mid := (l + r) / 2
 		if array[mid] >= search {
@@ -100,6 +106,7 @@ func binarySearch(array []uint64, search uint64) int {
 			l = mid + 1
 		}
 	}
+
 	return l
 }
 
@@ -111,11 +118,11 @@ func randomRangeInclusive(min uint64, max uint64) uint64 {
 
 	rangeLength := max - min + 1
 	maxAllowedValue := math.MaxUint64 - math.MaxUint64%rangeLength - 1
-	randomValue := rand.Uint64()
+	randomValue := rand.Uint64() //nolint
 
 	// reject anything that is beyond the reminder to avoid bias
 	for randomValue >= maxAllowedValue {
-		randomValue = rand.Uint64()
+		randomValue = rand.Uint64() //nolint
 	}
 
 	return min + randomValue%rangeLength
@@ -124,10 +131,12 @@ func randomRangeInclusive(min uint64, max uint64) uint64 {
 // createWeightedRanges converts array [1, 2, 3] into cumulative form [1, 3, 6]
 func createWeightedRanges(weights []uint64) ([]uint64, uint64) {
 	weightedRanges := make([]uint64, len(weights))
+
 	totalWeight := uint64(0)
 	for i := 0; i < len(weightedRanges); i++ {
 		totalWeight += weights[i]
 		weightedRanges[i] = totalWeight
 	}
+
 	return weightedRanges, totalWeight
 }

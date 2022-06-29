@@ -51,16 +51,16 @@ func (ak AccountKeeper) Logger(ctx sdk.Context) log.Logger {
 // NewAccountWithAddress implements sdk.AccountKeeper.
 func (ak AccountKeeper) NewAccountWithAddress(ctx sdk.Context, addr hmTypes.HeimdallAddress) types.Account {
 	acc := ak.proto()
-	err := acc.SetAddress(addr)
-	if err != nil {
+	if err := acc.SetAddress(addr); err != nil {
 		// Handle w/ #870
 		panic(err)
 	}
-	err = acc.SetAccountNumber(ak.GetNextAccountNumber(ctx))
-	if err != nil {
+
+	if err := acc.SetAccountNumber(ak.GetNextAccountNumber(ctx)); err != nil {
 		// Handle w/ #870
 		panic(err)
 	}
+
 	return acc
 }
 
@@ -69,17 +69,21 @@ func (ak AccountKeeper) NewAccount(ctx sdk.Context, acc types.Account) types.Acc
 	if err := acc.SetAccountNumber(ak.GetNextAccountNumber(ctx)); err != nil {
 		panic(err)
 	}
+
 	return acc
 }
 
 // GetAccount implements sdk.AccountKeeper.
 func (ak AccountKeeper) GetAccount(ctx sdk.Context, addr hmTypes.HeimdallAddress) types.Account {
 	store := ctx.KVStore(ak.key)
+
 	bz := store.Get(types.AddressStoreKey(addr))
 	if bz == nil {
 		return nil
 	}
+
 	acc := ak.decodeAccount(bz)
+
 	return acc
 }
 
@@ -90,7 +94,9 @@ func (ak AccountKeeper) GetAllAccounts(ctx sdk.Context) []types.Account {
 		accounts = append(accounts, acc)
 		return false
 	}
+
 	ak.IterateAccounts(ctx, appendAccount)
+
 	return accounts
 }
 
@@ -99,10 +105,12 @@ func (ak AccountKeeper) GetAllAccounts(ctx sdk.Context) []types.Account {
 func (ak AccountKeeper) SetAccount(ctx sdk.Context, acc types.Account) {
 	addr := acc.GetAddress()
 	store := ctx.KVStore(ak.key)
+
 	bz, err := ak.cdc.MarshalBinaryBare(acc)
 	if err != nil {
 		panic(err)
 	}
+
 	store.Set(types.AddressStoreKey(addr), bz)
 }
 
@@ -117,17 +125,22 @@ func (ak AccountKeeper) RemoveAccount(ctx sdk.Context, acc types.Account) {
 // IterateAccounts implements sdk.AccountKeeper.
 func (ak AccountKeeper) IterateAccounts(ctx sdk.Context, process func(types.Account) (stop bool)) {
 	store := ctx.KVStore(ak.key)
+
 	iter := sdk.KVStorePrefixIterator(store, types.AddressStoreKeyPrefix)
 	defer iter.Close()
+
 	for {
 		if !iter.Valid() {
 			return
 		}
+
 		val := iter.Value()
+
 		acc := ak.decodeAccount(val)
 		if process(acc) {
 			return
 		}
+
 		iter.Next()
 	}
 }
@@ -138,6 +151,7 @@ func (ak AccountKeeper) GetPubKey(ctx sdk.Context, addr hmTypes.HeimdallAddress)
 	if acc == nil {
 		return nil, sdk.ErrUnknownAddress(fmt.Sprintf("account %s does not exist", addr))
 	}
+
 	return acc.GetPubKey(), nil
 }
 
@@ -147,13 +161,16 @@ func (ak AccountKeeper) GetSequence(ctx sdk.Context, addr hmTypes.HeimdallAddres
 	if acc == nil {
 		return 0, sdk.ErrUnknownAddress(fmt.Sprintf("account %s does not exist", addr))
 	}
+
 	return acc.GetSequence(), nil
 }
 
 // GetNextAccountNumber Returns and increments the global account number counter
 func (ak AccountKeeper) GetNextAccountNumber(ctx sdk.Context) uint64 {
 	var accNumber uint64
+
 	store := ctx.KVStore(ak.key)
+
 	bz := store.Get(types.GlobalAccountNumberKey)
 	if bz == nil {
 		accNumber = 0
@@ -182,6 +199,7 @@ func (ak AccountKeeper) GetBlockProposer(ctx sdk.Context) (hmTypes.HeimdallAddre
 	}
 
 	bz := store.Get(types.ProposerKey())
+
 	return hmTypes.BytesToHeimdallAddress(bz), true
 }
 
@@ -219,5 +237,6 @@ func (ak AccountKeeper) decodeAccount(bz []byte) (acc types.Account) {
 	if err != nil {
 		panic(err)
 	}
+
 	return
 }

@@ -15,6 +15,11 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 )
 
+const (
+	blocksRange   = 1000
+	maxIterations = 100
+)
+
 var (
 	errNoEventsFound = errors.New("no events found")
 )
@@ -169,9 +174,6 @@ func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, no
 
 // getLatestEvent returns the latest event based on the given filters
 func (rl *RootChainListener) getLatestEvent(ctx context.Context, filters ethereum.FilterQuery) (*types.Log, error) {
-	const blocksRange = 1000
-	const maxIterations = 100
-
 	currentBlock, err := rl.contractConnector.MainChainClient.BlockByNumber(ctx, nil)
 	if err != nil {
 		return nil, err
@@ -182,22 +184,25 @@ func (rl *RootChainListener) getLatestEvent(ctx context.Context, filters ethereu
 	toBlockNumber := currentBlockNumber
 
 	var latestEvent *types.Log
+
 	for i := 0; i < maxIterations; i++ {
 		filters.FromBlock = big.NewInt(0).SetUint64(fromBlockNumber)
 		filters.ToBlock = big.NewInt(0).SetUint64(toBlockNumber)
 
-		var events []types.Log
-		if events, err = rl.contractConnector.MainChainClient.FilterLogs(ctx, filters); err != nil {
+		events, err := rl.contractConnector.MainChainClient.FilterLogs(ctx, filters)
+		if err != nil {
 			return nil, err
 		}
 
 		if len(events) == 0 {
 			toBlockNumber = fromBlockNumber
 			fromBlockNumber -= blocksRange
+
 			continue
 		}
 
 		latestEvent = &events[len(events)-1]
+
 		break
 	}
 

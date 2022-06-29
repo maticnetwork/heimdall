@@ -9,7 +9,11 @@ import (
 )
 
 func TestExponentialBackoff(t *testing.T) {
+	t.Parallel()
+
 	t.Run("success", func(t *testing.T) {
+		t.Parallel()
+
 		i := 0
 		outcomes := []bool{false, false, true}
 		t0 := time.Now()
@@ -30,6 +34,8 @@ func TestExponentialBackoff(t *testing.T) {
 	})
 
 	t.Run("failed", func(t *testing.T) {
+		t.Parallel()
+
 		i := 0
 		t0 := time.Now()
 		err := ExponentialBackoff(func() error {

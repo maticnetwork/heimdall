@@ -46,23 +46,23 @@ func fetchNextSpanSeedHandlerFn(
 		}
 
 		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
-		RestLogger.Debug("nextSpanSeed querier response", "res", res)
-
 		if err != nil {
 			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
+		RestLogger.Debug("nextSpanSeed querier response", "res", res)
+
 		// error if span seed found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "NextSpanSeed not found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, res, "NextSpanSeed not found") {
 			RestLogger.Error("NextSpanSeed not found ", "Error", err.Error())
 			return
 		}
 
 		// return result
 		rest.PostProcessResponse(w, cliCtx, res)
-
 	}
 }
 
@@ -210,6 +210,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if !ok {
 			return
 		}
+
 		chainID := params.Get("chain_id")
 
 		//
@@ -267,13 +268,12 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, validatorSetBytes, "No current validator set found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, validatorSetBytes, "No current validator set found") {
 			return
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		err = json.Unmarshal(validatorSetBytes, &_validatorSet)
-		if err != nil {
+		if err = json.Unmarshal(validatorSetBytes, &_validatorSet); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall JSON").Error())
 			return
 		}
@@ -298,6 +298,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
 		selectedProducers = hmTypes.SortValidatorByAddress(selectedProducers)
 
 		// draft a propose span message
@@ -314,6 +315,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -330,6 +332,7 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
+
 		res, height, err := cliCtx.QueryWithData(route, nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())

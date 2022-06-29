@@ -63,6 +63,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		RestLogger.Debug("Fetching total validator power")
+
 		totalPowerBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryTotalValidatorPower), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -70,7 +71,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, totalPowerBytes, "total power not found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, totalPowerBytes, "total power not found") {
 			return
 		}
 
@@ -84,14 +85,13 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, result)
-
 	}
-
 }
 
 // Returns validator information by signer address
@@ -116,6 +116,7 @@ func validatorByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching signer", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -152,16 +153,17 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 		if err != nil {
 			RestLogger.Error("Error while fetching validator status", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, statusBytes, "No validator found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, statusBytes, "No validator found") {
 			return
 		}
 
 		var status bool
-		if err := json.Unmarshal(statusBytes, &status); err != nil {
+		if err = json.Unmarshal(statusBytes, &status); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -205,6 +207,7 @@ func validatorByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching validator", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -231,6 +234,7 @@ func validatorSetHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching current validator set ", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -272,6 +276,7 @@ func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching proposers ", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -298,11 +303,12 @@ func currentProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching current proposer ", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No proposer found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, res, "No proposer found") {
 			return
 		}
 
@@ -325,6 +331,7 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching proposer bonus percentage", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+
 			return
 		}
 
@@ -344,8 +351,10 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
+
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
@@ -383,6 +392,7 @@ func StakingTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while fetching staking sequence", "Error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+
 			return
 		}
 

@@ -36,7 +36,9 @@ func (sp *SpanProcessor) Start() error {
 
 	// start polling for span
 	sp.Logger.Info("Start polling for span", "pollInterval", helper.GetConfig().SpanPollInterval)
+
 	go sp.startPolling(spanCtx, helper.GetConfig().SpanPollInterval)
+
 	return nil
 }
 
@@ -58,6 +60,7 @@ func (sp *SpanProcessor) startPolling(ctx context.Context, interval time.Duratio
 		case <-ctx.Done():
 			sp.Logger.Info("Polling stopped")
 			ticker.Stop()
+
 			return
 		}
 	}
@@ -76,6 +79,7 @@ func (sp *SpanProcessor) checkAndPropose() {
 	}
 
 	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
+
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
 	if err != nil {
 		sp.Logger.Error("Unable to fetch next span details", "error", err, "lastSpanId", lastSpan.ID)
@@ -101,9 +105,8 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		// log new span
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
-		//Get NextSpanSeed from HeimdallServer
-		var seed common.Hash
-		if seed, err = sp.fetchNextSpanSeed(); err != nil {
+		seed, err := sp.fetchNextSpanSeed()
+		if err != nil {
 			sp.Logger.Info("Error while fetching next span seed from HeimdallServer", "err", err)
 			return
 		}
@@ -134,12 +137,13 @@ func (sp *SpanProcessor) getLastSpan() (*types.Span, error) {
 		sp.Logger.Error("Error while fetching latest span")
 		return nil, err
 	}
+
 	var lastSpan types.Span
-	err = json.Unmarshal(result.Result, &lastSpan)
-	if err != nil {
+	if err = json.Unmarshal(result.Result, &lastSpan); err != nil {
 		sp.Logger.Error("Error unmarshalling span", "error", err)
 		return nil, err
 	}
+
 	return &lastSpan, nil
 }
 
@@ -149,6 +153,7 @@ func (sp *SpanProcessor) getCurrentChildBlock() (uint64, error) {
 	if err != nil {
 		return 0, err
 	}
+
 	return childBlock.Number.Uint64(), nil
 }
 
@@ -160,6 +165,7 @@ func (sp *SpanProcessor) isSpanProposer(nextSpanProducers []types.Validator) boo
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -170,6 +176,7 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 		sp.Logger.Error("Error creating a new request", "error", err)
 		return nil, err
 	}
+
 	configParams, err := util.GetChainmanagerParams(sp.cliCtx)
 	if err != nil {
 		sp.Logger.Error("Error while fetching chainmanager params", "error", err)
@@ -197,29 +204,32 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 	}
 
 	sp.Logger.Debug("◽ Generated proposer span msg", "msg", msg.String())
+
 	return &msg, nil
 }
 
 // fetchNextSpanSeed - fetches seed for next span
 func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed common.Hash, err error) {
 	sp.Logger.Info("Sending Rest call to Get Seed for next span")
+
 	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.NextSpanSeedURL))
 	if err != nil {
 		sp.Logger.Error("Error Fetching nextspanseed from HeimdallServer ", "error", err)
 		return nextSpanSeed, err
 	}
+
 	sp.Logger.Info("Next span seed fetched")
-	if err := json.Unmarshal(response.Result, &nextSpanSeed); err != nil {
+
+	if err = json.Unmarshal(response.Result, &nextSpanSeed); err != nil {
 		sp.Logger.Error("Error unmarshalling nextSpanSeed received from Heimdall Server", "error", err)
 		return nextSpanSeed, err
 	}
+
 	return nextSpanSeed, nil
 }
 
-// OnStop stops all necessary go routines
+// Stop stops all necessary go routines
 func (sp *SpanProcessor) Stop() {
-
 	// cancel span polling
 	sp.cancelSpanService()
-
 }

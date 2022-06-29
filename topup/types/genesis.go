@@ -35,6 +35,7 @@ func ValidateGenesis(data GenesisState) error {
 			return errors.New("Invalid Sequence")
 		}
 	}
+
 	return nil
 }
 
@@ -44,6 +45,7 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 	if appState[ModuleName] != nil {
 		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
+
 	return genesisState
 }
 
@@ -54,5 +56,6 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, dividendAcco
 	topupState.DividentAccounts = dividendAccounts
 
 	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(topupState)
+
 	return appState, nil
 }

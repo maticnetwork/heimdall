@@ -58,6 +58,7 @@ func QueryTxsByEvents(cliCtx cosmosContext.CLIContext, tags []string, page, limi
 	}
 
 	prove := !cliCtx.TrustNode
+
 	resTxs, err := node.TxSearch(query, prove, page, limit)
 	if err != nil {
 		return nil, err
@@ -90,6 +91,7 @@ func QueryTxsByEvents(cliCtx cosmosContext.CLIContext, tags []string, page, limi
 // formatTxResults parses the indexed txs into a slice of TxResponse objects.
 func formatTxResults(cdc *codec.Codec, resTxs []*ctypes.ResultTx, resBlocks map[int64]*ctypes.ResultBlock) ([]sdk.TxResponse, error) {
 	var err error
+
 	out := make([]sdk.TxResponse, len(resTxs))
 	for i := range resTxs {
 		out[i], err = formatTxResult(cdc, resTxs[i], resBlocks[resTxs[i].Height])
@@ -108,11 +110,13 @@ func ValidateTxResult(cliCtx cosmosContext.CLIContext, resTx *ctypes.ResultTx) e
 		if err != nil {
 			return err
 		}
+
 		err = resTx.Proof.Validate(check.Header.DataHash)
 		if err != nil {
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -241,7 +245,7 @@ func GetBlockWithClient(client *httpClient.HTTP, height int64) (*tmTypes.Block, 
 	for {
 		select {
 		case event := <-eventCh:
-			eventData := event.Data.(tmTypes.TMEventData)
+			eventData := event.Data
 			switch t := eventData.(type) {
 			case tmTypes.EventDataNewBlock:
 				if t.Block.Height == height {
@@ -280,12 +284,14 @@ func GetBeginBlockEvents(client *httpClient.HTTP, height int64) ([]abci.Event, e
 	}
 
 	// unsubscribe query
-	defer client.Unsubscribe(c, subscriber, query)
+	defer func() {
+		_ = client.Unsubscribe(c, subscriber, query)
+	}()
 
 	for {
 		select {
 		case event := <-eventCh:
-			eventData := event.Data.(tmTypes.TMEventData)
+			eventData := event.Data
 			switch t := eventData.(type) {
 			case tmTypes.EventDataNewBlock:
 				if t.Block.Height == height {

@@ -1,7 +1,7 @@
 package checkpoint
 
 /*
-Checkpoint module is reponsible for validating checkpoint in heimdall.
+Checkpoint module is responsible for validating checkpoint in heimdall.
 
 Sending checkpoint is a 2 phase process.
 1. Send `MsgCheckpoint`: Here the transaction sender proposes the new checkpoint by sending the start block, end block and the roothash of the new checkpoint

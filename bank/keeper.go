@@ -51,6 +51,7 @@ func NewKeeper(
 	vm ModuleCommunicator,
 ) Keeper {
 	ps := paramSpace.WithKeyTable(types.ParamKeyTable())
+
 	return Keeper{
 		key:        key,
 		cdc:        cdc,
@@ -75,7 +76,6 @@ func (keeper Keeper) Logger(ctx sdk.Context) log.Logger {
 func (keeper Keeper) SetCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) sdk.Error {
-
 	if !amt.IsValid() && !amt.IsZero() {
 		return sdk.ErrInvalidCoins(amt.String())
 	}
@@ -90,7 +90,9 @@ func (keeper Keeper) SetCoins(
 		// Handle w/ #870
 		panic(err)
 	}
+
 	keeper.ak.SetAccount(ctx, acc)
+
 	return nil
 }
 
@@ -98,7 +100,6 @@ func (keeper Keeper) SetCoins(
 func (keeper Keeper) SubtractCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Coins, sdk.Error) {
-
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}
@@ -129,7 +130,6 @@ func (keeper Keeper) SubtractCoins(
 func (keeper Keeper) AddCoins(
 	ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins,
 ) (sdk.Coins, sdk.Error) {
-
 	if !amt.IsValid() {
 		return nil, sdk.ErrInvalidCoins(amt.String())
 	}
@@ -144,6 +144,7 @@ func (keeper Keeper) AddCoins(
 	}
 
 	err := keeper.SetCoins(ctx, addr, newCoins)
+
 	return newCoins, err
 }
 
@@ -180,7 +181,9 @@ func (keeper Keeper) SendCoins(
 // nolint: errcheck
 func (keeper Keeper) GetSendEnabled(ctx sdk.Context) bool {
 	var enabled bool
+
 	keeper.paramSpace.Get(ctx, types.ParamStoreKeySendEnabled, &enabled)
+
 	return enabled
 }
 
@@ -195,6 +198,7 @@ func (keeper Keeper) GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk
 	if acc == nil {
 		return sdk.NewCoins()
 	}
+
 	return acc.GetCoins()
 }
 

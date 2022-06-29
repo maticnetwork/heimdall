@@ -117,6 +117,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 
 	// define the endpoint based on the type of event
 	var endpoint string
+
 	switch eventType {
 	case util.StakingEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
@@ -127,6 +128,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 	case util.SlashingEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.SlashingTxStatusURL)
 	}
+
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
 	if err != nil {
 		bp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
@@ -154,11 +156,13 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "checkTxAgainstMempool", time.Now())
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
+
 	resp, err := helper.Client.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		bp.Logger.Error("Error fetching mempool tx", "url", endpoint, "error", err)
 		return false, err
 	}
+
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
 		bp.Logger.Error("Error fetching mempool tx", "error", err)

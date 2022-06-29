@@ -13,7 +13,7 @@ import (
 
 func RandomizedGenState(simState *module.SimulationState) {
 	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
+	r1 := rand.New(s1) //nolint
 	n := 5
 	accounts := simulation.RandomAccounts(r1, n)
 	stakingSequence := make([]string, n)

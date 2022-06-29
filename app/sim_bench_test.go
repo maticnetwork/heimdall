@@ -17,8 +17,8 @@ func BenchmarkFullAppSimulation(b *testing.B) {
 
 	defer func() {
 		db.Close()
-		err = os.RemoveAll(dir)
-		if err != nil {
+
+		if err = os.RemoveAll(dir); err != nil {
 			b.Fatal(err)
 		}
 	}()
@@ -56,8 +56,8 @@ func BenchmarkInvariants(b *testing.B) {
 
 	defer func() {
 		db.Close()
-		err = os.RemoveAll(dir)
-		if err != nil {
+
+		if err = os.RemoveAll(dir); err != nil {
 			b.Fatal(err)
 		}
 	}()
