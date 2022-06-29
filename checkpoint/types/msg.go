@@ -52,6 +52,7 @@ func (msg MsgCheckpointAdjust) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 
@@ -81,6 +82,7 @@ func (msg MsgCheckpointAdjust) ValidateBasic() sdk.Error {
 	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid startBlock %v or/and endBlock %v", msg.StartBlock, msg.EndBlock)
 	}
+
 	return nil
 }
 
@@ -137,6 +139,7 @@ func (msg MsgCheckpoint) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 
@@ -160,6 +163,7 @@ func (msg MsgCheckpoint) ValidateBasic() sdk.Error {
 func (msg MsgCheckpoint) GetSideSignBytes() []byte {
 	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
 	borChainID, _ := strconv.ParseUint(msg.BorChainID, 10, 64)
+
 	return appendBytes32(
 		msg.Proposer.Bytes(),
 		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
@@ -198,7 +202,6 @@ func NewMsgCheckpointAck(
 	txHash types.HeimdallHash,
 	logIndex uint64,
 ) MsgCheckpointAck {
-
 	return MsgCheckpointAck{
 		From:       from,
 		Number:     number,
@@ -230,6 +233,7 @@ func (msg MsgCheckpointAck) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 
@@ -298,6 +302,7 @@ func (msg MsgCheckpointNoAck) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 

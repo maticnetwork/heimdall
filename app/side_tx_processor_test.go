@@ -46,6 +46,7 @@ func (suite *SideTxProcessorTestSuite) SetupTest() {
 }
 
 func TestSideTxProcessorTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(SideTxProcessorTestSuite))
 }
 
@@ -278,12 +279,13 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		addr3 := []byte("hello-3")
 		addr4 := []byte("hello-4")
 		// set validators
-		happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
+		err = happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
 			{Address: addr1, Power: 10},
 			{Address: addr2, Power: 20},
 			{Address: addr3, Power: 30},
 			{Address: addr4, Power: 40},
 		})
+		require.NoError(t, err)
 
 		res := happ.BeginSideBlocker(ctx, abci.RequestBeginSideBlock{})
 		require.Equal(t, 0, len(res.Events), "Events from begin side blocker result should be empty with validators but no sigs")
@@ -353,12 +355,13 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 		addr3 := []byte("hello-3")
 		addr4 := []byte("hello-4")
 		// set validators
-		happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
+		err = happ.SidechannelKeeper.SetValidators(ctx, height, []abci.Validator{
 			{Address: addr1, Power: 10},
 			{Address: addr2, Power: 20},
 			{Address: addr3, Power: 30},
 			{Address: addr4, Power: 40},
 		})
+		require.NoError(t, err)
 
 		req := abci.RequestBeginSideBlock{
 			SideTxResults: []abci.SideTxResult{
@@ -519,10 +522,11 @@ func registerTestCodec(cdc *codec.Codec) {
 const (
 	routeMsgCounter     = "msgCounter"
 	routeMsgSideCounter = "msgSideCounter"
+	routeMsgType        = "counter1"
 )
 
 // ValidateBasic() fails on negative counters.
-// Otherwise it's up to the handlers
+// Otherwise, it's up to the handlers
 type msgCounter struct {
 	Counter       int64
 	FailOnHandler bool
@@ -530,13 +534,14 @@ type msgCounter struct {
 
 // Implements Msg
 func (msg msgCounter) Route() string                { return routeMsgCounter }
-func (msg msgCounter) Type() string                 { return "counter1" }
+func (msg msgCounter) Type() string                 { return routeMsgType }
 func (msg msgCounter) GetSignBytes() []byte         { return nil }
 func (msg msgCounter) GetSigners() []sdk.AccAddress { return nil }
 func (msg msgCounter) ValidateBasic() sdk.Error {
 	if msg.Counter >= 0 {
 		return nil
 	}
+
 	return sdk.ErrInvalidSequence("counter should be a non-negative integer.")
 }
 
@@ -558,5 +563,6 @@ func (msg msgSideCounter) ValidateBasic() sdk.Error {
 	if msg.Counter >= 0 {
 		return nil
 	}
+
 	return sdk.ErrInvalidSequence("counter should be a non-negative integer.")
 }

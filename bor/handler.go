@@ -59,6 +59,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 			"spanStartBlock", msg.StartBlock,
 			"spanEndBlock", msg.EndBlock,
 		)
+
 		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
 	}
 
@@ -69,6 +70,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 			"proposedSpanDuration", msg.EndBlock-msg.StartBlock+1,
 			"paramsSpanDuration", spanDuration,
 		)
+
 		return common.ErrInvalidSpanDuration(k.Codespace()).Result()
 	}
 

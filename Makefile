@@ -55,9 +55,9 @@ contracts:
 LINT_COMMAND := $(shell command -v golangci-lint 2> /dev/null)
 lint:
 ifndef LINT_COMMAND
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.23.8
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 endif
-	golangci-lint run
+	golangci-lint run --config ./.golangci.yml
 
 #
 # docker commands

@@ -30,7 +30,7 @@ func (da *DividendAccount) String() string {
 	}
 
 	return fmt.Sprintf("DividendAccount{%s %v}",
-		da.User.EthAddress,
+		da.User.EthAddress(),
 		da.FeeAmount)
 }
 
@@ -46,12 +46,11 @@ func MarshallDividendAccount(cdc *codec.Codec, dividendAccount DividendAccount) 
 
 // UnMarshallDividendAccount - amino Unmarshall DividendAccount
 func UnMarshallDividendAccount(cdc *codec.Codec, value []byte) (DividendAccount, error) {
-
 	var dividendAccount DividendAccount
-	err := cdc.UnmarshalBinaryBare(value, &dividendAccount)
-	if err != nil {
+	if err := cdc.UnmarshalBinaryBare(value, &dividendAccount); err != nil {
 		return dividendAccount, err
 	}
+
 	return dividendAccount, nil
 }
 
@@ -60,6 +59,7 @@ func SortDividendAccountByAddress(dividendAccounts []DividendAccount) []Dividend
 	sort.Slice(dividendAccounts, func(i, j int) bool {
 		return bytes.Compare(dividendAccounts[i].User.Bytes(), dividendAccounts[j].User.Bytes()) < 0
 	})
+
 	return dividendAccounts
 }
 
@@ -76,12 +76,14 @@ func (da DividendAccount) CalculateHash() ([]byte, error) {
 
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
+
 	for _, v := range data {
 		paddedV, err := convertTo32(v)
 		if err == nil {
 			result = append(result, paddedV[:]...)
 		}
 	}
+
 	return result
 }
 
@@ -90,7 +92,9 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	if l > 32 || l == 0 {
 		return
 	}
+
 	copy(output[32-l:], input[:])
+
 	return
 }
 

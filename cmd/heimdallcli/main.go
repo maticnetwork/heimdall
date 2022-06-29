@@ -115,8 +115,7 @@ func main() {
 
 	// prepare and add flags
 	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("/var/lib/heimdall"))
-	err := executor.Execute()
-	if err != nil {
+	if err := executor.Execute(); err != nil {
 		// Note: Handle with #870
 		panic(err)
 	}
@@ -176,6 +175,7 @@ func convertAddressToHexCmd(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -190,6 +190,7 @@ func convertHexToAddressCmd(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -234,6 +235,7 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+
 	return cmd
 }
 
@@ -277,6 +279,7 @@ func generateKeystore(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -317,6 +320,7 @@ func generateValidatorKey(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -346,12 +350,14 @@ func keyFileName(keyAddr ethCommon.Address) string {
 
 func toISO8601(t time.Time) string {
 	var tz string
+
 	name, offset := t.Zone()
 	if name == "UTC" {
 		tz = "Z"
 	} else {
 		tz = fmt.Sprintf("%03d00", offset/3600)
 	}
+
 	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d.%09d%s",
 		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), tz)
 }

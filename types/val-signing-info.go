@@ -2,8 +2,6 @@ package types
 
 import (
 	"fmt"
-
-	"github.com/cosmos/cosmos-sdk/codec"
 )
 
 // ValidatorSigningInfo defines the signing info for a validator
@@ -27,7 +25,6 @@ func NewValidatorSigningInfo(
 	valID ValidatorID, startHeight, indexOffset int64,
 	missedBlocksCounter int64,
 ) ValidatorSigningInfo {
-
 	return ValidatorSigningInfo{
 		ValID:       valID,
 		StartHeight: startHeight,
@@ -47,24 +44,4 @@ func (i ValidatorSigningInfo) String() string {
   Missed Blocks Counter: %d`,
 		i.ValID, i.StartHeight, i.IndexOffset,
 		i.MissedBlocksCounter)
-}
-
-// amino marshall validator
-func MarshallValSigningInfo(cdc *codec.Codec, valSigningInfo ValidatorSigningInfo) (bz []byte, err error) {
-	bz, err = cdc.MarshalBinaryBare(valSigningInfo)
-	if err != nil {
-		return bz, err
-	}
-	return bz, nil
-}
-
-// amono unmarshall validator
-func UnmarshallValSigningInfo(cdc *codec.Codec, value []byte) (ValidatorSigningInfo, error) {
-	var valSigningInfo ValidatorSigningInfo
-	// unmarshall validator and return
-	err := cdc.UnmarshalBinaryBare(value, &valSigningInfo)
-	if err != nil {
-		return valSigningInfo, err
-	}
-	return valSigningInfo, nil
 }

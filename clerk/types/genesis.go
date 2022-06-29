@@ -26,5 +26,6 @@ func ValidateGenesis(data GenesisState) error {
 			return errors.New("Invalid Sequence")
 		}
 	}
+
 	return nil
 }

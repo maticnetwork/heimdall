@@ -87,18 +87,19 @@ func Logger() log.Logger {
 	loggerOnce.Do(func() {
 		defaultLevel := "info"
 		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-		logLevel := viper.GetString("log_level")
-		option, err := log.AllowLevel(logLevel)
+		option, err := log.AllowLevel(viper.GetString("log_level"))
 		if err != nil {
 			// cosmos sdk is using different style of log format
 			// and levels don't map well, config.toml
 			// see: https://github.com/cosmos/cosmos-sdk/pull/8072
 			logger.Error("Unable to parse logging level", "Error", err)
 			logger.Info("Using default log level")
-			logLevel = defaultLevel
+			option, err = log.AllowLevel(defaultLevel)
+			if err != nil {
+				logger.Error("failed to allow default log level", "Level", defaultLevel, "Error", err)
+			}
 		}
 
-		option, _ = log.AllowLevel(logLevel)
 		logger = log.NewFilter(logger, option)
 
 		// set no-op logger if log level is not debug for machinery
@@ -112,12 +113,14 @@ func Logger() log.Logger {
 
 // IsProposer  checks if we are proposer
 func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
-	var proposers []hmtypes.Validator
-	count := uint64(1)
+	var (
+		proposers []hmtypes.Validator
+		count     = uint64(1)
+	)
+
 	result, err := helper.FetchFromAPI(cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
 	)
-
 	if err != nil {
 		logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
 		return false, err
@@ -139,6 +142,7 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
@@ -157,11 +161,13 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	}
 
 	logger.Debug("Fetched proposers list", "numberOfProposers", count)
+
 	for _, proposer := range proposers {
 		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 			return true, nil
 		}
 	}
+
 	return false, nil
 }
 
@@ -180,10 +186,12 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 	}
 
 	logger.Info("Fetched current validatorset list", "currentValidatorcount", len(validatorSet.Validators))
+
 	for i, validator := range validatorSet.Validators {
 		if bytes.Equal(validator.Signer.Bytes(), helper.GetAddress()) {
 			valPosition = i + 1
 			isCurrentValidator = true
+
 			break
 		}
 	}
@@ -207,22 +215,24 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, 
 // IsCurrentProposer checks if we are current proposer
 func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var proposer hmtypes.Validator
+
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentProposerURL))
 	if err != nil {
 		logger.Error("Error fetching proposers", "error", err)
 		return false, err
 	}
 
-	err = json.Unmarshal(result.Result, &proposer)
-	if err != nil {
+	if err = json.Unmarshal(result.Result, &proposer); err != nil {
 		logger.Error("error unmarshalling validator", "error", err)
 		return false, err
 	}
+
 	logger.Debug("Current proposer fetched", "validator", proposer.String())
 
 	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 		return true, nil
 	}
+
 	logger.Debug("We are not the current proposer")
 
 	return false, nil
@@ -240,11 +250,11 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 		return false
 	}
 
-	err = json.Unmarshal(result.Result, &validator)
-	if err != nil {
+	if err = json.Unmarshal(result.Result, &validator); err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
 	}
+
 	logger.Debug("Current event sender received", "validator", validator.String())
 
 	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
@@ -264,6 +274,7 @@ func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error
 	}
 
 	urlObj.RawQuery = query.Encode()
+
 	return urlObj.String(), nil
 }
 
@@ -297,7 +308,7 @@ func WaitForOneEvent(tx tmTypes.Tx, client *httpClient.HTTP) (tmTypes.TMEventDat
 
 	select {
 	case event := <-eventCh:
-		return event.Data.(tmTypes.TMEventData), nil
+		return event.Data, nil
 	case <-ctx.Done():
 		return nil, errors.New("timed out waiting for event")
 	}
@@ -310,21 +321,25 @@ func IsCatchingUp(cliCtx cliContext.CLIContext) bool {
 	if err != nil {
 		return true
 	}
+
 	return resp.SyncInfo.CatchingUp
 }
 
 // GetAccount returns heimdall auth account
 func GetAccount(cliCtx cliContext.CLIContext, address types.HeimdallAddress) (account authTypes.Account, err error) {
 	url := helper.GetHeimdallServerEndpoint(fmt.Sprintf(AccountDetailsURL, address))
+
 	// call account rest api
 	response, err := helper.FetchFromAPI(cliCtx, url)
 	if err != nil {
 		return
 	}
+
 	if err = cliCtx.Codec.UnmarshalJSON(response.Result, &account); err != nil {
 		logger.Error("Error unmarshalling account details", "url", url)
 		return
 	}
+
 	return
 }
 
@@ -418,6 +433,7 @@ func AppendPrefix(signerPubKey []byte) []byte {
 	prefix := make([]byte, 1)
 	prefix[0] = byte(0x04)
 	signerPubKey = append(prefix[:], signerPubKey[:]...)
+
 	return signerPubKey
 }
 
@@ -499,6 +515,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 	defer LogElapsedTimeForStateSyncedEvent(event, "GetUnconfirmedTxnCount", time.Now())
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
+
 	resp, err := helper.Client.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)
@@ -530,8 +547,11 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 	if event == nil {
 		return
 	}
-	timeElapsed := time.Now().Sub(startTime).Milliseconds()
-	var typedEvent statesender.StatesenderStateSynced
+
+	var (
+		typedEvent  statesender.StatesenderStateSynced
+		timeElapsed = time.Since(startTime).Milliseconds()
+	)
 
 	switch e := event.(type) {
 	case statesender.StatesenderStateSynced:
@@ -540,10 +560,12 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 		if e == nil {
 			return
 		}
+
 		typedEvent = *e
 	default:
 		return
 	}
+
 	logger.Info("StateSyncedEvent: "+functionName,
 		"stateSyncId", typedEvent.Id,
 		"timeElapsed", timeElapsed)

@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"text/template"
 
-	"github.com/spf13/viper"
 	cmn "github.com/tendermint/tendermint/libs/common"
 )
 
@@ -59,17 +58,11 @@ var configTemplate *template.Template
 
 func init() {
 	var err error
+
 	tmpl := template.New("appConfigFileTemplate")
 	if configTemplate, err = tmpl.Parse(defaultConfigTemplate); err != nil {
 		panic(err)
 	}
-}
-
-// ParseConfig retrieves the default environment configuration for the application.
-func ParseConfig() (*Configuration, error) {
-	defaultConf := GetDefaultHeimdallConfig()
-	err := viper.Unmarshal(defaultConf)
-	return &defaultConf, err
 }
 
 // WriteConfigFile renders config using the template and writes it to

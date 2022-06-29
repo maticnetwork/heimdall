@@ -59,5 +59,6 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	app.Commit()
 	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1}})
 	app.CheckpointKeeper.SetParams(ctx, params)
+
 	return app, ctx, cliCtx
 }

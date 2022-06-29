@@ -62,9 +62,7 @@ func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func recordListHandlerFn(
-	cliCtx context.CLIContext,
-) http.HandlerFunc {
+func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
 
@@ -74,6 +72,7 @@ func recordListHandlerFn(
 		}
 
 		page := uint64(1) // default page
+
 		if vars.Get("page") != "" {
 			_page, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("page"))
 			if !ok {
@@ -84,6 +83,7 @@ func recordListHandlerFn(
 		}
 
 		limit := uint64(50) // default limit
+
 		if vars.Get("limit") != "" {
 			_limit, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("limit"))
 			if !ok {
@@ -96,8 +96,10 @@ func recordListHandlerFn(
 			}
 		}
 
-		var res []byte
-		var err error
+		var (
+			res []byte
+			err error
+		)
 
 		if vars.Get("from-time") != "" && vars.Get("to-time") != "" {
 			// get from time (epoch)
@@ -114,7 +116,6 @@ func recordListHandlerFn(
 
 			// get result by time-range query
 			res, err = timeRangeQuery(cliCtx, fromTime, toTime, page, limit)
-
 		} else if vars.Get("from-id") != "" && vars.Get("to-time") != "" {
 			// get from id
 			fromID, ok := rest.ParseUint64OrReturnBadRequest(w, vars.Get("from-id"))
@@ -135,7 +136,7 @@ func recordListHandlerFn(
 			res, err = rangeQuery(cliCtx, page, limit)
 		}
 
-		// send internal server error if error occured during the query
+		// send internal server error if error occurred during the query
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -154,6 +155,7 @@ func recordListHandlerFn(
 func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
+
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -266,20 +268,19 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 	}
 
 	var fromRecord types.EventRecord
-	err = json.Unmarshal(fromData, &fromRecord)
-	if err != nil {
+	if err = json.Unmarshal(fromData, &fromRecord); err != nil {
 		return nil, err
 	}
 
 	fromTime := fromRecord.RecordTime.Unix()
+
 	rangeData, err := timeRangeQuery(cliCtx, fromTime, toTime, 1, limit)
 	if err != nil {
 		return nil, err
 	}
 
 	rangeRecords := make([]*types.EventRecord, 0)
-	err = json.Unmarshal(rangeData, &rangeRecords)
-	if err != nil {
+	if err = json.Unmarshal(rangeData, &rangeRecords); err != nil {
 		return nil, err
 	}
 
@@ -290,6 +291,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 
 	nextID := fromID
 	toTimeObj := time.Unix(toTime, 0)
+
 	for nextID-fromID < limit {
 		if found, ok := rangeMapping[nextID]; ok {
 			result = append(result, found)

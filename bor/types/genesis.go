@@ -39,8 +39,11 @@ func ValidateGenesis(data GenesisState) error {
 
 // genFirstSpan generates default first valdiator producer set
 func genFirstSpan(valset hmTypes.ValidatorSet, chainId string) []*hmTypes.Span {
-	var firstSpan []*hmTypes.Span
-	var selectedProducers []hmTypes.Validator
+	var (
+		firstSpan         []*hmTypes.Span
+		selectedProducers []hmTypes.Validator
+	)
+
 	if len(valset.Validators) > int(DefaultProducerCount) {
 		// pop top validators and select
 		for i := 0; uint64(i) < DefaultProducerCount; i++ {
@@ -54,6 +57,7 @@ func genFirstSpan(valset hmTypes.ValidatorSet, chainId string) []*hmTypes.Span {
 
 	newSpan := hmTypes.NewSpan(0, 0, 0+DefaultFirstSpanDuration-1, valset, selectedProducers, chainId)
 	firstSpan = append(firstSpan, &newSpan)
+
 	return firstSpan
 }
 
@@ -63,6 +67,7 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 	if appState[ModuleName] != nil {
 		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
+
 	return genesisState
 }
 
@@ -74,5 +79,6 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, currentValSe
 	borState.Spans = genFirstSpan(currentValSet, chainState.Params.ChainParams.BorChainID)
 
 	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(borState)
+
 	return appState, nil
 }

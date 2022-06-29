@@ -57,14 +57,16 @@ func BridgeCommands(v *viper.Viper, loggerInstance tendermintLogger.Logger, call
 	return rootCmd
 }
 
-// function is called when bridge flags needs to be added to command
+// DecorateWithBridgeRootFlags is called when bridge flags needs to be added to command
 func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInstance tendermintLogger.Logger, caller string) {
 	cmd.PersistentFlags().StringP(helper.TendermintNodeFlag, "n", helper.DefaultTendermintNode, "Node to connect to")
+
 	if err := v.BindPFlag(helper.TendermintNodeFlag, cmd.PersistentFlags().Lookup(helper.TendermintNodeFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, helper.TendermintNodeFlag), "Error", err)
 	}
 
 	cmd.PersistentFlags().String(helper.HomeFlag, helper.DefaultNodeHome, "directory for config and data")
+
 	if err := v.BindPFlag(helper.HomeFlag, cmd.PersistentFlags().Lookup(helper.HomeFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, helper.HomeFlag), "Error", err)
 	}
@@ -75,6 +77,7 @@ func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInsta
 		"",
 		"Bridge db path (default <home>/bridge/storage)",
 	)
+
 	if err := v.BindPFlag(bridgeDBFlag, cmd.PersistentFlags().Lookup(bridgeDBFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, bridgeDBFlag), "Error", err)
 	}
@@ -139,7 +142,6 @@ func AdjustBridgeDBValue(cmd *cobra.Command, v *viper.Viper) {
 
 // initTendermintViperConfig sets global viper configuration needed to heimdall
 func initTendermintViperConfig(cmd *cobra.Command) {
-
 	// set appropriate bridge DB
 	AdjustBridgeDBValue(cmd, viper.GetViper())
 

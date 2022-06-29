@@ -27,7 +27,6 @@ import (
 	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
 	restServer "github.com/maticnetwork/heimdall/server"
 	"github.com/maticnetwork/heimdall/version"
-	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -92,7 +91,9 @@ type ValidatorAccountFormatter struct {
 // GetSignerInfo returns signer information
 func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAccountFormatter {
 	var privObject secp256k1.PrivKeySecp256k1
+
 	cdc.MustUnmarshalBinaryBare(priv, &privObject)
+
 	return ValidatorAccountFormatter{
 		Address: ethCommon.BytesToAddress(pub.Address().Bytes()).String(),
 		PubKey:  CryptoKeyToPubkey(pub).String(),
@@ -103,6 +104,7 @@ func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAc
 func main() {
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
+
 	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
@@ -151,8 +153,7 @@ func main() {
 
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("/var/lib/heimdall"))
-	err := executor.Execute()
-	if err != nil {
+	if err := executor.Execute(); err != nil {
 		// Note: Handle with #870
 		panic(err)
 	}
@@ -166,13 +167,6 @@ func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, sto
 		// create new heimdall app
 		return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 	}
-}
-
-func newApp(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
-	// init heimdall config
-	helper.InitHeimdallConfig("")
-	// create new heimdall app
-	return app.NewHeimdallApp(logger, db, baseapp.SetHaltHeight(cast.ToUint64(viper.GetString("halt-height"))), baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 }
 
 func exportAppStateAndTMValidators(logger log.Logger, db dbm.DB, storeTracer io.Writer, height int64, forZeroHeight bool, jailWhiteList []string) (json.RawMessage, []tmTypes.GenesisValidator, error) {
@@ -236,6 +230,7 @@ which accepts a path for the resulting pprof file.
 	)
 
 	cmd.PersistentFlags().String(helper.LogLevel, ctx.Config.LogLevel, "Log level")
+
 	if err := viper.BindPFlag(helper.LogLevel, cmd.PersistentFlags().Lookup(helper.LogLevel)); err != nil {
 		logger.Error("main | BindPFlag | helper.LogLevel", "Error", err)
 	}
@@ -263,6 +258,7 @@ which accepts a path for the resulting pprof file.
 
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
+
 	return cmd
 }
 
@@ -279,25 +275,26 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		clientHome:  viper.GetString(helper.FlagClientHome),
 		forceInit:   false,
 	}
-	err := heimdallInit(ctx, cdc, initConfig, cfg)
-	if err != nil {
-		return err
+
+	if err := heimdallInit(ctx, cdc, initConfig, cfg); err != nil {
+		return fmt.Errorf("failed init heimdall: %s", err)
 	}
 
 	db, err := openDB(home)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open DB: %s", err)
 	}
+
 	traceWriter, err := openTraceWriter(traceWriterFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open trace writer: %s", err)
 	}
 
 	app := appCreator(ctx.Logger, db, traceWriter)
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load or gen node key: %s", err)
 	}
 
 	server.UpgradeOldPrivValFile(cfg)
@@ -314,12 +311,12 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		ctx.Logger.With("module", "node"),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create new node: %s", err)
 	}
 
 	// start Tendermint node here
-	if err := tmNode.Start(); err != nil {
-		return err
+	if err = tmNode.Start(); err != nil {
+		return fmt.Errorf("failed to start Tendermint node: %s", err)
 	}
 
 	var cpuProfileCleanup func()
@@ -331,7 +328,8 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		}
 
 		ctx.Logger.Info("starting CPU profiler", "profile", cpuProfile)
-		if err := pprof.StartCPUProfile(f); err != nil {
+
+		if err = pprof.StartCPUProfile(f); err != nil {
 			return err
 		}
 
@@ -348,9 +346,11 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 	// start rest
 	if startRestServer {
 		waitForREST := make(chan struct{})
+
 		g.Go(func() error {
 			return restServer.StartRestServer(gCtx, cdc, restServer.RegisterRoutes, waitForREST)
 		})
+
 		// hang here for a while, and wait for REST server to start
 		<-waitForREST
 	}
@@ -394,20 +394,19 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 
 func openDB(rootDir string) (dbm.DB, error) {
 	dataDir := filepath.Join(rootDir, "data")
-	db, err := sdk.NewLevelDB("application", dataDir)
-	return db, err
+	return sdk.NewLevelDB("application", dataDir)
 }
 
-func openTraceWriter(traceWriterFile string) (w io.Writer, err error) {
-	if traceWriterFile != "" {
-		w, err = os.OpenFile(
-			traceWriterFile,
-			os.O_WRONLY|os.O_APPEND|os.O_CREATE,
-			0666,
-		)
-		return
+func openTraceWriter(traceWriterFile string) (io.Writer, error) {
+	if traceWriterFile == "" {
+		return nil, nil
 	}
-	return
+
+	return os.OpenFile(
+		traceWriterFile,
+		os.O_WRONLY|os.O_APPEND|os.O_CREATE,
+		0666,
+	)
 }
 
 func showAccountCmd() *cobra.Command {
@@ -506,6 +505,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 func totalValidators() int {
 	numValidators := viper.GetInt(flagNumValidators)
 	numNonValidators := viper.GetInt(flagNumNonValidators)
+
 	return numNonValidators + numValidators
 }
 
@@ -514,6 +514,7 @@ func nodeDir(i int) string {
 	outDir := viper.GetString(flagOutputDir)
 	nodeDirName := fmt.Sprintf("%s%d", viper.GetString(flagNodeDirPrefix), i)
 	nodeDaemonHomeName := viper.GetString(flagNodeDaemonHome)
+
 	return filepath.Join(outDir, nodeDirName, nodeDaemonHomeName)
 }
 
@@ -525,16 +526,20 @@ func hostnameOrIP(i int) string {
 // populate persistent peers in config
 func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 	persistentPeers := make([]string, totalValidators())
+
 	for i := 0; i < totalValidators(); i++ {
 		config.SetRoot(nodeDir(i))
+
 		nodeKey, err := p2p.LoadNodeKey(config.NodeKeyFile())
 		if err != nil {
 			return
 		}
+
 		persistentPeers[i] = p2p.IDAddressString(nodeKey.ID(), fmt.Sprintf("%s:%d", hostnameOrIP(i), 26656))
 	}
 
 	persistentPeersList := strings.Join(persistentPeers, ",")
+
 	for i := 0; i < totalValidators(); i++ {
 		config.SetRoot(nodeDir(i))
 		config.P2P.PersistentPeers = persistentPeersList
@@ -547,11 +552,15 @@ func populatePersistentPeersInConfigAndWriteIt(config *cfg.Config) {
 
 func getGenesisAccount(address []byte) authTypes.GenesisAccount {
 	acc := authTypes.NewBaseAccountWithAddress(hmTypes.BytesToHeimdallAddress(address))
+
 	genesisBalance, _ := big.NewInt(0).SetString("1000000000000000000000", 10)
+
 	if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(genesisBalance)}}); err != nil {
 		logger.Error("getGenesisAccount | SetCoins", "Error", err)
 	}
+
 	result, _ := authTypes.NewGenesisAccountI(&acc)
+
 	return result
 }
 
@@ -580,13 +589,13 @@ func writeGenesisFile(genesisTime time.Time, genesisFile, chainID string, appSta
 func InitializeNodeValidatorFiles(
 	config *cfg.Config) (nodeID string, valPubKey crypto.PubKey, priv crypto.PrivKey, err error,
 ) {
-
 	nodeKey, err := p2p.LoadOrGenNodeKey(config.NodeKeyFile())
 	if err != nil {
 		return nodeID, valPubKey, priv, err
 	}
 
 	nodeID = string(nodeKey.ID())
+
 	server.UpgradeOldPrivValFile(config)
 
 	pvKeyFile := config.PrivValidatorKeyFile()
@@ -601,6 +610,7 @@ func InitializeNodeValidatorFiles(
 
 	FilePv := privval.LoadOrGenFilePV(pvKeyFile, pvStateFile)
 	valPubKey = FilePv.GetPubKey()
+
 	return nodeID, valPubKey, FilePv.Key.PrivKey, nil
 }
 

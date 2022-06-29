@@ -28,6 +28,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetQueryParams(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/maticnetwork/bor/common"
+	"github.com/maticnetwork/bor/common/hexutil"
 	"gopkg.in/yaml.v2"
 )
 
@@ -50,24 +51,24 @@ func (bz HexBytes) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON this is the point of Bytes.
 func (bz *HexBytes) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
-	if err != nil {
+	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*bz = common.FromHex(s)
+
 	return nil
 }
 
 // UnmarshalYAML unmarshals from YAML assuming Bech32 encoding.
 func (bz *HexBytes) UnmarshalYAML(data []byte) error {
 	var s string
-	err := yaml.Unmarshal(data, &s)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*bz = common.FromHex(s)
+
 	return nil
 }
 
@@ -77,7 +78,7 @@ func (bz HexBytes) Bytes() []byte {
 }
 
 func (bz HexBytes) String() string {
-	return common.ToHex(bz)
+	return hexutil.Encode(bz)
 }
 
 // Format format bytes

@@ -38,7 +38,6 @@ func NewGenesisAccountRaw(
 	module string,
 	permissions ...string,
 ) GenesisAccount {
-
 	return GenesisAccount{
 		Address:           address,
 		Coins:             coins,
@@ -100,5 +99,6 @@ func (gaccs GenesisAccounts) Contains(acc hmTypes.HeimdallAddress) bool {
 			return true
 		}
 	}
+
 	return false
 }

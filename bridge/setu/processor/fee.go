@@ -22,10 +22,9 @@ type FeeProcessor struct {
 
 // NewFeeProcessor - add  abi to clerk processor
 func NewFeeProcessor(stakingInfoAbi *abi.ABI) *FeeProcessor {
-	feeProcessor := &FeeProcessor{
+	return &FeeProcessor{
 		stakingInfoAbi: stakingInfoAbi,
 	}
-	return feeProcessor
 }
 
 // Start starts new block subscription
@@ -37,6 +36,7 @@ func (fp *FeeProcessor) Start() error {
 // RegisterTasks - Registers clerk related tasks with machinery
 func (fp *FeeProcessor) RegisterTasks() {
 	fp.Logger.Info("Registering fee related tasks")
+
 	if err := fp.queueConnector.Server.RegisterTask("sendTopUpFeeToHeimdall", fp.sendTopUpFeeToHeimdall); err != nil {
 		fp.Logger.Error("RegisterTasks | sendTopUpFeeToHeimdall", "error", err)
 	}
@@ -79,10 +79,11 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), hmTypes.BytesToHeimdallAddress(event.User.Bytes()), sdk.NewIntFromBigInt(event.Fee), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
-		if err := fp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		if err = fp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "msg", msg, "error", err)
 			return err
 		}
 	}
+
 	return nil
 }

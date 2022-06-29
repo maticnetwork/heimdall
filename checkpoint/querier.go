@@ -43,6 +43,7 @@ func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -51,6 +52,7 @@ func handleQueryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -69,6 +71,7 @@ func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -86,17 +89,20 @@ func handleQueryCheckpointBuffer(ctx sdk.Context, req abci.RequestQuery, keeper 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
 func handleQueryLastNoAck(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	// get last no ack
 	res := keeper.GetLastNoAck(ctx)
+
 	// sed result
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -115,6 +121,7 @@ func handleQueryCheckpointList(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -134,10 +141,12 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 
 	if ackCount != 0 {
 		checkpointNumber := ackCount
+
 		lastCheckpoint, err := keeper.GetCheckpointByNumber(ctx, checkpointNumber)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", checkpointNumber), err.Error()))
 		}
+
 		start = lastCheckpoint.EndBlock + 1
 	}
 
@@ -149,6 +158,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	}
 
 	accs := tk.GetAllDividendAccounts(ctx)
+
 	accRootHash, err := types.GetAccountRootHash(accs)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not get generate account root hash. Error:%v", err), err.Error()))
@@ -162,9 +172,11 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		hmTypes.BytesToHeimdallHash(accRootHash),
 		queryParams.BorChainID,
 	)
+
 	bz, err := json.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))
 	}
+
 	return bz, nil
 }

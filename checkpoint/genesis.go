@@ -54,6 +54,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	params := keeper.GetParams(ctx)
 
 	bufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+
 	return types.NewGenesisState(
 		params,
 		bufferedCheckpoint,

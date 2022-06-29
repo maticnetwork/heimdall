@@ -13,9 +13,10 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Parallel test - to check BroadcastToHeimdall syncronization
+// Parallel test - to check BroadcastToHeimdall synchronisation
 func TestBroadcastToHeimdall(t *testing.T) {
 	t.Parallel()
+
 	cdc := app.MakeCodec()
 	// cli context
 	tendermintNode := "tcp://localhost:26657"
@@ -26,6 +27,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 	// cliCtx.TrustNode = true
 
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
 	_txBroadcaster := NewTxBroadcaster(cdc)
 
 	testData := []checkpointTypes.MsgCheckpoint{
@@ -35,8 +37,13 @@ func TestBroadcastToHeimdall(t *testing.T) {
 		{Proposer: hmTypes.BytesToHeimdallAddress(helper.GetAddress()), StartBlock: 2049, EndBlock: 3124, RootHash: hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"), AccountRootHash: hmTypes.HexToHeimdallHash("0xd10b5c16c25efe0b0f5b3d75038834223934ae8c2ec2b63a62bbe42aa21e2d2d")},
 	}
 
-	for index, test := range testData {
+	for index, test := range testData { //nolint
+		index := index
+		test := test
+
 		t.Run(strconv.Itoa(index), func(t *testing.T) {
+			t.Parallel()
+
 			// create and send checkpoint message
 			msg := checkpointTypes.NewMsgCheckpointBlock(
 				test.Proposer,

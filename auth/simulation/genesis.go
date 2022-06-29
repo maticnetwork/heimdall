@@ -63,48 +63,56 @@ func GenMaxGas(r *rand.Rand) uint64 {
 func GenTxFees(r *rand.Rand) string {
 	base, _ := big.NewInt(0).SetString("1000000000000000", 10)
 	t := simulation.RandIntBetween(r, 500, 1000)
+
 	return big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(t)), base).String()
 }
 
 // RandomizedGenState generates a random GenesisState for auth
 func RandomizedGenState(simState *module.SimulationState) {
 	var maxMemoChars uint64
+
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, MaxMemoChars, &maxMemoChars, simState.Rand,
 		func(r *rand.Rand) { maxMemoChars = GenMaxMemoChars(r) },
 	)
 
 	var txSigLimit uint64
+
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, TxSigLimit, &txSigLimit, simState.Rand,
 		func(r *rand.Rand) { txSigLimit = GenTxSigLimit(r) },
 	)
 
 	var txSizeCostPerByte uint64
+
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, TxSizeCostPerByte, &txSizeCostPerByte, simState.Rand,
 		func(r *rand.Rand) { txSizeCostPerByte = GenTxSizeCostPerByte(r) },
 	)
 
 	var sigVerifyCostED25519 uint64
+
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, SigVerifyCostED25519, &sigVerifyCostED25519, simState.Rand,
 		func(r *rand.Rand) { sigVerifyCostED25519 = GenSigVerifyCostED25519(r) },
 	)
 
 	var sigVerifyCostSECP256K1 uint64
+
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, SigVerifyCostSECP256K1, &sigVerifyCostSECP256K1, simState.Rand,
 		func(r *rand.Rand) { sigVerifyCostSECP256K1 = GenSigVerifyCostSECP256K1(r) },
 	)
 
 	var maxTxGas uint64
+
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, MaxGas, &maxTxGas, simState.Rand,
 		func(r *rand.Rand) { maxTxGas = GenMaxGas(r) },
 	)
 
 	var txFees string
+
 	simState.AppParams.GetOrGenerate(
 		simState.Cdc, TxFees, &txFees, simState.Rand,
 		func(r *rand.Rand) { txFees = GenTxFees(r) },

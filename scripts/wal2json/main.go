@@ -37,6 +37,7 @@ func main() {
 	defer f.Close()
 
 	dec := cs.NewWALDecoder(f)
+
 	for {
 		msg, err := dec.Decode()
 		if err == io.EOF {
@@ -54,11 +55,13 @@ func main() {
 		if err == nil {
 			_, err = os.Stdout.Write([]byte("\n"))
 		}
+
 		if err == nil {
 			if endMsg, ok := msg.Msg.(cs.EndHeightMessage); ok {
 				_, err = os.Stdout.Write([]byte(fmt.Sprintf("ENDHEIGHT %d\n", endMsg.Height))) // nolint: errcheck, gas
 			}
 		}
+
 		if err != nil {
 			fmt.Println("Failed to write message", err)
 			os.Exit(1)

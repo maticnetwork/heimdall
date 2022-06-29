@@ -26,5 +26,6 @@ func queryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte,
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }

@@ -107,6 +107,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock,
 			)
+
 			return common.ErrOldCheckpoint(k.Codespace()).Result()
 		}
 
@@ -115,6 +116,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 			logger.Error("Checkpoint not in countinuity",
 				"currentTip", lastCheckpoint.EndBlock,
 				"startBlock", msg.StartBlock)
+
 			return common.ErrDisCountinuousCheckpoint(k.Codespace()).Result()
 		}
 	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
@@ -137,6 +139,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		logger.Error("Error while fetching account root hash", "error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
+
 	logger.Debug("Validator account root hash generated", "accountRootHash", hmTypes.BytesToHeimdallHash(accountRoot).String())
 
 	// Compare stored root hash to msg root hash
@@ -146,6 +149,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 			"hash", hmTypes.BytesToHeimdallHash(accountRoot).String(),
 			"msgHash", msg.AccountRootHash,
 		)
+
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
@@ -166,6 +170,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 			"proposer", validatorSet.Proposer.Signer.String(),
 			"msgProposer", msg.Proposer.String(),
 		)
+
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
@@ -213,6 +218,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 			"rootExpected", headerBlock.RootHash.String(),
 			"rootRecieved", msg.RootHash.String(),
 		)
+
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
 
@@ -249,6 +255,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 		logger.Debug("Invalid No ACK -- Waiting for last checkpoint ACK", "lastCheckpointTime", lastCheckpointTime, "current time", currentTime,
 			"buffer Time", bufferTime.String(),
 		)
+
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
@@ -259,6 +266,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	if lastNoAckTime.After(currentTime) || (currentTime.Sub(lastNoAckTime) < bufferTime) {
 		logger.Debug("Too many no-ack", "lastNoAckTime", lastNoAckTime, "current time", currentTime,
 			"buffer Time", bufferTime.String())
+
 		return common.ErrTooManyNoACK(k.Codespace()).Result()
 	}
 

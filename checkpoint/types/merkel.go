@@ -6,12 +6,9 @@ import (
 
 	"github.com/cbergoon/merkletree"
 	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/rpc"
-	"github.com/tendermint/crypto/sha3"
-	"golang.org/x/sync/errgroup"
-
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/crypto/sha3"
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not
@@ -48,10 +45,10 @@ func GetAccountRootHash(dividendAccounts []hmTypes.DividendAccount) ([]byte, err
 func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.MerkleTree, error) {
 	// Sort the dividendAccounts by ID
 	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
-	var list []merkletree.Content
+	list := make([]merkletree.Content, len(dividendAccounts))
 
 	for i := 0; i < len(dividendAccounts); i++ {
-		list = append(list, dividendAccounts[i])
+		list[i] = dividendAccounts[i]
 	}
 
 	tree, err := merkletree.NewTreeWithHashStrategy(list, sha3.NewLegacyKeccak256)
@@ -66,11 +63,17 @@ func GetAccountTree(dividendAccounts []hmTypes.DividendAccount) (*merkletree.Mer
 func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress) ([]byte, uint64, error) {
 	// Sort the dividendAccounts by user address
 	dividendAccounts = hmTypes.SortDividendAccountByAddress(dividendAccounts)
-	var list []merkletree.Content
-	var account hmTypes.DividendAccount
+
+	var (
+		list    = make([]merkletree.Content, len(dividendAccounts))
+		account hmTypes.DividendAccount
+	)
+
 	index := uint64(0)
+
 	for i := 0; i < len(dividendAccounts); i++ {
-		list = append(list, dividendAccounts[i])
+		list[i] = dividendAccounts[i]
+
 		if dividendAccounts[i].User.Equals(userAddr) {
 			account = dividendAccounts[i]
 			index = uint64(i)
@@ -86,6 +89,7 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmType
 
 	// concatenate branch array
 	proof := appendBytes32(branchArray...)
+
 	return proof, index, err
 }
 
@@ -104,80 +108,26 @@ func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmT
 	return false, nil
 }
 
-func convert(input []([32]byte)) [][]byte {
-	var output [][]byte
-	for _, in := range input {
-		newInput := make([]byte, len(in[:]))
-		copy(newInput, in[:])
-		output = append(output, newInput)
-
-	}
-	return output
-}
-
 func convertTo32(input []byte) (output [32]byte, err error) {
 	l := len(input)
 	if l > 32 || l == 0 {
 		return
 	}
+
 	copy(output[32-l:], input[:])
+
 	return
 }
+
 func appendBytes32(data ...[]byte) []byte {
 	var result []byte
+
 	for _, v := range data {
 		paddedV, err := convertTo32(v)
 		if err == nil {
 			result = append(result, paddedV[:]...)
 		}
 	}
+
 	return result
-}
-
-func nextPowerOfTwo(n uint64) uint64 {
-	if n == 0 {
-		return 1
-	}
-	// http://graphics.stanford.edu/~seander/bithacks.html#RoundUpPowerOf2
-	n--
-	n |= n >> 1
-	n |= n >> 2
-	n |= n >> 4
-	n |= n >> 8
-	n |= n >> 16
-	n |= n >> 32
-	n++
-	return n
-}
-
-// spins go-routines to fetch batch elements to allow creation of large merkle trees
-func fetchBatchElements(rpcClient *rpc.Client, elements []rpc.BatchElem, checkpointLength uint64) (err error) {
-	var batchLength = int(checkpointLength)
-	// group
-	var g errgroup.Group
-
-	for i := 0; i < len(elements); i += batchLength {
-		var newBatch []rpc.BatchElem
-		if len(elements) < i+batchLength {
-			newBatch = elements[i:]
-		} else {
-			newBatch = elements[i : i+batchLength]
-		}
-
-		// common.CheckpointLogger.Info("Batching requests", "index", i, "length", len(newBatch))
-
-		// spawn go-routine
-		g.Go(func() error {
-			// Batch call
-			err := rpcClient.BatchCall(newBatch)
-			return err
-		})
-	}
-
-	if err := g.Wait(); err != nil {
-		return err
-	}
-
-	// common.CheckpointLogger.Info("Fetched all headers", "len", len(elements))
-	return nil
 }

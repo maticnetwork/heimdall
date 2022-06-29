@@ -42,6 +42,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			SendCheckpointAdjust(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 
@@ -116,11 +117,25 @@ func SendCheckpointAdjust(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagEndBlock, "", "--end-block=<end-block-number>")
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
 
-	cmd.MarkFlagRequired(FlagHeaderNumber)
-	cmd.MarkFlagRequired(FlagRootHash)
-	cmd.MarkFlagRequired(FlagProposerAddress)
-	cmd.MarkFlagRequired(FlagStartBlock)
-	cmd.MarkFlagRequired(FlagEndBlock)
+	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
+		logger.Error("SendCheckpointAdjust | MarkFlagRequired | FlagHeaderNumber", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagRootHash); err != nil {
+		logger.Error("SendCheckpointAdjust | MarkFlagRequired | FlagRootHash", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagProposerAddress); err != nil {
+		logger.Error("SendCheckpointAdjust | MarkFlagRequired | FlagProposerAddress", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagStartBlock); err != nil {
+		logger.Error("SendCheckpointAdjust | MarkFlagRequired | FlagStartBlock", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagEndBlock); err != nil {
+		logger.Error("SendCheckpointAdjust | MarkFlagRequired | FlagEndBlock", "Error", err)
+	}
 
 	return cmd
 }
@@ -235,9 +250,17 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagBorChainID, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().Bool(FlagAutoConfigure, false, "--auto-configure=true/false")
 
-	cmd.MarkFlagRequired(FlagRootHash)
-	cmd.MarkFlagRequired(FlagAccountRootHash)
-	cmd.MarkFlagRequired(FlagBorChainID)
+	if err := cmd.MarkFlagRequired(FlagRootHash); err != nil {
+		logger.Error("SendCheckpointTx | MarkFlagRequired | FlagRootHash", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagAccountRootHash); err != nil {
+		logger.Error("SendCheckpointTx | MarkFlagRequired | FlagAccountRootHash", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagBorChainID); err != nil {
+		logger.Error("SendCheckpointTx | MarkFlagRequired | FlagBorChainID", "Error", err)
+	}
 
 	return cmd
 }
@@ -328,9 +351,11 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagHeaderNumber); err != nil {
 		logger.Error("SendCheckpointACKTx | MarkFlagRequired | FlagHeaderNumber", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagCheckpointTxHash); err != nil {
 		logger.Error("SendCheckpointACKTx | MarkFlagRequired | FlagCheckpointTxHash", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagCheckpointLogIndex); err != nil {
 		logger.Error("SendCheckpointACKTx | MarkFlagRequired | FlagCheckpointLogIndex", "Error", err)
 	}
@@ -363,5 +388,6 @@ func SendCheckpointNoACKTx(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
+
 	return cmd
 }

@@ -40,7 +40,7 @@ type (
 	HeaderACKReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		From        hmTypes.HeimdallAddress `json:"proposer"`
+		From        hmTypes.HeimdallAddress `json:"from"`
 		HeaderBlock uint64                  `json:"header_block"`
 		StartBlock  uint64                  `json:"start_block"`
 		EndBlock    uint64                  `json:"end_block"`

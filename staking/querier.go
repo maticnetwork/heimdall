@@ -42,13 +42,12 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 }
 
 func handleQueryTotalValidatorPower(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-
 	bz, err := json.Marshal(keeper.GetTotalPower(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
-	return bz, nil
 
+	return bz, nil
 }
 
 func handleQueryCurrentValidatorSet(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
@@ -60,6 +59,7 @@ func handleQueryCurrentValidatorSet(ctx sdk.Context, req abci.RequestQuery, keep
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -80,6 +80,7 @@ func handleQuerySigner(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -100,6 +101,7 @@ func handleQueryValidator(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -117,6 +119,7 @@ func handleQueryValidatorStatus(ctx sdk.Context, req abci.RequestQuery, keeper K
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -135,11 +138,11 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	}
 
 	// init proposers
-	var proposers []hmTypes.Validator
+	proposers := make([]hmTypes.Validator, times)
 
 	// get proposers
 	for index := 0; index < times; index++ {
-		proposers = append(proposers, *(validatorSet.GetProposer()))
+		proposers[index] = *(validatorSet.GetProposer())
 		validatorSet.IncrementProposerPriority(1)
 	}
 
@@ -148,15 +151,18 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
 func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	proposer := keeper.GetCurrentProposer(ctx)
+
 	bz, err := json.Marshal(proposer)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -172,7 +178,7 @@ func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper K
 	// get main tx receipt
 	receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
+		return nil, sdk.ErrInternal("Transaction is not confirmed yet. Please wait for sometime and try again")
 	}
 
 	// sequence id

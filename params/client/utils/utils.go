@@ -64,6 +64,7 @@ func (pcj ParamChangesJSON) ToParamChanges() []types.ParamChange {
 	for i, pc := range pcj {
 		res[i] = pc.ToParamChange()
 	}
+
 	return res
 }
 

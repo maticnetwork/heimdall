@@ -222,13 +222,13 @@ func querySlashingSequence(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 
 	contractCallerObj, err := helper.NewContractCaller()
 	if err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf(err.Error()))
+		return nil, sdk.ErrInternal(err.Error())
 	}
 
 	// get main tx receipt
 	receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
+		return nil, sdk.ErrInternal("Transaction is not confirmed yet. Please wait for sometime and try again")
 	}
 
 	// sequence id

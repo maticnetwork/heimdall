@@ -23,6 +23,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func TestKeeperTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(KeeperTestSuite))
 }
 
@@ -34,7 +35,8 @@ func (suite *KeeperTestSuite) TestSetCoins() {
 
 	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount*10)))
 	// keeper.SendCoins(ctx, hmTypes.HexToHeimdallAddress("123"), hmTypes.HexToHeimdallAddress("456"), coins)
-	keeper.SetCoins(ctx, address, coins)
+	err := keeper.SetCoins(ctx, address, coins)
+	require.NoError(t, err)
 
 	res := keeper.GetCoins(ctx, address)
 	require.Equal(t, res, coins)
@@ -63,9 +65,11 @@ func (suite *KeeperTestSuite) TestSendCoins() {
 	address := hmTypes.HexToHeimdallAddress("123")
 	to := hmTypes.HexToHeimdallAddress("456")
 	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount)))
-	keeper.SetCoins(ctx, address, coins)
 
-	err := keeper.SendCoins(ctx, address, to, coins)
+	err := keeper.SetCoins(ctx, address, coins)
+	require.NoError(t, err)
+
+	err = keeper.SendCoins(ctx, address, to, coins)
 	require.NoError(t, err)
 
 	fromAcc := keeper.GetCoins(ctx, address)
@@ -82,7 +86,8 @@ func (suite *KeeperTestSuite) TestHasCoins() {
 	address := hmTypes.HexToHeimdallAddress("123")
 
 	coins := sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, sdk.NewInt(amount*10)))
-	keeper.SetCoins(ctx, address, coins)
+	err := keeper.SetCoins(ctx, address, coins)
+	require.NoError(t, err)
 
 	res := app.BankKeeper.HasCoins(ctx, address, coins)
 	require.True(t, res)

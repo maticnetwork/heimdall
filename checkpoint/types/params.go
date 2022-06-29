@@ -71,6 +71,7 @@ func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 func (p Params) Equal(p2 Params) bool {
 	bz1 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p)
 	bz2 := ModuleCdc.MustMarshalBinaryLengthPrefixed(&p2)
+
 	return bytes.Equal(bz1, bz2)
 }
 
@@ -87,11 +88,13 @@ func DefaultParams() Params {
 // String implements the stringer interface.
 func (p Params) String() string {
 	var sb strings.Builder
+
 	sb.WriteString("Params: \n")
 	sb.WriteString(fmt.Sprintf("CheckpointBufferTime: %s\n", p.CheckpointBufferTime))
 	sb.WriteString(fmt.Sprintf("AvgCheckpointLength: %d\n", p.AvgCheckpointLength))
 	sb.WriteString(fmt.Sprintf("MaxCheckpointLength: %d\n", p.MaxCheckpointLength))
 	sb.WriteString(fmt.Sprintf("ChildBlockInterval: %d\n", p.ChildBlockInterval))
+
 	return sb.String()
 }
 

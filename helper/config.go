@@ -36,6 +36,10 @@ const (
 	LogLevel               = "log_level"
 	SeedsFlag              = "seeds"
 
+	MainChain   = "mainnet"
+	MumbaiChain = "mumbai"
+	LocalChain  = "local"
+
 	// heimdall-config flags
 	MainRPCUrlFlag               = "eth_rpc_url"
 	BorRPCUrlFlag                = "bor_rpc_url"
@@ -97,16 +101,16 @@ const (
 
 	DefaultMainchainMaxGasPrice = 400000000000 // 400 Gwei
 
-	DefaultBorChainID string = "15001"
+	DefaultBorChainID = "15001"
 
-	DefaultLogsType        = "json"
-	DefaultChain    string = "mainnet"
+	DefaultLogsType = "json"
+	DefaultChain    = MainChain
 
 	DefaultTendermintNode = "tcp://localhost:26657"
 
-	DefaultMainnetSeeds string = "f4f605d60b8ffaaf15240564e58a81103510631c@159.203.9.164:26656,4fb1bc820088764a564d4f66bba1963d47d82329@44.232.55.71:26656,2eadba4be3ce47ac8db0a3538cb923b57b41c927@35.199.4.13:26656,3b23b20017a6f348d329c102ddc0088f0a10a444@35.221.13.28:26656,25f5f65a09c56e9f1d2d90618aa70cd358aa68da@35.230.116.151:26656"
+	DefaultMainnetSeeds = "f4f605d60b8ffaaf15240564e58a81103510631c@159.203.9.164:26656,4fb1bc820088764a564d4f66bba1963d47d82329@44.232.55.71:26656,2eadba4be3ce47ac8db0a3538cb923b57b41c927@35.199.4.13:26656,3b23b20017a6f348d329c102ddc0088f0a10a444@35.221.13.28:26656,25f5f65a09c56e9f1d2d90618aa70cd358aa68da@35.230.116.151:26656"
 
-	DefaultTestnetSeeds string = "4cd60c1d76e44b05f7dfd8bab3f447b119e87042@54.147.31.250:26656,b18bbe1f3d8576f4b73d9b18976e71c65e839149@34.226.134.117:26656"
+	DefaultTestnetSeeds = "4cd60c1d76e44b05f7dfd8bab3f447b119e87042@54.147.31.250:26656,b18bbe1f3d8576f4b73d9b18976e71c65e839149@34.226.134.117:26656"
 
 	secretFilePerm = 0600
 
@@ -129,6 +133,7 @@ var cdc = amino.NewCodec()
 func init() {
 	cdc.RegisterConcrete(secp256k1.PubKeySecp256k1{}, secp256k1.PubKeyAminoName, nil)
 	cdc.RegisterConcrete(secp256k1.PrivKeySecp256k1{}, secp256k1.PrivKeyAminoName, nil)
+
 	Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
 }
 
@@ -220,11 +225,12 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		return
 	}
 
-	// read configuration from the standard configuratin file
+	// read configuration from the standard configuration file
 	configDir := filepath.Join(homeDir, "config")
 	heimdallViper := viper.New()
 	heimdallViper.SetEnvPrefix("HEIMDALL")
 	heimdallViper.AutomaticEnv()
+
 	if heimdallConfigFileFromFLag == "" {
 		heimdallViper.SetConfigName("heimdall-config") // name of config file (without extension)
 		heimdallViper.AddConfigPath(configDir)         // call multiple times to add many search paths
@@ -233,13 +239,12 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	}
 
 	// Handle errors reading the config file
-	err := heimdallViper.ReadInConfig()
-	if err != nil {
+	if err := heimdallViper.ReadInConfig(); err != nil {
 		log.Fatal(err)
 	}
 
 	// unmarshal configuration from the standard configuration file
-	if err = heimdallViper.UnmarshalExact(&conf); err != nil {
+	if err := heimdallViper.UnmarshalExact(&conf); err != nil {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
@@ -306,11 +311,13 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		conf.SHMaxDepthDuration = DefaultSHMaxDepthDuration
 	}
 
+	var err error
 	if mainRPCClient, err = rpc.Dial(conf.EthRPCUrl); err != nil {
 		log.Fatalln("Unable to dial via ethClient", "URL=", conf.EthRPCUrl, "chain=eth", "Error", err)
 	}
 
 	mainChainClient = ethclient.NewClient(mainRPCClient)
+
 	if maticRPCClient, err = rpc.Dial(conf.BorRPCUrl); err != nil {
 		log.Fatal(err)
 	}
@@ -321,6 +328,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+
 	GenesisDoc = *genDoc
 
 	// load pv file, unmarshall and set to privObject
@@ -328,11 +336,19 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	if err != nil {
 		Logger.Error(err.Error())
 	}
+
 	privVal := privval.LoadFilePV(filepath.Join(configDir, "priv_validator_key.json"), filepath.Join(configDir, "priv_validator_key.json"))
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
-	setNewSelectionAlgoHeight(conf.Chain)
+	switch conf.Chain {
+	case MainChain:
+		newSelectionAlgoHeight = 375300
+	case MumbaiChain:
+		newSelectionAlgoHeight = 282500
+	default:
+		newSelectionAlgoHeight = 0
+	}
 }
 
 // GetDefaultHeimdallConfig returns configration with default params
@@ -424,6 +440,7 @@ func GetECDSAPrivKey() *ecdsa.PrivateKey {
 
 	// create ecdsa private key
 	ecdsaPrivateKey, _ := ethCrypto.ToECDSA(pkObject[:])
+
 	return ecdsaPrivateKey
 }
 
@@ -447,20 +464,8 @@ func GetNewSelectionAlgoHeight() int64 {
 	return newSelectionAlgoHeight
 }
 
-func setNewSelectionAlgoHeight(chain string) {
-	switch chain {
-	case "mainnet":
-		newSelectionAlgoHeight = 375300
-	case "mumbai":
-		newSelectionAlgoHeight = 282500
-	default:
-		newSelectionAlgoHeight = 0
-	}
-}
-
-// add persistent flags for heimdall-config and bind flags with command
+// DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command
 func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstance logger.Logger, caller string) {
-
 	// add with-heimdall-config flag
 	cmd.PersistentFlags().String(
 		WithHeimdallConfigFlag,
@@ -628,6 +633,8 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 }
 
 func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Logger) error {
+	const logErrMsg = "Unable to read flag."
+
 	// get endpoint for ethereum chain from viper/cobra
 	stringConfgValue := v.GetString(MainRPCUrlFlag)
 	if stringConfgValue != "" {
@@ -659,8 +666,7 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 	}
 
 	// need this error for parsing Duration values
-	var err error = nil
-	var logErrMsg string = "Unable to read flag."
+	var err error
 
 	// get check point pull interval from viper/cobra
 	stringConfgValue = v.GetString(CheckpointerPollIntervalFlag)
@@ -803,6 +809,7 @@ func DecorateWithTendermintFlags(cmd *cobra.Command, v *viper.Viper, loggerInsta
 		"",
 		"Override seeds",
 	)
+
 	if err := v.BindPFlag(SeedsFlag, cmd.PersistentFlags().Lookup(SeedsFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", message, SeedsFlag), "Error", err)
 	}
@@ -818,9 +825,9 @@ func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 
 	if tendermintConfig.P2P.Seeds == "" {
 		switch conf.Chain {
-		case "mainnet":
+		case MainChain:
 			tendermintConfig.P2P.Seeds = DefaultMainnetSeeds
-		case "mumbai":
+		case MumbaiChain:
 			tendermintConfig.P2P.Seeds = DefaultTestnetSeeds
 		}
 	}
