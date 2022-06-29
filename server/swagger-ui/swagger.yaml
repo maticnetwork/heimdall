@@ -1,11 +1,11 @@
 swagger: "2.0"
-schemes:
-- http
 host: localhost:1317
 info:
   title: Heimdall APIs
   description: Package classification HiemdallRest API
   version: 0.0.1
+schemes:
+- http
 basePath: /
 consumes:
 - application/json
@@ -92,6 +92,86 @@ definitions:
         type: integer
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  authAccount:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/value'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
+  authAccountSequence:
+    properties:
+      account_number:
+        type: string
+        x-go-name: AccountNumber
+      address:
+        type: string
+        x-go-name: Address
+      sequence:
+        type: string
+        x-go-name: Sequence
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
+  authAccountSequenceStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/authAccountSequence'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
+  authAccountStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/authAccount'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
+  authParams:
+    properties:
+      max_memo_characters:
+        type: string
+        x-go-name: MaxMemoCharacters
+      max_tx_gas:
+        format: int64
+        type: integer
+        x-go-name: MaxTxGas
+      sig_verify_cost_ed25519:
+        format: int64
+        type: integer
+        x-go-name: SigVerifyCostEd2219
+      sig_verify_cost_secp256k1:
+        format: int64
+        type: integer
+        x-go-name: SigVerifyCostSecp256k1
+      tx_fees:
+        format: int64
+        type: integer
+        x-go-name: TxFees
+      tx_sig_limit:
+        format: int64
+        type: integer
+        x-go-name: TxSigLimit
+      tx_size_cost_per_byte:
+        format: int64
+        type: integer
+        x-go-name: TxSizeCostPerByte
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
+  authParamsStructure:
+    properties:
+      height:
+        type: string
+        x-go-name: Height
+      result:
+        $ref: '#/definitions/authParams'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
   bankBalance:
     properties:
       amount:
@@ -169,18 +249,6 @@ definitions:
         $ref: '#/definitions/chainManager'
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/chainmanager/client/rest
-  change:
-    properties:
-      Subspace:
-        type: string
-      key:
-        type: string
-        x-go-name: Key
-      value:
-        type: string
-        x-go-name: Value
-    type: object
-    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
   checkpoint:
     properties:
       bor_chain_id:
@@ -274,6 +342,16 @@ definitions:
         x-go-name: Result
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  coin:
+    properties:
+      amount:
+        type: string
+        x-go-name: Amount
+      denom:
+        type: string
+        x-go-name: Denom
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
   content:
     properties:
       type:
@@ -581,6 +659,16 @@ definitions:
         x-go-name: Proposer
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  publicKey:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        type: string
+        x-go-name: Value
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
   slashingCountStructure:
     properties:
       height:
@@ -889,19 +977,24 @@ definitions:
     x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
   value:
     properties:
-      change:
+      account_number:
+        type: string
+        x-go-name: AccountNumber
+      address:
+        type: string
+        x-go-name: Address
+      coins:
         items:
-          $ref: '#/definitions/change'
+          $ref: '#/definitions/coin'
         type: array
-        x-go-name: Changes
-      description:
+        x-go-name: Coins
+      public_key:
+        $ref: '#/definitions/publicKey'
+      sequence:
         type: string
-        x-go-name: Description
-      title:
-        type: string
-        x-go-name: Title
+        x-go-name: Sequence
     type: object
-    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
   vote:
     properties:
       option:
@@ -915,8 +1008,52 @@ definitions:
         x-go-name: Voter
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
-
+host: localhost:1317
+info:
+  description: Package classification HiemdallRest API
+  version: 0.0.1
 paths:
+  /auth/accounts/{address}:
+    get:
+      operationId: authAccount
+      parameters:
+      - description: Account Address
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      responses:
+        "200":
+          $ref: '#/responses/authAccountResponse'
+      summary: It returns the account details.
+      tags:
+      - auth
+  /auth/accounts/{address}/sequence:
+    get:
+      description: It returns the account sequence
+      operationId: authAccountSequence
+      parameters:
+      - description: Account Address
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      responses:
+        "200":
+          $ref: '#/responses/authAccountSequenceResponse'
+      tags:
+      - auth
+  /auth/params:
+    get:
+      operationId: authParams
+      responses:
+        "200":
+          $ref: '#/responses/authParamsResponse'
+      summary: It returns the auth parameters.
+      tags:
+      - auth
   /bank/balances/{address}:
     get:
       description: It returns the matic balance of particular address
@@ -1983,6 +2120,18 @@ paths:
 produces:
 - application/json
 responses:
+  authAccountResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/authAccountStructure'
+  authAccountSequenceResponse:
+    description: ""
+    schema:
+      $ref: '#/definitions/authAccountSequenceStructure'
+  authParamsResponse:
+    description: It represents the auth params
+    schema:
+      $ref: '#/definitions/authParamsStructure'
   bankBalanceByAddressResponse:
     description: It represents the bank balance of particluar account
     schema:

@@ -14,6 +14,92 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
+//It represents the auth params
+//swagger:response authParamsResponse
+type authParamsResponse struct {
+	//in:body
+	Output authParamsStructure `json:"output"`
+}
+
+type authParamsStructure struct {
+	Height string     `json:"height"`
+	Result authParams `json:"result"`
+}
+
+type authParams struct {
+	MaxMemoCharacters      string `json:"max_memo_characters"`
+	TxSigLimit             int64  `json:"tx_sig_limit"`
+	TxSizeCostPerByte      int64  `json:"tx_size_cost_per_byte"`
+	SigVerifyCostEd2219    int64  `json:"sig_verify_cost_ed25519"`
+	SigVerifyCostSecp256k1 int64  `json:"sig_verify_cost_secp256k1"`
+	MaxTxGas               int64  `json:"max_tx_gas"`
+	TxFees                 int64  `json:"tx_fees"`
+}
+
+//swagger:response authAccountSequenceResponse
+type authAccountSequenceResponse struct {
+	//in:body
+	Output authAccountSequenceStructure `json:"output"`
+}
+
+type authAccountSequenceStructure struct {
+	Height string              `json:"height"`
+	Result authAccountSequence `json:"result"`
+}
+
+type authAccountSequence struct {
+	Address       string `json:"address"`
+	AccountNumber string `json:"account_number"`
+	Sequence      string `json:"sequence"`
+}
+
+//swagger:response authAccountResponse
+type authAccountResponse struct {
+	//in:body
+	Output authAccountStructure `json:"output"`
+}
+
+type authAccountStructure struct {
+	Height string      `json:"height"`
+	Result authAccount `json:"result"`
+}
+
+type authAccount struct {
+	Type  string `json:"type"`
+	Value value  `json:"value"`
+}
+
+type value struct {
+	Address       string    `json:"address"`
+	Coins         []coin    `json:"coins"`
+	PublicKey     publicKey `json:"public_key"`
+	AccountNumber string    `json:"account_number"`
+	Sequence      string    `json:"sequence"`
+}
+
+type coin struct {
+	Denom  string `json:"denom"`
+	Amount string `json:"amount"`
+}
+
+type publicKey struct {
+	Type  string `json:"type"`
+	Value string `json:"value"`
+}
+
+//swagger:parameters authAccount authAccountSequence
+type address struct {
+
+	//Account Address
+	//in:path
+	//required:true
+	Address string `json:"address"`
+}
+
+// swagger:route GET /auth/accounts/{address} auth authAccount
+// It returns the account details.
+// responses:
+//   200: authAccountResponse
 // QueryAccountRequestHandlerFn query account REST Handler
 func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -51,6 +137,10 @@ func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /auth/accounts/{address}/sequence auth authAccountSequence
+// It returns the account sequence
+// responses:
+//   200: authAccountSequenceResponse
 // QueryAccountSequenceRequestHandlerFn query account sequence REST Handler
 func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -95,6 +185,10 @@ func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.Handle
 	}
 }
 
+// swagger:route GET /auth/params auth authParams
+// It returns the auth parameters.
+// responses:
+//   200: authParamsResponse
 // HTTP request handler to query the auth params values
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
