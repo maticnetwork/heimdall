@@ -276,26 +276,25 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		forceInit:   false,
 	}
 
-	err := heimdallInit(ctx, cdc, initConfig, cfg)
-	if err != nil {
-		return err
+	if err := heimdallInit(ctx, cdc, initConfig, cfg); err != nil {
+		return fmt.Errorf("failed init heimdall: %s", err)
 	}
 
 	db, err := openDB(home)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open DB: %s", err)
 	}
 
 	traceWriter, err := openTraceWriter(traceWriterFile)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to open trace writer: %s", err)
 	}
 
 	app := appCreator(ctx.Logger, db, traceWriter)
 
 	nodeKey, err := p2p.LoadOrGenNodeKey(cfg.NodeKeyFile())
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to load or gen node key: %s", err)
 	}
 
 	server.UpgradeOldPrivValFile(cfg)
@@ -312,12 +311,12 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		ctx.Logger.With("module", "node"),
 	)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to create new node: %s", err)
 	}
 
 	// start Tendermint node here
 	if err = tmNode.Start(); err != nil {
-		return err
+		return fmt.Errorf("failed to start Tendermint node: %s", err)
 	}
 
 	var cpuProfileCleanup func()
@@ -399,7 +398,7 @@ func openDB(rootDir string) (dbm.DB, error) {
 }
 
 func openTraceWriter(traceWriterFile string) (io.Writer, error) {
-	if traceWriterFile != "" {
+	if traceWriterFile == "" {
 		return nil, nil
 	}
 
