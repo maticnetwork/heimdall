@@ -27,6 +27,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	cliCtx := context.NewCLIContext().WithCodec(app.Codec())
 
 	genesisState[stakingTypes.ModuleName] = app.Codec().MustMarshalJSON(stakingGenesis)
+
 	stateBytes, err := codec.MarshalJSONIndent(app.Codec(), genesisState)
 	if err != nil {
 		panic(err)

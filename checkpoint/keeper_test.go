@@ -25,6 +25,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func TestKeeperTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(KeeperTestSuite))
 }
 
@@ -89,7 +90,9 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 			timestamp,
 		)
 
-		keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
+		err := keeper.AddCheckpoint(ctx, headerBlockNumber, Checkpoint)
+		require.NoError(t, err)
+
 		keeper.UpdateACKCount(ctx)
 	}
 
@@ -108,9 +111,12 @@ func (suite *KeeperTestSuite) TestHasStoreValue() {
 
 func (suite *KeeperTestSuite) TestFlushCheckpointBuffer() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
+
 	keeper := app.CheckpointKeeper
 	key := checkpoint.BufferCheckpointKey
+
 	keeper.FlushCheckpointBuffer(ctx)
+
 	result := keeper.HasStoreValue(ctx, key)
 	require.False(t, result)
 }

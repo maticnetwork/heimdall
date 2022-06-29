@@ -31,7 +31,6 @@ var (
 
 	ValidatorSigningInfoKey         = []byte{0x01} // Prefix for signing info
 	ValidatorMissedBlockBitArrayKey = []byte{0x02} // Prefix for missed block bit array
-	AddrPubkeyRelationKey           = []byte{0x03} // Prefix for address-pubkey relation
 	TotalSlashedAmountKey           = []byte{0x04} // Prefix for total slashed amount stored in buffer
 	BufferValSlashingInfoKey        = []byte{0x05} // Prefix for Slashing Info stored in buffer
 	TickValSlashingInfoKey          = []byte{0x06} // Prefix for Slashing Info stored after tick tx

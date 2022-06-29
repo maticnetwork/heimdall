@@ -241,5 +241,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Bool("signer-dump", true, "dumps all signer information in a json file")
+
 	return cmd
 }

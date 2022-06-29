@@ -65,6 +65,7 @@ func ValidateGenesis(data GenesisState) error {
 			return errors.New("Invalid validator")
 		}
 	}
+
 	for _, sq := range data.StakingSequences {
 		if sq == "" {
 			return errors.New("Invalid Sequence")
@@ -80,6 +81,7 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 	if appState[ModuleName] != nil {
 		types.ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
+
 	return genesisState
 }
 
@@ -91,5 +93,6 @@ func SetGenesisStateToAppState(appState map[string]json.RawMessage, validators [
 	stakingState.CurrentValSet = currentValSet
 
 	appState[ModuleName] = types.ModuleCdc.MustMarshalJSON(stakingState)
+
 	return appState, nil
 }

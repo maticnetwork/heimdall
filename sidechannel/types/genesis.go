@@ -41,5 +41,6 @@ func ValidateGenesis(data GenesisState) error {
 			return fmt.Errorf("Txs must be present")
 		}
 	}
+
 	return nil
 }

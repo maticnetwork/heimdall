@@ -80,6 +80,7 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().Int(FlagValidatorID, 0, "--id=<validator ID here>")
 	cmd.Flags().String(FlagValidatorAddress, "", "--validator=<validator address here>")
+
 	return cmd
 }
 

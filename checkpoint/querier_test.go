@@ -10,15 +10,16 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/checkpoint"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper/mocks"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // QuerierTestSuite integrate test suite context object
@@ -41,6 +42,7 @@ func (suite *QuerierTestSuite) SetupTest() {
 
 // TestQuerierTestSuite
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -66,6 +68,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
 	var params types.Params
+
 	defaultParams := types.DefaultParams()
 
 	path := []string{types.QueryParams}
@@ -75,12 +78,12 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		Path: route,
 		Data: []byte{},
 	}
-	res, err := querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr := querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	json.Unmarshal(res, &params)
-
+	err := json.Unmarshal(res, &params)
+	require.NoError(t, err)
 	require.NotNil(t, params)
 	require.Equal(t, defaultParams.AvgCheckpointLength, params.AvgCheckpointLength)
 	require.Equal(t, defaultParams.MaxCheckpointLength, params.MaxCheckpointLength)
@@ -105,7 +108,6 @@ func (suite *QuerierTestSuite) TestQueryAckCount() {
 
 	actualAckcount, _ := strconv.ParseUint(string(res), 0, 64)
 	require.Equal(t, actualAckcount, ackCount)
-
 }
 
 func (suite *QuerierTestSuite) TestQueryCheckpoint() {
@@ -127,7 +129,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpoint() {
 		borChainId,
 		timestamp,
 	)
-	app.CheckpointKeeper.AddCheckpoint(ctx, headerNumber, checkpointBlock)
+	err := app.CheckpointKeeper.AddCheckpoint(ctx, headerNumber, checkpointBlock)
+	require.NoError(t, err)
 
 	path := []string{types.QueryCheckpoint}
 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint)
@@ -137,13 +140,13 @@ func (suite *QuerierTestSuite) TestQueryCheckpoint() {
 		Data: app.Codec().MustMarshalJSON(types.NewQueryCheckpointParams(headerNumber)),
 	}
 
-	res, err := querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr := querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
 	var checkpoint hmTypes.Checkpoint
-	json.Unmarshal(res, &checkpoint)
-
+	err = json.Unmarshal(res, &checkpoint)
+	require.NoError(t, err)
 	require.Equal(t, checkpoint, checkpointBlock)
 }
 
@@ -168,7 +171,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 		borChainId,
 		timestamp,
 	)
-	app.CheckpointKeeper.SetCheckpointBuffer(ctx, checkpointBlock)
+	err := app.CheckpointKeeper.SetCheckpointBuffer(ctx, checkpointBlock)
+	require.NoError(t, err)
 
 	req := abci.RequestQuery{
 		Path: route,
@@ -180,8 +184,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 	require.NotNil(t, res)
 
 	var checkpoint hmTypes.Checkpoint
-	json.Unmarshal(res, &checkpoint)
-
+	err = json.Unmarshal(res, &checkpoint)
+	require.NoError(t, err)
 	require.Equal(t, checkpoint, checkpointBlock)
 }
 
@@ -205,7 +209,6 @@ func (suite *QuerierTestSuite) TestQueryLastNoAck() {
 
 	actualRes, _ := strconv.ParseUint(string(res), 10, 64)
 	require.Equal(t, actualRes, noAck)
-
 }
 
 func (suite *QuerierTestSuite) TestQueryCheckpointList() {
@@ -238,7 +241,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 			timestamp,
 		)
 		checkpoints[i] = checkpoint
-		keeper.AddCheckpoint(ctx, headerBlockNumber, checkpoint)
+		err := keeper.AddCheckpoint(ctx, headerBlockNumber, checkpoint)
+		require.NoError(t, err)
 		keeper.UpdateACKCount(ctx)
 	}
 
@@ -249,25 +253,26 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(hmTypes.NewQueryPaginationParams(uint64(1), uint64(10))),
 	}
-	res, err := querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr := querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
 	var actualRes []hmTypes.Checkpoint
-	json.Unmarshal(res, &actualRes)
-
+	err := json.Unmarshal(res, &actualRes)
+	require.NoError(t, err)
 	require.Equal(t, checkpoints, actualRes)
 }
 
 func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	chSim.LoadValidatorSet(2, t, app.StakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10)
 
 	dividendAccount := hmTypes.DividendAccount{
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	headerNumber := uint64(1)
 	startBlock := uint64(0)
@@ -287,7 +292,8 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 	)
 
 	suite.contractCaller.On("GetRootHash", checkpointBlock.StartBlock, checkpointBlock.EndBlock, uint64(1024)).Return(checkpointBlock.RootHash.Bytes(), nil)
-	app.CheckpointKeeper.AddCheckpoint(ctx, headerNumber, checkpointBlock)
+	err = app.CheckpointKeeper.AddCheckpoint(ctx, headerNumber, checkpointBlock)
+	require.NoError(t, err)
 
 	path := []string{types.QueryNextCheckpoint}
 
@@ -296,13 +302,13 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryBorChainID(borChainId)),
 	}
-	res, err := querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr := querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
 	var actualRes types.MsgCheckpoint
-	json.Unmarshal(res, &actualRes)
-
+	err = json.Unmarshal(res, &actualRes)
+	require.NoError(t, err)
 	require.Equal(t, checkpointBlock.StartBlock, actualRes.StartBlock)
 	require.Equal(t, checkpointBlock.EndBlock, actualRes.EndBlock)
 	require.Equal(t, checkpointBlock.RootHash, actualRes.RootHash)

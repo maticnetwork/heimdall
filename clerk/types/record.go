@@ -39,7 +39,7 @@ func NewEventRecord(
 	}
 }
 
-// String returns the string representatin of span
+// String returns the string representation of span
 func (s *EventRecord) String() string {
 	return fmt.Sprintf(
 		"EventRecord: id %v, contract %v, data: %v, txHash: %v, logIndex: %v, chainId: %v, recordTime: %v",

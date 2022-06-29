@@ -66,6 +66,7 @@ func NewKeeper(
 		ck:                 chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
+
 	return keeper
 }
 
@@ -82,11 +83,12 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // AddCheckpoint adds checkpoint into final blocks
 func (k *Keeper) AddCheckpoint(ctx sdk.Context, checkpointNumber uint64, checkpoint hmTypes.Checkpoint) error {
 	key := GetCheckpointKey(checkpointNumber)
-	err := k.addCheckpoint(ctx, key, checkpoint)
-	if err != nil {
+	if err := k.addCheckpoint(ctx, key, checkpoint); err != nil {
 		return err
 	}
+
 	k.Logger(ctx).Info("Adding good checkpoint to state", "checkpoint", checkpoint, "checkpointNumber", checkpointNumber)
+
 	return nil
 }
 
@@ -96,6 +98,7 @@ func (k *Keeper) SetCheckpointBuffer(ctx sdk.Context, checkpoint hmTypes.Checkpo
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -112,6 +115,7 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 
 	// store in key provided
 	store.Set(key, out)
+
 	return nil
 }
 
@@ -119,18 +123,18 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.Checkpoint, error) {
 	store := ctx.KVStore(k.storeKey)
 	checkpointKey := GetCheckpointKey(number)
+
 	var _checkpoint hmTypes.Checkpoint
 
 	if store.Has(checkpointKey) {
-		err := k.cdc.UnmarshalBinaryBare(store.Get(checkpointKey), &_checkpoint)
-		if err != nil {
+		if err := k.cdc.UnmarshalBinaryBare(store.Get(checkpointKey), &_checkpoint); err != nil {
 			return _checkpoint, err
-		} else {
-			return _checkpoint, nil
 		}
-	} else {
-		return _checkpoint, errors.New("Invalid checkpoint Index")
+
+		return _checkpoint, nil
 	}
+
+	return _checkpoint, errors.New("Invalid checkpoint Index")
 }
 
 // GetCheckpointList returns all checkpoints with params like page and limit
@@ -181,6 +185,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) 
 			return _checkpoint, nil
 		}
 	}
+
 	return _checkpoint, cmn.ErrNoCheckpointFound(k.Codespace())
 }
 
@@ -235,10 +240,10 @@ func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 		// get current ACK count
 		result, err := strconv.ParseUint(string(store.Get(LastNoACKKey)), 10, 64)
 		if err == nil {
-
-			return uint64(result)
+			return result
 		}
 	}
+
 	return 0
 }
 
@@ -259,6 +264,7 @@ func (k *Keeper) GetCheckpoints(ctx sdk.Context) []hmTypes.Checkpoint {
 			headers = append(headers, checkpoint)
 		}
 	}
+
 	return headers
 }
 

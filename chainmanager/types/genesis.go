@@ -37,5 +37,6 @@ func GetGenesisStateFromAppState(appState map[string]json.RawMessage) GenesisSta
 	if appState[ModuleName] != nil {
 		ModuleCdc.MustUnmarshalJSON(appState[ModuleName], &genesisState)
 	}
+
 	return genesisState
 }

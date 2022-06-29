@@ -36,6 +36,7 @@ func RandomAcc(r *rand.Rand, accs []Account) (Account, int) {
 // RandomAccounts generates n random accounts
 func RandomAccounts(r *rand.Rand, n int) []Account {
 	accs := make([]Account, n)
+
 	for i := 0; i < n; i++ {
 		// don't need that much entropy for simulation
 		privkeySeed := make([]byte, 15)
@@ -84,22 +85,14 @@ func RandomFees(r *rand.Rand, ctx sdk.Context, spendableCoins sdk.Coins) (sdk.Co
 	// Create a random fee and verify the fees are within the account's spendable
 	// balance.
 	fees := sdk.NewCoins(sdk.NewCoin(randCoin.Denom, amt))
+
 	return fees, nil
 }
 
 // RandomFeeCoins returns random fee coins
 func RandomFeeCoins() sdk.Coins {
 	base, _ := big.NewInt(0).SetString("1000000000000000000", 10)
-	amt := big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(rand.Intn(1000000))), base)
+	amt := big.NewInt(0).Mul(big.NewInt(0).SetInt64(int64(rand.Intn(1000000))), base) //nolint
+
 	return sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: sdk.NewIntFromBigInt(amt)}}
-}
-
-// NewFooCoin returns foo coin
-func NewFooCoin(amt int64) sdk.Coin {
-	return sdk.NewInt64Coin("foo", amt)
-}
-
-// NewBarCoin returns bar coin
-func NewBarCoin(amt int64) sdk.Coin {
-	return sdk.NewInt64Coin("bar", amt)
 }

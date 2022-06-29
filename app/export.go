@@ -20,5 +20,6 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 	// create app state
 	// appState, err = codec.MarshalJSONIndent(app.cdc, genState)
 	appState, err = json.Marshal(result)
+
 	return appState, validators, err
 }

@@ -50,6 +50,7 @@ func (suite *QuerierTestSuite) SetupTest() {
 
 // TestQuerierTestSuite
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -116,7 +117,9 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 		hmTypes.BytesToHeimdallAddress([]byte("some-address")),
 		big.NewInt(0).String(),
 	)
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
+
 	req := abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryDividendAccountParams(dividendAccount.User)),
@@ -126,7 +129,8 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 	require.NotNil(t, res)
 
 	var divAcc hmTypes.DividendAccount
-	json.Unmarshal(res, &divAcc)
+	err = json.Unmarshal(res, &divAcc)
+	require.NoError(t, err)
 	require.Equal(t, dividendAccount, divAcc)
 }
 
@@ -136,7 +140,8 @@ func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
 		hmTypes.BytesToHeimdallAddress([]byte("some-address")),
 		big.NewInt(0).String(),
 	)
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	path := []string{types.QueryDividendAccountRoot}
 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryDividendAccountRoot)
@@ -152,6 +157,7 @@ func (suite *QuerierTestSuite) TestHandleDividendAccountRoot() {
 
 func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+
 	var accountRoot [32]byte
 
 	path := []string{types.QueryAccountProof}
@@ -162,10 +168,13 @@ func (suite *QuerierTestSuite) TestHandleQueryAccountProof() {
 		hmTypes.BytesToHeimdallAddress([]byte("some-address")),
 		big.NewInt(0).String(),
 	)
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
+
 	dividendAccounts := app.TopupKeeper.GetAllDividendAccounts(ctx)
 
 	accRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
+	require.NoError(t, err)
 	copy(accountRoot[:], accRoot)
 
 	// mock contracts
@@ -188,7 +197,8 @@ func (suite *QuerierTestSuite) TestHandleQueryVerifyAccountProof() {
 		hmTypes.BytesToHeimdallAddress([]byte("some-address")),
 		big.NewInt(0).String(),
 	)
-	app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := app.TopupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	path := []string{types.QueryVerifyAccountProof}
 

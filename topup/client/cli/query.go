@@ -65,17 +65,21 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 			}
 
 			fmt.Println("Success. Topup exists with sequence:", string(res))
+
 			return nil
 		},
 	}
 
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
+
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		cliLogger.Error("GetSequence | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		cliLogger.Error("GetSequence | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
+
 	return cmd
 }

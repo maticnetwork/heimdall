@@ -8,6 +8,8 @@ import (
 )
 
 func TestGetPulpHash(t *testing.T) {
+	t.Parallel()
+
 	tc := struct {
 		in  sdk.Msg
 		out []byte

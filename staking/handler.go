@@ -36,7 +36,6 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 // HandleMsgValidatorJoin msg validator join
 func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating validator join msg",
 		"validatorId", msg.ID,
 		"activationEpoch", msg.ActivationEpoch,
@@ -97,7 +96,6 @@ func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keepe
 
 // HandleMsgStakeUpdate handles stake update message
 func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating stake update msg",
 		"validatorID", msg.ID,
 		"newAmount", msg.NewAmount,
@@ -158,7 +156,6 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 
 // HandleMsgSignerUpdate handles signer update message
 func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating signer update msg",
 		"validatorID", msg.ID,
 		"NewSignerPubkey", msg.NewSignerPubKey.String(),
@@ -217,7 +214,6 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 
 // HandleMsgValidatorExit handle msg validator exit
 func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating validator exit msg",
 		"validatorID", msg.ID,
 		"deactivatonEpoch", msg.DeactivationEpoch,

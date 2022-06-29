@@ -19,16 +19,16 @@ const (
 	MaticchainTxConfirmations = "maticchain_tx_confirmations"
 
 	BorChainID            = "bor_chain_id"
-	MaticTokenAddress     = "matic_token_address"
-	StakingManagerAddress = "staking_manager_address"
-	SlashManagerAddress   = "slash_manager_address"
-	RootChainAddress      = "root_chain_address"
-	StakingInfoAddress    = "staking_info_address"
-	StateSenderAddress    = "state_sender_address"
+	MaticTokenAddress     = "matic_token_address"     //nolint
+	StakingManagerAddress = "staking_manager_address" //nolint
+	SlashManagerAddress   = "slash_manager_address"   //nolint
+	RootChainAddress      = "root_chain_address"      //nolint
+	StakingInfoAddress    = "staking_info_address"    //nolint
+	StateSenderAddress    = "state_sender_address"    //nolint
 
 	// Bor Chain Contracts
-	StateReceiverAddress = "state_receiver_address"
-	ValidatorSetAddress  = "validator_set_address"
+	StateReceiverAddress = "state_receiver_address" //nolint
+	ValidatorSetAddress  = "validator_set_address"  //nolint
 )
 
 func GenMainchainTxConfirmations(r *rand.Rand) uint64 {
@@ -50,28 +50,35 @@ func GenBorChainId(r *rand.Rand) string {
 
 func RandomizedGenState(simState *module.SimulationState) {
 	var mainchainTxConfirmations uint64
+
 	simState.AppParams.GetOrGenerate(simState.Cdc, MainchainTxConfirmations, &mainchainTxConfirmations, simState.Rand,
 		func(r *rand.Rand) { mainchainTxConfirmations = GenMainchainTxConfirmations(r) },
 	)
 
-	var maticchainTxConfirmations uint64
+	var (
+		maticchainTxConfirmations uint64
+		borChainID                string
+	)
+
 	simState.AppParams.GetOrGenerate(simState.Cdc, MaticchainTxConfirmations, &maticchainTxConfirmations, simState.Rand,
 		func(r *rand.Rand) { maticchainTxConfirmations = GenMaticchainTxConfirmations(r) },
 	)
 
-	var borChainID string
 	simState.AppParams.GetOrGenerate(simState.Cdc, BorChainID, &borChainID, simState.Rand,
 		func(r *rand.Rand) { borChainID = GenBorChainId(r) },
 	)
 
-	var maticTokenAddress = GenHeimdallAddress()
-	var stakingManagerAddress = GenHeimdallAddress()
-	var slashManagerAddress = GenHeimdallAddress()
-	var rootChainAddress = GenHeimdallAddress()
-	var stakingInfoAddress = GenHeimdallAddress()
-	var stateSenderAddress = GenHeimdallAddress()
-	var stateReceiverAddress = GenHeimdallAddress()
-	var validatorSetAddress = GenHeimdallAddress()
+	var (
+		maticTokenAddress     = GenHeimdallAddress()
+		stakingManagerAddress = GenHeimdallAddress()
+		slashManagerAddress   = GenHeimdallAddress()
+		rootChainAddress      = GenHeimdallAddress()
+		stakingInfoAddress    = GenHeimdallAddress()
+		stateSenderAddress    = GenHeimdallAddress()
+		stateReceiverAddress  = GenHeimdallAddress()
+		validatorSetAddress   = GenHeimdallAddress()
+	)
+
 	chainParams := types.ChainParams{
 		BorChainID:            borChainID,
 		MaticTokenAddress:     maticTokenAddress,

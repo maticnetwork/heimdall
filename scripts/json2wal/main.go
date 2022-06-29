@@ -64,13 +64,11 @@ func main() {
 		}
 
 		var msg cs.TimedWALMessage
-		err = cdc.UnmarshalJSON(msgJson, &msg)
-		if err != nil {
+		if err = cdc.UnmarshalJSON(msgJson, &msg); err != nil {
 			panic(fmt.Errorf("failed to unmarshal json: %v", err))
 		}
 
-		err = dec.Encode(&msg)
-		if err != nil {
+		if err = dec.Encode(&msg); err != nil {
 			panic(fmt.Errorf("failed to encode msg: %v", err))
 		}
 	}

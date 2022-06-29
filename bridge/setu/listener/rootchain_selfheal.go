@@ -38,6 +38,7 @@ func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
 	stateSyncedTicker := time.NewTicker(helper.GetConfig().SHStateSyncedInterval)
 
 	rl.Logger.Info("Started self-healing")
+
 	for {
 		select {
 		case <-stakeUpdateTicker.C:
@@ -48,6 +49,7 @@ func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
 			rl.Logger.Info("Stopping self-healing")
 			stakeUpdateTicker.Stop()
 			stateSyncedTicker.Stop()
+
 			return
 		}
 	}
@@ -61,16 +63,19 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 		rl.Logger.Error("Error getting heimdall validators", "error", err)
 		return
 	}
+
 	rl.Logger.Info("Fetched validators list from heimdall", "len", len(validatorSet.Validators))
 
 	// Make sure each validator is in sync
 	var wg sync.WaitGroup
 	for _, validator := range validatorSet.Validators {
 		wg.Add(1)
+
 		go func(id, nonce uint64) {
 			defer wg.Done()
 
 			var ethereumNonce uint64
+
 			if err = helper.ExponentialBackoff(func() error {
 				ethereumNonce, err = rl.getLatestNonce(ctx, id)
 				return err
@@ -88,6 +93,7 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 			rl.Logger.Info("Processing stake update for validator", "id", id, "nonce", nonce)
 
 			var stakeUpdate *stakinginfo.StakinginfoStakeUpdate
+
 			if err = helper.ExponentialBackoff(func() error {
 				stakeUpdate, err = rl.getStakeUpdate(ctx, id, nonce)
 				return err
@@ -109,6 +115,7 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 			}
 		}(validator.ID.Uint64(), validator.Nonce)
 	}
+
 	wg.Wait()
 }
 
@@ -139,6 +146,7 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 		rl.Logger.Info("Processing state sync", "id", i)
 
 		var stateSynced *statesender.StatesenderStateSynced
+
 		if err = helper.ExponentialBackoff(func() error {
 			stateSynced, err = rl.getStateSync(ctx, i)
 			return err
@@ -154,18 +162,19 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 			stateSynced.Raw.TxHash.String(),
 		).Add(1)
 
-		var ignore bool
-		if ignore, err = rl.processEvent(ctx, stateSynced.Raw); err != nil {
+		ignore, err := rl.processEvent(ctx, stateSynced.Raw)
+		if err != nil {
 			rl.Logger.Error("Unable to update state id on heimdall", "error", err)
 			i--
+
 			continue
 		}
 
 		if !ignore {
 			time.Sleep(1 * time.Second)
 
-			statusCheck := 0
-			for {
+			var statusCheck int
+			for statusCheck = 0; statusCheck > 15; statusCheck++ {
 				if _, err = util.GetClerkEventRecord(rl.cliCtx, i); err == nil {
 					rl.Logger.Info("State found on heimdall", "id", i)
 					break
@@ -173,10 +182,6 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 
 				rl.Logger.Info("State not found on heimdall", "id", i)
 				time.Sleep(1 * time.Second)
-
-				if statusCheck++; statusCheck > 15 {
-					break
-				}
 			}
 
 			if statusCheck > 15 {
@@ -199,9 +204,6 @@ func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) 
 		return true, err
 	}
 
-	pubkey := helper.GetPubKey()
-	pubkeyBytes := pubkey[1:]
-
 	topic := event.Topics[0].Bytes()
 	for _, abiObject := range rl.abis {
 		selectedEvent := helper.EventByID(abiObject, topic)
@@ -209,7 +211,7 @@ func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) 
 			continue
 		}
 
-		rl.handleLog(event, selectedEvent, pubkeyBytes)
+		rl.handleLog(event, selectedEvent)
 	}
 
 	return false, nil

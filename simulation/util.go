@@ -8,13 +8,17 @@ import (
 )
 
 func getTestingMode(tb testing.TB) (testingMode bool, t *testing.T, b *testing.B) {
+	tb.Helper()
+
 	testingMode = false
+
 	if _t, ok := tb.(*testing.T); ok {
 		t = _t
 		testingMode = true
 	} else {
 		b = tb.(*testing.B)
 	}
+
 	return testingMode, t, b
 }
 

@@ -56,27 +56,27 @@ func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 // ValidateGenesis performs genesis state validation for the auth module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz, &data)
-	if err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(bz, &data); err != nil {
 		return err
 	}
+
 	return types.ValidateGenesis(data)
 }
 
 // VerifyGenesis performs verification on auth module state.
 func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
 	var chainManagertData chainmanagerTypes.GenesisState
+
 	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
 	if errcm != nil {
 		return errcm
 	}
 
 	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
-
-	if err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data); err != nil {
 		return err
 	}
+
 	return verifyGenesis(data, chainManagertData)
 }
 
@@ -150,8 +150,11 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
+
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+
 	InitGenesis(ctx, am.keeper, genesisState)
+
 	return []abci.ValidatorUpdate{}
 }
 
@@ -159,6 +162,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
+
 	return types.ModuleCdc.MustMarshalJSON(gs)
 }
 
@@ -202,7 +206,6 @@ func (AppModule) RandomizedParams(r *rand.Rand) []simTypes.ParamChange {
 
 // RegisterStoreDecoder registers a decoder for chainmanager module's types
 func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
-	return
 }
 
 // WeightedOperations doesn't return any chainmanager module operation.
@@ -218,6 +221,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	if err != nil {
 		return err
 	}
+
 	childBlockInterval := state.Params.ChildBlockInterval
 	rootChainAddress := chainManagerState.Params.ChainParams.RootChainAddress.EthAddress()
 	rootChainInstance, _ := contractCaller.GetRootChainInstance(rootChainAddress)
@@ -234,6 +238,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 			"contractCheckpointNumber", currentCheckpointNumber,
 			"genesisCheckpointNumber", state.AckCount,
 		)
+
 		return nil
 	}
 
@@ -242,6 +247,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	// check all headers
 	for i, header := range state.Checkpoints {
 		ackCount := uint64(i + 1)
+
 		root, start, end, _, _, err := contractCaller.GetHeaderInfo(ackCount, rootChainInstance, childBlockInterval)
 		if err != nil {
 			return err
@@ -258,6 +264,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 				root.String(),
 			)
 		}
+
 		fmt.Println("Checkpoint block valid:", "start", start, "end", end, "root", root.String())
 	}
 

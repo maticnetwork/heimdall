@@ -1,8 +1,19 @@
 name: CI
 
-on: [push, pull_request]
+on:
+  push:
+    branches:
+      - "master"
+      - "qa"
+      - "develop"
+  pull_request:
+    branches:
+      - "**"
+    types: [opened, synchronize, edited]
+
 jobs:
   build:
+    name: build
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
@@ -14,6 +25,37 @@ jobs:
 
       - name: "Build binaries"
         run: make build
+
+  lint:
+    name: lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18.x
+
+      - name: "Generate Heimdall Params"
+        run: go run helper/heimdall-params.template.go $(network)
+
+      - name: "Run linter"
+        run: make lint
+
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: 1.18.x
+
+      - name: "Generate Heimdall Params"
+        run: go run helper/heimdall-params.template.go $(network)
 
       - name: "Run tests"
         run: make tests

@@ -17,6 +17,7 @@ import (
 func QueryBalancesRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
 		vars := mux.Vars(r)
 		addr := types.HexToHeimdallAddress(vars["address"])
 
@@ -26,6 +27,7 @@ func QueryBalancesRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		params := bankTypes.NewQueryBalanceParams(addr)
+
 		bz, err := cliCtx.Codec.MarshalJSON(params)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

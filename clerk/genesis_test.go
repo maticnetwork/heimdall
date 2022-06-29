@@ -33,6 +33,7 @@ func (suite *GenesisTestSuite) SetupTest() {
 
 // TestGenesisTestSuite
 func TestGenesisTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(GenesisTestSuite))
 }
 
@@ -55,6 +56,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		testEventRecord := types.NewEventRecord(hHash, uint64(i), uint64(i), hAddr, make([]byte, 0), strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000)), time.Now())
 		eventRecords[i] = &testEventRecord
 	}
+
 	genesisState := types.GenesisState{
 		EventRecords:    eventRecords,
 		RecordSequences: recordSequences,

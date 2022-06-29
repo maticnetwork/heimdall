@@ -65,6 +65,7 @@ func (ar AccountRetriever) EnsureExists(addr types.HeimdallAddress) error {
 	if _, err := ar.GetAccount(addr); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -75,5 +76,6 @@ func (ar AccountRetriever) GetAccountNumberSequence(addr types.HeimdallAddress) 
 	if err != nil {
 		return 0, 0, err
 	}
+
 	return acc.GetAccountNumber(), acc.GetSequence(), nil
 }

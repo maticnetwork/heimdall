@@ -35,6 +35,7 @@ func (pa PermissionsForAddress) HasPermission(permission string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -55,5 +56,6 @@ func validatePermissions(permissions ...string) error {
 			return fmt.Errorf("module permission is empty")
 		}
 	}
+
 	return nil
 }
