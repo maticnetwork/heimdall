@@ -94,6 +94,7 @@ Where proposal.json contains:
 	}
 
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
+
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("GetCmdSubmitProposal | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}

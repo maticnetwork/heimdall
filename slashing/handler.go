@@ -92,7 +92,7 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
-	if tickSlashingInfos != nil && len(tickSlashingInfos) > 0 {
+	if len(tickSlashingInfos) > 0 {
 		k.Logger(ctx).Error("Waiting for tick data to be pushed to contract", "tickSlashingInfo", tickSlashingInfos)
 		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}

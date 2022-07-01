@@ -6,8 +6,11 @@
   Restart=on-failure
   RestartSec=5s
   WorkingDirectory=/usr/local/bin
-  ExecStart=/usr/local/bin/heimdalld start --home /var/lib/heimdall
+  ExecStart=/usr/local/bin/heimdalld start --home /var/lib/heimdall \
+    --chain=mainnet \
+    --bridge --all \
+    --rest-server
   Type=simple
-  User=root
+  User=ubuntu
 [Install]
   WantedBy=multi-user.target

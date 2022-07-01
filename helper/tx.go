@@ -47,9 +47,11 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	if mainChainMaxGasPrice <= 0 {
 		mainChainMaxGasPrice = DefaultMainchainMaxGasPrice
 	}
+
 	if gasprice.Cmp(big.NewInt(mainChainMaxGasPrice)) == 1 {
 		Logger.Error("Gas price is more than max gas price", "gasprice", gasprice)
 		err = fmt.Errorf("gas price is more than max_gas_price, gasprice = %v, maxGasPrice = %d", gasprice, mainChainMaxGasPrice)
+
 		return
 	}
 
@@ -67,7 +69,7 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
-	auth.GasLimit = uint64(gasLimit) // uint64(gasLimit)
+	auth.GasLimit = gasLimit
 
 	return
 }
@@ -102,7 +104,9 @@ func (c *ContractCaller) SendCheckpoint(signedData []byte, sigs [][3]*big.Int, r
 		Logger.Error("Error while submitting checkpoint", "error", err)
 		return err
 	}
+
 	Logger.Info("Submitted new checkpoint to rootchain successfully", "txHash", tx.Hash().String())
+
 	return
 }
 
@@ -130,7 +134,9 @@ func (c *ContractCaller) SendTick(signedData []byte, sigs []byte, slashManagerAd
 		Logger.Error("Error while submitting tick", "error", err)
 		return err
 	}
+
 	Logger.Info("Submitted new tick to slashmanager successfully", "txHash", tx.Hash().String())
+
 	return
 }
 
@@ -167,7 +173,8 @@ func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeA
 		return err
 	}
 
-	Logger.Info("Submitted stake sucessfully", "txHash", tx.Hash().String())
+	Logger.Info("Submitted stake successfully", "txHash", tx.Hash().String())
+
 	return nil
 }
 
@@ -191,6 +198,7 @@ func (c *ContractCaller) ApproveTokens(amount *big.Int, stakeManager common.Addr
 		return err
 	}
 
-	Logger.Info("Sent approve tx sucessfully", "txHash", tx.Hash().String())
+	Logger.Info("Sent approve tx successfully", "txHash", tx.Hash().String())
+
 	return nil
 }

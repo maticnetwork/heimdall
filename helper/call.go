@@ -15,6 +15,7 @@ import (
 	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/bor/ethclient"
 	"github.com/maticnetwork/bor/rpc"
+
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -23,7 +24,6 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/statereceiver"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/contracts/validatorset"
-
 	"github.com/maticnetwork/heimdall/types"
 )
 
@@ -129,35 +129,35 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	// ABIs
 	//
 
-	if contractCallerObj.RootChainABI, err = getABI(string(rootchain.RootchainABI)); err != nil {
+	if contractCallerObj.RootChainABI, err = getABI(rootchain.RootchainABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StakingInfoABI, err = getABI(string(stakinginfo.StakinginfoABI)); err != nil {
+	if contractCallerObj.StakingInfoABI, err = getABI(stakinginfo.StakinginfoABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.ValidatorSetABI, err = getABI(string(validatorset.ValidatorsetABI)); err != nil {
+	if contractCallerObj.ValidatorSetABI, err = getABI(validatorset.ValidatorsetABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StateReceiverABI, err = getABI(string(statereceiver.StatereceiverABI)); err != nil {
+	if contractCallerObj.StateReceiverABI, err = getABI(statereceiver.StatereceiverABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StateSenderABI, err = getABI(string(statesender.StatesenderABI)); err != nil {
+	if contractCallerObj.StateSenderABI, err = getABI(statesender.StatesenderABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.StakeManagerABI, err = getABI(string(stakemanager.StakemanagerABI)); err != nil {
+	if contractCallerObj.StakeManagerABI, err = getABI(stakemanager.StakemanagerABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.SlashManagerABI, err = getABI(string(slashmanager.SlashmanagerABI)); err != nil {
+	if contractCallerObj.SlashManagerABI, err = getABI(slashmanager.SlashmanagerABI); err != nil {
 		return
 	}
 
-	if contractCallerObj.MaticTokenABI, err = getABI(string(erc20.Erc20ABI)); err != nil {
+	if contractCallerObj.MaticTokenABI, err = getABI(erc20.Erc20ABI); err != nil {
 		return
 	}
 
@@ -172,8 +172,10 @@ func (c *ContractCaller) GetRootChainInstance(rootchainAddress common.Address) (
 	if !ok {
 		ci, err := rootchain.NewRootchain(rootchainAddress, mainChainClient)
 		c.ContractInstanceCache[rootchainAddress] = ci
+
 		return ci, err
 	}
+
 	return contractInstance.(*rootchain.Rootchain), nil
 }
 
@@ -183,8 +185,10 @@ func (c *ContractCaller) GetStakingInfoInstance(stakingInfoAddress common.Addres
 	if !ok {
 		ci, err := stakinginfo.NewStakinginfo(stakingInfoAddress, mainChainClient)
 		c.ContractInstanceCache[stakingInfoAddress] = ci
+
 		return ci, err
 	}
+
 	return contractInstance.(*stakinginfo.Stakinginfo), nil
 }
 
@@ -194,9 +198,10 @@ func (c *ContractCaller) GetValidatorSetInstance(validatorSetAddress common.Addr
 	if !ok {
 		ci, err := validatorset.NewValidatorset(validatorSetAddress, mainChainClient)
 		c.ContractInstanceCache[validatorSetAddress] = ci
-		return ci, err
 
+		return ci, err
 	}
+
 	return contractInstance.(*validatorset.Validatorset), nil
 }
 
@@ -206,8 +211,10 @@ func (c *ContractCaller) GetStakeManagerInstance(stakingManagerAddress common.Ad
 	if !ok {
 		ci, err := stakemanager.NewStakemanager(stakingManagerAddress, mainChainClient)
 		c.ContractInstanceCache[stakingManagerAddress] = ci
+
 		return ci, err
 	}
+
 	return contractInstance.(*stakemanager.Stakemanager), nil
 }
 
@@ -217,8 +224,10 @@ func (c *ContractCaller) GetSlashManagerInstance(slashManagerAddress common.Addr
 	if !ok {
 		ci, err := slashmanager.NewSlashmanager(slashManagerAddress, mainChainClient)
 		c.ContractInstanceCache[slashManagerAddress] = ci
+
 		return ci, err
 	}
+
 	return contractInstance.(*slashmanager.Slashmanager), nil
 }
 
@@ -228,8 +237,10 @@ func (c *ContractCaller) GetStateSenderInstance(stateSenderAddress common.Addres
 	if !ok {
 		ci, err := statesender.NewStatesender(stateSenderAddress, mainChainClient)
 		c.ContractInstanceCache[stateSenderAddress] = ci
+
 		return ci, err
 	}
+
 	return contractInstance.(*statesender.Statesender), nil
 }
 
@@ -237,10 +248,12 @@ func (c *ContractCaller) GetStateSenderInstance(stateSenderAddress common.Addres
 func (c *ContractCaller) GetStateReceiverInstance(stateReceiverAddress common.Address) (*statereceiver.Statereceiver, error) {
 	contractInstance, ok := c.ContractInstanceCache[stateReceiverAddress]
 	if !ok {
-		ci, err := statereceiver.NewStatereceiver(stateReceiverAddress, mainChainClient)
+		ci, err := statereceiver.NewStatereceiver(stateReceiverAddress, maticClient)
 		c.ContractInstanceCache[stateReceiverAddress] = ci
+
 		return ci, err
 	}
+
 	return contractInstance.(*statereceiver.Statereceiver), nil
 }
 
@@ -250,8 +263,10 @@ func (c *ContractCaller) GetMaticTokenInstance(maticTokenAddress common.Address)
 	if !ok {
 		ci, err := erc20.NewErc20(maticTokenAddress, mainChainClient)
 		c.ContractInstanceCache[maticTokenAddress] = ci
+
 		return ci, err
 	}
+
 	return contractInstance.(*erc20.Erc20), nil
 }
 
@@ -261,6 +276,7 @@ func NewLru(size int) (*lru.Cache, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return lruObj, nil
 }
 
@@ -275,6 +291,7 @@ func (c *ContractCaller) GetHeaderInfo(number uint64, rootChainInstance *rootcha
 ) {
 	// get header from rootchain
 	checkpointBigInt := big.NewInt(0).Mul(big.NewInt(0).SetUint64(number), big.NewInt(0).SetUint64(childBlockInterval))
+
 	headerBlock, err := rootChainInstance.HeaderBlocks(nil, checkpointBigInt)
 	if err != nil {
 		return root, start, end, createdAt, proposer, errors.New("Unable to fetch checkpoint block")
@@ -318,6 +335,7 @@ func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchai
 		Logger.Error("Could not fetch current child block from rootchain contract", "error", err)
 		return 0, err
 	}
+
 	return GetLastChildBlock.Uint64(), nil
 }
 
@@ -328,6 +346,7 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 		Logger.Error("Could not fetch current header block from rootchain contract", "error", err)
 		return 0, err
 	}
+
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
 
@@ -381,18 +400,35 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.
 		Logger.Error("Unable to connect to main chain", "error", err)
 		return
 	}
+
 	return latestBlock, nil
+}
+
+// GetMainChainBlockTime returns main chain block time
+func (c *ContractCaller) GetMainChainBlockTime(ctx context.Context, blockNum uint64) (time.Time, error) {
+	ctx, cancel := context.WithTimeout(ctx, c.MainChainTimeout)
+	defer cancel()
+
+	latestBlock, err := c.MainChainClient.BlockByNumber(ctx, big.NewInt(0).SetUint64(blockNum))
+	if err != nil {
+		Logger.Error("Unable to connect to main chain", "error", err)
+		return time.Time{}, err
+	}
+
+	return time.Unix(int64(latestBlock.Time()), 0), nil
 }
 
 // GetMaticChainBlock returns child chain block header
 func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes.Header, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
+
 	latestBlock, err := c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "error", err)
 		return
 	}
+
 	return latestBlock, nil
 }
 
@@ -408,10 +444,12 @@ func (c *ContractCaller) GetBlockNumberFromTxHash(tx common.Hash) (*big.Int, err
 	}
 
 	blkNum := big.NewInt(0)
+
 	blkNum, ok := blkNum.SetString(*rpcTx.BlockNumber, 0)
 	if !ok {
 		return nil, errors.New("unable to set string")
 	}
+
 	return blkNum, nil
 }
 
@@ -428,10 +466,9 @@ func (c *ContractCaller) IsTxConfirmed(tx common.Hash, requiredConfirmations uin
 
 // GetConfirmedTxReceipt returns confirmed tx receipt
 func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmations uint64) (*ethTypes.Receipt, error) {
+	var receipt *ethTypes.Receipt
 
-	var receipt *ethTypes.Receipt = nil
 	receiptCache, ok := c.ReceiptCache.Get(tx.String())
-
 	if !ok {
 		var err error
 
@@ -455,6 +492,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		Logger.Error("error getting latest block from main chain", "error", err)
 		return nil, err
 	}
+
 	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
 
 	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
@@ -474,12 +512,15 @@ func (c *ContractCaller) DecodeNewHeaderBlockEvent(contractAddress common.Addres
 	event := new(rootchain.RootchainNewHeaderBlock)
 
 	found := false
+
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.RootChainABI, event, "NewHeaderBlock", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -493,15 +534,19 @@ func (c *ContractCaller) DecodeNewHeaderBlockEvent(contractAddress common.Addres
 
 // DecodeValidatorTopupFeesEvent represents topup for fees tokens
 func (c *ContractCaller) DecodeValidatorTopupFeesEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
-	event := new(stakinginfo.StakinginfoTopUpFee)
+	var (
+		event = new(stakinginfo.StakinginfoTopUpFee)
+		found = false
+	)
 
-	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "TopUpFee", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -518,12 +563,15 @@ func (c *ContractCaller) DecodeValidatorJoinEvent(contractAddress common.Address
 	event := new(stakinginfo.StakinginfoStaked)
 
 	found := false
+
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "Staked", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -537,15 +585,19 @@ func (c *ContractCaller) DecodeValidatorJoinEvent(contractAddress common.Address
 
 // DecodeValidatorStakeUpdateEvent represents validator stake update event
 func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoStakeUpdate, error) {
-	event := new(stakinginfo.StakinginfoStakeUpdate)
+	var (
+		event = new(stakinginfo.StakinginfoStakeUpdate)
+		found = false
+	)
 
-	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "StakeUpdate", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -559,15 +611,19 @@ func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(contractAddress common.
 
 // DecodeValidatorExitEvent represents validator stake unstake event
 func (c *ContractCaller) DecodeValidatorExitEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoUnstakeInit, error) {
-	event := new(stakinginfo.StakinginfoUnstakeInit)
+	var (
+		event = new(stakinginfo.StakinginfoUnstakeInit)
+		found = false
+	)
 
-	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "UnstakeInit", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -581,15 +637,19 @@ func (c *ContractCaller) DecodeValidatorExitEvent(contractAddress common.Address
 
 // DecodeSignerUpdateEvent represents sig update event
 func (c *ContractCaller) DecodeSignerUpdateEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoSignerChange, error) {
-	event := new(stakinginfo.StakinginfoSignerChange)
+	var (
+		event = new(stakinginfo.StakinginfoSignerChange)
+		found = false
+	)
 
-	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "SignerChange", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -603,15 +663,19 @@ func (c *ContractCaller) DecodeSignerUpdateEvent(contractAddress common.Address,
 
 // DecodeStateSyncedEvent decode state sync data
 func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*statesender.StatesenderStateSynced, error) {
-	event := new(statesender.StatesenderStateSynced)
+	var (
+		event = new(statesender.StatesenderStateSynced)
+		found = false
+	)
 
-	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StateSenderABI, event, "StateSynced", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -627,15 +691,19 @@ func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, 
 
 // DecodeSlashedEvent represents tick ack on contract
 func (c *ContractCaller) DecodeSlashedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoSlashed, error) {
-	event := new(stakinginfo.StakinginfoSlashed)
+	var (
+		event = new(stakinginfo.StakinginfoSlashed)
+		found = false
+	)
 
-	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "Slashed", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -649,15 +717,19 @@ func (c *ContractCaller) DecodeSlashedEvent(contractAddress common.Address, rece
 
 // DecodeUnJailedEvent represents unjail on contract
 func (c *ContractCaller) DecodeUnJailedEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoUnJailed, error) {
-	event := new(stakinginfo.StakinginfoUnJailed)
+	var (
+		event = new(stakinginfo.StakinginfoUnJailed)
+		found = false
+	)
 
-	found := false
 	for _, vLog := range receipt.Logs {
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
+
 			if err := UnpackLog(&c.StakingInfoABI, event, "UnJailed", vLog); err != nil {
 				return nil, err
 			}
+
 			break
 		}
 	}
@@ -679,7 +751,9 @@ func (c *ContractCaller) CurrentAccountStateRoot(stakingInfoInstance *stakinginf
 
 	if err != nil {
 		Logger.Error("Unable to get current account state roor", "error", err)
+
 		var emptyArr [32]byte
+
 		return emptyArr, err
 	}
 
@@ -744,6 +818,7 @@ func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
 func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
+
 	return c.getTxReceipt(ctx, c.MainChainClient, txHash)
 }
 
@@ -751,6 +826,7 @@ func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt
 func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receipt, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
+
 	return c.getTxReceipt(ctx, c.MaticChainClient, txHash)
 }
 
@@ -772,6 +848,7 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	defer cancel()
 
 	mainChainClient := GetMainClient()
+
 	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
 	if err != nil {
 		Logger.Error("Error while Fetching Transaction By hash from MainChain", "error", err)
@@ -782,5 +859,6 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 
 	payload := transaction.Data()
 	abi := c.RootChainABI
+
 	return UnpackSigAndVotes(payload, abi)
 }

@@ -179,7 +179,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/checkpoints/list", checkpointListhandlerFn(cliCtx)).Methods("GET")
 
 	r.HandleFunc("/checkpoints/{number}", checkpointByNumberHandlerFunc(cliCtx)).Methods("GET")
-
 }
 
 // swagger:route GET /checkpoints/params checkpoint checkpointParams
@@ -195,6 +194,7 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryParams)
+
 		res, height, err := cliCtx.QueryWithData(route, nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -241,6 +241,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		RestLogger.Debug("Fetching number of checkpoints from state")
+
 		ackCountBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -262,6 +263,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
@@ -290,7 +292,6 @@ type checkpointPrepareParams struct {
 //   200: checkpointPrepareResponse
 func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -299,9 +300,11 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// Get params
 		params := r.URL.Query()
 
-		var result []byte
-		var height int64
-		var validatorSetBytes []byte
+		var (
+			result            []byte
+			height            int64
+			validatorSetBytes []byte
+		)
 
 		// get start and start
 		if params.Get("start") != "" && params.Get("end") != "" {
@@ -321,18 +324,32 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err != nil {
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 				RestLogger.Error("Unable to get checkpoint params", "Error", err)
+
 				return
 			}
 
 			var params types.Params
-			json.Unmarshal(res, &params)
+			if err = json.Unmarshal(res, &params); err != nil {
+				RestLogger.Error("Unable to unmarshal params", "Start", start, "End", end, "Error", err)
+				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+				return
+			}
+
 			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				RestLogger.Error("Unable to create contract caller", "Start", start, "End", end, "Error", err)
+				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+				return
+			}
 
 			// get headers
-			roothash, err := contractCallerObj.GetRootHash(uint64(start), uint64(end), params.MaxCheckpointLength)
+			roothash, err := contractCallerObj.GetRootHash(start, end, params.MaxCheckpointLength)
 			if err != nil {
 				RestLogger.Error("Unable to get roothash", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 				return
 			}
 
@@ -341,12 +358,13 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			//
 
 			var validatorSet hmTypes.ValidatorSet
+
 			validatorSetBytes, height, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 			if err == nil {
-				err := json.Unmarshal(validatorSetBytes, &validatorSet)
-				if err != nil {
+				if err = json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 					hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 					RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
+
 					return
 				}
 			}
@@ -354,8 +372,8 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			// header block -- checkpoint
 			checkpoint := HeaderBlockResult{
 				Proposer:   validatorSet.Proposer.Signer,
-				StartBlock: uint64(start),
-				EndBlock:   uint64(end),
+				StartBlock: start,
+				EndBlock:   end,
 				RootHash:   ethcmn.BytesToHash(roothash),
 			}
 
@@ -363,6 +381,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err != nil {
 				RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 				return
 			}
 		} else {
@@ -415,6 +434,7 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("Error while sending last ack time").Error())
+
 			return
 		}
 
@@ -438,7 +458,6 @@ type stateDump struct {
 // get all state-dump of heimdall
 func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -449,11 +468,12 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		//
 
 		var ackCountInt uint64
+
 		ackCountBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
 		if err == nil {
 			// check content
-			if ok := hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found"); ok {
-				if err := json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
+			if hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found") {
+				if err = json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing no-ack count", "error", err)
 				}
@@ -465,6 +485,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		//
 
 		var _checkpoint *hmTypes.Checkpoint
+
 		checkpointBufferBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
 		if err == nil {
 			if len(checkpointBufferBytes) != 0 {
@@ -481,6 +502,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		//
 
 		var validatorSet hmTypes.ValidatorSet
+
 		validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 		if err == nil {
 			if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
@@ -498,11 +520,12 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// last no ack
 		var lastNoACKTime uint64
+
 		lastNoACKBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
 		if err == nil {
 			// check content
-			if ok := hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found"); ok {
-				if err := json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
+			if hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found") {
+				if err = json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing last no-ack time", "error", err)
 				}
@@ -525,8 +548,10 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
+
 		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
@@ -589,7 +614,10 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var checkpointUnmarshal hmTypes.Checkpoint
-		json.Unmarshal(res, &checkpointUnmarshal)
+		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
 		checkpointWithID := &CheckpointWithID{
 			ID:         ackCount,
@@ -607,9 +635,10 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// error if no checkpoint found
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
+		if !hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found") {
 			return
 		}
+
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, resWithID)
 	}
@@ -669,7 +698,10 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var checkpointUnmarshal hmTypes.Checkpoint
-		json.Unmarshal(res, &checkpointUnmarshal)
+		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
 
 		checkpointWithID := &CheckpointWithID{
 			ID:         number,
@@ -690,9 +722,10 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, resWithID, "No checkpoint found"); !ok {
 			return
 		}
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, resWithID)
 
+		cliCtx = cliCtx.WithHeight(height)
+
+		rest.PostProcessResponse(w, cliCtx, resWithID)
 	}
 }
 
@@ -754,7 +787,9 @@ func checkpointListhandlerFn(
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoints found"); !ok {
 			return
 		}
+
 		cliCtx = cliCtx.WithHeight(height)
+
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }

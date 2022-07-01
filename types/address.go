@@ -71,24 +71,24 @@ func (aa HeimdallAddress) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (aa *HeimdallAddress) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
-	if err != nil {
+	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*aa = HexToHeimdallAddress(s)
+
 	return nil
 }
 
 // UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
 func (aa *HeimdallAddress) UnmarshalYAML(data []byte) error {
 	var s string
-	err := yaml.Unmarshal(data, &s)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*aa = HexToHeimdallAddress(s)
+
 	return nil
 }
 

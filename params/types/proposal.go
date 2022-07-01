@@ -107,9 +107,11 @@ func ValidateChanges(changes []ParamChange) sdk.Error {
 		if len(pc.Subspace) == 0 {
 			return ErrEmptySubspace(DefaultCodespace)
 		}
+
 		if len(pc.Key) == 0 {
 			return ErrEmptyKey(DefaultCodespace)
 		}
+
 		if len(pc.Value) == 0 {
 			return ErrEmptyValue(DefaultCodespace)
 		}

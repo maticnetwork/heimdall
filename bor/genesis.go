@@ -32,6 +32,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 
 	allSpans := keeper.GetAllSpans(ctx)
 	hmTypes.SortSpanByID(allSpans)
+
 	return types.NewGenesisState(
 		params,
 		// TODO think better way to export all spans

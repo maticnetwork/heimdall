@@ -65,6 +65,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 			"msgSeed", msg.Seed.String(),
 			"mainchainSeed", nextSpanSeed.String(),
 		)
+
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
@@ -90,11 +91,14 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 			"msgStartblock", msg.StartBlock,
 			"msgEndBlock", msg.EndBlock,
 		)
+
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for span msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for span msg")
+
 	result.Result = abci.SideTxResultType_Yes
+
 	return
 }
 

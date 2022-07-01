@@ -75,8 +75,8 @@ type BaseListener struct {
 
 // NewBaseListener creates a new BaseListener.
 func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
-
 	logger := util.Logger().With("service", "listener", "module", name)
+
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
@@ -140,9 +140,10 @@ func (bl *BaseListener) String() string {
 	return bl.name
 }
 
-// startHeaderProcess starts header process when they get new header
+// StartHeaderProcess starts header process when they get new header
 func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	bl.Logger.Info("Starting header process")
+
 	for {
 		select {
 		case newHeader := <-bl.HeaderChannel:
@@ -154,7 +155,7 @@ func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	}
 }
 
-// startPolling starts polling
+// StartPolling starts polling
 func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
@@ -175,6 +176,7 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 		case <-ctx.Done():
 			bl.Logger.Info("Polling stopped")
 			ticker.Stop()
+
 			return
 		}
 	}
@@ -193,6 +195,7 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 				bl.Logger.Debug("Cancelling the subscription of listner")
 				bl.cancelSubscription()
 			}
+
 			return
 		case <-ctx.Done():
 			bl.Logger.Info("Subscription stopped")
@@ -201,14 +204,15 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 	}
 }
 
-// OnStop stops all necessary go routines
+// Stop stops all necessary go routines
 func (bl *BaseListener) Stop() {
-
 	// cancel subscription if any
 	if bl.cancelSubscription != nil {
 		bl.cancelSubscription()
 	}
 
 	// cancel header process
-	bl.cancelHeaderProcess()
+	if bl.cancelHeaderProcess != nil {
+		bl.cancelHeaderProcess()
+	}
 }

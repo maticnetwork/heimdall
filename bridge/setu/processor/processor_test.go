@@ -16,13 +16,14 @@ import (
 
 func TestBroadcastWhenTxInMempool(t *testing.T) {
 	t.Parallel()
+
 	cdc := app.MakeCodec()
 
-	tendermintNode := "http://localhost:26657"
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, "http://localhost:26657")
 	viper.Set("log_level", "info")
 
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
 	_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 
 	defaultMessage := clerkTypes.MsgEventRecord{
@@ -37,8 +38,10 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 	}
 
 	// adding clerk messages and errors for testing
-	var testData []clerkTypes.MsgEventRecord
-	var expectedStatus []bool
+	var (
+		testData       []clerkTypes.MsgEventRecord
+		expectedStatus []bool
+	)
 
 	// keep the first 2 messages same (default)
 	testData = append(testData, defaultMessage)
@@ -63,16 +66,23 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
 	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, nil, "clerk", cp)
 
-	for index, tx := range testData {
+	for index, tx := range testData { //nolint
+		index := index
+		tx := tx
+
 		t.Run(string(rune(index)), func(t *testing.T) {
+			t.Parallel()
+
 			inMempool, err := cp.checkTxAgainstMempool(tx, nil)
 			t.Log("Done checking tx against mempool", "in mempool", inMempool)
 			if err != nil {
 				t.Fatal(err)
 			}
+
 			assert.Equal(t, inMempool, expectedStatus[index])
 			if !inMempool {
 				t.Log("Tx not in mempool, broadcasting")

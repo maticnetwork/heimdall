@@ -105,6 +105,7 @@ func (keeper Keeper) SetValidators(ctx sdk.Context, height int64, validators []a
 	}
 
 	store.Set(types.ValidatorsKey(height), bz)
+
 	return nil
 }
 
@@ -114,7 +115,9 @@ func (keeper Keeper) GetValidators(ctx sdk.Context, height int64) (validators []
 
 	// marshal validators if exists
 	if keeper.HasValidators(ctx, height) {
-		keeper.cdc.UnmarshalBinaryBare(store.Get(types.ValidatorsKey(height)), &validators)
+		if err := keeper.cdc.UnmarshalBinaryBare(store.Get(types.ValidatorsKey(height)), &validators); err != nil {
+			keeper.Logger(ctx).Error("Failed to unmarshal binary bare", "Error", err)
+		}
 	}
 
 	return
@@ -153,7 +156,6 @@ func (keeper Keeper) IterateTxAndApplyFn(ctx sdk.Context, height int64, f func(t
 			return
 		}
 	}
-	return
 }
 
 // IterateTxsAndApplyFn interate all txs and apply the given function.
@@ -171,16 +173,15 @@ func (keeper Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmTypes
 		heightBytes := iterator.Key()[prefixLength : 8+prefixLength]
 
 		var height uint64
-		buf := bytes.NewBuffer(heightBytes)
-		binary.Read(buf, binary.BigEndian, &height)
+		if err := binary.Read(bytes.NewBuffer(heightBytes), binary.BigEndian, &height); err != nil {
+			return
+		}
 
 		// call function and return if required
 		if err := f(int64(height), iterator.Value()); err != nil {
 			return
 		}
 	}
-
-	return
 }
 
 // IterateValidatorsAndApplyFn interate all validators and apply the given function.
@@ -203,14 +204,13 @@ func (keeper Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(int64, 
 		heightBytes := iterator.Key()[prefixLength : 8+prefixLength]
 
 		var height uint64
-		buf := bytes.NewBuffer(heightBytes)
-		binary.Read(buf, binary.BigEndian, &height)
+		if err := binary.Read(bytes.NewBuffer(heightBytes), binary.BigEndian, &height); err != nil {
+			return
+		}
 
 		// call function and return if required
 		if err := f(int64(height), validators); err != nil {
 			return
 		}
 	}
-
-	return
 }

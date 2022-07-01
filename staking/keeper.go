@@ -66,6 +66,7 @@ func NewKeeper(
 		chainKeeper:        chainKeeper,
 		moduleCommunicator: moduleCommunicator,
 	}
+
 	return keeper
 }
 
@@ -96,11 +97,6 @@ func GetStakingSequenceKey(sequence string) []byte {
 
 // AddValidator adds validator indexed with address
 func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) error {
-	// TODO uncomment
-	//if ok:=validator.ValidateBasic(); !ok{
-	//	// return error
-	//}
-
 	store := ctx.KVStore(k.storeKey)
 
 	bz, err := hmTypes.MarshallValidator(k.cdc, validator)
@@ -110,6 +106,7 @@ func (k *Keeper) AddValidator(ctx sdk.Context, validator hmTypes.Validator) erro
 
 	// store validator with address prefixed with validator key as index
 	store.Set(GetValidatorKey(validator.Signer.Bytes()), bz)
+
 	k.Logger(ctx).Debug("Validator stored", "key", hex.EncodeToString(GetValidatorKey(validator.Signer.Bytes())), "validator", validator.String())
 
 	// add validator to validator ID => SignerAddress map
@@ -194,6 +191,7 @@ func (k *Keeper) GetTotalPower(ctx sdk.Context) (totalPower int64) {
 		totalPower += validator.VotingPower
 		return true
 	})
+
 	return
 }
 
@@ -270,9 +268,10 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	validator.VotingPower = validatorPower
 
 	// add updated validator to store with new key
-	if err := k.AddValidator(ctx, validator); err != nil {
+	if err = k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
 	}
+
 	return nil
 }
 
@@ -289,6 +288,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
+
 	return nil
 }
 
@@ -367,11 +367,13 @@ func (k *Keeper) GetValidatorFromValID(ctx sdk.Context, valID hmTypes.ValidatorI
 	if !ok {
 		return validator, ok
 	}
+
 	// query for validator signer address
 	validator, err := k.GetValidatorInfo(ctx, signerAddr.Bytes())
 	if err != nil {
 		return validator, false
 	}
+
 	return validator, true
 }
 
@@ -382,6 +384,7 @@ func (k *Keeper) GetLastUpdated(ctx sdk.Context, valID hmTypes.ValidatorID) (upd
 	if !ok {
 		return "", false
 	}
+
 	return validator.LastUpdated, true
 }
 
@@ -418,6 +421,7 @@ func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []string) {
 		sequences = append(sequences, sequence)
 		return nil
 	})
+
 	return
 }
 
@@ -451,11 +455,12 @@ func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validato
 func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
-	k.Logger(ctx).Debug("validator fetched", "validator", validator)
 	if !found {
 		k.Logger(ctx).Error("Unable to fetch valiator from store")
 		return errors.New("validator not found")
 	}
+
+	k.Logger(ctx).Debug("validator fetched", "validator", validator)
 
 	updatedPower := int64(0)
 	// calculate power after slash
@@ -470,14 +475,17 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	validator.Jailed = valSlashingInfo.IsJailed
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Failed to add validator", "error", err)
+	}
+
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
+
 	return nil
 }
 
-// unjail a validator
+// Unjail a validator
 func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
-
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
@@ -493,7 +501,7 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	validator.Jailed = false
 
 	// add updated validator to store with new key
-	k.AddValidator(ctx, validator)
-	return
-
+	if err := k.AddValidator(ctx, validator); err != nil {
+		k.Logger(ctx).Error("Failed to add validator", "Error", err)
+	}
 }

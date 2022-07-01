@@ -102,9 +102,11 @@ func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// get from address
 		fromAddr := types.HexToHeimdallAddress(req.BaseReq.From)
 		amountStr := "0"
+
 		if req.Amount != "" {
 			amountStr = req.Amount
 		}
+
 		amount, ok := big.NewInt(0).SetString(amountStr, 10)
 		if !ok {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Bad amount")
@@ -116,6 +118,7 @@ func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			fromAddr,
 			sdk.NewIntFromBigInt(amount),
 		)
+
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

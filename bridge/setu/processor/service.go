@@ -127,10 +127,16 @@ func (processorService *ProcessorService) OnStart() error {
 	// start processors
 	for _, processor := range processorService.processors {
 		processor.RegisterTasks()
-		go processor.Start()
+
+		go func(processor Processor) {
+			if err := processor.Start(); err != nil {
+				processorService.Logger.Error("OnStart | processor.Start", "Error", err)
+			}
+		}(processor)
 	}
 
 	processorService.Logger.Info("all processors Started")
+
 	return nil
 }
 

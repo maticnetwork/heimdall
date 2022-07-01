@@ -24,6 +24,7 @@ type StdSignDoc struct {
 // StdSignBytes returns the bytes to sign for a transaction.
 func StdSignBytes(chainID string, accnum uint64, sequence uint64, msg sdk.Msg, memo string) []byte {
 	msgsBytes := json.RawMessage(msg.GetSignBytes())
+
 	bz, err := ModuleCdc.MarshalJSON(StdSignDoc{
 		AccountNumber: accnum,
 		ChainID:       chainID,
@@ -34,6 +35,7 @@ func StdSignBytes(chainID string, accnum uint64, sequence uint64, msg sdk.Msg, m
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(bz)
 }
 

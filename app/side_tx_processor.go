@@ -22,6 +22,7 @@ func (app *HeimdallApp) PostDeliverTxHandler(ctx sdk.Context, tx sdk.Tx, result 
 
 	if result.IsOK() {
 		anySideMsg := false
+
 		for _, msg := range tx.GetMsgs() {
 			if _, ok := msg.(types.SideTxMsg); ok {
 				anySideMsg = true
@@ -68,6 +69,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 	for _, sideTxResult := range req.SideTxResults {
 		txHash := sideTxResult.TxHash
+
 		// get tx from the store
 		tx := app.SidechannelKeeper.GetTx(ctx, targetHeight, txHash)
 		if tx != nil {
@@ -144,8 +146,10 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 
 // DeliverSideTxHandler runs for each side tx
 func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abci.RequestDeliverSideTx) (res abci.ResponseDeliverSideTx) {
-	var code uint32
-	var codespace string
+	var (
+		code      uint32
+		codespace string
+	)
 
 	result := abci.SideTxResultType_Skip
 	data := make([]byte, 0)
@@ -156,6 +160,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 		// match message route
 		msgRoute := msg.Route()
 		handlers := app.sideRouter.GetRoute(msgRoute)
+
 		if handlers != nil && handlers.SideTxHandler != nil && isSideTxMsg {
 			// Create a new context based off of the existing context with a cache wrapped multi-store (for state-less execution)
 			runMsgCtx, _ := app.cacheTxContext(ctx, req.Tx)
@@ -171,6 +176,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 				codespace = msgResult.Codespace
 				// skip side-tx if result is error
 				result = abci.SideTxResultType_Skip
+
 				break
 			}
 
@@ -187,8 +193,8 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 	}
 
 	return abci.ResponseDeliverSideTx{
-		Code:      uint32(code),
-		Codespace: string(codespace),
+		Code:      code,
+		Codespace: codespace,
 		Data:      data,
 		Result:    result,
 	}
@@ -201,6 +207,7 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci.SideTxResultType) (result sdk.Result) {
 	// get decoder
 	decoder := authTypes.DefaultTxDecoder(app.cdc)
+
 	tx, err := decoder(txBytes)
 	if err != nil {
 		return
@@ -245,6 +252,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 
 		// match message route
 		msgRoute := msg.Route()
+
 		handler := app.sideRouter.GetRoute(msgRoute)
 		if handler != nil && handler.PostTxHandler != nil && isSideTxMsg {
 			msgResult := handler.PostTxHandler(ctx, msg, sideTxResult)
@@ -260,6 +268,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 			if !msgResult.IsOK() {
 				code = msgResult.Code
 				codespace = msgResult.Codespace
+
 				break
 			}
 		}

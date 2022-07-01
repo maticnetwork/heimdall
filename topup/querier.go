@@ -47,7 +47,7 @@ func querySequence(ctx sdk.Context, req abci.RequestQuery, k Keeper, contractCal
 	// get main tx receipt
 	receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
+		return nil, sdk.ErrInternal("Transaction is not confirmed yet. Please wait for sometime and try again")
 	}
 
 	// sequence id
@@ -86,16 +86,19 @@ func handleQueryDividendAccount(ctx sdk.Context, req abci.RequestQuery, keeper K
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
 func handleDividendAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	// Calculate new account root hash
 	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
+
 	accountRoot, err := checkpointTypes.GetAccountRootHash(dividendAccounts)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch accountroothash ", err.Error()))
 	}
+
 	return accountRoot, nil
 }
 
@@ -103,7 +106,6 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 	// 1. Fetch AccountRoot a1 present on RootChainContract
 	// 2. Fetch AccountRoot a2 from current account
 	// 3. if a1 == a2, Calculate merkle path using GetAllDividendAccounts
-
 	var params types.QueryAccountProofParams
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
@@ -136,11 +138,11 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
-		return bz, nil
 
-	} else {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
+		return bz, nil
 	}
+
+	return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch merkle proof ", err.Error()))
 }
 
 func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
@@ -162,5 +164,6 @@ func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keepe
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }

@@ -3,25 +3,19 @@ package simulation
 import (
 	"fmt"
 	"testing"
-	"time"
-
-	gogotypes "github.com/gogo/protobuf/types"
-
-	"github.com/stretchr/testify/require"
-
-	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/maticnetwork/heimdall/slashing/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/stretchr/testify/require"
+	"github.com/tendermint/tendermint/crypto/secp256k1"
 )
 
 // nolint:deadcode,unused,varcheck
 var (
 	delPk1    = secp256k1.GenPrivKey().PubKey()
-	delAddr1  = sdk.AccAddress(delPk1.Address())
-	valAddr1  = sdk.ValAddress(delPk1.Address())
 	consAddr1 = hmTypes.BytesToHeimdallAddress(delPk1.Address().Bytes())
 )
 
@@ -36,15 +30,13 @@ func makeTestCodec() (cdc *codec.Codec) {
 func TestDecodeStore(t *testing.T) {
 	cdc := makeTestCodec()
 
-	info := hmTypes.NewValidatorSigningInfo(consAddr1, 0, 1, time.Now().UTC(), false, 0)
-	bechPK := sdk.MustBech32ifyPubKey(sdk.Bech32PubKeyTypeAccPub, delPk1)
+	info := hmTypes.NewValidatorSigningInfo(1, 0, 1, 0)
 	missed := gogotypes.BoolValue{Value: true}
 
-	kvPairs := tmkv.Pairs{
-		tmkv.Pair{Key: types.GetValidatorSigningInfoKey(consAddr1), Value: cdc.MustMarshalBinaryBare(info)},
-		tmkv.Pair{Key: types.GetValidatorMissedBlockBitArrayKey(consAddr1, 6), Value: cdc.MustMarshalBinaryBare(&missed)},
-		tmkv.Pair{Key: types.GetAddrPubkeyRelationKey(delAddr1), Value: cdc.MustMarshalBinaryBare(delPk1)},
-		tmkv.Pair{Key: []byte{0x99}, Value: []byte{0x99}},
+	kvPairs := []sdk.KVPair{
+		{Key: types.GetValidatorSigningInfoKey(consAddr1.Bytes()), Value: cdc.MustMarshalBinaryBare(info)},
+		{Key: types.GetValidatorMissedBlockBitArrayKey(consAddr1.Bytes(), 6), Value: cdc.MustMarshalBinaryBare(&missed)},
+		{Key: []byte{0x99}, Value: []byte{0x99}},
 	}
 
 	tests := []struct {
@@ -53,7 +45,6 @@ func TestDecodeStore(t *testing.T) {
 	}{
 		{"ValidatorSigningInfo", fmt.Sprintf("%v\n%v", info, info)},
 		{"ValidatorMissedBlockBitArray", fmt.Sprintf("missedA: %v\nmissedB: %v", missed.Value, missed.Value)},
-		{"AddrPubkeyRelation", fmt.Sprintf("PubKeyA: %s\nPubKeyB: %s", bechPK, bechPK)},
 		{"other", ""},
 	}
 	for i, tt := range tests {

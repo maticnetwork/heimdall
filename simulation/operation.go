@@ -60,6 +60,7 @@ func (oe OperationEntry) MustMarshal() json.RawMessage {
 	if err != nil {
 		panic(err)
 	}
+
 	return out
 }
 
@@ -76,7 +77,6 @@ func NewOperationQueue() OperationQueue {
 // queueOperations adds all future operations into the operation queue.
 func queueOperations(queuedOps OperationQueue,
 	queuedTimeOps []simulation.FutureOperation, futureOps []simulation.FutureOperation) {
-
 	if futureOps == nil {
 		return
 	}
@@ -89,6 +89,7 @@ func queueOperations(queuedOps OperationQueue,
 			} else {
 				queuedOps[futureOp.BlockHeight] = []simulation.Operation{futureOp.Op}
 			}
+
 			continue
 		}
 
@@ -100,6 +101,7 @@ func queueOperations(queuedOps OperationQueue,
 				return queuedTimeOps[i].BlockTime.After(futureOp.BlockTime)
 			},
 		)
+
 		queuedTimeOps = append(queuedTimeOps, simulation.FutureOperation{})
 		copy(queuedTimeOps[index+1:], queuedTimeOps[index:])
 		queuedTimeOps[index] = futureOp
@@ -139,19 +141,23 @@ func (ops WeightedOperations) totalWeight() int {
 	for _, op := range ops {
 		totalOpWeight += op.Weight()
 	}
+
 	return totalOpWeight
 }
 
 func (ops WeightedOperations) getSelectOpFn() simulation.SelectOpFn {
 	totalOpWeight := ops.totalWeight()
+
 	return func(r *rand.Rand) simulation.Operation {
 		x := r.Intn(totalOpWeight)
 		for i := 0; i < len(ops); i++ {
 			if x <= ops[i].Weight() {
 				return ops[i].Op()
 			}
+
 			x -= ops[i].Weight()
 		}
+
 		// shouldn't happen
 		return ops[0].Op()
 	}

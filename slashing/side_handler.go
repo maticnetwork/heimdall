@@ -261,19 +261,19 @@ func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideT
 		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
-	if tickSlashInfos == nil || len(tickSlashInfos) == 0 {
+	if len(tickSlashInfos) == 0 {
 		k.Logger(ctx).Error("tick ack already processed", "error", err)
 		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
 	// slash validator - Iterate lastTickData and reduce power of each validator along with jailing if needed
-	if err := k.SlashAndJailTickValSlashingInfos(ctx); err != nil {
+	if err = k.SlashAndJailTickValSlashingInfos(ctx); err != nil {
 		k.Logger(ctx).Error("Error slashing and jailing validator in tick handler", "error", err)
 		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
 
 	// remove validator slashing infos from tick data
-	if err := k.FlushTickValSlashingInfos(ctx); err != nil {
+	if err = k.FlushTickValSlashingInfos(ctx); err != nil {
 		k.Logger(ctx).Error("Error flushing tick slash info in tick-ack handler", "error", err)
 		return common.ErrSlashInfoDetails(k.Codespace()).Result()
 	}
@@ -303,7 +303,7 @@ func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideT
 	}
 }
 
-// Validators must submit a transaction to unjail itself after
+// PostHandleMsgUnjail must submit a transaction to unjail itself after
 // having been jailed (and thus unbonded) for downtime
 func PostHandleMsgUnjail(ctx sdk.Context, k Keeper, msg types.MsgUnjail, sideTxResult abci.SideTxResultType) sdk.Result {
 	// Skip handler if topup is not approved

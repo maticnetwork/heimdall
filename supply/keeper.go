@@ -41,7 +41,6 @@ func NewKeeper(
 	ak auth.AccountKeeper,
 	bk bank.Keeper,
 ) Keeper {
-
 	// set the addresses
 	permAddrs := make(map[string]supplyTypes.PermissionsForAddress)
 	for name, perms := range maccPerms {
@@ -66,11 +65,14 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // GetSupply retrieves the Supply from store
 func (k Keeper) GetSupply(ctx sdk.Context) (supply supplyTypes.Supply) {
 	store := ctx.KVStore(k.storeKey)
+
 	b := store.Get(SupplyKey)
 	if b == nil {
 		panic("stored supply should not have been nil")
 	}
+
 	k.cdc.MustUnmarshalBinaryLengthPrefixed(b, &supply)
+
 	return
 }
 
@@ -90,6 +92,7 @@ func (k Keeper) ValidatePermissions(macc supplyTypes.ModuleAccountInterface) err
 			return fmt.Errorf("invalid module permission %s", perm)
 		}
 	}
+
 	return nil
 }
 
@@ -103,7 +106,9 @@ func (k Keeper) GetModuleAddress(moduleName string) (addr hmTypes.HeimdallAddres
 	if !ok {
 		return
 	}
+
 	addr = permAddr.GetAddress()
+
 	return
 }
 
@@ -113,7 +118,9 @@ func (k Keeper) RemoveModuleAddress(moduleName string) bool {
 	if !ok {
 		return false
 	}
+
 	delete(k.permAddrs, moduleName)
+
 	return true
 }
 
@@ -123,6 +130,7 @@ func (k Keeper) GetModuleAddressAndPermissions(moduleName string) (addr hmTypes.
 	if !ok {
 		return addr, permissions
 	}
+
 	return permAddr.GetAddress(), permAddr.GetPermissions()
 }
 
@@ -140,6 +148,7 @@ func (k Keeper) GetModuleAccountAndPermissions(ctx sdk.Context, moduleName strin
 		if !ok {
 			panic("account is not a module account")
 		}
+
 		return macc, perms
 	}
 
@@ -189,7 +198,6 @@ func (k Keeper) SendCoinsFromModuleToModule(
 	recipientModule string,
 	amt sdk.Coins,
 ) sdk.Error {
-
 	senderAddr := k.GetModuleAddress(senderModule)
 	if senderAddr.Empty() {
 		return sdk.ErrUnknownAddress(fmt.Sprintf("module account %s does not exist", senderModule))
@@ -211,7 +219,6 @@ func (k Keeper) SendCoinsFromAccountToModule(
 	recipientModule string,
 	amt sdk.Coins,
 ) sdk.Error {
-
 	// create the account if it doesn't yet exist
 	recipientAcc := k.GetModuleAccount(ctx, recipientModule)
 	if recipientAcc == nil {

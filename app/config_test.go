@@ -7,6 +7,8 @@ import (
 )
 
 func TestNewConfigFromFlags(t *testing.T) {
+	t.Parallel()
+
 	config := NewConfigFromFlags()
 	require.Equal(t, config.ChainID, "", "Default chain id should be empty")
 }

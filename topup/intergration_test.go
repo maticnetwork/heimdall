@@ -28,5 +28,6 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 
 	topupSequence := strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
 	app.TopupKeeper.SetTopupSequence(ctx, topupSequence)
+
 	return app, ctx, cliCtx
 }

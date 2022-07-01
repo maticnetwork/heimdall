@@ -104,6 +104,7 @@ type address struct {
 func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
 		vars := mux.Vars(r)
 
 		// key
@@ -126,9 +127,12 @@ func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			if err := accGetter.EnsureExists(key); err != nil {
 				cliCtx = cliCtx.WithHeight(height)
 				hmRest.PostProcessResponse(w, cliCtx, authTypes.BaseAccount{})
+
 				return
 			}
+
 			hmRest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+
 			return
 		}
 
@@ -145,6 +149,7 @@ func QueryAccountRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
+
 		vars := mux.Vars(r)
 
 		// key
@@ -167,9 +172,12 @@ func QueryAccountSequenceRequestHandlerFn(cliCtx context.CLIContext) http.Handle
 			if err := accGetter.EnsureExists(key); err != nil {
 				cliCtx = cliCtx.WithHeight(height)
 				hmRest.PostProcessResponse(w, cliCtx, authTypes.BaseAccount{})
+
 				return
 			}
+
 			hmRest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
+
 			return
 		}
 
@@ -198,6 +206,7 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", authTypes.QuerierRoute, authTypes.QueryParams)
+
 		res, height, err := cliCtx.QueryWithData(route, nil)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())

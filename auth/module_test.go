@@ -29,6 +29,7 @@ func (suite *ModuleTestSuite) SetupTest() {
 }
 
 func TestModuleTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(ModuleTestSuite))
 }
 

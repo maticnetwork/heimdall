@@ -83,6 +83,7 @@ func (ma *ModuleAccount) RemovePermission(permission string) error {
 			return nil
 		}
 	}
+
 	return fmt.Errorf("cannot remove non granted permission %s", permission)
 }
 
@@ -93,6 +94,7 @@ func (ma ModuleAccount) HasPermission(permission string) bool {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -122,6 +124,7 @@ func (ma ModuleAccount) String() string {
 	if err != nil {
 		panic(err)
 	}
+
 	return string(b)
 }
 

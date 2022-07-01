@@ -28,13 +28,12 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 }
 
 func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating clerk msg",
 		"id", msg.ID,
 		"contract", msg.ContractAddress,
 		"data", hex.EncodeToString(msg.Data),
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 

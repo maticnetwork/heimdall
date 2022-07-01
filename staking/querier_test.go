@@ -42,6 +42,8 @@ func (suite *QuerierTestSuite) SetupTest() {
 
 // TestQuerierTestSuite
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -66,7 +68,7 @@ func (suite *QuerierTestSuite) TestInvalidQuery() {
 func (suite *QuerierTestSuite) TestHandleQueryCurrentValidatorSet() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	path := []string{types.QueryCurrentValidatorSet}
 
@@ -87,7 +89,7 @@ func (suite *QuerierTestSuite) TestHandleQueryCurrentValidatorSet() {
 func (suite *QuerierTestSuite) TesthandleQuerySigner() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	validators := keeper.GetAllValidators(ctx)
 	path := []string{types.QuerySigner}
@@ -109,7 +111,7 @@ func (suite *QuerierTestSuite) TesthandleQuerySigner() {
 func (suite *QuerierTestSuite) TesthandleQueryValidator() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	validators := keeper.GetAllValidators(ctx)
 
 	path := []string{types.QueryValidator}
@@ -131,7 +133,7 @@ func (suite *QuerierTestSuite) TesthandleQueryValidator() {
 func (suite *QuerierTestSuite) TestHandleQueryValidatorStatus() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	validators := keeper.GetAllValidators(ctx)
 
 	path := []string{types.QueryValidatorStatus}
@@ -153,7 +155,7 @@ func (suite *QuerierTestSuite) TestHandleQueryValidatorStatus() {
 func (suite *QuerierTestSuite) TestHandleQueryProposer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	path := []string{types.QueryProposer}
 
@@ -174,7 +176,7 @@ func (suite *QuerierTestSuite) TestHandleQueryProposer() {
 func (suite *QuerierTestSuite) TestHandleQueryCurrentProposer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	path := []string{types.QueryCurrentProposer}
 

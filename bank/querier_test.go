@@ -38,6 +38,7 @@ func (suite *QuerierTestSuite) SetupTest() {
 }
 
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -72,27 +73,28 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 		Path: fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryBalance),
 		Data: []byte{},
 	}
-	res, err := querier(ctx, path, req)
-	require.Error(t, err)
+	res, sdkErr := querier(ctx, path, req)
+	require.Error(t, sdkErr)
 	require.Nil(t, res)
 
 	// balance for non-existing address (empty address)
 
 	req.Data = cdc.MustMarshalJSON(types.NewQueryBalanceParams(hmTypes.BytesToHeimdallAddress([]byte(""))))
-	res, err = querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr = querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
 	// fetch balance
 	var balance sdk.Coins
+
 	require.NoError(t, json.Unmarshal(res, &balance))
 	require.True(t, balance.IsZero())
 
 	// balance for non-existing address
 	_, _, addr := sdkAuth.KeyTestPubAddr()
 	req.Data = cdc.MustMarshalJSON(types.NewQueryBalanceParams(hmTypes.AccAddressToHeimdallAddress(addr)))
-	res, err = querier(ctx, path, req)
-	require.NoError(t, err)
+	res, sdkErr = querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
 	require.NoError(t, json.Unmarshal(res, &balance))
@@ -101,7 +103,8 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 	// set account
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr))
 	amt := simulation.RandomFeeCoins()
-	acc1.SetCoins(amt)
+	err := acc1.SetCoins(amt)
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 
 	res, err = querier(ctx, path, req)
@@ -121,7 +124,8 @@ func (suite *QuerierTestSuite) TestQueryBalance() {
 		store := ctx.KVStore(happ.GetKey(authTypes.StoreKey))
 		store.Set(authTypes.AddressStoreKey(hmTypes.AccAddressToHeimdallAddress(addr)), []byte(""))
 		require.Panics(t, func() {
-			querier(ctx, path, req)
+			_, err = querier(ctx, path, req)
+			require.NoError(t, err)
 		})
 	}
 }

@@ -48,8 +48,7 @@ func (es EventStats) ExportJSON(path string) {
 		panic(err)
 	}
 
-	err = ioutil.WriteFile(path, bz, 0644)
-	if err != nil {
+	if err = ioutil.WriteFile(path, bz, 0644); err != nil { //nolint
 		panic(err)
 	}
 }

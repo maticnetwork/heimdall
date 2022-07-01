@@ -23,7 +23,6 @@ import (
 func AppStateFn(cdc *codec.Codec, simManager *module.SimulationManager) simtypes.AppStateFn {
 	return func(r *rand.Rand, accs []simtypes.Account, config simtypes.Config,
 	) (appState json.RawMessage, simAccs []simtypes.Account, chainID string, genesisTimestamp time.Time) {
-
 		if FlagGenesisTimeValue == 0 {
 			genesisTimestamp = simtypes.RandTimestamp(r)
 		} else {
@@ -31,6 +30,7 @@ func AppStateFn(cdc *codec.Codec, simManager *module.SimulationManager) simtypes
 		}
 
 		chainID = config.ChainID
+
 		switch {
 		case config.ParamsFile != "" && config.GenesisFile != "":
 			panic("cannot provide both a genesis file and a params file")
@@ -50,6 +50,7 @@ func AppStateFn(cdc *codec.Codec, simManager *module.SimulationManager) simtypes
 
 		case config.ParamsFile != "":
 			appParams := make(simtypes.AppParams)
+
 			bz, err := ioutil.ReadFile(config.ParamsFile)
 			if err != nil {
 				panic(err)
@@ -57,7 +58,6 @@ func AppStateFn(cdc *codec.Codec, simManager *module.SimulationManager) simtypes
 
 			cdc.MustUnmarshalJSON(bz, &appParams)
 			appState, simAccs = AppStateRandomizedFn(simManager, r, cdc, accs, genesisTimestamp, appParams)
-
 		default:
 			appParams := make(simtypes.AppParams)
 			appState, simAccs = AppStateRandomizedFn(simManager, r, cdc, accs, genesisTimestamp, appParams)
@@ -79,10 +79,12 @@ func AppStateRandomizedFn(
 	// generate a random amount of initial stake coins and a random initial
 	// number of bonded accounts
 	var initialStake, numInitiallyBonded int64
+
 	appParams.GetOrGenerate(
 		cdc, simapparams.StakePerAccount, &initialStake, r,
 		func(r *rand.Rand) { initialStake = r.Int63n(1e12) },
 	)
+
 	appParams.GetOrGenerate(
 		cdc, simapparams.InitiallyBondedValidators, &numInitiallyBonded, r,
 		func(r *rand.Rand) { numInitiallyBonded = int64(r.Intn(300)) },
@@ -118,10 +120,12 @@ func AppStateFromGenesisFileFn(r io.Reader, cdc *codec.Codec, genesisFile string
 		panic(err)
 	}
 
-	var genesis tmtypes.GenesisDoc
-	cdc.MustUnmarshalJSON(bytes, &genesis)
+	var (
+		genesis  tmtypes.GenesisDoc
+		appState GenesisState
+	)
 
-	var appState GenesisState
+	cdc.MustUnmarshalJSON(bytes, &genesis)
 	cdc.MustUnmarshalJSON(genesis.AppState, &appState)
 
 	var authGenesis authTypes.GenesisState
@@ -130,6 +134,7 @@ func AppStateFromGenesisFileFn(r io.Reader, cdc *codec.Codec, genesisFile string
 	}
 
 	newAccs := make([]simtypes.Account, len(authGenesis.Accounts))
+
 	for i, acc := range authGenesis.Accounts {
 		// Pick a random private key, since we don't know the actual key
 		// This should be fine as it's only used for mock Tendermint validators

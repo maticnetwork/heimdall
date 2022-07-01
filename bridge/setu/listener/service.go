@@ -28,7 +28,6 @@ type ListenerService struct {
 
 // NewListenerService returns new service object for listneing to events
 func NewListenerService(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP) *ListenerService {
-
 	var logger = util.Logger().With("service", ListenerServiceStr)
 
 	// creating listener object
@@ -65,6 +64,7 @@ func (listenerService *ListenerService) OnStart() error {
 	}
 
 	listenerService.Logger.Info("all listeners Started")
+
 	return nil
 }
 
@@ -78,5 +78,4 @@ func (listenerService *ListenerService) OnStop() {
 	}
 
 	listenerService.Logger.Info("all listeners stopped")
-
 }

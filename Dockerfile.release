@@ -11,7 +11,6 @@ RUN apk add --no-cache \
 WORKDIR ${HEIMDALL_DIR}
 COPY heimdalld /usr/local/bin/
 COPY heimdallcli /usr/local/bin/
-COPY bridge /usr/local/bin/
 COPY builder/files/genesis-mainnet-v1.json ${HEIMDALL_DIR}/
 COPY builder/files/genesis-testnet-v4.json ${HEIMDALL_DIR}/
 

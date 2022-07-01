@@ -13,6 +13,8 @@ import (
 )
 
 func TestParamChange(t *testing.T) {
+	t.Parallel()
+
 	subspace, key := "theSubspace", "key"
 	f := func(r *rand.Rand) string {
 		return "theResult"
@@ -27,6 +29,8 @@ func TestParamChange(t *testing.T) {
 }
 
 func TestNewWeightedProposalContent(t *testing.T) {
+	t.Parallel()
+
 	key := "theKey"
 	weight := 1
 	content := &testContent{}

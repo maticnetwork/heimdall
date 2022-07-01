@@ -36,6 +36,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			WithdrawFeeTxCmd(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 
@@ -95,15 +96,19 @@ func TopupTxCmd(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagUserAddress); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagUserAddress", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagFeeAmount); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagFeeAmount", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		cliLogger.Error("TopupTxCmd | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
