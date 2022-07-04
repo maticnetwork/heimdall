@@ -28,7 +28,7 @@ func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log
 	}
 
 	selectedEvent := EventByID(abiObject, log.Topics[0].Bytes())
-	if selectedEvent == nil {
+	if selectedEvent == nil || selectedEvent.Name != event {
 		return errors.New("event signature does not match")
 	}
 

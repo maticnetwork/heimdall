@@ -193,6 +193,43 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 
 			nonce := viper.GetUint64(FlagNonce)
 
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+			if err != nil {
+				return err
+			}
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), chainmanagerParams.MainchainTxConfirmations)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
+
+			abiObject := &contractCallerObj.StakingInfoABI
+			eventName := "UnstakeInit"
+			event := new(stakinginfo.StakinginfoUnstakeInit)
+			found := false
+			for _, vLog := range receipt.Logs {
+				topic := vLog.Topics[0].Bytes()
+				selectedEvent := helper.EventByID(abiObject, topic)
+				if selectedEvent != nil && selectedEvent.Name == eventName {
+					if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+						return err
+					}
+
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				return fmt.Errorf("Invalid tx for validator unstake init")
+			}
+
 			// draf msg
 			msg := types.NewMsgValidatorExit(
 				proposer,
@@ -271,6 +308,43 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("transaction hash has to be supplied")
 			}
 
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+			if err != nil {
+				return err
+			}
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), chainmanagerParams.MainchainTxConfirmations)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
+
+			abiObject := &contractCallerObj.StakingInfoABI
+			eventName := "SignerChange"
+			event := new(stakinginfo.StakinginfoSignerChange)
+			found := false
+			for _, vLog := range receipt.Logs {
+				topic := vLog.Topics[0].Bytes()
+				selectedEvent := helper.EventByID(abiObject, topic)
+				if selectedEvent != nil && selectedEvent.Name == eventName {
+					if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+						return err
+					}
+
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				return fmt.Errorf("Invalid tx for validator signer change")
+			}
+
 			msg := types.NewMsgSignerUpdate(
 				proposer,
 				validator,
@@ -344,6 +418,43 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
 			if !ok {
 				return errors.New("Invalid new stake amount")
+			}
+
+			contractCallerObj, err := helper.NewContractCaller()
+			if err != nil {
+				return err
+			}
+
+			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
+			if err != nil {
+				return err
+			}
+
+			// get main tx receipt
+			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), chainmanagerParams.MainchainTxConfirmations)
+			if err != nil || receipt == nil {
+				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+			}
+
+			abiObject := &contractCallerObj.StakingInfoABI
+			eventName := "StakeUpdate"
+			event := new(stakinginfo.StakinginfoStakeUpdate)
+			found := false
+			for _, vLog := range receipt.Logs {
+				topic := vLog.Topics[0].Bytes()
+				selectedEvent := helper.EventByID(abiObject, topic)
+				if selectedEvent != nil && selectedEvent.Name == eventName {
+					if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+						return err
+					}
+
+					found = true
+					break
+				}
+			}
+
+			if !found {
+				return fmt.Errorf("Invalid tx for validator stake update")
 			}
 
 			msg := types.NewMsgStakeUpdate(
