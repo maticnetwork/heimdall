@@ -46,7 +46,7 @@ func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, er
 	}
 
 	var event statesender.StatesenderStateSynced
-	if err = helper.UnpackLog(rl.stateSenderAbi, event, "StateSynced", latestEvent); err != nil {
+	if err = helper.UnpackLog(rl.stateSenderAbi, &event, "StateSynced", latestEvent); err != nil {
 		return nil, err
 	}
 
@@ -101,7 +101,7 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 	}
 
 	var event statesender.StatesenderStateSynced
-	if err = helper.UnpackLog(rl.stateSenderAbi, event, "StateSynced", &events[0]); err != nil {
+	if err = helper.UnpackLog(rl.stateSenderAbi, &event, "StateSynced", &events[0]); err != nil {
 		return nil, err
 	}
 
