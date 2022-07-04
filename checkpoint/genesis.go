@@ -30,7 +30,10 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		for i, checkpoint := range data.Checkpoints {
 			checkpointIndex := uint64(i) + 1
 			if err := keeper.AddCheckpoint(ctx, checkpointIndex, checkpoint); err != nil {
-				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint", "error", err)
+				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint",
+					"checkpointIndex", checkpointIndex,
+					"checkpoint", checkpoint.String(),
+					"error", err)
 			}
 		}
 	}

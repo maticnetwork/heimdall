@@ -18,7 +18,6 @@ var purgeCmd = &cobra.Command{
 }
 
 func purgeQueue() {
-	var logger = helper.Logger.With("module", "bridge/cmd/")
 	dialer := helper.GetConfig().AmqpURL
 
 	// amqp dialer
@@ -33,7 +32,7 @@ func purgeQueue() {
 		panic(err)
 	}
 
-	if _, err := channel.QueuePurge(queue.QueueName, false); err != nil {
+	if _, err = channel.QueuePurge(queue.QueueName, false); err != nil {
 		logger.Error("purgeQueue | QueuePurge", "Error", err)
 	}
 }

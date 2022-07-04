@@ -154,7 +154,7 @@ func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	}
 }
 
-// startPolling starts polling
+// StartPolling starts polling
 func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
@@ -190,6 +190,7 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 
 			// cancel subscription
 			if bl.cancelSubscription != nil {
+				bl.Logger.Debug("Cancelling the subscription of listner")
 				bl.cancelSubscription()
 			}
 			return
@@ -209,5 +210,7 @@ func (bl *BaseListener) Stop() {
 	}
 
 	// cancel header process
-	bl.cancelHeaderProcess()
+	if bl.cancelHeaderProcess != nil {
+		bl.cancelHeaderProcess()
+	}
 }

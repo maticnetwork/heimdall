@@ -3,7 +3,6 @@ package processor
 import (
 	"encoding/json"
 
-	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -55,7 +54,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 	if err := helper.UnpackLog(fp.stakingInfoAbi, event, eventName, &vLog); err != nil {
 		fp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
-		if isOld, _ := fp.isOldTx(fp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index)); isOld {
+		if isOld, _ := fp.isOldTx(fp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.TopupEvent, event); isOld {
 			fp.Logger.Info("Ignoring task to send topup to heimdall as already processed",
 				"event", eventName,
 				"user", event.User,
@@ -80,39 +79,10 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), hmTypes.BytesToHeimdallAddress(event.User.Bytes()), sdk.NewIntFromBigInt(event.Fee), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
-		if err := fp.txBroadcaster.BroadcastToHeimdall(msg); err != nil {
-			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "error", err)
+		if err := fp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "msg", msg, "error", err)
 			return err
 		}
 	}
 	return nil
-}
-
-// isOldTx  checks if tx is already processed or not
-func (fp *FeeProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64) (bool, error) {
-	queryParam := map[string]interface{}{
-		"txhash":   txHash,
-		"logindex": logIndex,
-	}
-
-	endpoint := helper.GetHeimdallServerEndpoint(util.TopupTxStatusURL)
-	url, err := util.CreateURLWithQuery(endpoint, queryParam)
-	if err != nil {
-		fp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
-		return false, err
-	}
-
-	res, err := helper.FetchFromAPI(fp.cliCtx, url)
-	if err != nil {
-		fp.Logger.Error("Error fetching tx status", "url", url, "error", err)
-		return false, err
-	}
-
-	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
-		fp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
-		return false, err
-	}
-
-	return status, nil
 }

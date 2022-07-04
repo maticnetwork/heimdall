@@ -6,6 +6,8 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 	"net/url"
 	"os"
 	"strconv"
@@ -23,10 +25,14 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	clerktypes "github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
+
+type BridgeEvent string
 
 const (
 	AccountDetailsURL       = "/auth/accounts/%v"
@@ -47,15 +53,28 @@ const (
 	StakingTxStatusURL      = "/staking/isoldtx"
 	TopupTxStatusURL        = "/topup/isoldtx"
 	ClerkTxStatusURL        = "/clerk/isoldtx"
+	ClerkEventRecordURL     = "/clerk/event-record/%d"
 	LatestSlashInfoBytesURL = "/slashing/latest_slash_info_bytes"
 	TickSlashInfoListURL    = "/slashing/tick_slash_infos"
 	SlashingTxStatusURL     = "/slashing/isoldtx"
 	SlashingTickCountURL    = "/slashing/tick-count"
 
+	TendermintUnconfirmedTxsURL      = "/unconfirmed_txs"
+	TendermintUnconfirmedTxsCountURL = "/num_unconfirmed_txs"
+
 	TransactionTimeout      = 1 * time.Minute
 	CommitTimeout           = 2 * time.Minute
 	TaskDelayBetweenEachVal = 10 * time.Second
 	RetryTaskDelay          = 12 * time.Second
+	RetryStateSyncTaskDelay = 24 * time.Second
+
+	mempoolTxnCountDivisor = 1000
+
+	// Bridge event types
+	StakingEvent  BridgeEvent = "staking"
+	TopupEvent    BridgeEvent = "topup"
+	ClerkEvent    BridgeEvent = "clerk"
+	SlashingEvent BridgeEvent = "slashing"
 
 	BridgeDBFlag = "bridge-db"
 )
@@ -66,8 +85,20 @@ var loggerOnce sync.Once
 // Logger returns logger singleton instance
 func Logger() log.Logger {
 	loggerOnce.Do(func() {
+		defaultLevel := "info"
 		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
-		option, _ := log.AllowLevel(viper.GetString("log_level"))
+		logLevel := viper.GetString("log_level")
+		option, err := log.AllowLevel(logLevel)
+		if err != nil {
+			// cosmos sdk is using different style of log format
+			// and levels don't map well, config.toml
+			// see: https://github.com/cosmos/cosmos-sdk/pull/8072
+			logger.Error("Unable to parse logging level", "Error", err)
+			logger.Info("Using default log level")
+			logLevel = defaultLevel
+		}
+
+		option, _ = log.AllowLevel(logLevel)
 		logger = log.NewFilter(logger, option)
 
 		// set no-op logger if log level is not debug for machinery
@@ -136,20 +167,15 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 
 // CalculateTaskDelay calculates delay required for current validator to propose the tx
 // It solves for multiple validators sending same transaction.
-func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
+func CalculateTaskDelay(cliCtx cliContext.CLIContext, event interface{}) (bool, time.Duration) {
+	defer LogElapsedTimeForStateSyncedEvent(event, "CalculateTaskDelay", time.Now())
 	// calculate validator position
 	valPosition := 0
 	isCurrentValidator := false
-	response, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+
+	validatorSet, err := GetValidatorSet(cliCtx)
 	if err != nil {
-		logger.Error("Unable to send request for current validatorset", "url", CurrentValidatorSetURL, "error", err)
-		return isCurrentValidator, 0
-	}
-	// unmarshall data from buffer
-	var validatorSet hmtypes.ValidatorSet
-	err = json.Unmarshal(response.Result, &validatorSet)
-	if err != nil {
-		logger.Error("Error unmarshalling current validatorset data ", "error", err)
+		logger.Error("Error getting current validatorset data ", "error", err)
 		return isCurrentValidator, 0
 	}
 
@@ -162,8 +188,19 @@ func CalculateTaskDelay(cliCtx cliContext.CLIContext) (bool, time.Duration) {
 		}
 	}
 
+	// Change calculation later as per the discussion
+	// Currently it will multiply delay for every 1000 unconfirmed txns in mempool
+	// For example if the current default delay is 12 Seconds
+	// Then for upto 1000 txns it will stay as 12 only
+	// For 1000-2000 It will be 24 seconds
+	// For 2000-3000 it will be 36 seconds
+	// Basically for every 1000 txns it will increase the factor by 1.
+
+	mempoolFactor := GetUnconfirmedTxnCount(event) / mempoolTxnCountDivisor
+
 	// calculate delay
-	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal
+	taskDelay := time.Duration(valPosition) * TaskDelayBetweenEachVal * time.Duration(mempoolFactor+1)
+
 	return isCurrentValidator, taskDelay
 }
 
@@ -186,6 +223,7 @@ func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
 		return true, nil
 	}
+	logger.Debug("We are not the current proposer")
 
 	return false, nil
 }
@@ -212,8 +250,8 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 	return bytes.Equal(validator.Signer.Bytes(), helper.GetAddress())
 }
 
-//CreateURLWithQuery receives the uri and parameters in key value form
-//it will return the new url with the given query from the parameter
+// CreateURLWithQuery receives the uri and parameters in key value form
+// it will return the new url with the given query from the parameter
 func CreateURLWithQuery(uri string, param map[string]interface{}) (string, error) {
 	urlObj, err := url.Parse(uri)
 	if err != nil {
@@ -296,14 +334,13 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(ChainManagerParamsURL),
 	)
-
 	if err != nil {
 		logger.Error("Error fetching chainmanager params", "err", err)
 		return nil, err
 	}
 
 	var params chainManagerTypes.Params
-	if err := json.Unmarshal(response.Result, &params); err != nil {
+	if err = json.Unmarshal(response.Result, &params); err != nil {
 		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err
 	}
@@ -353,8 +390,8 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, e
 	return &checkpoint, nil
 }
 
-// GetlastestCheckpoint return last successful checkpoint
-func GetlastestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
+// GetLatestCheckpoint return last successful checkpoint
+func GetLatestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(LatestCheckpointURL),
@@ -366,7 +403,7 @@ func GetlastestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, er
 	}
 
 	var checkpoint hmtypes.Checkpoint
-	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
+	if err = json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
 		return nil, err
 	}
@@ -384,7 +421,7 @@ func AppendPrefix(signerPubKey []byte) []byte {
 	return signerPubKey
 }
 
-// GetValidatorNonce fethes validator nonce and height
+// GetValidatorNonce fetches validator nonce and height
 func GetValidatorNonce(cliCtx cliContext.CLIContext, validatorID uint64) (uint64, int64, error) {
 	var validator hmtypes.Validator
 
@@ -397,28 +434,117 @@ func GetValidatorNonce(cliCtx cliContext.CLIContext, validatorID uint64) (uint64
 		return 0, 0, err
 	}
 
-	err = json.Unmarshal(result.Result, &validator)
-	if err != nil {
+	if err = json.Unmarshal(result.Result, &validator); err != nil {
 		logger.Error("error unmarshalling validator data", "error", err)
 		return 0, 0, err
 	}
 
-	logger.Debug("Validator data recieved ", "validator", validator.String())
+	logger.Debug("Validator data received ", "validator", validator.String())
 
 	return validator.Nonce, result.Height, nil
 }
 
-// GetlastestCheckpoint return last successful checkpoint
+// GetValidatorSet fetches the current validator set
+func GetValidatorSet(cliCtx cliContext.CLIContext) (*hmtypes.ValidatorSet, error) {
+	response, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(CurrentValidatorSetURL))
+	if err != nil {
+		logger.Error("Unable to send request for current validatorset", "url", CurrentValidatorSetURL, "error", err)
+		return nil, err
+	}
+
+	var validatorSet hmtypes.ValidatorSet
+	if err = json.Unmarshal(response.Result, &validatorSet); err != nil {
+		logger.Error("Error unmarshalling current validatorset data ", "error", err)
+		return nil, err
+	}
+
+	return &validatorSet, nil
+}
+
+// GetBlockHeight return last successful checkpoint
 func GetBlockHeight(cliCtx cliContext.CLIContext) int64 {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
 		helper.GetHeimdallServerEndpoint(CountCheckpointURL),
 	)
-
 	if err != nil {
 		logger.Debug("Error fetching latest block height", "err", err)
 		return 0
 	}
 
 	return response.Height
+}
+
+// GetClerkEventRecord return last successful checkpoint
+func GetClerkEventRecord(cliCtx cliContext.CLIContext, stateId int64) (*clerktypes.EventRecord, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ClerkEventRecordURL, stateId)),
+	)
+	if err != nil {
+		logger.Error("Error fetching event record by state ID", "error", err)
+		return nil, err
+	}
+
+	var eventRecord clerktypes.EventRecord
+	if err = json.Unmarshal(response.Result, &eventRecord); err != nil {
+		logger.Error("Error unmarshalling event record", "error", err)
+		return nil, err
+	}
+
+	return &eventRecord, nil
+}
+
+func GetUnconfirmedTxnCount(event interface{}) int {
+	defer LogElapsedTimeForStateSyncedEvent(event, "GetUnconfirmedTxnCount", time.Now())
+
+	endpoint := helper.GetConfig().TendermintRPCUrl + TendermintUnconfirmedTxsCountURL
+	resp, err := helper.Client.Get(endpoint)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)
+		return 0
+	}
+
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		logger.Error("Error fetching mempool txs count", "error", err)
+		return 0
+	}
+
+	// a minimal response of the unconfirmed txs
+	var response TendermintUnconfirmedTxs
+
+	err = json.Unmarshal(body, &response)
+	if err != nil {
+		logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
+		return 0
+	}
+
+	count, _ := strconv.Atoi(response.Result.Total)
+
+	return count
+}
+
+// LogElapsedTimeForStateSyncedEvent logs useful info for StateSynced events
+func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, startTime time.Time) {
+	if event == nil {
+		return
+	}
+	timeElapsed := time.Now().Sub(startTime).Milliseconds()
+	var typedEvent statesender.StatesenderStateSynced
+
+	switch e := event.(type) {
+	case statesender.StatesenderStateSynced:
+		typedEvent = e
+	case *statesender.StatesenderStateSynced:
+		if e == nil {
+			return
+		}
+		typedEvent = *e
+	default:
+		return
+	}
+	logger.Info("StateSyncedEvent: "+functionName,
+		"stateSyncId", typedEvent.Id,
+		"timeElapsed", timeElapsed)
 }

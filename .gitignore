@@ -13,7 +13,5 @@ logs
 .idea
 .vscode
 
-helper/heimdall-params.go
-
 data/
 dist/

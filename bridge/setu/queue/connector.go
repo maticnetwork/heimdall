@@ -40,7 +40,7 @@ func NewQueueConnector(dialer string) *QueueConnector {
 
 	server, err := machinery.NewServer(cnf)
 	if err != nil {
-		// do something with the error
+		panic(err)
 	}
 
 	// queue connector
