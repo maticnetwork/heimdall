@@ -34,7 +34,7 @@ type bankBalance struct {
 }
 
 //swagger:parameters bankBalanceByAddress
-type borSpanListParam struct {
+type Address struct {
 
 	//Address of the account
 	//required:true

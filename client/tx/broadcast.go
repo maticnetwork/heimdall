@@ -24,6 +24,29 @@ type BroadcastReq struct {
 	Mode string          `json:"mode"`
 }
 
+//swagger:parameters txsBroadcast
+type txsBroadcast struct {
+
+	//Body
+	//required:true
+	//in:body
+	Input txsBroadcastInput `json:"input"`
+}
+
+type txsBroadcastInput struct {
+	Tx   StdTx  `json:"tx"`
+	Mode string `json:"mode"`
+}
+
+type StdTx struct {
+	Msg       interface{} `json:"msg"`
+	Signature string      `json:"signature"`
+	Memo      string      `json:"memo"`
+}
+
+// swagger:route POST /txs  txs txsBroadcast
+// It broadcast the signed transaction to the network.
+
 // BroadcastTxRequest implements a tx broadcasting handler that is responsible
 // for broadcasting a valid and signed tx to a full node. The tx can be
 // broadcasted via a sync|async|block mechanism.

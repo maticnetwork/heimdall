@@ -5,8 +5,7 @@
 //     title: Heimdall APIs
 //     Consumes:
 //     - application/json
-//	   Host:localhost:1317
-//     Produces:
+//	   Host:heimdall-api.polygon.technology
 //     - application/json
 //swagger:meta
 package rest

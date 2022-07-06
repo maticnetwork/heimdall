@@ -299,6 +299,47 @@ type VoteReq struct {
 	Validator hmTypes.ValidatorID     `json:"validator" yaml:"validator"` // id of the validator
 }
 
+//swagger:parameters govProposals
+type govProposalsParam struct {
+
+	//Body
+	//required:true
+	//in:body
+	Input govProposalsInput `json:"input"`
+}
+
+type govProposalsInput struct {
+	BaseReq        BaseReq `json:"base_req"`
+	Title          string  `json:"title"`
+	Description    string  `json:"description"`
+	ProposalType   string  `json:"proposal_type"`
+	Proposer       string  `json:"proposer"`
+	Validator      string  `json:"validator"`
+	InitialDeposit []coin  `json:"initial_deposit"`
+}
+
+type coin struct {
+	Denom  string `json:"denom"`
+	Amount string `json:"amount"`
+}
+
+type BaseReq struct {
+
+	//Address of the sender
+	//required:true
+	//in:body
+	From string `json:"address"`
+
+	//Chain ID of Heimdall
+	//required:true
+	//in:body
+	ChainID string `json:"chain_id"`
+}
+
+// swagger:route POST /gov/proposals gov govProposals
+// It returns the prepared msg for gov Proposals
+// responses:
+//   200: interface{}
 func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req PostProposalReq
@@ -323,6 +364,32 @@ func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }
+
+//swagger:parameters govProposalsDeposits
+type govProposalsDeposits struct {
+
+	//Proposal ID
+	//required:true
+	//in:path
+	ProposalID int64 `json:"proposal-id"`
+
+	//Body
+	//required:true
+	//in:body
+	Input govProposalsDepositsInput `json:"input"`
+}
+
+type govProposalsDepositsInput struct {
+	BaseReq   BaseReq `json:"base_req"`
+	Depositor string  `json:"depositor"`
+	Amount    []coin  `json:"amount"`
+	Validator int64   `json:"validator"`
+}
+
+// swagger:route POST /gov/proposals/{proposal-id}/deposits gov govProposalsDeposits
+// It returns the prepared msg for gov proposal deposit
+// responses:
+//   200: govProposalsDepositsResponse
 
 func depositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -361,6 +428,31 @@ func depositHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters govProposalsVotes
+type govProposalsVotesParam struct {
+
+	//Proposal Id
+	//required:true
+	//in:path
+	ProposalId int64 `json:"proposal-id"`
+
+	//Body
+	//required:true
+	//in:body
+	Input govProposalsVotesInput `json:"input"`
+}
+
+type govProposalsVotesInput struct {
+	BaseReq   BaseReq `json:"base_req"`
+	Voter     string  `json:"voter"`
+	Option    string  `json:"option"`
+	Validator int64   `json:"validator"`
+}
+
+// swagger:route POST /gov/proposals/{proposal-id}/votes gov govProposalsVotes
+// It returns the prepared msg for gov proposal votes
+// responses:
+//   200: interface{}
 func voteHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
@@ -833,7 +925,7 @@ func queryVotesOnProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-//swagger:parameters govProposals
+//swagger:parameters govProposalsGet
 type ProposalsQuery struct {
 
 	//Proposal Status [DepositPeriod,Passed,Rejected,Failed,VotingPeriod]
@@ -853,7 +945,7 @@ type ProposalsQuery struct {
 	Depositor int64 `json:"depositor"`
 }
 
-// swagger:route GET /gov/proposals gov govProposals
+// swagger:route GET /gov/proposals gov govProposalsGet
 // It returns the gov proposals
 // responses:
 //   200: govProposalsResponse
