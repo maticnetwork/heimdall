@@ -432,7 +432,7 @@ type slashingTickInfosParams struct {
 }
 
 // swagger:route GET /slashing/tick_slash_infos slashing slashingTickInfos
-// It returns the signing infos of the validator based on Id
+// It returns the tick slash infos
 // responses:
 //   200: slashingLatestInfosResponse
 // http request handler to query tick slashing info

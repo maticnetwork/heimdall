@@ -168,9 +168,16 @@ type txsGET struct {
 
 	//in:query
 	Height int64 `json:"height"`
+
+	//in:query
+	Page int64 `json:"page"`
+
+	//in:query
+	Limit int64 `json:"limit"`
 }
 
 // swagger:route GET /txs  txs txsGET
+//It returns the list of transaction based on page,limit and events specified.
 // QueryTxsRequestHandlerFn implements a REST handler that searches for transactions.
 // Genesis transactions are returned if the height parameter is set to zero,
 // otherwise the transactions are searched for by events.
@@ -282,6 +289,7 @@ type txsHashCommitProof struct {
 }
 
 // swagger:route GET /txs/{hash}/commit-proof  txs txsHashCommitProof
+//It returns the commit-proof for the transaction.
 // QueryCommitTxRequestHandlerFn implements a REST handler that queries vote, sigs and tx bytes committed block.
 func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -348,6 +356,7 @@ type txsSideTx struct {
 }
 
 // swagger:route GET /txs/{hash}/side-tx  txs txsSideTx
+//It returns the side-tx bytes
 // QuerySideTxRequestHandlerFn implements a REST handler that queries sigs, side-tx bytes committed block
 func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

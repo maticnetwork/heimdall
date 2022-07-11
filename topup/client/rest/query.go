@@ -220,7 +220,7 @@ func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 }
 
 // swagger:route GET /topup/dividend-account-root topup topupDividendAccountRoot
-// It returns the genesis accountroothash
+// It returns the genesis account roothash
 // responses:
 //   200: topupDividendAccountRootResponse
 // dividendAccountRootHandlerFn returns genesis accountroothash
@@ -267,7 +267,7 @@ func dividendAccountRootHandlerFn(
 }
 
 // swagger:route GET /topup/account-proof/{address} topup topupDividendAccountProofByAddress
-// It returns the Dividend Account information by User Address
+// It returns the account proof by User Address
 // responses:
 //   200: topupDividendAccountProofResponse
 // Returns Merkle path for dividendAccountID using dividend Account Tree

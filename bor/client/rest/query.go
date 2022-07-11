@@ -5,7 +5,7 @@
 //     title: Heimdall APIs
 //     Consumes:
 //     - application/json
-//	   Host:heimdall-api.polygon.technology
+//	   Host:localhost:1317
 //     - application/json
 //swagger:meta
 package rest
@@ -75,7 +75,7 @@ type borSpanList struct {
 	Result []span `json:"result"`
 }
 
-//It represents the spans
+//It represents the span
 //swagger:response borSpanResponse
 type borSpanResponse struct {
 	//in:body
@@ -243,7 +243,7 @@ type borSpanById struct {
 }
 
 // swagger:route GET /bor/span/{id} bor borSpanById
-// It returns the list of Bor Span
+// It returns the span based on ID
 // responses:
 //   200: borSpanResponse
 func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -303,7 +303,7 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // swagger:route GET /bor/latest-span bor borSpanLatest
-// It returns the list of Bor Span
+// It returns the latest-span
 // responses:
 //   200: borSpanResponse
 func latestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -354,7 +354,7 @@ type borPrepareNextSpanParam struct {
 }
 
 // swagger:route GET /bor/prepare-next-span bor borPrepareNextSpan
-// It returns the list of Bor Span
+// It returns the prepared next span
 // responses:
 //   200: borSpanResponse
 func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -489,7 +489,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 // swagger:route GET /bor/params bor borSpanParams
-// It returns the list of Bor Span
+// It returns the span parameters
 // responses:
 //   200: borSpanParamsResponse
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {

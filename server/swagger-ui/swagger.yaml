@@ -1,3 +1,5 @@
+
+
 swagger: "2.0"
 host: localhost:1317
 info:
@@ -6,10 +8,27 @@ info:
   version: 0.0.1
 schemes:
 - http
+
+
 basePath: /
 consumes:
 - application/json
 definitions:
+  BaseReq:
+    properties:
+      address:
+        description: Address of the sender
+        type: string
+        x-go-name: From
+      chain_id:
+        description: Chain ID of Heimdall
+        type: string
+        x-go-name: ChainID
+    required:
+    - address
+    - chain_id
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
   ContractAddresses:
     properties:
       BorChainId:
@@ -64,6 +83,42 @@ definitions:
         x-go-name: User
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  SendReqInput:
+    properties:
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainID
+      span_id:
+        format: uint64
+        type: integer
+        x-go-name: ID
+      start_block:
+        format: uint64
+        type: integer
+        x-go-name: StartBlock
+    required:
+    - base_req
+    - amount
+    - span_id
+    - start_block
+    - bor_chain_id
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  StdTx:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        type: object
+        x-go-name: Msg
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/client/tx
   TallyResult:
     properties:
       abstain:
@@ -274,6 +329,96 @@ definitions:
         x-go-name: Timestamp
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointAck:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/checkpointAckValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointAckInput:
+    properties:
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      end_block:
+        type: string
+        x-go-name: EndBlock
+      from:
+        type: string
+        x-go-name: From
+      header_block:
+        type: string
+        x-go-name: HeaderBlock
+      log_index:
+        type: string
+        x-go-name: LogIndex
+      proposer:
+        type: string
+        x-go-name: Proposer
+      root_Hash:
+        type: string
+        x-go-name: RootHash
+      start_block:
+        type: string
+        x-go-name: StartBlock
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    required:
+    - base_req
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointAckMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/checkpointAckVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointAckVal:
+    properties:
+      end_block:
+        type: string
+        x-go-name: EndBlock
+      from:
+        type: string
+        x-go-name: From
+      log_index:
+        type: string
+        x-go-name: LogIndex
+      number:
+        type: string
+        x-go-name: Number
+      proposer:
+        type: string
+        x-go-name: Proposer
+      root_Hash:
+        type: string
+        x-go-name: RootHash
+      start_block:
+        type: string
+        x-go-name: StartBlock
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointAckValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/checkpointAckMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
   checkpointCount:
     properties:
       result:
@@ -301,6 +446,119 @@ definitions:
           $ref: '#/definitions/checkpoint'
         type: array
         x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNew:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/checkpointNewValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNewInput:
+    properties:
+      account_root_hash:
+        type: string
+        x-go-name: AccountRootHash
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainID
+      end_block:
+        type: string
+        x-go-name: EndBlock
+      proposer:
+        type: string
+        x-go-name: Proposer
+      root_Hash:
+        type: string
+        x-go-name: RootHash
+      start_block:
+        type: string
+        x-go-name: StartBlock
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNewMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/checkpointNewVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNewVal:
+    properties:
+      account_root_hash:
+        type: string
+        x-go-name: AccountRootHash
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainId
+      end_block:
+        type: string
+        x-go-name: EndBlock
+      proposer:
+        type: string
+        x-go-name: Proposer
+      root_hash:
+        type: string
+        x-go-name: RootHash
+      start_block:
+        type: string
+        x-go-name: StartBlock
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNewValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/checkpointNewMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNoAck:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/checkpointNoAckValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNoAckMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/checkpointNoAckVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNoAckVal:
+    properties:
+      from:
+        type: string
+        x-go-name: From
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  checkpointNoAckValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/checkpointNoAckMsg'
+      signature:
+        type: string
+        x-go-name: Signature
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
   checkpointParams:
@@ -342,6 +600,91 @@ definitions:
         x-go-name: Result
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  clerkNewEvent:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/clerkNewEventValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  clerkNewEventInput:
+    properties:
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        type: string
+        x-go-name: BlockNumber
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainID
+      contract_address:
+        type: string
+        x-go-name: ContractAddress
+      data:
+        type: string
+        x-go-name: Data
+      id:
+        type: string
+        x-go-name: ID
+      log_index:
+        type: string
+        x-go-name: LogIndex
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  clerkNewEventMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/clerkNewEventVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  clerkNewEventVal:
+    properties:
+      block_number:
+        type: string
+        x-go-name: BlockNumber
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainID
+      contract_address:
+        type: string
+        x-go-name: ContractAddress
+      data:
+        type: string
+        x-go-name: Data
+      from:
+        type: string
+        x-go-name: From
+      id:
+        type: string
+        x-go-name: ID
+      log_index:
+        type: string
+        x-go-name: LogIndex
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
+  clerkNewEventValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/clerkNewEventMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/clerk/client/rest
   coin:
     properties:
       amount:
@@ -351,7 +694,7 @@ definitions:
         type: string
         x-go-name: Denom
     type: object
-    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
   content:
     properties:
       type:
@@ -491,6 +834,50 @@ definitions:
         $ref: '#/definitions/govParameterVoting'
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govProposalsDepositsInput:
+    properties:
+      amount:
+        items:
+          $ref: '#/definitions/coin'
+        type: array
+        x-go-name: Amount
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      depositor:
+        type: string
+        x-go-name: Depositor
+      validator:
+        format: int64
+        type: integer
+        x-go-name: Validator
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govProposalsInput:
+    properties:
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      description:
+        type: string
+        x-go-name: Description
+      initial_deposit:
+        items:
+          $ref: '#/definitions/coin'
+        type: array
+        x-go-name: InitialDeposit
+      proposal_type:
+        type: string
+        x-go-name: ProposalType
+      proposer:
+        type: string
+        x-go-name: Proposer
+      title:
+        type: string
+        x-go-name: Title
+      validator:
+        type: string
+        x-go-name: Validator
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
   govProposalsStructure:
     properties:
       height:
@@ -501,6 +888,22 @@ definitions:
           $ref: '#/definitions/proposal'
         type: array
         x-go-name: Result
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
+  govProposalsVotesInput:
+    properties:
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      option:
+        type: string
+        x-go-name: Option
+      validator:
+        format: int64
+        type: integer
+        x-go-name: Validator
+      voter:
+        type: string
+        x-go-name: Voter
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
   govProposerStructure:
@@ -560,6 +963,24 @@ definitions:
         $ref: '#/definitions/lastNoAck'
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/checkpoint/client/rest
+  msg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/val'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  output:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/value'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
   overview:
     properties:
       ack_count:
@@ -659,16 +1080,6 @@ definitions:
         x-go-name: Proposer
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
-  publicKey:
-    properties:
-      type:
-        type: string
-        x-go-name: Type
-      value:
-        type: string
-        x-go-name: Value
-    type: object
-    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
   slashingCountStructure:
     properties:
       height:
@@ -723,6 +1134,65 @@ definitions:
         x-go-name: Result
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingNewTickInput:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      proposer:
+        type: string
+        x-go-name: Proposer
+      slashing_info_bytes:
+        type: string
+        x-go-name: SlashingInfoBytes
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingNewTickMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/slashingNewTickVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingNewTickOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/slashingNewTickValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingNewTickVal:
+    properties:
+      id:
+        format: uint64
+        type: integer
+        x-go-name: ID
+      proposer:
+        type: string
+        x-go-name: Proposer
+      slashinginfobytes:
+        type: string
+        x-go-name: SlashingInfoBytes
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingNewTickValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/slashingNewTickMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
   slashingParametersStructure:
     properties:
       height:
@@ -755,6 +1225,158 @@ definitions:
         x-go-name: Height
       result:
         $ref: '#/definitions/slashingSigningInfo'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingTickAckInput:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      amount:
+        format: uint64
+        type: integer
+        x-go-name: Amount
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingTickAckMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/slashingTickAckVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingTickAckOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/slashingTickAckValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingTickAckVal:
+    properties:
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      from:
+        type: string
+        x-go-name: From
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      slashed_amount:
+        format: uint64
+        type: integer
+        x-go-name: Amount
+      tick_id:
+        format: uint64
+        type: integer
+        x-go-name: ID
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingTickAckValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/slashingTickAckMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingUnjailInput:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingUnjailMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/slashingUnjailVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingUnjailOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/slashingUnjailValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingUnjailVal:
+    properties:
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      from:
+        type: string
+        x-go-name: From
+      id:
+        format: uint64
+        type: integer
+        x-go-name: ID
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
+  slashingUnjailValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/slashingUnjailMsg'
+      signature:
+        type: string
+        x-go-name: Signature
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/slashing/client/rest
   span:
@@ -812,6 +1434,105 @@ definitions:
         x-go-name: Result
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
+  stakingNewValidatorInput:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      activationEpoch:
+        format: uint64
+        type: integer
+        x-go-name: ActivationEpoch
+      amount:
+        type: string
+        x-go-name: Amount
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      pubKey:
+        type: string
+        x-go-name: SignerPubKey
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingNewValidatorMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingNewValidatorVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingNewValidatorOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingNewValidatorValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingNewValidatorVal:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      activationEpoch:
+        format: uint64
+        type: integer
+        x-go-name: ActivationEpoch
+      amount:
+        type: string
+        x-go-name: Amount
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      from:
+        type: string
+        x-go-name: From
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      pubKey:
+        type: string
+        x-go-name: SignerPubKey
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingNewValidatorValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/stakingNewValidatorMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
   stakingProposerByTimeStructure:
     properties:
       height:
@@ -841,6 +1562,94 @@ definitions:
         $ref: '#/definitions/stakingTotalPower'
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorDeleteInput:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      deactivationEpoch:
+        format: uint64
+        type: integer
+        x-go-name: DeactivationEpoch
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorDeleteMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingValidatorDeleteVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorDeleteOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingValidatorDeleteValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorDeleteVal:
+    properties:
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      deactivationEpoch:
+        format: uint64
+        type: integer
+        x-go-name: DeactivationEpoch
+      from:
+        type: string
+        x-go-name: From
+      id:
+        format: uint64
+        type: integer
+        x-go-name: ID
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorDeleteValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/stakingValidatorDeleteMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
   stakingValidatorSetStructure:
     properties:
       height:
@@ -848,6 +1657,91 @@ definitions:
         x-go-name: Height
       result:
         $ref: '#/definitions/validators'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStakeUpdateInput:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      amount:
+        type: string
+        x-go-name: Amount
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStakeUpdateMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingValidatorStakeUpdateVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStakeUpdateOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingValidatorStakeUpdateValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStakeUpdateVal:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      amount:
+        type: string
+        x-go-name: Amount
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      from:
+        type: string
+        x-go-name: From
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorStakeUpdateValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/stakingValidatorStakeUpdateMsg'
+      signature:
+        type: string
+        x-go-name: Signature
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
   stakingValidatorStatus:
@@ -873,6 +1767,92 @@ definitions:
         x-go-name: Height
       result:
         $ref: '#/definitions/validator'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorUpdateInput:
+    properties:
+      ID:
+        format: uint64
+        type: integer
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      pubKey:
+        type: string
+        x-go-name: NewSignerPubKey
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorUpdateMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingValidatorUpdateVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorUpdateOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/stakingValidatorUpdateValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorUpdateVal:
+    properties:
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      from:
+        type: string
+        x-go-name: From
+      id:
+        format: uint64
+        type: integer
+        x-go-name: ID
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      nonce:
+        format: uint64
+        type: integer
+        x-go-name: Nonce
+      pub_key:
+        type: string
+        x-go-name: NewSignerPubKey
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
+  stakingValidatorUpdateValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/stakingValidatorUpdateMsg'
+      signature:
+        type: string
+        x-go-name: Signature
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
   topupDividendAccountProofStructure:
@@ -916,6 +1896,169 @@ definitions:
         $ref: '#/definitions/DividendAccount'
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupFeeInput:
+    properties:
+      base_req:
+        $ref: '#/definitions/BaseReq'
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      fee:
+        type: string
+        x-go-name: Fee
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+      user:
+        type: string
+        x-go-name: User
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupFeeMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/topupFeeVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupFeeOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/topupFeeValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupFeeVal:
+    properties:
+      block_number:
+        format: uint64
+        type: integer
+        x-go-name: BlockNumber
+      fee:
+        type: string
+        x-go-name: Fee
+      from_address:
+        type: string
+        x-go-name: FromAddress
+      log_index:
+        format: uint64
+        type: integer
+        x-go-name: LogIndex
+      tx_hash:
+        type: string
+        x-go-name: TxHash
+      user:
+        type: string
+        x-go-name: User
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupFeeValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/topupFeeMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupWithdrawInput:
+    properties:
+      amount:
+        type: string
+        x-go-name: Amount
+      base_req:
+        $ref: '#/definitions/BaseReq'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupWithdrawMsg:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/topupWithdrawVal'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupWithdrawOutput:
+    properties:
+      type:
+        type: string
+        x-go-name: Type
+      value:
+        $ref: '#/definitions/topupWithdrawValue'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupWithdrawVal:
+    properties:
+      amount:
+        type: string
+        x-go-name: Amount
+      from_address:
+        type: string
+        x-go-name: FromAddress
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  topupWithdrawValue:
+    properties:
+      memo:
+        type: string
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/topupWithdrawMsg'
+      signature:
+        type: string
+        x-go-name: Signature
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/topup/client/rest
+  txsBroadcastInput:
+    properties:
+      mode:
+        type: string
+        x-go-name: Mode
+      tx:
+        $ref: '#/definitions/StdTx'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/client/tx
+  txsEncodeInput:
+    properties:
+      tx:
+        $ref: '#/definitions/StdTx'
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/client/tx
+  val:
+    properties:
+      bor_chain_id:
+        type: string
+        x-go-name: BorChainId
+      end_block:
+        type: string
+        x-go-name: EndBlock
+      proposer:
+        type: string
+        x-go-name: Proposer
+      seed:
+        type: string
+        x-go-name: Seed
+      span_id:
+        type: string
+        x-go-name: SpanID
+      start_block:
+        type: string
+        x-go-name: StartBlock
+    type: object
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
   validator:
     properties:
       ID:
@@ -977,24 +2120,16 @@ definitions:
     x-go-package: _/Users/vaibhavjindal/heimdall/staking/client/rest
   value:
     properties:
-      account_number:
+      memo:
         type: string
-        x-go-name: AccountNumber
-      address:
+        x-go-name: Memo
+      msg:
+        $ref: '#/definitions/msg'
+      signature:
         type: string
-        x-go-name: Address
-      coins:
-        items:
-          $ref: '#/definitions/coin'
-        type: array
-        x-go-name: Coins
-      public_key:
-        $ref: '#/definitions/publicKey'
-      sequence:
-        type: string
-        x-go-name: Sequence
+        x-go-name: Signature
     type: object
-    x-go-package: _/Users/vaibhavjindal/heimdall/auth/client/rest
+    x-go-package: _/Users/vaibhavjindal/heimdall/bor/client/rest
   vote:
     properties:
       option:
@@ -1008,10 +2143,7 @@ definitions:
         x-go-name: Voter
     type: object
     x-go-package: _/Users/vaibhavjindal/heimdall/gov/client/rest
-host: localhost:1317
-info:
-  description: Package classification HiemdallRest API
-  version: 0.0.1
+
 paths:
   /auth/accounts/{address}:
     get:
@@ -1054,6 +2186,30 @@ paths:
       summary: It returns the auth parameters.
       tags:
       - auth
+  /bank/accounts/{address}/transfers:
+    post:
+      operationId: bankBalanceTransfer
+      parameters:
+      - description: Address of the account
+        in: path
+        name: address
+        required: true
+        type: string
+        x-go-name: Address
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/SendReqInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/bankBalanceTransferResponse'
+      summary: It returns the prepared msg for the transfer of balance from one account
+        to another.
+      tags:
+      - bank
   /bank/balances/{address}:
     get:
       description: It returns the matic balance of particular address
@@ -1077,7 +2233,7 @@ paths:
       - bank
   /bor/latest-span:
     get:
-      description: It returns the list of Bor Span
+      description: It returns the latest-span
       operationId: borSpanLatest
       parameters:
       - description: Block Height
@@ -1107,7 +2263,7 @@ paths:
       - bor
   /bor/params:
     get:
-      description: It returns the list of Bor Span
+      description: It returns the span parameters
       operationId: borSpanParams
       parameters:
       - description: Block Height
@@ -1122,7 +2278,7 @@ paths:
       - bor
   /bor/prepare-next-span:
     get:
-      description: It returns the list of Bor Span
+      description: It returns the prepared next span
       operationId: borPrepareNextSpan
       parameters:
       - description: Start Block
@@ -1156,9 +2312,26 @@ paths:
           $ref: '#/responses/borSpanResponse'
       tags:
       - bor
+  /bor/propose-span:
+    post:
+      description: It returns the prepared msg for proposing the span
+      operationId: borProposeSpan
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/SendReqInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/borProposeSpanResponse'
+      tags:
+      - bor
   /bor/span/{id}:
     get:
-      description: It returns the list of Bor Span
+      description: It returns the span based on ID
       operationId: borSpanById
       parameters:
       - description: Id number of the span
@@ -1222,6 +2395,57 @@ paths:
           $ref: '#/responses/chainManagerParamsResponse'
       tags:
       - chain-manager
+  /checkpoint/ack:
+    post:
+      description: It returns the prepared msg for ack checkpoint
+      operationId: checkpointAck
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/checkpointAckInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/checkpointAckResponse'
+      tags:
+      - checkpoint
+  /checkpoint/new:
+    post:
+      description: It returns the prepared msg for new checkpoint
+      operationId: checkpointNew
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/checkpointNewInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/checkpointNewResponse'
+      tags:
+      - checkpoint
+  /checkpoint/no-ack:
+    post:
+      description: It returns the prepared msg for no-ack checkpoint
+      operationId: checkpointNoAck
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/checkpointAckInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/checkpointNoAckResponse'
+      tags:
+      - checkpoint
   /checkpoints/{id}:
     get:
       description: It returns the checkpoint by ID
@@ -1379,7 +2603,7 @@ paths:
       - checkpoint
   /clerk/event-record/{recordID}:
     get:
-      description: It returns the clerk events list
+      description: It returns the clerk event based on ID
       operationId: clerkEventById
       parameters:
       - description: ID of the checkpoint
@@ -1453,7 +2677,24 @@ paths:
       responses:
         "200":
           $ref: '#/responses/clerkIsOldTxResponse'
-      summary: It checks for wheter the transaction is old or new.
+      summary: It checks for whether the transaction is old or new.
+      tags:
+      - clerk
+  /clerk/records:
+    post:
+      description: It returns the prepared msg for new clerk event
+      operationId: clerkNewEvent
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/clerkNewEventInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/clerkNewEventResponse'
       tags:
       - clerk
   /gov/parameters/deposit:
@@ -1492,7 +2733,7 @@ paths:
   /gov/proposals:
     get:
       description: It returns the gov proposals
-      operationId: govProposals
+      operationId: govProposalsGet
       parameters:
       - description: Proposal Status [DepositPeriod,Passed,Rejected,Failed,VotingPeriod]
         in: query
@@ -1517,6 +2758,22 @@ paths:
         name: depositor
         type: integer
         x-go-name: Depositor
+      responses:
+        "200":
+          $ref: '#/responses/govProposalsResponse'
+      tags:
+      - gov
+    post:
+      description: It returns the prepared msg for gov Proposals
+      operationId: govProposals
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/govProposalsInput'
+        x-go-name: Input
       - description: Block Height
         in: query
         name: height
@@ -1524,7 +2781,7 @@ paths:
         x-go-name: Height
       responses:
         "200":
-          $ref: '#/responses/govProposalsResponse'
+          $ref: '#/responses/interface%7B%7D'
       tags:
       - gov
   /gov/proposals/{proposal-id}:
@@ -1559,6 +2816,29 @@ paths:
       responses:
         "200":
           $ref: '#/responses/govDepositsResponse'
+      tags:
+      - gov
+    post:
+      description: It returns the prepared msg for gov proposal deposit
+      operationId: govProposalsDeposits
+      parameters:
+      - description: Proposal ID
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalID
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/govProposalsDepositsInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/govProposalsDepositsResponse'
       tags:
       - gov
   /gov/proposals/{proposal-id}/deposits/{depositor}:
@@ -1635,6 +2915,29 @@ paths:
       responses:
         "200":
           $ref: '#/responses/govVotesResponse'
+      tags:
+      - gov
+    post:
+      description: It returns the prepared msg for gov proposal votes
+      operationId: govProposalsVotes
+      parameters:
+      - description: Proposal Id
+        format: int64
+        in: path
+        name: proposal-id
+        required: true
+        type: integer
+        x-go-name: ProposalId
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/govProposalsVotesInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/interface%7B%7D'
       tags:
       - gov
   /gov/proposals/{proposal-id}/votes/{voter}:
@@ -1764,6 +3067,23 @@ paths:
       summary: It returns the signing infos.
       tags:
       - slashing
+  /slashing/tick:
+    post:
+      description: It returns the prepared msg for new tick
+      operationId: slashingNewTick
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/slashingNewTickInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/slashingNewTickResponse'
+      tags:
+      - slashing
   /slashing/tick-count:
     get:
       description: It returns the slashing tick count
@@ -1781,7 +3101,7 @@ paths:
       - slashing
   /slashing/tick_slash_infos:
     get:
-      description: It returns the signing infos of the validator based on Id
+      description: It returns the tick slash infos
       operationId: slashingTickInfos
       parameters:
       - description: Page number
@@ -1850,6 +3170,29 @@ paths:
       responses:
         "200":
           $ref: '#/responses/slashingSigningInfoByIdResponse'
+      tags:
+      - slashing
+  /slashing/validators/{validatorAddr}/unjail:
+    post:
+      description: It returns the prepared msg for unjail
+      operationId: slashingUnjail
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/slashingUnjailInput'
+        x-go-name: Input
+      - description: Validator Address
+        in: path
+        name: validatorAddr
+        required: true
+        type: string
+        x-go-name: ValidatorAddr
+      responses:
+        "200":
+          $ref: '#/responses/slashingUnjailResponse'
       tags:
       - slashing
   /staking/current-proposer:
@@ -2011,9 +3354,75 @@ paths:
           $ref: '#/responses/stakingValidatorResponse'
       tags:
       - staking
+  /staking/validators:
+    delete:
+      description: It returns the prepared msg for deleting the Validator
+      operationId: stakingValidatorDelete
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/stakingValidatorDeleteInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorDeleteResponse'
+      tags:
+      - staking
+    post:
+      description: It returns the prepared msg for new validator joining
+      operationId: stakingNewValidator
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/stakingNewValidatorInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/stakingNewValidatorResponse'
+      tags:
+      - staking
+    put:
+      description: It returns the prepared msg for updating the validator
+      operationId: stakingValidatorUpdate
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/stakingValidatorUpdateInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorUpdateResponse'
+      tags:
+      - staking
+  /staking/validators/stake:
+    put:
+      description: It returns the prepared msg for updating the validator's stake
+      operationId: stakingValidatorStakeUpdate
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/stakingValidatorStakeUpdateInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/stakingValidatorStakeUpdateResponse'
+      tags:
+      - staking
   /topup/account-proof/{address}:
     get:
-      description: It returns the Dividend Account information by User Address
+      description: It returns the account proof by User Address
       operationId: topupDividendAccountProofByAddress
       parameters:
       - description: Address
@@ -2055,7 +3464,7 @@ paths:
       - topup
   /topup/dividend-account-root:
     get:
-      description: It returns the genesis accountroothash
+      description: It returns the genesis account roothash
       operationId: topupDividendAccountRoot
       parameters:
       - description: Block Height
@@ -2089,6 +3498,23 @@ paths:
           $ref: '#/responses/topupDividendAccountResponse'
       tags:
       - topup
+  /topup/fee:
+    post:
+      description: It returns the prepared msg for topup fee
+      operationId: topupFee
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/topupFeeInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/topupFeeResponse'
+      tags:
+      - topup
   /topup/isoldtx:
     get:
       description: It returns whether the transaction is old
@@ -2117,8 +3543,137 @@ paths:
           $ref: '#/responses/topupIsOldTxResponse'
       tags:
       - topup
-produces:
-- application/json
+  /topup/withdraw:
+    post:
+      description: It returns the prepared msg for topup withdraw
+      operationId: topupWithdraw
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/topupWithdrawInput'
+        x-go-name: Input
+      responses:
+        "200":
+          $ref: '#/responses/topupWithdrawResponse'
+      tags:
+      - topup
+  /txs:
+    get:
+      description: |-
+        QueryTxsRequestHandlerFn implements a REST handler that searches for transactions.
+        Genesis transactions are returned if the height parameter is set to zero,
+        otherwise the transactions are searched for by events.
+      operationId: txsGET
+      parameters:
+      - format: int64
+        in: query
+        name: height
+        type: integer
+        x-go-name: Height
+      - format: int64
+        in: query
+        name: page
+        type: integer
+        x-go-name: Page
+      - format: int64
+        in: query
+        name: limit
+        type: integer
+        x-go-name: Limit
+      summary: It returns the list of transaction based on page,limit and events specified.
+      tags:
+      - txs
+    post:
+      operationId: txsBroadcast
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/txsBroadcastInput'
+        x-go-name: Input
+      summary: It broadcast the signed transaction to the network.
+      tags:
+      - txs
+  /txs/{hash}:
+    get:
+      description: |-
+        QueryTxRequestHandlerFn implements a REST handler that queries a transaction
+        by hash in a committed block.
+      operationId: txsByHash
+      parameters:
+      - description: Hash
+        in: path
+        name: hash
+        required: true
+        type: string
+        x-go-name: Hash
+      - description: Height
+        format: int64
+        in: query
+        name: height
+        type: integer
+        x-go-name: Height
+      summary: It returns the transaction by hash.
+      tags:
+      - txs
+  /txs/{hash}/commit-proof:
+    get:
+      description: QueryCommitTxRequestHandlerFn implements a REST handler that queries
+        vote, sigs and tx bytes committed block.
+      operationId: txsHashCommitProof
+      parameters:
+      - in: path
+        name: hash
+        required: true
+        type: string
+        x-go-name: Hash
+      - format: int64
+        in: query
+        name: height
+        type: integer
+        x-go-name: Height
+      summary: It returns the commit-proof for the transaction.
+      tags:
+      - txs
+  /txs/{hash}/side-tx:
+    get:
+      description: |-
+        It returns the side-tx bytes
+        QuerySideTxRequestHandlerFn implements a REST handler that queries sigs, side-tx bytes committed block
+      operationId: txsSideTx
+      parameters:
+      - in: path
+        name: hash
+        required: true
+        type: string
+        x-go-name: Hash
+      - format: int64
+        in: query
+        name: height
+        type: integer
+        x-go-name: Height
+      tags:
+      - txs
+  /txs/encode:
+    post:
+      description: It Encode the transaction
+      operationId: txsEncode
+      parameters:
+      - description: Body
+        in: body
+        name: input
+        required: true
+        schema:
+          $ref: '#/definitions/txsEncodeInput'
+        x-go-name: Input
+      responses: {}
+      tags:
+      - txs
 responses:
   authAccountResponse:
     description: ""
@@ -2136,10 +3691,18 @@ responses:
     description: It represents the bank balance of particluar account
     schema:
       $ref: '#/definitions/bankBalanceByAddress'
+  bankBalanceTransferResponse:
+    description: It represents transfer msg.
+    schema:
+      $ref: '#/definitions/output'
   borNextSpanSeedRespose:
     description: It represents the next span seed
     schema:
       $ref: '#/definitions/spanSeed'
+  borProposeSpanResponse:
+    description: It represents Propose Span msg.
+    schema:
+      $ref: '#/definitions/output'
   borSpanListResponse:
     description: It represents the list of spans
     schema:
@@ -2149,13 +3712,17 @@ responses:
     schema:
       $ref: '#/definitions/borSpanParams'
   borSpanResponse:
-    description: It represents the spans
+    description: It represents the span
     schema:
       $ref: '#/definitions/borSpan'
   chainManagerParamsResponse:
     description: It represents the bank balance of particluar account
     schema:
       $ref: '#/definitions/chainManagerParams'
+  checkpointAckResponse:
+    description: It represents Propose Span msg.
+    schema:
+      $ref: '#/definitions/checkpointAck'
   checkpointCountResponse:
     description: It represents the checkpoint count
     schema:
@@ -2164,6 +3731,14 @@ responses:
     description: It represents the checkpoint list
     schema:
       $ref: '#/definitions/checkpointListStructure'
+  checkpointNewResponse:
+    description: It represents New checkpoint msg.
+    schema:
+      $ref: '#/definitions/checkpointNew'
+  checkpointNoAckResponse:
+    description: It represents Propose Span msg.
+    schema:
+      $ref: '#/definitions/checkpointNoAck'
   checkpointParamsResponse:
     description: It represents the checkpoint parameters
     schema:
@@ -2188,6 +3763,10 @@ responses:
     description: ""
     schema:
       $ref: '#/definitions/isOldTx'
+  clerkNewEventResponse:
+    description: It represents New checkpoint msg.
+    schema:
+      $ref: '#/definitions/clerkNewEvent'
   govDepositResponse:
     description: It represents the vote response
     schema:
@@ -2264,6 +3843,10 @@ responses:
     description: ""
     schema:
       $ref: '#/definitions/slashingLatestInfosStructure'
+  slashingNewTickResponse:
+    description: It represents Propose Span msg.
+    schema:
+      $ref: '#/definitions/slashingNewTickOutput'
   slashingParametersResponse:
     description: It represents the slashing parameters
     schema:
@@ -2272,10 +3855,22 @@ responses:
     description: ""
     schema:
       $ref: '#/definitions/slashingSigningInfoByIdStructure'
+  slashingTickAckResponse:
+    description: It represents Propose Span msg.
+    schema:
+      $ref: '#/definitions/slashingTickAckOutput'
+  slashingUnjailResponse:
+    description: It represents unjail msg.
+    schema:
+      $ref: '#/definitions/slashingUnjailOutput'
   stakingIsOldTxResponse:
     description: ""
     schema:
       $ref: '#/definitions/isOldTx'
+  stakingNewValidatorResponse:
+    description: It represents Propose Span msg.
+    schema:
+      $ref: '#/definitions/stakingNewValidatorOutput'
   stakingProposerByTimeResponse:
     description: It represents the proposer based on time
     schema:
@@ -2284,6 +3879,10 @@ responses:
     description: It represents the staking total power
     schema:
       $ref: '#/definitions/stakingTotalPowerStructure'
+  stakingValidatorDeleteResponse:
+    description: It represents validator deleting msg
+    schema:
+      $ref: '#/definitions/stakingValidatorDeleteOutput'
   stakingValidatorResponse:
     description: It represents the signer by address or id
     schema:
@@ -2292,10 +3891,18 @@ responses:
     description: It represents the validator set
     schema:
       $ref: '#/definitions/stakingValidatorSetStructure'
+  stakingValidatorStakeUpdateResponse:
+    description: It represents validator stake update msg
+    schema:
+      $ref: '#/definitions/stakingValidatorStakeUpdateOutput'
   stakingValidatorStatusResponse:
     description: It represents the validor status
     schema:
       $ref: '#/definitions/stakingValidatorStatusStructure'
+  stakingValidatorUpdateResponse:
+    description: It represents validator update msg.
+    schema:
+      $ref: '#/definitions/stakingValidatorUpdateOutput'
   topupDividendAccountProofResponse:
     description: ""
     schema:
@@ -2312,8 +3919,19 @@ responses:
     description: ""
     schema:
       $ref: '#/definitions/topupDividendAccountRootStructure'
+  topupFeeResponse:
+    description: It represents topup fee msg.
+    schema:
+      $ref: '#/definitions/topupFeeOutput'
   topupIsOldTxResponse:
     description: ""
     schema:
       $ref: '#/definitions/isOldTx'
+  topupWithdrawResponse:
+    description: It represents topup withdraw msg.
+    schema:
+      $ref: '#/definitions/topupWithdrawOutput'
+
+
+
 

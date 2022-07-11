@@ -83,7 +83,7 @@ type clerkEventID struct {
 }
 
 // swagger:route GET /clerk/event-record/{recordID} clerk clerkEventById
-// It returns the clerk events list
+// It returns the clerk event based on ID
 // responses:
 //   200: clerkEventByIdResponse
 // recordHandlerFn returns record by record id
@@ -117,7 +117,6 @@ func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		hmRest.PostProcessResponse(w, cliCtx, res)
 	}
 }
-
 
 //swagger:parameters clerkEventList
 type clerkEventListParams struct {
@@ -241,7 +240,7 @@ type clerkTxParams struct {
 }
 
 // swagger:route GET /clerk/isoldtx clerk clerkIsOldTx
-// It checks for wheter the transaction is old or new.
+// It checks for whether the transaction is old or new.
 // responses:
 //   200: clerkIsOldTxResponse
 // DepositTxStatusHandlerFn returns deposit tx status information
