@@ -8,6 +8,7 @@
 //	   Host:localhost:1317
 //     - application/json
 //swagger:meta
+//nolint
 package rest
 
 import (

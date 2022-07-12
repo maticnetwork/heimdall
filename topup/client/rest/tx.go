@@ -1,3 +1,4 @@
+//nolint
 package rest
 
 import (
