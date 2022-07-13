@@ -27,6 +27,20 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+const (
+	RootChainABI     = "RootChainABI"
+	StakingInfoABI   = "StakingInfoABI"
+	ValidatorSetABI  = "ValidatorSetABI"
+	StateReceiverABI = "StateReceiverABI"
+	StateSenderABI   = "StateSenderABI"
+	StakeManagerABI  = "StakeManagerABI"
+	SlashManagerABI  = "SlashManagerABI"
+	MaticTokenABI    = "MaticTokenABI"
+)
+
+//var ContractsABIsMap map[string]*abi.ABI
+var ContractsABIsMap = make(map[string]*abi.ABI)
+
 // IContractCaller represents contract caller
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
@@ -125,43 +139,10 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MaticChainRPC = GetMaticRPCClient()
 	contractCallerObj.ReceiptCache, _ = NewLru(1000)
 
-	//
-	// ABIs
-	//
-
-	if contractCallerObj.RootChainABI, err = getABI(rootchain.RootchainABI); err != nil {
-		return
-	}
-
-	if contractCallerObj.StakingInfoABI, err = getABI(stakinginfo.StakinginfoABI); err != nil {
-		return
-	}
-
-	if contractCallerObj.ValidatorSetABI, err = getABI(validatorset.ValidatorsetABI); err != nil {
-		return
-	}
-
-	if contractCallerObj.StateReceiverABI, err = getABI(statereceiver.StatereceiverABI); err != nil {
-		return
-	}
-
-	if contractCallerObj.StateSenderABI, err = getABI(statesender.StatesenderABI); err != nil {
-		return
-	}
-
-	if contractCallerObj.StakeManagerABI, err = getABI(stakemanager.StakemanagerABI); err != nil {
-		return
-	}
-
-	if contractCallerObj.SlashManagerABI, err = getABI(slashmanager.SlashmanagerABI); err != nil {
-		return
-	}
-
-	if contractCallerObj.MaticTokenABI, err = getABI(erc20.Erc20ABI); err != nil {
-		return
-	}
-
+	// listeners and processors instance cache (address->ABI)
 	contractCallerObj.ContractInstanceCache = make(map[common.Address]interface{})
+	// package global cache (string->ABI)
+	PopulateABIs(&contractCallerObj)
 
 	return
 }
@@ -268,16 +249,6 @@ func (c *ContractCaller) GetMaticTokenInstance(maticTokenAddress common.Address)
 	}
 
 	return contractInstance.(*erc20.Erc20), nil
-}
-
-// NewLru create instance of lru
-func NewLru(size int) (*lru.Cache, error) {
-	lruObj, err := lru.New(size)
-	if err != nil {
-		return nil, err
-	}
-
-	return lruObj, nil
 }
 
 // GetHeaderInfo get header info from checkpoint number
@@ -834,14 +805,6 @@ func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Cli
 	return client.TransactionReceipt(ctx, txHash)
 }
 
-//
-// private abi methods
-//
-
-func getABI(data string) (abi.ABI, error) {
-	return abi.JSON(strings.NewReader(data))
-}
-
 // GetCheckpointSign returns sigs input of committed checkpoint tranasction
 func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
@@ -861,4 +824,100 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	abi := c.RootChainABI
 
 	return UnpackSigAndVotes(payload, abi)
+}
+
+// utility and helper methods
+
+// NewLru create instance of lru
+func NewLru(size int) (*lru.Cache, error) {
+	lruObj, err := lru.New(size)
+	if err != nil {
+		return nil, err
+	}
+
+	return lruObj, nil
+}
+
+// PopulateABIs fills the package level cache for contracts' ABIs
+// It uses ABIs' names instead of contracts addresses, as the latter might not be available at init time
+// This reduces the number of calls to json decode methods made by the contract caller
+func PopulateABIs(contractCallerObj *ContractCaller) {
+	var err error
+
+	if ContractsABIsMap[RootChainABI] == nil {
+		if contractCallerObj.RootChainABI, err = getABI(rootchain.RootchainABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[RootChainABI] = &contractCallerObj.RootChainABI
+			Logger.Info("ABI initialized", "name", RootChainABI)
+		}
+	}
+
+	if ContractsABIsMap[StakingInfoABI] == nil {
+		if contractCallerObj.StakingInfoABI, err = getABI(stakinginfo.StakinginfoABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[StakingInfoABI] = &contractCallerObj.StakingInfoABI
+			Logger.Info("ABI initialized", "name", StakingInfoABI)
+		}
+	}
+
+	if ContractsABIsMap[ValidatorSetABI] == nil {
+		if contractCallerObj.ValidatorSetABI, err = getABI(validatorset.ValidatorsetABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[ValidatorSetABI] = &contractCallerObj.ValidatorSetABI
+			Logger.Info("ABI initialized", "name", ValidatorSetABI)
+		}
+	}
+
+	if ContractsABIsMap[StateReceiverABI] == nil {
+		if contractCallerObj.StateReceiverABI, err = getABI(statereceiver.StatereceiverABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[StateReceiverABI] = &contractCallerObj.StateReceiverABI
+			Logger.Info("ABI initialized", "name", StateReceiverABI)
+		}
+	}
+
+	if ContractsABIsMap[StateSenderABI] == nil {
+		if contractCallerObj.StateSenderABI, err = getABI(statesender.StatesenderABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[StateSenderABI] = &contractCallerObj.StateSenderABI
+			Logger.Info("ABI initialized", "name", StateSenderABI)
+		}
+	}
+
+	if ContractsABIsMap[StakeManagerABI] == nil {
+		if contractCallerObj.StakeManagerABI, err = getABI(stakemanager.StakemanagerABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[StakeManagerABI] = &contractCallerObj.StakeManagerABI
+			Logger.Info("ABI initialized", "name", StakeManagerABI)
+		}
+	}
+
+	if ContractsABIsMap[SlashManagerABI] == nil {
+		if contractCallerObj.SlashManagerABI, err = getABI(slashmanager.SlashmanagerABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[SlashManagerABI] = &contractCallerObj.SlashManagerABI
+			Logger.Info("ABI initialized", "name", SlashManagerABI)
+		}
+	}
+
+	if ContractsABIsMap[MaticTokenABI] == nil {
+		if contractCallerObj.MaticTokenABI, err = getABI(erc20.Erc20ABI); err != nil {
+			return
+		} else {
+			ContractsABIsMap[MaticTokenABI] = &contractCallerObj.MaticTokenABI
+			Logger.Info("ABI initialized", "name", MaticTokenABI)
+		}
+	}
+}
+
+// getABI returns the contract's ABI struct from on its JSON representation
+func getABI(data string) (abi.ABI, error) {
+	return abi.JSON(strings.NewReader(data))
 }

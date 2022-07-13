@@ -10,14 +10,15 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/viper"
+	"github.com/stretchr/testify/assert"
 )
 
 const (
 	testTendermintNode = "tcp://localhost:26657"
 )
 
-//  Test - to decode signers from checkpoint sigs data
-func TestCheckpointsigs(t *testing.T) {
+//  TestCheckpointSigs decodes signers from checkpoint sigs data
+func TestCheckpointSigs(t *testing.T) {
 	t.Parallel()
 
 	viper.Set(TendermintNodeFlag, testTendermintNode)
@@ -47,7 +48,7 @@ func TestCheckpointsigs(t *testing.T) {
 	fmt.Println("signers list", signerList)
 }
 
-// CalculateSignerRewards calculates new rewards for signers
+// FetchSigners fetches the signers' list
 func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 	const sigLength = 65
 
@@ -67,4 +68,53 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 	}
 
 	return signersList, nil
+}
+
+//  TestPopulateABIs tests that package level ABIs cache works as expected
+//  by not invoking json methods after contracts ABIs' init
+func TestPopulateABIs(t *testing.T) {
+	t.Parallel()
+
+	viper.Set(TendermintNodeFlag, testTendermintNode)
+	viper.Set("log_level", "info")
+	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
+	assert.True(t, len(ContractsABIsMap) == 0)
+
+	fmt.Println("Should create a new contract caller and populate its ABIs by decoding json")
+
+	contractCallerObjFirst, err := NewContractCaller()
+	if err != nil {
+		fmt.Println("Error creating contract caller")
+	}
+
+	assert.Equalf(t, ContractsABIsMap[RootChainABI], &contractCallerObjFirst.RootChainABI,
+		"values for %s not equals", RootChainABI)
+	assert.Equalf(t, ContractsABIsMap[StakingInfoABI], &contractCallerObjFirst.StakingInfoABI,
+		"values for %s not equals", StakingInfoABI)
+	assert.Equalf(t, ContractsABIsMap[StateReceiverABI], &contractCallerObjFirst.StateReceiverABI,
+		"values for %s not equals", StateReceiverABI)
+	assert.Equalf(t, ContractsABIsMap[StateSenderABI], &contractCallerObjFirst.StateSenderABI,
+		"values for %s not equals", StateSenderABI)
+	assert.Equalf(t, ContractsABIsMap[StakeManagerABI], &contractCallerObjFirst.StakeManagerABI,
+		"values for %s not equals", StakeManagerABI)
+	assert.Equalf(t, ContractsABIsMap[SlashManagerABI], &contractCallerObjFirst.SlashManagerABI,
+		"values for %s not equals", SlashManagerABI)
+	assert.Equalf(t, ContractsABIsMap[MaticTokenABI], &contractCallerObjFirst.MaticTokenABI,
+		"values for %s not equals", MaticTokenABI)
+
+	fmt.Println("Should create a new contract caller and populate its ABIs by using cached map")
+
+	contractCallerObjSecond, err := NewContractCaller()
+	if err != nil {
+		fmt.Println("Error creating contract caller")
+	}
+
+	assert.Emptyf(t, &contractCallerObjSecond.RootChainABI, "contract caller %s not empty", RootChainABI)
+	assert.Emptyf(t, &contractCallerObjSecond.StakingInfoABI, "contract caller %s not empty", StakingInfoABI)
+	assert.Emptyf(t, &contractCallerObjSecond.StateReceiverABI, "contract caller %s not empty", StateReceiverABI)
+	assert.Emptyf(t, &contractCallerObjSecond.StateSenderABI, "contract caller %s not empty", StateSenderABI)
+	assert.Emptyf(t, &contractCallerObjSecond.StakeManagerABI, "contract caller %s not empty", StakeManagerABI)
+	assert.Emptyf(t, &contractCallerObjSecond.SlashManagerABI, "contract caller %s not empty", SlashManagerABI)
+	assert.Emptyf(t, &contractCallerObjSecond.MaticTokenABI, "contract caller %s not empty", MaticTokenABI)
 }
