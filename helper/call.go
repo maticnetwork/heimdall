@@ -847,6 +847,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[RootChainABI] == nil {
 		if contractCallerObj.RootChainABI, err = getABI(rootchain.RootchainABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", RootChainABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[RootChainABI] = &contractCallerObj.RootChainABI
@@ -858,6 +859,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[StakingInfoABI] == nil {
 		if contractCallerObj.StakingInfoABI, err = getABI(stakinginfo.StakinginfoABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", StakingInfoABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[StakingInfoABI] = &contractCallerObj.StakingInfoABI
@@ -869,6 +871,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[ValidatorSetABI] == nil {
 		if contractCallerObj.ValidatorSetABI, err = getABI(validatorset.ValidatorsetABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", ValidatorSetABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[ValidatorSetABI] = &contractCallerObj.ValidatorSetABI
@@ -880,6 +883,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[StateReceiverABI] == nil {
 		if contractCallerObj.StateReceiverABI, err = getABI(statereceiver.StatereceiverABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", StateReceiverABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[StateReceiverABI] = &contractCallerObj.StateReceiverABI
@@ -891,6 +895,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[StateSenderABI] == nil {
 		if contractCallerObj.StateSenderABI, err = getABI(statesender.StatesenderABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", StateSenderABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[StateSenderABI] = &contractCallerObj.StateSenderABI
@@ -902,6 +907,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[StakeManagerABI] == nil {
 		if contractCallerObj.StakeManagerABI, err = getABI(stakemanager.StakemanagerABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", StakeManagerABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[StakeManagerABI] = &contractCallerObj.StakeManagerABI
@@ -913,6 +919,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[SlashManagerABI] == nil {
 		if contractCallerObj.SlashManagerABI, err = getABI(slashmanager.SlashmanagerABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", SlashManagerABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[SlashManagerABI] = &contractCallerObj.SlashManagerABI
@@ -924,6 +931,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 
 	if ContractsABIsMap[MaticTokenABI] == nil {
 		if contractCallerObj.MaticTokenABI, err = getABI(erc20.Erc20ABI); err != nil {
+			Logger.Error("Error while getting ABI for contract caller", "name", MaticTokenABI, "error", err)
 			return
 		} else {
 			ContractsABIsMap[MaticTokenABI] = &contractCallerObj.MaticTokenABI

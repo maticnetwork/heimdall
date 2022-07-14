@@ -156,5 +156,4 @@ func TestPopulateABIs(t *testing.T) {
 		"values for %s not equals", SlashManagerABI)
 	assert.Equalf(t, ContractsABIsMap[MaticTokenABI], &contractCallerObjSecond.MaticTokenABI,
 		"values for %s not equals", MaticTokenABI)
-
 }
