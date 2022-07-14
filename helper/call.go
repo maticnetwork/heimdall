@@ -142,9 +142,11 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	// listeners and processors instance cache (address->ABI)
 	contractCallerObj.ContractInstanceCache = make(map[common.Address]interface{})
 	// package global cache (string->ABI)
-	populateABIs(&contractCallerObj)
+	if err = populateABIs(&contractCallerObj); err != nil {
+		return contractCallerObj, err
+	}
 
-	return
+	return contractCallerObj, nil
 }
 
 // GetRootChainInstance returns RootChain contract instance for selected base chain
@@ -842,13 +844,13 @@ func NewLru(size int) (*lru.Cache, error) {
 // When called the first time, ContractsABIsMap will be filled and getABI method won't be invoked the next times
 // This reduces the number of calls to json decode methods made by the contract caller
 // It uses ABIs' names instead of contracts addresses, as the latter might not be available at init time
-func populateABIs(contractCallerObj *ContractCaller) {
+func populateABIs(contractCallerObj *ContractCaller) error {
 	var err error
 
 	if ContractsABIsMap[RootChainABI] == nil {
 		if contractCallerObj.RootChainABI, err = getABI(rootchain.RootchainABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", RootChainABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[RootChainABI] = &contractCallerObj.RootChainABI
 			Logger.Debug("ABI initialized", "name", RootChainABI)
@@ -860,7 +862,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	if ContractsABIsMap[StakingInfoABI] == nil {
 		if contractCallerObj.StakingInfoABI, err = getABI(stakinginfo.StakinginfoABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", StakingInfoABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[StakingInfoABI] = &contractCallerObj.StakingInfoABI
 			Logger.Debug("ABI initialized", "name", StakingInfoABI)
@@ -872,7 +874,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	if ContractsABIsMap[ValidatorSetABI] == nil {
 		if contractCallerObj.ValidatorSetABI, err = getABI(validatorset.ValidatorsetABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", ValidatorSetABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[ValidatorSetABI] = &contractCallerObj.ValidatorSetABI
 			Logger.Debug("ABI initialized", "name", ValidatorSetABI)
@@ -884,7 +886,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	if ContractsABIsMap[StateReceiverABI] == nil {
 		if contractCallerObj.StateReceiverABI, err = getABI(statereceiver.StatereceiverABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", StateReceiverABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[StateReceiverABI] = &contractCallerObj.StateReceiverABI
 			Logger.Debug("ABI initialized", "name", StateReceiverABI)
@@ -896,7 +898,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	if ContractsABIsMap[StateSenderABI] == nil {
 		if contractCallerObj.StateSenderABI, err = getABI(statesender.StatesenderABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", StateSenderABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[StateSenderABI] = &contractCallerObj.StateSenderABI
 			Logger.Debug("ABI initialized", "name", StateSenderABI)
@@ -908,7 +910,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	if ContractsABIsMap[StakeManagerABI] == nil {
 		if contractCallerObj.StakeManagerABI, err = getABI(stakemanager.StakemanagerABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", StakeManagerABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[StakeManagerABI] = &contractCallerObj.StakeManagerABI
 			Logger.Debug("ABI initialized", "name", StakeManagerABI)
@@ -920,7 +922,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	if ContractsABIsMap[SlashManagerABI] == nil {
 		if contractCallerObj.SlashManagerABI, err = getABI(slashmanager.SlashmanagerABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", SlashManagerABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[SlashManagerABI] = &contractCallerObj.SlashManagerABI
 			Logger.Debug("ABI initialized", "name", SlashManagerABI)
@@ -932,7 +934,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	if ContractsABIsMap[MaticTokenABI] == nil {
 		if contractCallerObj.MaticTokenABI, err = getABI(erc20.Erc20ABI); err != nil {
 			Logger.Error("Error while getting ABI for contract caller", "name", MaticTokenABI, "error", err)
-			return
+			return err
 		} else {
 			ContractsABIsMap[MaticTokenABI] = &contractCallerObj.MaticTokenABI
 			Logger.Debug("ABI initialized", "name", MaticTokenABI)
@@ -940,6 +942,7 @@ func populateABIs(contractCallerObj *ContractCaller) {
 	} else {
 		contractCallerObj.MaticTokenABI = *ContractsABIsMap[MaticTokenABI]
 	}
+	return nil
 }
 
 // getABI returns the contract's ABI struct from on its JSON representation
