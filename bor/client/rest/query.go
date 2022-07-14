@@ -1,3 +1,14 @@
+// Package classification HiemdallRest API
+//     Schemes: http
+//     BasePath: /
+//     Version: 0.0.1
+//     title: Heimdall APIs
+//     Consumes:
+//     - application/json
+//	   Host:localhost:1317
+//     - application/json
+//swagger:meta
+//nolint
 package rest
 
 import (
@@ -25,6 +36,92 @@ type HeimdallSpanResultWithHeight struct {
 	Result []byte
 }
 
+type validator struct {
+	ID           int    `json:"ID"`
+	StartEpoch   int    `json:"startEpoch"`
+	EndEpoch     int    `json:"endEpoch"`
+	Nonce        int    `json:"nonce"`
+	Power        int    `json:"power"`
+	PubKey       string `json:"pubKey"`
+	Signer       string `json:"signer"`
+	Last_Updated string `json:"last_updated"`
+	Jailed       bool   `json:"jailed"`
+	Accum        int    `json:"accum"`
+}
+
+type span struct {
+	SpanID     int `json:"span_id"`
+	StartBlock int `json:"start_block"`
+	EndBlock   int `json:"end_block"`
+	//in:body
+	ValidatorSet      validatorSet `json:"validator_set"`
+	SelectedProducers []validator  `json:"selected_producer"`
+	BorChainId        string       `json:"bor_chain_id"`
+}
+
+type validatorSet struct {
+	Validators []validator `json:"validators"`
+	Proposer   validator   `json:"Proposer"`
+}
+
+//It represents the list of spans
+//swagger:response borSpanListResponse
+type borSpanListResponse struct {
+	//in:body
+	Output borSpanList `json:"output"`
+}
+
+type borSpanList struct {
+	Height string `json:"height"`
+	Result []span `json:"result"`
+}
+
+//It represents the span
+//swagger:response borSpanResponse
+type borSpanResponse struct {
+	//in:body
+	Output borSpan `json:"output"`
+}
+
+type borSpan struct {
+	Height string `json:"height"`
+	Result span   `json:"result"`
+}
+
+//It represents the bor span parameters
+//swagger:response borSpanParamsResponse
+type borSpanParamsResponse struct {
+	//in:body
+	Output borSpanParams `json:"output"`
+}
+
+type borSpanParams struct {
+	Height string     `json:"height"`
+	Result spanParams `json:"result"`
+}
+
+type spanParams struct {
+
+	//type:integer
+	SprintDuration int64 `json:"sprint_duration"`
+	//type:integer
+	SpanDuration int64 `json:"span_duration"`
+	//type:integer
+	ProducerCount int64 `json:"producer_count"`
+}
+
+//It represents the next span seed
+//swagger:response borNextSpanSeedRespose
+type borNextSpanSeedRespose struct {
+	//in:body
+	Output spanSeed `json:"output"`
+}
+
+type spanSeed struct {
+	Height string `json:"height"`
+	Result string `json:"result"`
+}
+
 var spanOverrides map[uint64]*HeimdallSpanResultWithHeight = nil
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
@@ -35,6 +132,11 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bor/next-span-seed", fetchNextSpanSeedHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/params", paramsHandlerFn(cliCtx)).Methods("GET")
 }
+
+// swagger:route GET /bor/next-span-seed bor borNextSpanSeed
+// It returns the seed for the next span
+// responses:
+//   200: borNextSpanSeedRespose
 
 func fetchNextSpanSeedHandlerFn(
 	cliCtx context.CLIContext,
@@ -66,6 +168,26 @@ func fetchNextSpanSeedHandlerFn(
 	}
 }
 
+//swagger:parameters borSpanList
+type borSpanListParam struct {
+
+	//Page Number
+	//required:true
+	//type:integer
+	//in:query
+	Page int `json:"page"`
+
+	//Limit
+	//required:true
+	//type:integer
+	//in:query
+	Limit int `json:"limit"`
+}
+
+// swagger:route GET /bor/span/list bor borSpanList
+// It returns the list of Bor Span
+// responses:
+//   200: borSpanListResponse
 func spanListHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -111,6 +233,20 @@ func spanListHandlerFn(
 	}
 }
 
+//swagger:parameters borSpanById
+type borSpanById struct {
+
+	//Id number of the span
+	//required:true
+	//type:integer
+	//in:path
+	Id int `json:"id"`
+}
+
+// swagger:route GET /bor/span/{id} bor borSpanById
+// It returns the span based on ID
+// responses:
+//   200: borSpanResponse
 func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -167,6 +303,10 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /bor/latest-span bor borSpanLatest
+// It returns the latest-span
+// responses:
+//   200: borSpanResponse
 func latestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -192,6 +332,32 @@ func latestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters borPrepareNextSpan
+type borPrepareNextSpanParam struct {
+
+	//Start Block
+	//required:true
+	//type:integer
+	//in:query
+	StartBlock int `json:"start_block"`
+
+	//Span ID of the span
+	//required:true
+	//type:integer
+	//in:query
+	SpanId int `json:"span_id"`
+
+	//Chain ID of the network
+	//required:true
+	//type:integer
+	//in:query
+	ChainId int `json:"chain_id"`
+}
+
+// swagger:route GET /bor/prepare-next-span bor borPrepareNextSpan
+// It returns the prepared next span
+// responses:
+//   200: borSpanResponse
 func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -323,7 +489,10 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-// HTTP request handler to query the bor params values
+// swagger:route GET /bor/params bor borSpanParams
+// It returns the span parameters
+// responses:
+//   200: borSpanParamsResponse
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -373,4 +542,12 @@ func loadSpanOverrides() {
 			Result: span.Result,
 		}
 	}
+}
+
+//swagger:parameters borSpanList borSpanById borPrepareNextSpan borSpanLatest borSpanParams borNextSpanSeed
+type Height struct {
+
+	//Block Height
+	//in:query
+	Height string `json:"height"`
 }

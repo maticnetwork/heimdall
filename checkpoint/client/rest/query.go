@@ -1,3 +1,4 @@
+//nolint
 package rest
 
 import (
@@ -21,6 +22,146 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
+//It represents the checkpoint parameters
+//swagger:response checkpointParamsResponse
+type checkpointParamsResponse struct {
+	//in:body
+	Output checkpointParams `json:"output"`
+}
+
+type checkpointParams struct {
+	Height string `json:"height"`
+	Result params `json:"result"`
+}
+
+type params struct {
+	CheckpointBufferTime    int `json:"checkpoint_buffer_time"`
+	AvgCheckpointLength     int `json:"avg_checkpoint_length"`
+	MaxCheckPoint           int `json:"max_checkpoint_length"`
+	ChildChainBlockInterval int `json:"child_chain_block_interval"`
+}
+
+//It represents the checkpoint
+//swagger:response checkpointResponse
+type checkpointResponse struct {
+	//in:body
+	Output checkpointStructure `json:"output"`
+}
+type checkpointStructure struct {
+	Height string     `json:"height"`
+	Result checkpoint `json:"result"`
+}
+
+type checkpoint struct {
+	Proposer   string `json:"proposer"`
+	StartBlock int64  `json:"start_block"`
+	EndBlock   int64  `json:"end_block"`
+	RootHash   string `json:"root_hash"`
+	BorChainId string `json:"bor_chain_id"`
+	Timestamp  int64  `json:"timestamp"`
+}
+
+//It represents the checkpoint prepare
+//swagger:response checkpointPrepareResponse
+type checkpointPrepareResponse struct {
+	//in:body
+	Output checkpointParams `json:"output"`
+}
+
+type checkpointPrepareStructure struct {
+	Height string            `json:"height"`
+	Result prepareCheckpoint `json:"result"`
+}
+
+type prepareCheckpoint struct {
+	Proposer   string `json:"proposer"`
+	StartBlock int64  `json:"start_block"`
+	EndBlock   int64  `json:"end_block"`
+	RootHash   string `json:"root_hash"`
+}
+
+//It represents the checkpoint list
+//swagger:response checkpointListResponse
+type checkpointListResponse struct {
+	//in:body
+	Output checkpointListStructure `json:"output"`
+}
+
+type checkpointListStructure struct {
+	Height string       `json:"height"`
+	Result []checkpoint `json:"result"`
+}
+
+//It represents the last-no-ack
+//swagger:response lastNoAckResponse
+type lastNoAckResponse struct {
+	//in:body
+	Output lastNoAckResponseStructure `json:"output"`
+}
+
+type lastNoAckResponseStructure struct {
+	Height string    `json:"height"`
+	Result lastNoAck `json:"result"`
+}
+
+type lastNoAck struct {
+	Result int64 `json:"result"`
+}
+
+//It represents the checkpoint count
+//swagger:response checkpointCountResponse
+type checkpointCountResponse struct {
+	//in:body
+	Output checkpointCountResponseStructure `json:"output"`
+}
+
+type checkpointCountResponseStructure struct {
+	Height string          `json:"height"`
+	Result checkpointCount `json:"result"`
+}
+
+type checkpointCount struct {
+	Result int64 `json:"result"`
+}
+
+//It represents the overview
+//swagger:response overviewResponse
+type overviewResponse struct {
+	//in:body
+	Output overviewResponseStructure `json:"output"`
+}
+
+type overviewResponseStructure struct {
+	Height string   `json:"height"`
+	Result overview `json:"result"`
+}
+
+type overview struct {
+	AckCount         int64        `json:"ack_count"`
+	CheckpointBuffer checkpoint   `json:"checkpoint_buffer"`
+	ValidatorCount   int64        `json:"validator_Count"`
+	ValidatorSet     validatorSet `json:"validator_set"`
+	LastNoAckTime    string       `json:"last_noack_time"`
+}
+
+type validatorSet struct {
+	Validators []validator `json:"validators"`
+	Proposer   validator   `json:"proposer"`
+}
+
+type validator struct {
+	ID           int    `json:"ID"`
+	StartEpoch   int    `json:"startEpoch"`
+	EndEpoch     int    `json:"endEpoch"`
+	Nonce        int    `json:"nonce"`
+	Power        int    `json:"power"`
+	PubKey       string `json:"pubKey"`
+	Signer       string `json:"signer"`
+	Last_Updated string `json:"last_updated"`
+	Jailed       bool   `json:"jailed"`
+	Accum        int    `json:"accum"`
+}
+
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/checkpoints/params", paramsHandlerFn(cliCtx)).Methods("GET")
 
@@ -41,6 +182,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/checkpoints/{number}", checkpointByNumberHandlerFunc(cliCtx)).Methods("GET")
 }
 
+// swagger:route GET /checkpoints/params checkpoint checkpointParams
+// It returns the checkpoint parameters
+// responses:
+//   200: checkpointParamsResponse
 // HTTP request handler to query the auth params values
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +207,10 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /checkpoints/buffer checkpoint checkpointBuffer
+// It returns the checkpoint buffer
+// responses:
+//   200: checkpointResponse
 func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -81,6 +230,10 @@ func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /checkpoints/count checkpoint checkpointCount
+// It returns the checkpoint counts
+// responses:
+//   200: checkpointCountResponse
 func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -120,6 +273,24 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters checkpointPrepare
+type checkpointPrepareParams struct {
+
+	//Start Block
+	//required:true
+	//in:query
+	Start int64 `json:"start"`
+
+	//End Block
+	//required:true
+	//in:query
+	End int64 `json:"end"`
+}
+
+// swagger:route GET /checkpoints/prepare checkpoint checkpointPrepare
+// It returns the prepared checkpoint
+// responses:
+//   200: checkpointPrepareResponse
 func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -232,6 +403,10 @@ type HeaderBlockResult struct {
 	EndBlock   uint64                  `json:"endBlock"`
 }
 
+// swagger:route GET /checkpoints/last-no-ack checkpoint checkpointLastNoAck
+// It returns the last no ack
+// responses:
+//   200: lastNoAckResponse
 func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -277,6 +452,10 @@ type stateDump struct {
 	LastNoACK        time.Time            `json:"last_noack_time"`
 }
 
+// swagger:route GET /overview checkpoint overview
+// It returns the complete overview
+// responses:
+//   200: overviewResponse
 // get all state-dump of heimdall
 func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -378,6 +557,10 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// swagger:route GET /checkpoints/latest checkpoint checkpointLatest
+// It returns the last checkpoint from the store
+// responses:
+//   200: checkpointResponse
 // get last checkpoint from store
 func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -473,6 +656,19 @@ type CheckpointWithID struct {
 	TimeStamp  uint64                  `json:"timestamp"`
 }
 
+//swagger:parameters checkpointById
+type checkpointID struct {
+
+	//ID of the checkpoint
+	//required:true
+	//in:path
+	Id int64 `json:"id"`
+}
+
+// swagger:route GET /checkpoints/{id} checkpoint checkpointById
+// It returns the checkpoint by ID
+// responses:
+//   200: checkpointResponse
 // get checkpoint by checkppint number from store
 func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -534,6 +730,24 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters checkpointList
+type checkpointListParams struct {
+
+	//Page number
+	//required:true
+	//in:query
+	Page int64 `json:"page"`
+
+	//Limit per page
+	//required:true
+	//in:query
+	Limit int64 `json:"limit"`
+}
+
+// swagger:route GET /checkpoints/list checkpoint checkpointList
+// It returns the checkpoints list
+// responses:
+//   200: checkpointListResponse
 func checkpointListhandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -579,4 +793,12 @@ func checkpointListhandlerFn(
 
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
+}
+
+//swagger:parameters checkpointList checkpointById checkpointLatest overview checkpointLastNoAck checkpointPrepare checkpointCount checkpointParams checkpointBuffer
+type Height struct {
+
+	//Block Height
+	//in:query
+	Height string `json:"height"`
 }
