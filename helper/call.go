@@ -142,7 +142,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	// listeners and processors instance cache (address->ABI)
 	contractCallerObj.ContractInstanceCache = make(map[common.Address]interface{})
 	// package global cache (string->ABI)
-	PopulateABIs(&contractCallerObj)
+	populateABIs(&contractCallerObj)
 
 	return
 }
@@ -838,10 +838,10 @@ func NewLru(size int) (*lru.Cache, error) {
 	return lruObj, nil
 }
 
-// PopulateABIs fills the package level cache for contracts' ABIs
+// populateABIs fills the package level cache for contracts' ABIs
 // It uses ABIs' names instead of contracts addresses, as the latter might not be available at init time
 // This reduces the number of calls to json decode methods made by the contract caller
-func PopulateABIs(contractCallerObj *ContractCaller) {
+func populateABIs(contractCallerObj *ContractCaller) {
 	var err error
 
 	if ContractsABIsMap[RootChainABI] == nil {
@@ -849,7 +849,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[RootChainABI] = &contractCallerObj.RootChainABI
-			Logger.Info("ABI initialized", "name", RootChainABI)
+			Logger.Debug("ABI initialized", "name", RootChainABI)
 		}
 	}
 
@@ -858,7 +858,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[StakingInfoABI] = &contractCallerObj.StakingInfoABI
-			Logger.Info("ABI initialized", "name", StakingInfoABI)
+			Logger.Debug("ABI initialized", "name", StakingInfoABI)
 		}
 	}
 
@@ -867,7 +867,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[ValidatorSetABI] = &contractCallerObj.ValidatorSetABI
-			Logger.Info("ABI initialized", "name", ValidatorSetABI)
+			Logger.Debug("ABI initialized", "name", ValidatorSetABI)
 		}
 	}
 
@@ -876,7 +876,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[StateReceiverABI] = &contractCallerObj.StateReceiverABI
-			Logger.Info("ABI initialized", "name", StateReceiverABI)
+			Logger.Debug("ABI initialized", "name", StateReceiverABI)
 		}
 	}
 
@@ -885,7 +885,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[StateSenderABI] = &contractCallerObj.StateSenderABI
-			Logger.Info("ABI initialized", "name", StateSenderABI)
+			Logger.Debug("ABI initialized", "name", StateSenderABI)
 		}
 	}
 
@@ -894,7 +894,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[StakeManagerABI] = &contractCallerObj.StakeManagerABI
-			Logger.Info("ABI initialized", "name", StakeManagerABI)
+			Logger.Debug("ABI initialized", "name", StakeManagerABI)
 		}
 	}
 
@@ -903,7 +903,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[SlashManagerABI] = &contractCallerObj.SlashManagerABI
-			Logger.Info("ABI initialized", "name", SlashManagerABI)
+			Logger.Debug("ABI initialized", "name", SlashManagerABI)
 		}
 	}
 
@@ -912,7 +912,7 @@ func PopulateABIs(contractCallerObj *ContractCaller) {
 			return
 		} else {
 			ContractsABIsMap[MaticTokenABI] = &contractCallerObj.MaticTokenABI
-			Logger.Info("ABI initialized", "name", MaticTokenABI)
+			Logger.Debug("ABI initialized", "name", MaticTokenABI)
 		}
 	}
 }
