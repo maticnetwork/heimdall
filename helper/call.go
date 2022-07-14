@@ -942,6 +942,7 @@ func populateABIs(contractCallerObj *ContractCaller) error {
 	} else {
 		contractCallerObj.MaticTokenABI = *ContractsABIsMap[MaticTokenABI]
 	}
+
 	return nil
 }
 
