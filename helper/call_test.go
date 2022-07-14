@@ -94,6 +94,7 @@ func TestPopulateABIs(t *testing.T) {
 	_, found = ContractsABIsMap[SlashManagerABI]
 	assert.False(t, found)
 	_, found = ContractsABIsMap[MaticTokenABI]
+	assert.False(t, found)
 
 	fmt.Println("Should create a new contract caller and populate its ABIs by decoding json")
 
@@ -132,6 +133,7 @@ func TestPopulateABIs(t *testing.T) {
 	_, found = ContractsABIsMap[SlashManagerABI]
 	assert.True(t, found)
 	_, found = ContractsABIsMap[MaticTokenABI]
+	assert.True(t, found)
 
 	fmt.Println("Should create a new contract caller and populate its ABIs by using cached map")
 
@@ -139,14 +141,6 @@ func TestPopulateABIs(t *testing.T) {
 	if err != nil {
 		fmt.Println("Error creating contract caller")
 	}
-
-	//assert.Emptyf(t, &contractCallerObjSecond.RootChainABI, "contract caller %s not empty", RootChainABI)
-	//assert.Emptyf(t, &contractCallerObjSecond.StakingInfoABI, "contract caller %s not empty", StakingInfoABI)
-	//assert.Emptyf(t, &contractCallerObjSecond.StateReceiverABI, "contract caller %s not empty", StateReceiverABI)
-	//assert.Emptyf(t, &contractCallerObjSecond.StateSenderABI, "contract caller %s not empty", StateSenderABI)
-	//assert.Emptyf(t, &contractCallerObjSecond.StakeManagerABI, "contract caller %s not empty", StakeManagerABI)
-	//assert.Emptyf(t, &contractCallerObjSecond.SlashManagerABI, "contract caller %s not empty", SlashManagerABI)
-	//assert.Emptyf(t, &contractCallerObjSecond.MaticTokenABI, "contract caller %s not empty", MaticTokenABI)
 
 	assert.Equalf(t, ContractsABIsMap[RootChainABI], &contractCallerObjSecond.RootChainABI,
 		"values for %s not equals", RootChainABI)

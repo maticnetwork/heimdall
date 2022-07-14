@@ -38,7 +38,7 @@ const (
 	MaticTokenABI    = "MaticTokenABI"
 )
 
-//var ContractsABIsMap map[string]*abi.ABI
+// ContractsABIsMap is a cached map holding the ABIs of the contracts
 var ContractsABIsMap = make(map[string]*abi.ABI)
 
 // IContractCaller represents contract caller
@@ -839,8 +839,9 @@ func NewLru(size int) (*lru.Cache, error) {
 }
 
 // populateABIs fills the package level cache for contracts' ABIs
-// It uses ABIs' names instead of contracts addresses, as the latter might not be available at init time
+// When called the first time, ContractsABIsMap will be filled and getABI method won't be invoked the next times
 // This reduces the number of calls to json decode methods made by the contract caller
+// It uses ABIs' names instead of contracts addresses, as the latter might not be available at init time
 func populateABIs(contractCallerObj *ContractCaller) {
 	var err error
 
