@@ -79,7 +79,21 @@ func TestPopulateABIs(t *testing.T) {
 	viper.Set("log_level", "info")
 	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 
+	fmt.Println("ABIs map should be empty and all ABIs not found")
 	assert.True(t, len(ContractsABIsMap) == 0)
+	_, found := ContractsABIsMap[RootChainABI]
+	assert.False(t, found)
+	_, found = ContractsABIsMap[StakingInfoABI]
+	assert.False(t, found)
+	_, found = ContractsABIsMap[StateReceiverABI]
+	assert.False(t, found)
+	_, found = ContractsABIsMap[StateSenderABI]
+	assert.False(t, found)
+	_, found = ContractsABIsMap[StakeManagerABI]
+	assert.False(t, found)
+	_, found = ContractsABIsMap[SlashManagerABI]
+	assert.False(t, found)
+	_, found = ContractsABIsMap[MaticTokenABI]
 
 	fmt.Println("Should create a new contract caller and populate its ABIs by decoding json")
 
@@ -103,6 +117,22 @@ func TestPopulateABIs(t *testing.T) {
 	assert.Equalf(t, ContractsABIsMap[MaticTokenABI], &contractCallerObjFirst.MaticTokenABI,
 		"values for %s not equals", MaticTokenABI)
 
+	fmt.Println("ABIs map should not be empty and all ABIs found")
+	assert.True(t, len(ContractsABIsMap) == 8)
+	_, found = ContractsABIsMap[RootChainABI]
+	assert.True(t, found)
+	_, found = ContractsABIsMap[StakingInfoABI]
+	assert.True(t, found)
+	_, found = ContractsABIsMap[StateReceiverABI]
+	assert.True(t, found)
+	_, found = ContractsABIsMap[StateSenderABI]
+	assert.True(t, found)
+	_, found = ContractsABIsMap[StakeManagerABI]
+	assert.True(t, found)
+	_, found = ContractsABIsMap[SlashManagerABI]
+	assert.True(t, found)
+	_, found = ContractsABIsMap[MaticTokenABI]
+
 	fmt.Println("Should create a new contract caller and populate its ABIs by using cached map")
 
 	contractCallerObjSecond, err := NewContractCaller()
@@ -110,11 +140,27 @@ func TestPopulateABIs(t *testing.T) {
 		fmt.Println("Error creating contract caller")
 	}
 
-	assert.Emptyf(t, &contractCallerObjSecond.RootChainABI, "contract caller %s not empty", RootChainABI)
-	assert.Emptyf(t, &contractCallerObjSecond.StakingInfoABI, "contract caller %s not empty", StakingInfoABI)
-	assert.Emptyf(t, &contractCallerObjSecond.StateReceiverABI, "contract caller %s not empty", StateReceiverABI)
-	assert.Emptyf(t, &contractCallerObjSecond.StateSenderABI, "contract caller %s not empty", StateSenderABI)
-	assert.Emptyf(t, &contractCallerObjSecond.StakeManagerABI, "contract caller %s not empty", StakeManagerABI)
-	assert.Emptyf(t, &contractCallerObjSecond.SlashManagerABI, "contract caller %s not empty", SlashManagerABI)
-	assert.Emptyf(t, &contractCallerObjSecond.MaticTokenABI, "contract caller %s not empty", MaticTokenABI)
+	//assert.Emptyf(t, &contractCallerObjSecond.RootChainABI, "contract caller %s not empty", RootChainABI)
+	//assert.Emptyf(t, &contractCallerObjSecond.StakingInfoABI, "contract caller %s not empty", StakingInfoABI)
+	//assert.Emptyf(t, &contractCallerObjSecond.StateReceiverABI, "contract caller %s not empty", StateReceiverABI)
+	//assert.Emptyf(t, &contractCallerObjSecond.StateSenderABI, "contract caller %s not empty", StateSenderABI)
+	//assert.Emptyf(t, &contractCallerObjSecond.StakeManagerABI, "contract caller %s not empty", StakeManagerABI)
+	//assert.Emptyf(t, &contractCallerObjSecond.SlashManagerABI, "contract caller %s not empty", SlashManagerABI)
+	//assert.Emptyf(t, &contractCallerObjSecond.MaticTokenABI, "contract caller %s not empty", MaticTokenABI)
+
+	assert.Equalf(t, ContractsABIsMap[RootChainABI], &contractCallerObjSecond.RootChainABI,
+		"values for %s not equals", RootChainABI)
+	assert.Equalf(t, ContractsABIsMap[StakingInfoABI], &contractCallerObjSecond.StakingInfoABI,
+		"values for %s not equals", StakingInfoABI)
+	assert.Equalf(t, ContractsABIsMap[StateReceiverABI], &contractCallerObjSecond.StateReceiverABI,
+		"values for %s not equals", StateReceiverABI)
+	assert.Equalf(t, ContractsABIsMap[StateSenderABI], &contractCallerObjSecond.StateSenderABI,
+		"values for %s not equals", StateSenderABI)
+	assert.Equalf(t, ContractsABIsMap[StakeManagerABI], &contractCallerObjSecond.StakeManagerABI,
+		"values for %s not equals", StakeManagerABI)
+	assert.Equalf(t, ContractsABIsMap[SlashManagerABI], &contractCallerObjSecond.SlashManagerABI,
+		"values for %s not equals", SlashManagerABI)
+	assert.Equalf(t, ContractsABIsMap[MaticTokenABI], &contractCallerObjSecond.MaticTokenABI,
+		"values for %s not equals", MaticTokenABI)
+
 }

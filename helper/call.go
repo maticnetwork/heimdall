@@ -851,6 +851,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[RootChainABI] = &contractCallerObj.RootChainABI
 			Logger.Debug("ABI initialized", "name", RootChainABI)
 		}
+	} else {
+		contractCallerObj.RootChainABI = *ContractsABIsMap[RootChainABI]
 	}
 
 	if ContractsABIsMap[StakingInfoABI] == nil {
@@ -860,6 +862,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[StakingInfoABI] = &contractCallerObj.StakingInfoABI
 			Logger.Debug("ABI initialized", "name", StakingInfoABI)
 		}
+	} else {
+		contractCallerObj.StakingInfoABI = *ContractsABIsMap[StakingInfoABI]
 	}
 
 	if ContractsABIsMap[ValidatorSetABI] == nil {
@@ -869,6 +873,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[ValidatorSetABI] = &contractCallerObj.ValidatorSetABI
 			Logger.Debug("ABI initialized", "name", ValidatorSetABI)
 		}
+	} else {
+		contractCallerObj.ValidatorSetABI = *ContractsABIsMap[ValidatorSetABI]
 	}
 
 	if ContractsABIsMap[StateReceiverABI] == nil {
@@ -878,6 +884,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[StateReceiverABI] = &contractCallerObj.StateReceiverABI
 			Logger.Debug("ABI initialized", "name", StateReceiverABI)
 		}
+	} else {
+		contractCallerObj.StateReceiverABI = *ContractsABIsMap[StateReceiverABI]
 	}
 
 	if ContractsABIsMap[StateSenderABI] == nil {
@@ -887,6 +895,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[StateSenderABI] = &contractCallerObj.StateSenderABI
 			Logger.Debug("ABI initialized", "name", StateSenderABI)
 		}
+	} else {
+		contractCallerObj.StateSenderABI = *ContractsABIsMap[StateSenderABI]
 	}
 
 	if ContractsABIsMap[StakeManagerABI] == nil {
@@ -896,6 +906,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[StakeManagerABI] = &contractCallerObj.StakeManagerABI
 			Logger.Debug("ABI initialized", "name", StakeManagerABI)
 		}
+	} else {
+		contractCallerObj.StakeManagerABI = *ContractsABIsMap[StakeManagerABI]
 	}
 
 	if ContractsABIsMap[SlashManagerABI] == nil {
@@ -905,6 +917,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[SlashManagerABI] = &contractCallerObj.SlashManagerABI
 			Logger.Debug("ABI initialized", "name", SlashManagerABI)
 		}
+	} else {
+		contractCallerObj.SlashManagerABI = *ContractsABIsMap[SlashManagerABI]
 	}
 
 	if ContractsABIsMap[MaticTokenABI] == nil {
@@ -914,6 +928,8 @@ func populateABIs(contractCallerObj *ContractCaller) {
 			ContractsABIsMap[MaticTokenABI] = &contractCallerObj.MaticTokenABI
 			Logger.Debug("ABI initialized", "name", MaticTokenABI)
 		}
+	} else {
+		contractCallerObj.MaticTokenABI = *ContractsABIsMap[MaticTokenABI]
 	}
 }
 
