@@ -11,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/server/proto"
+	"github.com/maticnetwork/heimdall/types"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	"google.golang.org/grpc"
 )
@@ -56,25 +57,9 @@ type heimdallGRPCServer struct {
 	cdc *codec.Codec
 }
 
-func (h *heimdallGRPCServer) GetLatestSpan(ctx context.Context, in *proto.GetLatestSpanRequest) (*proto.GetLatestSpanResponse, error) {
-	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
-	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(LatestSpanURL))
-
-	if err != nil {
-		logger.Error("Error while fetching latest span")
-		return nil, err
-	}
-
-	resp := &proto.GetLatestSpanResponse{}
-	resp.Result = parseSpan(result.Result)
-	resp.Height = result.Height
-
-	return resp, nil
-}
-
 func (h *heimdallGRPCServer) GetSpan(ctx context.Context, in *proto.GetSpanRequest) (*proto.GetSpanResponse, error) {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
-	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fmt.Sprintf(SpanURL, in.SpanId)))
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fmt.Sprintf(SpanURL, in.ID)))
 
 	if err != nil {
 		logger.Error("Error while fetching span")
@@ -89,14 +74,53 @@ func (h *heimdallGRPCServer) GetSpan(ctx context.Context, in *proto.GetSpanReque
 }
 
 func parseSpan(result json.RawMessage) *proto.Span {
-	resp := &proto.Span{}
-	resp.ValidatorSet = &proto.ValidatorSet{}
-	resp.SelectedProducers = []*proto.Validator{}
+	var addr [20]byte
 
-	err := json.Unmarshal(result, resp)
+	span := &types.Span{}
+
+	err := json.Unmarshal(result, span)
 	if err != nil {
 		logger.Error("Error unmarshalling span", "error", err)
 		return nil
+	}
+
+	resp := &proto.Span{}
+	resp.ID = span.ID
+	resp.StartBlock = span.StartBlock
+	resp.EndBlock = span.EndBlock
+	resp.ChainID = span.ChainID
+	resp.ValidatorSet = &proto.ValidatorSet{}
+	resp.SelectedProducers = []*proto.Validator{}
+
+	for _, v := range span.ValidatorSet.Validators {
+		copy(addr[:], v.Signer.Bytes())
+
+		resp.ValidatorSet.Validators = append(resp.ValidatorSet.Validators, &proto.Validator{
+			ID:               uint64(v.ID),
+			Address:          proto.ConvertAddressToH160(addr),
+			VotingPower:      v.VotingPower,
+			ProposerPriority: v.ProposerPriority,
+		})
+	}
+
+	copy(addr[:], span.ValidatorSet.Proposer.Signer.Bytes())
+
+	resp.ValidatorSet.Proposer = &proto.Validator{
+		ID:               uint64(span.ValidatorSet.Proposer.ID),
+		Address:          proto.ConvertAddressToH160(addr),
+		VotingPower:      span.ValidatorSet.Proposer.VotingPower,
+		ProposerPriority: span.ValidatorSet.Proposer.ProposerPriority,
+	}
+
+	for _, v := range span.SelectedProducers {
+		copy(addr[:], v.Signer.Bytes())
+
+		resp.SelectedProducers = append(resp.SelectedProducers, &proto.Validator{
+			ID:               uint64(v.ID),
+			Address:          proto.ConvertAddressToH160(addr),
+			VotingPower:      v.VotingPower,
+			ProposerPriority: v.ProposerPriority,
+		})
 	}
 
 	return resp
@@ -104,7 +128,7 @@ func parseSpan(result json.RawMessage) *proto.Span {
 
 func (h *heimdallGRPCServer) GetEventRecords(req *proto.GetEventRecordsRequest, reply proto.Heimdall_GetEventRecordsServer) error {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
-	fromId := req.FromId
+	fromId := req.FromID
 
 	for {
 		params := map[string]string{

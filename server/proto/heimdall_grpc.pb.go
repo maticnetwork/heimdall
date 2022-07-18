@@ -22,7 +22,6 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type HeimdallClient interface {
-	GetLatestSpan(ctx context.Context, in *GetLatestSpanRequest, opts ...grpc.CallOption) (*GetLatestSpanResponse, error)
 	GetSpan(ctx context.Context, in *GetSpanRequest, opts ...grpc.CallOption) (*GetSpanResponse, error)
 	GetEventRecords(ctx context.Context, in *GetEventRecordsRequest, opts ...grpc.CallOption) (Heimdall_GetEventRecordsClient, error)
 }
@@ -33,15 +32,6 @@ type heimdallClient struct {
 
 func NewHeimdallClient(cc grpc.ClientConnInterface) HeimdallClient {
 	return &heimdallClient{cc}
-}
-
-func (c *heimdallClient) GetLatestSpan(ctx context.Context, in *GetLatestSpanRequest, opts ...grpc.CallOption) (*GetLatestSpanResponse, error) {
-	out := new(GetLatestSpanResponse)
-	err := c.cc.Invoke(ctx, "/proto.Heimdall/GetLatestSpan", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *heimdallClient) GetSpan(ctx context.Context, in *GetSpanRequest, opts ...grpc.CallOption) (*GetSpanResponse, error) {
@@ -89,7 +79,6 @@ func (x *heimdallGetEventRecordsClient) Recv() (*GetEventRecordsResponse, error)
 // All implementations must embed UnimplementedHeimdallServer
 // for forward compatibility
 type HeimdallServer interface {
-	GetLatestSpan(context.Context, *GetLatestSpanRequest) (*GetLatestSpanResponse, error)
 	GetSpan(context.Context, *GetSpanRequest) (*GetSpanResponse, error)
 	GetEventRecords(*GetEventRecordsRequest, Heimdall_GetEventRecordsServer) error
 	mustEmbedUnimplementedHeimdallServer()
@@ -99,9 +88,6 @@ type HeimdallServer interface {
 type UnimplementedHeimdallServer struct {
 }
 
-func (UnimplementedHeimdallServer) GetLatestSpan(context.Context, *GetLatestSpanRequest) (*GetLatestSpanResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetLatestSpan not implemented")
-}
 func (UnimplementedHeimdallServer) GetSpan(context.Context, *GetSpanRequest) (*GetSpanResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSpan not implemented")
 }
@@ -119,24 +105,6 @@ type UnsafeHeimdallServer interface {
 
 func RegisterHeimdallServer(s grpc.ServiceRegistrar, srv HeimdallServer) {
 	s.RegisterService(&Heimdall_ServiceDesc, srv)
-}
-
-func _Heimdall_GetLatestSpan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetLatestSpanRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(HeimdallServer).GetLatestSpan(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/proto.Heimdall/GetLatestSpan",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(HeimdallServer).GetLatestSpan(ctx, req.(*GetLatestSpanRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _Heimdall_GetSpan_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -185,10 +153,6 @@ var Heimdall_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "proto.Heimdall",
 	HandlerType: (*HeimdallServer)(nil),
 	Methods: []grpc.MethodDesc{
-		{
-			MethodName: "GetLatestSpan",
-			Handler:    _Heimdall_GetLatestSpan_Handler,
-		},
 		{
 			MethodName: "GetSpan",
 			Handler:    _Heimdall_GetSpan_Handler,
