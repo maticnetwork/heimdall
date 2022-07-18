@@ -40,13 +40,14 @@ func setupGRPCServer(shutDownCtx context.Context, cdc *codec.Codec, addr string,
 		if err := grpcServer.Serve(lis); err != nil {
 			logger.Error("failed to serve grpc server", "err", err)
 		}
+
 		<-shutDownCtx.Done()
 		grpcServer.Stop()
 		lis.Close()
-		return
 	}()
 
 	logger.Info("GRPC Server started", "addr", addr)
+
 	return nil
 }
 
@@ -58,6 +59,7 @@ type heimdallGRPCServer struct {
 func (h *heimdallGRPCServer) GetLatestSpan(ctx context.Context, in *proto.GetLatestSpanRequest) (*proto.GetLatestSpanResponse, error) {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(LatestSpanURL))
+
 	if err != nil {
 		logger.Error("Error while fetching latest span")
 		return nil, err
@@ -66,12 +68,14 @@ func (h *heimdallGRPCServer) GetLatestSpan(ctx context.Context, in *proto.GetLat
 	resp := &proto.GetLatestSpanResponse{}
 	resp.Result = parseSpan(result.Result)
 	resp.Height = result.Height
+
 	return resp, nil
 }
 
 func (h *heimdallGRPCServer) GetSpan(ctx context.Context, in *proto.GetSpanRequest) (*proto.GetSpanResponse, error) {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fmt.Sprintf(SpanURL, in.SpanId)))
+
 	if err != nil {
 		logger.Error("Error while fetching span")
 		return nil, err
@@ -80,6 +84,7 @@ func (h *heimdallGRPCServer) GetSpan(ctx context.Context, in *proto.GetSpanReque
 	resp := &proto.GetSpanResponse{}
 	resp.Result = parseSpan(result.Result)
 	resp.Height = result.Height
+
 	return resp, nil
 }
 
@@ -93,12 +98,14 @@ func parseSpan(result json.RawMessage) *proto.Span {
 		logger.Error("Error unmarshalling span", "error", err)
 		return nil
 	}
+
 	return resp
 }
 
 func (h *heimdallGRPCServer) GetEventRecords(req *proto.GetEventRecordsRequest, reply proto.Heimdall_GetEventRecordsServer) error {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
 	fromId := req.FromId
+
 	for {
 		params := map[string]string{
 			"from-id": fmt.Sprintf("%d", fromId),
@@ -126,27 +133,34 @@ func (h *heimdallGRPCServer) GetEventRecords(req *proto.GetEventRecordsRequest, 
 			logger.Error("Error while sending event record", "error", err)
 			return err
 		}
+
 		fromId += req.Limit
 	}
+
 	return nil
 }
 
 func parseEventRecords(result json.RawMessage) []*proto.EventRecord {
 	resp := []*proto.EventRecord{}
 	err := json.Unmarshal(result, &resp)
+
 	if err != nil {
 		logger.Error("Error unmarshalling event record", "error", err)
 		return nil
 	}
+
 	return resp
 }
 
 func addParamsToEndpoint(endpoint string, params map[string]string) string {
 	u, _ := url.Parse(endpoint)
 	q := u.Query()
+
 	for k, v := range params {
 		q.Set(k, v)
 	}
+
 	u.RawQuery = q.Encode()
+
 	return u.String()
 }
