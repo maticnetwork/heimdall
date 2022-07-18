@@ -127,6 +127,7 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.MaticChainRPC = GetMaticRPCClient()
 	contractCallerObj.ReceiptCache, err = lru.New(1000)
+
 	if err != nil {
 		return contractCallerObj, err
 	}
@@ -827,8 +828,8 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 // This reduces the number of calls to json decode methods made by the contract caller
 // It uses ABIs' definitions instead of contracts addresses, as the latter might not be available at init time
 func populateABIs(contractCallerObj *ContractCaller) error {
-
 	var ccAbi *abi.ABI
+
 	var err error
 
 	contractsABIs := [8]string{rootchain.RootchainABI, stakinginfo.StakinginfoABI, validatorset.ValidatorsetABI,
@@ -842,6 +843,7 @@ func populateABIs(contractCallerObj *ContractCaller) error {
 			Logger.Error("Error while fetching contract caller ABI", "error", err)
 			return err
 		}
+
 		if ContractsABIsMap[contractABI] == nil {
 			// fills cached abi map
 			if *ccAbi, err = getABI(contractABI); err != nil {
@@ -880,6 +882,7 @@ func chooseContractCallerABI(contractCallerObj *ContractCaller, abi string) (*ab
 	case erc20.Erc20ABI:
 		return &contractCallerObj.MaticTokenABI, nil
 	}
+
 	return nil, errors.New("no ABI associated with such data")
 }
 
