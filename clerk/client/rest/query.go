@@ -1,3 +1,4 @@
+//nolint
 package rest
 
 import (
@@ -15,6 +16,49 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
+//swagger:response clerkEventListResponse
+type clerkEventListResponse struct {
+	//in:body
+	Output clerkEventList `json:"output"`
+}
+
+type clerkEventList struct {
+	Height string  `json:"height"`
+	Result []event `json:"result"`
+}
+
+//swagger:response clerkEventByIdResponse
+type clerkEventByIdResponse struct {
+	//in:body
+	Output clerkEventById `json:"output"`
+}
+
+type clerkEventById struct {
+	Height string `json:"height"`
+	Result event  `json:"result"`
+}
+
+type event struct {
+	Id         int64  `json:"id"`
+	Contract   string `json:"contract"`
+	Data       string `json:"data"`
+	TxHash     string `json:"tx_hash"`
+	LogIndex   int64  `json:"log_index"`
+	BorChainId string `json:"bor_chain_id"`
+	RecoedTime string `json:"record_time"`
+}
+
+//swagger:response clerkIsOldTxResponse
+type clerkIdOldTxResponse struct {
+	//in:body
+	Output isOldTx `json:"output"`
+}
+
+type isOldTx struct {
+	Height string `json:"height"`
+	Result bool   `json:"result"`
+}
+
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/clerk/event-record/list",
@@ -30,6 +74,19 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	).Methods("GET")
 }
 
+//swagger:parameters clerkEventById
+type clerkEventID struct {
+
+	//ID of the checkpoint
+	//required:true
+	//in:path
+	Id int64 `json:"recordID"`
+}
+
+// swagger:route GET /clerk/event-record/{recordID} clerk clerkEventById
+// It returns the clerk event based on ID
+// responses:
+//   200: clerkEventByIdResponse
 // recordHandlerFn returns record by record id
 func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -62,6 +119,24 @@ func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters clerkEventList
+type clerkEventListParams struct {
+
+	//Page number
+	//required:true
+	//in:query
+	Page int64 `json:"page"`
+
+	//Limit per page
+	//required:true
+	//in:query
+	Limit int64 `json:"limit"`
+}
+
+// swagger:route GET /clerk/event-record/list clerk clerkEventList
+// It returns the clerk events list
+// responses:
+//   200: clerkEventListResponse
 func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
@@ -151,6 +226,24 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters clerkIsOldTx
+type clerkTxParams struct {
+
+	//Log Index of the transaction
+	//required:true
+	//in:query
+	LogIndex int64 `json:"logindex"`
+
+	//Hash of the transaction
+	//required:true
+	//in:query
+	Txhash string `json:"txhash"`
+}
+
+// swagger:route GET /clerk/isoldtx clerk clerkIsOldTx
+// It checks for whether the transaction is old or new.
+// responses:
+//   200: clerkIsOldTxResponse
 // DepositTxStatusHandlerFn returns deposit tx status information
 func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -322,4 +415,12 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 
 	// return result in json
 	return json.Marshal(result)
+}
+
+//swagger:parameters clerkIsOldTx clerkEventList clerkEventById
+type Height struct {
+
+	//Block Height
+	//in:query
+	Height string `json:"height"`
 }

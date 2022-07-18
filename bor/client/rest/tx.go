@@ -1,3 +1,4 @@
+//nolint
 package rest
 
 import (
@@ -17,6 +18,38 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
+//It represents Propose Span msg.
+//swagger:response borProposeSpanResponse
+type borProposeSpanResponse struct {
+	//in:body
+	Output output `json:"output"`
+}
+
+type output struct {
+	Type  string `json:"type"`
+	Value value  `json:"value"`
+}
+
+type value struct {
+	Msg       msg    `json:"msg"`
+	Signature string `json:"signature"`
+	Memo      string `json:"memo"`
+}
+
+type msg struct {
+	Type  string `json:"type"`
+	Value val    `json:"value"`
+}
+
+type val struct {
+	SpanID     string `json:"span_id"`
+	Proposer   string `json:"proposer"`
+	StartBlock string `json:"start_block"`
+	EndBlock   string `json:"end_block"`
+	BorChainId string `json:"bor_chain_id"`
+	Seed       string `json:"seed"`
+}
+
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
 		"/bor/propose-span",
@@ -32,6 +65,52 @@ type ProposeSpanReq struct {
 	StartBlock uint64 `json:"start_block"`
 	BorChainID string `json:"bor_chain_id"`
 }
+
+//swagger:parameters borProposeSpan
+type borProposeSpan struct {
+
+	//Body
+	//required:true
+	//in:body
+	Input SendReqInput `json:"input"`
+}
+
+type SendReqInput struct {
+
+	//required:true
+	//in:body
+	BaseReq BaseReq `json:"base_req"`
+
+	//required:true
+	//in:body
+	ID uint64 `json:"span_id"`
+
+	//required:true
+	//in:body
+	StartBlock uint64 `json:"start_block"`
+
+	//required:true
+	//in:body
+	BorChainID string `json:"bor_chain_id"`
+}
+
+type BaseReq struct {
+
+	//Address of the sender
+	//required:true
+	//in:body
+	From string `json:"address"`
+
+	//Chain ID of Heimdall
+	//required:true
+	//in:body
+	ChainID string `json:"chain_id"`
+}
+
+// swagger:route POST /bor/propose-span bor borProposeSpan
+// It returns the prepared msg for proposing the span
+// responses:
+//   200: borProposeSpanResponse
 
 func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
