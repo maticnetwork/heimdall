@@ -497,8 +497,8 @@ func (c *ContractCaller) DecodeNewHeaderBlockEvent(contractAddress common.Addres
 	return event, nil
 }
 
-// DecodeValidatorTopUpFeesEvent represents topUp for fees tokens
-func (c *ContractCaller) DecodeValidatorTopUpFeesEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
+// DecodeValidatorTopupFeesEvent represents topUp for fees tokens
+func (c *ContractCaller) DecodeValidatorTopupFeesEvent(contractAddress common.Address, receipt *ethTypes.Receipt, logIndex uint64) (*stakinginfo.StakinginfoTopUpFee, error) {
 	var (
 		event = new(stakinginfo.StakinginfoTopUpFee)
 		found = false
