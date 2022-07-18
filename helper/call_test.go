@@ -2,13 +2,20 @@ package helper
 
 import (
 	"encoding/hex"
-	"fmt"
 	"os"
 	"testing"
 
 	"github.com/maticnetwork/bor/common"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/contracts/erc20"
+	"github.com/maticnetwork/heimdall/contracts/rootchain"
+	"github.com/maticnetwork/heimdall/contracts/slashmanager"
+	"github.com/maticnetwork/heimdall/contracts/stakemanager"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
+	"github.com/maticnetwork/heimdall/contracts/statereceiver"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/types"
+
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
@@ -27,7 +34,7 @@ func TestCheckpointSigs(t *testing.T) {
 
 	contractCallerObj, err := NewContractCaller()
 	if err != nil {
-		fmt.Println("Error creating contract caller")
+		t.Error("Error creating contract caller")
 	}
 
 	txHashStr := "0x9c2a9e20e1fecdae538f72b01dd0fd5008cc90176fd603b92b59274d754cbbd8"
@@ -35,17 +42,17 @@ func TestCheckpointSigs(t *testing.T) {
 
 	voteSignBytes, sigs, txData, err := contractCallerObj.GetCheckpointSign(txHash)
 	if err != nil {
-		fmt.Println("Error fetching checkpoint tx input args")
+		t.Error("Error fetching checkpoint tx input args")
 	}
 
-	fmt.Println("checkpoint args", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
+	t.Log("checkpoint args", "vote", hex.EncodeToString(voteSignBytes), "sigs", hex.EncodeToString(sigs), "txData", hex.EncodeToString(txData))
 
 	signerList, err := FetchSigners(voteSignBytes, sigs)
 	if err != nil {
-		fmt.Println("Error fetching signer list from tx input args")
+		t.Error("Error fetching signer list from tx input args")
 	}
 
-	fmt.Println("signers list", signerList)
+	t.Log("signers list", signerList)
 }
 
 // FetchSigners fetches the signers' list
@@ -60,7 +67,6 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 
 		pKey, err := authTypes.RecoverPubkey(voteBytes, signature)
 		if err != nil {
-			fmt.Println("Error Recovering PubKey", "Error", err)
 			return nil, err
 		}
 
@@ -79,81 +85,81 @@ func TestPopulateABIs(t *testing.T) {
 	viper.Set("log_level", "info")
 	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
 
-	fmt.Println("ABIs map should be empty and all ABIs not found")
+	t.Log("ABIs map should be empty and all ABIs not found")
 	assert.True(t, len(ContractsABIsMap) == 0)
-	_, found := ContractsABIsMap[RootChainABI]
+	_, found := ContractsABIsMap[rootchain.RootchainABI]
 	assert.False(t, found)
-	_, found = ContractsABIsMap[StakingInfoABI]
+	_, found = ContractsABIsMap[stakinginfo.StakinginfoABI]
 	assert.False(t, found)
-	_, found = ContractsABIsMap[StateReceiverABI]
+	_, found = ContractsABIsMap[statereceiver.StatereceiverABI]
 	assert.False(t, found)
-	_, found = ContractsABIsMap[StateSenderABI]
+	_, found = ContractsABIsMap[statesender.StatesenderABI]
 	assert.False(t, found)
-	_, found = ContractsABIsMap[StakeManagerABI]
+	_, found = ContractsABIsMap[stakemanager.StakemanagerABI]
 	assert.False(t, found)
-	_, found = ContractsABIsMap[SlashManagerABI]
+	_, found = ContractsABIsMap[slashmanager.SlashmanagerABI]
 	assert.False(t, found)
-	_, found = ContractsABIsMap[MaticTokenABI]
+	_, found = ContractsABIsMap[erc20.Erc20ABI]
 	assert.False(t, found)
 
-	fmt.Println("Should create a new contract caller and populate its ABIs by decoding json")
+	t.Log("Should create a new contract caller and populate its ABIs by decoding json")
 
 	contractCallerObjFirst, err := NewContractCaller()
 	if err != nil {
-		fmt.Println("Error creating contract caller")
+		t.Error("Error creating contract caller")
 	}
 
-	assert.Equalf(t, ContractsABIsMap[RootChainABI], &contractCallerObjFirst.RootChainABI,
-		"values for %s not equals", RootChainABI)
-	assert.Equalf(t, ContractsABIsMap[StakingInfoABI], &contractCallerObjFirst.StakingInfoABI,
-		"values for %s not equals", StakingInfoABI)
-	assert.Equalf(t, ContractsABIsMap[StateReceiverABI], &contractCallerObjFirst.StateReceiverABI,
-		"values for %s not equals", StateReceiverABI)
-	assert.Equalf(t, ContractsABIsMap[StateSenderABI], &contractCallerObjFirst.StateSenderABI,
-		"values for %s not equals", StateSenderABI)
-	assert.Equalf(t, ContractsABIsMap[StakeManagerABI], &contractCallerObjFirst.StakeManagerABI,
-		"values for %s not equals", StakeManagerABI)
-	assert.Equalf(t, ContractsABIsMap[SlashManagerABI], &contractCallerObjFirst.SlashManagerABI,
-		"values for %s not equals", SlashManagerABI)
-	assert.Equalf(t, ContractsABIsMap[MaticTokenABI], &contractCallerObjFirst.MaticTokenABI,
-		"values for %s not equals", MaticTokenABI)
+	assert.Equalf(t, ContractsABIsMap[rootchain.RootchainABI], &contractCallerObjFirst.RootChainABI,
+		"values for %s not equals", rootchain.RootchainABI)
+	assert.Equalf(t, ContractsABIsMap[stakinginfo.StakinginfoABI], &contractCallerObjFirst.StakingInfoABI,
+		"values for %s not equals", stakinginfo.StakinginfoABI)
+	assert.Equalf(t, ContractsABIsMap[statereceiver.StatereceiverABI], &contractCallerObjFirst.StateReceiverABI,
+		"values for %s not equals", statereceiver.StatereceiverABI)
+	assert.Equalf(t, ContractsABIsMap[statesender.StatesenderABI], &contractCallerObjFirst.StateSenderABI,
+		"values for %s not equals", statesender.StatesenderABI)
+	assert.Equalf(t, ContractsABIsMap[stakemanager.StakemanagerABI], &contractCallerObjFirst.StakeManagerABI,
+		"values for %s not equals", stakemanager.StakemanagerABI)
+	assert.Equalf(t, ContractsABIsMap[slashmanager.SlashmanagerABI], &contractCallerObjFirst.SlashManagerABI,
+		"values for %s not equals", slashmanager.SlashmanagerABI)
+	assert.Equalf(t, ContractsABIsMap[erc20.Erc20ABI], &contractCallerObjFirst.MaticTokenABI,
+		"values for %s not equals", erc20.Erc20ABI)
 
-	fmt.Println("ABIs map should not be empty and all ABIs found")
+	t.Log("ABIs map should not be empty and all ABIs found")
 	assert.True(t, len(ContractsABIsMap) == 8)
-	_, found = ContractsABIsMap[RootChainABI]
+	_, found = ContractsABIsMap[rootchain.RootchainABI]
 	assert.True(t, found)
-	_, found = ContractsABIsMap[StakingInfoABI]
+	_, found = ContractsABIsMap[stakinginfo.StakinginfoABI]
 	assert.True(t, found)
-	_, found = ContractsABIsMap[StateReceiverABI]
+	_, found = ContractsABIsMap[statereceiver.StatereceiverABI]
 	assert.True(t, found)
-	_, found = ContractsABIsMap[StateSenderABI]
+	_, found = ContractsABIsMap[statesender.StatesenderABI]
 	assert.True(t, found)
-	_, found = ContractsABIsMap[StakeManagerABI]
+	_, found = ContractsABIsMap[stakemanager.StakemanagerABI]
 	assert.True(t, found)
-	_, found = ContractsABIsMap[SlashManagerABI]
+	_, found = ContractsABIsMap[slashmanager.SlashmanagerABI]
 	assert.True(t, found)
-	_, found = ContractsABIsMap[MaticTokenABI]
+	_, found = ContractsABIsMap[erc20.Erc20ABI]
 	assert.True(t, found)
 
-	fmt.Println("Should create a new contract caller and populate its ABIs by using cached map")
+	t.Log("Should create a new contract caller and populate its ABIs by using cached map")
 
 	contractCallerObjSecond, err := NewContractCaller()
 	if err != nil {
-		fmt.Println("Error creating contract caller")
+		t.Log("Error creating contract caller")
 	}
 
-	assert.Equalf(t, ContractsABIsMap[RootChainABI], &contractCallerObjSecond.RootChainABI,
-		"values for %s not equals", RootChainABI)
-	assert.Equalf(t, ContractsABIsMap[StakingInfoABI], &contractCallerObjSecond.StakingInfoABI,
-		"values for %s not equals", StakingInfoABI)
-	assert.Equalf(t, ContractsABIsMap[StateReceiverABI], &contractCallerObjSecond.StateReceiverABI,
-		"values for %s not equals", StateReceiverABI)
-	assert.Equalf(t, ContractsABIsMap[StateSenderABI], &contractCallerObjSecond.StateSenderABI,
-		"values for %s not equals", StateSenderABI)
-	assert.Equalf(t, ContractsABIsMap[StakeManagerABI], &contractCallerObjSecond.StakeManagerABI,
-		"values for %s not equals", StakeManagerABI)
-	assert.Equalf(t, ContractsABIsMap[SlashManagerABI], &contractCallerObjSecond.SlashManagerABI,
-		"values for %s not equals", SlashManagerABI)
-	assert.Equalf(t, ContractsABIsMap[MaticTokenABI], &contractCallerObjSecond.MaticTokenABI,
-		"values for %s not equals", MaticTokenABI)
+	assert.Equalf(t, ContractsABIsMap[rootchain.RootchainABI], &contractCallerObjSecond.RootChainABI,
+		"values for %s not equals", rootchain.RootchainABI)
+	assert.Equalf(t, ContractsABIsMap[stakinginfo.StakinginfoABI], &contractCallerObjSecond.StakingInfoABI,
+		"values for %s not equals", stakinginfo.StakinginfoABI)
+	assert.Equalf(t, ContractsABIsMap[statereceiver.StatereceiverABI], &contractCallerObjSecond.StateReceiverABI,
+		"values for %s not equals", statereceiver.StatereceiverABI)
+	assert.Equalf(t, ContractsABIsMap[statesender.StatesenderABI], &contractCallerObjSecond.StateSenderABI,
+		"values for %s not equals", statesender.StatesenderABI)
+	assert.Equalf(t, ContractsABIsMap[stakemanager.StakemanagerABI], &contractCallerObjSecond.StakeManagerABI,
+		"values for %s not equals", stakemanager.StakemanagerABI)
+	assert.Equalf(t, ContractsABIsMap[slashmanager.SlashmanagerABI], &contractCallerObjSecond.SlashManagerABI,
+		"values for %s not equals", slashmanager.SlashmanagerABI)
+	assert.Equalf(t, ContractsABIsMap[erc20.Erc20ABI], &contractCallerObjSecond.MaticTokenABI,
+		"values for %s not equals", erc20.Erc20ABI)
 }
