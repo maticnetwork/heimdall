@@ -1,0 +1,78 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/timestamp.proto";
+
+option go_package = "/server/proto";
+
+service Heimdall {
+    rpc GetLatestSpan(GetLatestSpanRequest) returns (GetLatestSpanResponse) {}
+    rpc GetSpan(GetSpanRequest) returns (GetSpanResponse) {}
+    rpc GetEventRecords(GetEventRecordsRequest) returns (stream GetEventRecordsResponse) {}
+}
+
+message Validator {
+    uint64 ID = 1;
+    uint64 startEpoch = 2;
+    uint64 endEpoch = 3;
+    uint64 nonce = 4;
+    int64 power = 5;
+    string pubKey = 6;
+    string signer = 7;
+    string last_updated = 8;
+    bool jailed = 9;
+    int64 accum = 10;
+}
+
+message ValidatorSet {
+    repeated Validator validators = 1;
+    Validator proposer = 2;
+}
+
+message Span {
+    uint64 span_id = 1;
+    uint64 start_block = 2;
+    uint64 end_block = 3;
+    ValidatorSet validator_set = 4;
+    repeated Validator selected_producers = 5;
+    string bor_chain_id = 6;
+}
+
+message GetLatestSpanRequest {
+}
+
+message GetLatestSpanResponse {
+    int64 height = 1;
+    Span result = 2;
+}
+
+message GetSpanRequest{
+    uint64 span_id = 1;
+}
+
+message GetSpanResponse {
+    int64 height = 1;
+    Span result = 2;
+}
+
+message EventRecord{
+    uint64 ID = 1;
+    string Contract = 2;
+    string Data = 3;
+    string TxHash = 4;
+    uint64 LogIndex = 5;
+    string ChainID = 6;
+    google.protobuf.Timestamp RecordTime = 7;
+}
+
+message GetEventRecordsRequest {
+    uint64 from_id = 1;
+    uint64 to_time = 2;
+    uint64 limit = 3;
+}
+
+message GetEventRecordsResponse {
+    int64 height = 1;
+    repeated EventRecord result = 2;
+}
