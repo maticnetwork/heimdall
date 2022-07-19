@@ -31,6 +31,13 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 		client.GetCommands(
 			// GetCmdQuerySigningInfo(cdc),
 			GetCmdQueryParams(cdc),
+			GetSigningInfo(cdc),
+			GetSigningInfos(cdc),
+			GetLatestSlashInfo(cdc),
+			GetLatestSlashingInfos(cdc),
+			GetTickSlashingInfos(cdc),
+			GetLatestSlashInfoBytes(cdc),
+			GetTickCount(cdc),
 		)...,
 	)
 	return slashingQueryCmd

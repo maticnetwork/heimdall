@@ -15,7 +15,6 @@ import (
 	"github.com/maticnetwork/heimdall/clerk/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var logger = helper.Logger.With("module", "clerk/client/cli")
@@ -151,72 +150,6 @@ func IsOldTx(cdc *codec.Codec) *cobra.Command {
 
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("IsOldTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-
-	return cmd
-}
-
-// GetStateRecordList g
-func GetStateRecordList(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "record-list",
-		Short: "get records list",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			pageStr := viper.GetString(FlagPage)
-			if pageStr == "" {
-				return fmt.Errorf("page can't be empty")
-			}
-
-			limitStr := viper.GetString(FlagLimit)
-			if limitStr == "" {
-				return fmt.Errorf("limit can't be empty")
-			}
-
-			page, err := strconv.ParseUint(pageStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			limit, err := strconv.ParseUint(limitStr, 10, 64)
-			if err != nil {
-				return err
-			}
-
-			// get query params
-			queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
-			if err != nil {
-				return err
-			}
-
-			// query checkpoint
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointList), queryParams)
-			if err != nil {
-				return err
-			}
-
-			// check content
-			if len(res) == 0 {
-				fmt.Printf("checkpoint list not found")
-				return nil
-			}
-
-			fmt.Printf(string(res))
-			return nil
-
-		},
-	}
-
-	cmd.Flags().Uint64(FlagPage, 0, "--page=<page number here>")
-	cmd.Flags().Uint64(FlagLimit, 0, "--id=<limit here>")
-
-	if err := cmd.MarkFlagRequired(FlagPage); err != nil {
-		logger.Error("GetCheckpointList | MarkFlagRequired | FlagPage", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagLimit); err != nil {
-		logger.Error("GetCheckpointList | MarkFlagRequired | FlagLimit", "Error", err)
 	}
 
 	return cmd
