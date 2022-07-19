@@ -3,6 +3,7 @@ package gRPC
 import (
 	"context"
 	"net"
+	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/maticnetwork/heimdall/server/gRPC/proto"
@@ -26,7 +27,7 @@ type HeimdallGRPCServer struct {
 
 func SetupGRPCServer(shutDownCtx context.Context, cdc *codec.Codec, addr string, lggr tmLog.Logger) error {
 	logger = lggr
-	grpcServer := grpc.NewServer()
+	grpcServer := grpc.NewServer(withLoggingUnaryInterceptor())
 	proto.RegisterHeimdallServer(grpcServer,
 		&HeimdallGRPCServer{
 			cdc: cdc,
@@ -51,4 +52,17 @@ func SetupGRPCServer(shutDownCtx context.Context, cdc *codec.Codec, addr string,
 	logger.Info("GRPC Server started", "addr", addr)
 
 	return nil
+}
+
+func withLoggingUnaryInterceptor() grpc.ServerOption {
+	return grpc.UnaryInterceptor(loggingServerInterceptor)
+}
+
+func loggingServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
+	start := time.Now()
+	h, err := handler(ctx, req)
+
+	logger.Info("Request", "method", info.FullMethod, "duration", time.Since(start), "error", err)
+
+	return h, err
 }
