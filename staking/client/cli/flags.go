@@ -16,7 +16,7 @@ const (
 	FlagFeeAmount         = "fee-amount"
 	FlagBlockNumber       = "block-number"
 	FlagNonce             = "nonce"
-
-	FlagStartEpoch = "start-epoch"
-	FlagEndEpoch   = "end-epoch"
+	FlagStartEpoch        = "start-epoch"
+	FlagEndEpoch          = "end-epoch"
+	FlagTimes             = "times"
 )

@@ -242,7 +242,7 @@ func dividendAccountRootHandlerFn(
 			return
 		}
 
-		// error if no checkpoint found
+		// error if AccountRoot not found
 		if !hmRest.ReturnNotFoundIfNoContent(w, res, "Dividend AccountRoot not found") {
 			RestLogger.Error("AccountRoot not found ", "Error", err.Error())
 
