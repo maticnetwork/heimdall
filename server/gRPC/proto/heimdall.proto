@@ -1,0 +1,119 @@
+syntax = "proto3";
+
+package proto;
+
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/empty.proto";
+
+
+option go_package = "/server/gRPC/proto";
+
+service Heimdall {
+    rpc Span(SpanRequest) returns (SpanResponse) {}
+    rpc StateSyncEvents(StateSyncEventsRequest) returns (stream StateSyncEventsResponse) {}
+    rpc FetchCheckpoint(FetchCheckpointRequest) returns (FetchCheckpointResponse){}
+    rpc FetchCheckpointCount(google.protobuf.Empty) returns (FetchCheckpointCountResponse){}
+}
+
+message H128 {
+    uint64 Hi = 1;
+    uint64 Lo = 2;
+}
+
+message H160 {
+    H128 Hi = 1;
+    uint32 Lo = 2;
+}
+
+message H256 {
+    H128 Hi = 1;
+    H128 Lo = 2;
+}
+
+// ---- SPAN ----
+
+message Validator {
+    uint64 ID = 1;
+    H160 Address = 2;
+    int64 VotingPower = 3;
+    int64 ProposerPriority = 4;
+}
+
+message ValidatorSet {
+    repeated Validator Validators = 1;
+    Validator Proposer = 2;
+}
+
+message Span {
+    uint64 ID = 1;
+    uint64 StartBlock = 2;
+    uint64 EndBlock = 3;
+    ValidatorSet ValidatorSet = 4;
+    repeated Validator SelectedProducers = 5;
+    string ChainID = 6;
+}
+
+message SpanRequest{
+    uint64 ID = 1;
+}
+
+message SpanResponse {
+    string Height = 1;
+    Span Result = 2;
+}
+
+// ---- STATE SYNC ----
+
+message EventRecord{
+    uint64 ID = 1;
+    string Contract = 2;
+    string Data = 3;
+    string TxHash = 4;
+    uint64 LogIndex = 5;
+    string ChainID = 6;
+    google.protobuf.Timestamp Time = 7;
+}
+
+message StateSyncEventsRequest {
+    uint64 FromID = 1;
+    uint64 ToTime = 2;
+    uint64 Limit = 3;
+}
+
+message StateSyncEventsResponse {
+    string Height = 1;
+    repeated EventRecord Result = 2;
+}
+
+// ---- FETCH CHECKPOINT ----
+
+message Checkpoint {
+    H160 Proposer = 1;
+    uint64 StartBlock = 2;
+    uint64 EndBlock = 3;
+    H256 RootHash = 4;
+    string BorChainID = 5;
+    google.protobuf.Timestamp Timestamp = 6;
+}
+
+message FetchCheckpointRequest {
+    int64 ID = 1;
+}
+
+message FetchCheckpointResponse {
+    string Height = 1;
+    Checkpoint Result = 2;
+}
+
+// ---- FETCH CHECKPOINT COUNT ----
+
+message CheckpointCount {
+    int64 Result = 1;
+}
+
+message FetchCheckpointCountResponse {
+    string Height = 1;
+    CheckpointCount Result = 2;
+}
+
+

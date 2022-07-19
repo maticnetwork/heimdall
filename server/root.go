@@ -29,6 +29,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 
 	// unnamed import of statik for swagger UI support
+	"github.com/maticnetwork/heimdall/server/gRPC"
 	_ "github.com/maticnetwork/heimdall/server/statik"
 )
 
@@ -77,7 +78,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 
 	// Setup gRPC server
 	gRPCLogger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "gRPC-server")
-	if err := setupGRPCServer(mainCtx, cdc, viper.GetString(FlagGrpcAddr), gRPCLogger); err != nil {
+	if err := gRPC.SetupGRPCServer(mainCtx, cdc, viper.GetString(FlagGrpcAddr), gRPCLogger); err != nil {
 		return err
 	}
 
