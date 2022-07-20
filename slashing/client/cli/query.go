@@ -38,6 +38,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetTickSlashingInfos(cdc),
 			GetLatestSlashInfoBytes(cdc),
 			GetTickCount(cdc),
+			IsOldTx(cdc),
 		)...,
 	)
 	return slashingQueryCmd
@@ -114,7 +115,7 @@ func GetSigningInfo(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(FlagId, "", "--id=<id here>")
 
-	if err := cmd.MarkFlagRequired(FlagValidatorAddress); err != nil {
+	if err := cmd.MarkFlagRequired(FlagId); err != nil {
 		logger.Error("GetSigningInfo | MarkFlagRequired | FlagId", "Error", err)
 	}
 
@@ -194,8 +195,8 @@ func GetLatestSlashInfo(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(FlagId, "", "--id=<id here>")
 
-	if err := cmd.MarkFlagRequired(FlagValidatorAddress); err != nil {
-		logger.Error("GetSigningInfo | MarkFlagRequired | FlagId", "Error", err)
+	if err := cmd.MarkFlagRequired(FlagId); err != nil {
+		logger.Error("GetLatestSlashInfo | MarkFlagRequired | FlagId", "Error", err)
 	}
 
 	return cmd
@@ -235,11 +236,11 @@ func GetLatestSlashingInfos(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Uint64(FlagLimit, 0, "--id=<limit here>")
 
 	if err := cmd.MarkFlagRequired(FlagPage); err != nil {
-		logger.Error("GetCheckpointList | MarkFlagRequired | FlagPage", "Error", err)
+		logger.Error("GetLatestSlashingInfos | MarkFlagRequired | FlagPage", "Error", err)
 	}
 
 	if err := cmd.MarkFlagRequired(FlagLimit); err != nil {
-		logger.Error("GetCheckpointList | MarkFlagRequired | FlagLimit", "Error", err)
+		logger.Error("GetLatestSlashingInfos | MarkFlagRequired | FlagLimit", "Error", err)
 	}
 
 	return cmd
@@ -279,11 +280,11 @@ func GetTickSlashingInfos(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().Uint64(FlagLimit, 0, "--id=<limit here>")
 
 	if err := cmd.MarkFlagRequired(FlagPage); err != nil {
-		logger.Error("GetCheckpointList | MarkFlagRequired | FlagPage", "Error", err)
+		logger.Error("GetTickSlashingInfos | MarkFlagRequired | FlagPage", "Error", err)
 	}
 
 	if err := cmd.MarkFlagRequired(FlagLimit); err != nil {
-		logger.Error("GetCheckpointList | MarkFlagRequired | FlagLimit", "Error", err)
+		logger.Error("GetTickSlashingInfos | MarkFlagRequired | FlagLimit", "Error", err)
 	}
 
 	return cmd

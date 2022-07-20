@@ -16,7 +16,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var logger = helper.Logger.With("module", "staking/client/cli")
+var logger = helper.Logger.With("module", "topup/client/cli")
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
@@ -265,7 +265,7 @@ func GetAccountProof(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagValidatorAddress, "", "--validator=<validator address here>")
 
 	if err := cmd.MarkFlagRequired(FlagValidatorAddress); err != nil {
-		logger.Error("GetDividendAccount | MarkFlagRequired | FlagValidatorAddress", "Error", err)
+		logger.Error("GetAccountProof | MarkFlagRequired | FlagValidatorAddress", "Error", err)
 	}
 
 	return cmd
@@ -313,7 +313,11 @@ func GetAccountProofVerify(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagAccountProof, "", "--proof=<proof here>")
 
 	if err := cmd.MarkFlagRequired(FlagValidatorAddress); err != nil {
-		logger.Error("GetDividendAccount | MarkFlagRequired | FlagValidatorAddress", "Error", err)
+		logger.Error("GetAccountProofVerify | MarkFlagRequired | FlagValidatorAddress", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagAccountProof); err != nil {
+		logger.Error("GetAccountProofVerify | MarkFlagRequired | FlagAccountProof", "Error", err)
 	}
 
 	return cmd

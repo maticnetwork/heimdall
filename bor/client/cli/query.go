@@ -354,5 +354,9 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 		cliLogger.Error("GetPreparedProposeSpan | MarkFlagRequired | FlagStartBlock", "Error", err)
 	}
 
+	if err := cmd.MarkFlagRequired(FlagSpanId); err != nil {
+		cliLogger.Error("GetPreparedProposeSpan | MarkFlagRequired | FlagSpanId", "Error", err)
+	}
+
 	return cmd
 }

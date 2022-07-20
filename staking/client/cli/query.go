@@ -236,7 +236,7 @@ func GetProposer(cdc *codec.Codec) *cobra.Command {
 
 	cmd.Flags().String(FlagTimes, "", "--times=<time here>")
 
-	if err := cmd.MarkFlagRequired(FlagValidatorAddress); err != nil {
+	if err := cmd.MarkFlagRequired(FlagTimes); err != nil {
 		logger.Error("GetProposer | MarkFlagRequired | FlagTimes", "Error", err)
 	}
 
