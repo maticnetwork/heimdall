@@ -1,7 +1,4 @@
 package helper
 
-const (
-	NetworkName             = "mumbai"
-	NewSelectionAlgoHeight  = 282500
-	SpanOverrideBlockHeight = 10205000
-)
+const NewSelectionAlgoHeight = 375300
+const SpanOverrideBlockHeight = 8664000
