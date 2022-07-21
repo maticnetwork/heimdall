@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -142,6 +142,7 @@ $ %s query bor params
 			}
 
 			var params types.Params
+			var json = jsoniter.ConfigCompatibleWithStandardLibrary
 			err = json.Unmarshal(bz, &params)
 			if err != nil {
 				return err

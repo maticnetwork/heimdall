@@ -1,13 +1,13 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/chainmanager/types"
@@ -56,6 +56,7 @@ $ %s query chainmanager params
 				return err
 			}
 
+			var json = jsoniter.ConfigCompatibleWithStandardLibrary
 			var params types.Params
 			if err = json.Unmarshal(bz, &params); err != nil {
 				return err

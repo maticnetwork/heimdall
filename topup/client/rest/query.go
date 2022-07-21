@@ -2,13 +2,13 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -253,6 +253,7 @@ func dividendAccountRootHandlerFn(
 
 		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		result, err := json.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
@@ -343,6 +344,8 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			return
 		}
+
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		var accountProofStatus bool
 		if err = json.Unmarshal(res, &accountProofStatus); err != nil {

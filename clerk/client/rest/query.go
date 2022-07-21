@@ -2,7 +2,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -353,6 +353,7 @@ func rangeQuery(cliCtx context.CLIContext, page uint64, limit uint64) ([]byte, e
 
 func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, limit uint64) ([]byte, error) {
 	result := make([]*types.EventRecord, 0, limit)
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	// if from id not found, return empty result
 	fromData, err := recordQuery(cliCtx, fromID)

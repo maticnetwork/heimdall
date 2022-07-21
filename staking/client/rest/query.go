@@ -2,15 +2,15 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
-	"github.com/maticnetwork/bor/common"
+	jsoniter "github.com/json-iterator/go"
 
+	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
@@ -175,6 +175,8 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 		var totalPower uint64
 		if err := json.Unmarshal(totalPowerBytes, &totalPower); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -286,6 +288,8 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 		if !hmRest.ReturnNotFoundIfNoContent(w, statusBytes, "No validator found") {
 			return
 		}
+
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		var status bool
 		if err = json.Unmarshal(statusBytes, &status); err != nil {
@@ -499,6 +503,8 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			RestLogger.Error("Proposer bonus percentage not found ", "Error", err.Error())
 			return
 		}
+
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		var _proposerBonusPercent int64
 		if err := json.Unmarshal(res, &_proposerBonusPercent); err != nil {

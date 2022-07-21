@@ -1,11 +1,11 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"math/big"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -147,6 +147,7 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Par
 		return nil, err
 	}
 
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var params chainmanagerTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
 		return nil, err

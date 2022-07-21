@@ -1,10 +1,10 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
 
 	govutils "github.com/maticnetwork/heimdall/gov/client/utils"
@@ -33,6 +33,7 @@ func parseSubmitProposalFlags() (*proposal, error) {
 		return nil, err
 	}
 
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err = json.Unmarshal(contents, proposal)
 	if err != nil {
 		return nil, err

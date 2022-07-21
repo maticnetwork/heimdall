@@ -3,11 +3,12 @@ package types
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"fmt"
 
-	"github.com/maticnetwork/bor/common"
+	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v2"
+
+	"github.com/maticnetwork/bor/common"
 )
 
 // Ensure that different address types implement the interface
@@ -53,6 +54,7 @@ func (aa *HeimdallHash) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using Bech32.
 func (aa HeimdallHash) MarshalJSON() ([]byte, error) {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(aa.String())
 }
 
@@ -63,6 +65,7 @@ func (aa HeimdallHash) MarshalYAML() (interface{}, error) {
 
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (aa *HeimdallHash) UnmarshalJSON(data []byte) error {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var s string
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err

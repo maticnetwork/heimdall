@@ -20,18 +20,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
-	"golang.org/x/sync/errgroup"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCommon "github.com/maticnetwork/bor/common"
-	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
-	restServer "github.com/maticnetwork/heimdall/server"
-	"github.com/maticnetwork/heimdall/version"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -45,12 +39,17 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
+	"golang.org/x/sync/errgroup"
 
+	ethCommon "github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
 	"github.com/maticnetwork/heimdall/helper"
+	restServer "github.com/maticnetwork/heimdall/server"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/version"
 )
 
 var logger = helper.Logger.With("module", "cmd/heimdalld")
@@ -410,6 +409,8 @@ func openTraceWriter(traceWriterFile string) (io.Writer, error) {
 }
 
 func showAccountCmd() *cobra.Command {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 	return &cobra.Command{
 		Use:   "show-account",
 		Short: "Print the account's address and public key",
@@ -437,6 +438,7 @@ func showAccountCmd() *cobra.Command {
 }
 
 func showPrivateKeyCmd() *cobra.Command {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return &cobra.Command{
 		Use:   "show-privatekey",
 		Short: "Print the account's private key",
@@ -464,6 +466,7 @@ func showPrivateKeyCmd() *cobra.Command {
 
 // VerifyGenesis verifies the genesis file and brings it in sync with on-chain contract
 func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	cmd := &cobra.Command{
 		Use:   "verify-genesis",
 		Short: "Verify if the genesis matches",

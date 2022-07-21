@@ -2,7 +2,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,6 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/bor/common"
 	ethcmn "github.com/maticnetwork/bor/common"
@@ -254,6 +254,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var ackCount uint64
 		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -306,6 +307,8 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			height            int64
 			validatorSetBytes []byte
 		)
+
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		// get start and start
 		if params.Get("start") != "" && params.Get("end") != "" {
@@ -425,6 +428,7 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var lastAckTime uint64
 		if err := json.Unmarshal(res, &lastAckTime); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -463,6 +467,8 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if !ok {
 			return
 		}
+
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		//
 		// Ack acount
@@ -569,6 +575,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		//
 		// Get ack count
 		//
@@ -698,6 +705,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var checkpointUnmarshal hmTypes.Checkpoint
 		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

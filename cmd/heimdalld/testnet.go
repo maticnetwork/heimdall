@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto"
@@ -28,6 +28,8 @@ import (
 
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
 	cmd := &cobra.Command{
 		Use:   "create-testnet",
 		Short: "Initialize files for a Heimdall testnet",

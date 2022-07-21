@@ -2,7 +2,6 @@ package cli
 
 import (
 	"bytes"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -11,12 +10,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
-	types "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -161,6 +161,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 					return err
 				}
 
+				var json = jsoniter.ConfigCompatibleWithStandardLibrary
 				if err := json.Unmarshal(proposerBytes, &checkpointProposer); err != nil {
 					return err
 				}

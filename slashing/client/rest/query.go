@@ -2,17 +2,15 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
-	"github.com/gorilla/mux"
-
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/slashing/types"
-
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
@@ -381,6 +379,7 @@ func latestSlashInfoBytesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		var slashInfoBytes = hmTypes.BytesToHexBytes(res)
 		RestLogger.Debug("Fetched slashInfoBytes ", "SlashInfoBytes", slashInfoBytes.String())
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		result, err := json.Marshal(&slashInfoBytes)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
@@ -558,6 +557,7 @@ func tickCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var tickCount uint64
 		if err := json.Unmarshal(tickCountBytes, &tickCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

@@ -1,13 +1,13 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 
 	"github.com/maticnetwork/heimdall/auth/types"
@@ -90,6 +90,7 @@ $ %s query auth params
 			}
 
 			var params types.Params
+			var json = jsoniter.ConfigCompatibleWithStandardLibrary
 			if err := json.Unmarshal(bz, &params); err != nil {
 				return err
 			}

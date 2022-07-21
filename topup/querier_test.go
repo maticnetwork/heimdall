@@ -1,7 +1,6 @@
 package topup_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"math/rand"
@@ -10,12 +9,13 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	ethTypes "github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/app"
 	chainTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
@@ -128,6 +128,7 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var divAcc hmTypes.DividendAccount
 	err = json.Unmarshal(res, &divAcc)
 	require.NoError(t, err)

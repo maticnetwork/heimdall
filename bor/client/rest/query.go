@@ -12,7 +12,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,6 +20,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/bor/consensus/bor"
 	"github.com/maticnetwork/heimdall/bor/types"
@@ -395,6 +395,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var spanDuration uint64
 		if err := json.Unmarshal(spanDurationBytes, &spanDuration); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -521,6 +522,7 @@ func loadSpanOverrides() {
 		return
 	}
 
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var spans []*bor.ResponseWithHeight
 	if err := json.Unmarshal(j, &spans); err != nil {
 		return

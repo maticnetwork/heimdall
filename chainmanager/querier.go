@@ -1,9 +1,8 @@
 package chainmanager
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/chainmanager/types"
@@ -22,6 +21,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 }
 
 func queryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	bz, err := json.Marshal(keeper.GetParams(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

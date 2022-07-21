@@ -1,12 +1,11 @@
 package bor
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/consensus/bor"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	"github.com/maticnetwork/bor/consensus/bor"
 	"github.com/maticnetwork/heimdall/bor/client/rest"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -23,6 +22,7 @@ func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 		}
 
 		var spans []*bor.ResponseWithHeight
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		if err := json.Unmarshal(j, &spans); err != nil {
 			k.Logger(ctx).Error("Error Unmarshal spans", "error", err)
 			panic(err)

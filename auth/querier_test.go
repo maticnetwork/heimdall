@@ -1,16 +1,16 @@
 package auth_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/auth/exported"
@@ -134,6 +134,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	defaultParams := authTypes.DefaultParams()
 
 	var params types.Params
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err2 := json.Unmarshal(res, &params)
 	require.Nil(t, err2)
 	require.Equal(t, defaultParams.MaxMemoCharacters, params.MaxMemoCharacters)

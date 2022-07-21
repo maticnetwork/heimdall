@@ -1,14 +1,13 @@
 package version
 
 import (
-	"encoding/json"
 	"fmt"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/tendermint/tendermint/libs/cli"
+	"gopkg.in/yaml.v2"
 )
 
 const flagLong = "long"
@@ -31,6 +30,8 @@ var Cmd = &cobra.Command{
 
 		var bz []byte
 		var err error
+
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		switch viper.GetString(cli.OutputFlag) {
 		case "json":
