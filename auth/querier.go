@@ -27,6 +27,7 @@ func NewQuerier(keeper AccountKeeper) sdk.Querier {
 
 func queryParams(ctx sdk.Context, req abci.RequestQuery, keeper AccountKeeper) ([]byte, sdk.Error) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(keeper.GetParams(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

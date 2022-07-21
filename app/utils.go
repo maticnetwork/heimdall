@@ -89,6 +89,7 @@ func CheckExportSimulation(app App, config simTypes.Config, params simTypes.Para
 		fmt.Println("exporting simulation params...")
 
 		json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 		paramsBz, err := json.MarshalIndent(params, "", " ")
 		if err != nil {
 			return err

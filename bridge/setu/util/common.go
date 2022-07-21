@@ -127,6 +127,7 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
@@ -359,8 +360,8 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	var params chainManagerTypes.Params
 
+	var params chainManagerTypes.Params
 	if err = json.Unmarshal(response.Result, &params); err != nil {
 		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err
@@ -382,6 +383,7 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var params checkpointTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
 		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
@@ -404,6 +406,7 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, e
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var checkpoint hmtypes.Checkpoint
 	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
@@ -547,6 +550,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 	var response TendermintUnconfirmedTxs
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)

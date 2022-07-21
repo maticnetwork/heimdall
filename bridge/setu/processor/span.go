@@ -199,6 +199,7 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var msg types.Span
 	if err = json.Unmarshal(result.Result, &msg); err != nil {
 		sp.Logger.Error("Error unmarshalling propose tx msg ", "error", err)

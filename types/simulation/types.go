@@ -88,6 +88,7 @@ func NoOpMsg(route string) OperationMsg {
 // log entry text for this operation msg
 func (om OperationMsg) String() string {
 	var jsonLib = jsoniter.ConfigCompatibleWithStandardLibrary
+
 	out, err := jsonLib.Marshal(om)
 	if err != nil {
 		panic(err)
@@ -99,6 +100,7 @@ func (om OperationMsg) String() string {
 // MustMarshal Marshals the operation msg, panic on error
 func (om OperationMsg) MustMarshal() json.RawMessage {
 	var jsonLib = jsoniter.ConfigCompatibleWithStandardLibrary
+
 	out, err := jsonLib.Marshal(om)
 	if err != nil {
 		panic(err)

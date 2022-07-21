@@ -41,6 +41,7 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, topupKeeper topup.K
 
 func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(keeper.GetParams(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -51,6 +52,7 @@ func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 
 func handleQueryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(keeper.GetACKCount(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -71,6 +73,7 @@ func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -90,6 +93,7 @@ func handleQueryCheckpointBuffer(ctx sdk.Context, req abci.RequestQuery, keeper 
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -104,6 +108,7 @@ func handleQueryLastNoAck(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 
 	// send result
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -124,6 +129,7 @@ func handleQueryCheckpointList(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -181,6 +187,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	)
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))

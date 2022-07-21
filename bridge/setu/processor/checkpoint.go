@@ -613,13 +613,14 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	var noackObject Result
-	if err := json.Unmarshal(response.Result, &noackObject); err != nil {
+
+	var noAckObject Result
+	if err := json.Unmarshal(response.Result, &noAckObject); err != nil {
 		cp.Logger.Error("Error unmarshalling no-ack data ", "error", err)
 		return 0
 	}
 
-	return noackObject.Result
+	return noAckObject.Result
 }
 
 // checkIfNoAckIsRequired - check if NoAck has to be sent or not

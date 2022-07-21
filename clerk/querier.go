@@ -46,6 +46,7 @@ func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 
 	// json record
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(record)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -66,6 +67,7 @@ func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -86,6 +88,7 @@ func handleQueryRecordListWithTime(ctx sdk.Context, req abci.RequestQuery, keepe
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

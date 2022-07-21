@@ -123,6 +123,7 @@ func handleQuerySpanList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -179,6 +180,7 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(nextProducers)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
@@ -196,6 +198,7 @@ func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 
 	// json record
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	bz, err := json.Marshal(nextSpanSeed)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))

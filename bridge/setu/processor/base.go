@@ -142,6 +142,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 	}
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var status bool
 	if err := json.Unmarshal(res.Result, &status); err != nil {
 		bp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)

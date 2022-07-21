@@ -182,6 +182,7 @@ func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight
 	hl.Logger.Info("Received block event from Heimdall", "eventType", event.Type)
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	eventBytes, err := json.Marshal(event)
 	if err != nil {
 		hl.Logger.Error("Error while parsing block event", "eventType", event.Type, "error", err)

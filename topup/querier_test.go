@@ -129,6 +129,7 @@ func (suite *QuerierTestSuite) TestHandleQueryDividendAccount() {
 	require.NotNil(t, res)
 
 	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var divAcc hmTypes.DividendAccount
 	err = json.Unmarshal(res, &divAcc)
 	require.NoError(t, err)
