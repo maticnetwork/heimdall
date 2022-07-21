@@ -395,7 +395,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var json = jsoniter.ConfigCompatibleWithStandardLibrary
+		json := jsoniter.ConfigCompatibleWithStandardLibrary
 		var spanDuration uint64
 		if err := json.Unmarshal(spanDurationBytes, &spanDuration); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -522,7 +522,7 @@ func loadSpanOverrides() {
 		return
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var spans []*bor.ResponseWithHeight
 	if err := json.Unmarshal(j, &spans); err != nil {
 		return

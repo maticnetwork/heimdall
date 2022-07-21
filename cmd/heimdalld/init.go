@@ -123,7 +123,7 @@ func heimdallInit(ctx *server.Context, cdc *codec.Codec, initConfig *initHeimdal
 	}
 
 	// app state json
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	appStateJSON, err := json.Marshal(appStateBytes)
 	if err != nil {

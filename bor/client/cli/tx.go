@@ -96,7 +96,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return errors.New("span duration not found")
 			}
 
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			var spanDuration uint64
 			if err := json.Unmarshal(res, &spanDuration); err != nil {
 				return err

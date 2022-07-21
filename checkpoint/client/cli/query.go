@@ -67,7 +67,7 @@ $ %s query checkpoint params
 				return err
 			}
 
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			var params types.Params
 			if err := json.Unmarshal(bz, &params); err != nil {
 				return nil
@@ -119,7 +119,7 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 				return errors.New("No last-no-ack count found")
 			}
 
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			var lastNoAck uint64
 			if err := json.Unmarshal(res, &lastNoAck); err != nil {
 				return err
@@ -185,7 +185,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 				return errors.New("No ack count found")
 			}
 
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			var ackCount uint64
 			if err := json.Unmarshal(res, &ackCount); err != nil {
 				return err

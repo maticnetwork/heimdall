@@ -41,7 +41,7 @@ func (bz *HexBytes) Unmarshal(data []byte) error {
 
 // MarshalJSON this is the point of Bytes.
 func (bz HexBytes) MarshalJSON() ([]byte, error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(bz.String())
 }
 
@@ -52,7 +52,7 @@ func (bz HexBytes) MarshalYAML() (interface{}, error) {
 
 // UnmarshalJSON this is the point of Bytes.
 func (bz *HexBytes) UnmarshalJSON(data []byte) error {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var s string
 
 	if err := json.Unmarshal(data, &s); err != nil {
