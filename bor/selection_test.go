@@ -84,7 +84,8 @@ func TestSelectNextProducers(t *testing.T) {
 	}
 
 	var validators []hmTypes.Validator
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	err := json.Unmarshal([]byte(testValidators), &validators)
 	require.NoError(t, err)
 	require.Equal(t, 5, len(validators), "Total validators should be 5")

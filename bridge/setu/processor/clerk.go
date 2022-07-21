@@ -56,7 +56,7 @@ func (cp *ClerkProcessor) RegisterTasks() {
 func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes string) error {
 	start := time.Now()
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var vLog = types.Log{}
 	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)

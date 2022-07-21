@@ -147,7 +147,7 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Par
 		return nil, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var params chainmanagerTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
 		return nil, err

@@ -28,7 +28,7 @@ import (
 
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	cmd := &cobra.Command{
 		Use:   "create-testnet",

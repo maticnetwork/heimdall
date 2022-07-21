@@ -134,7 +134,8 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	defaultParams := authTypes.DefaultParams()
 
 	var params types.Params
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	err2 := json.Unmarshal(res, &params)
 	require.Nil(t, err2)
 	require.Equal(t, defaultParams.MaxMemoCharacters, params.MaxMemoCharacters)

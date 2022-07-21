@@ -61,7 +61,7 @@ func (aa *HeimdallAddress) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using Bech32.
 func (aa HeimdallAddress) MarshalJSON() ([]byte, error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(aa.String())
 }
 
@@ -72,8 +72,9 @@ func (aa HeimdallAddress) MarshalYAML() (interface{}, error) {
 
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (aa *HeimdallAddress) UnmarshalJSON(data []byte) error {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var s string
+
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}

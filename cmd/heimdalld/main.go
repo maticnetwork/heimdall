@@ -409,7 +409,7 @@ func openTraceWriter(traceWriterFile string) (io.Writer, error) {
 }
 
 func showAccountCmd() *cobra.Command {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	return &cobra.Command{
 		Use:   "show-account",
@@ -438,7 +438,7 @@ func showAccountCmd() *cobra.Command {
 }
 
 func showPrivateKeyCmd() *cobra.Command {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	return &cobra.Command{
 		Use:   "show-privatekey",
 		Short: "Print the account's private key",
@@ -466,7 +466,7 @@ func showPrivateKeyCmd() *cobra.Command {
 
 // VerifyGenesis verifies the genesis file and brings it in sync with on-chain contract
 func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	cmd := &cobra.Command{
 		Use:   "verify-genesis",
 		Short: "Verify if the genesis matches",

@@ -56,7 +56,7 @@ $ %s query chainmanager params
 				return err
 			}
 
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			var params types.Params
 			if err = json.Unmarshal(bz, &params); err != nil {
 				return err

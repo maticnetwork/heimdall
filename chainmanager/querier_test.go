@@ -73,7 +73,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	err := json.Unmarshal(res, &params)
 	require.NoError(t, err)
 

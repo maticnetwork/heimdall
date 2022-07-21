@@ -82,7 +82,7 @@ func (a *PubKey) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using Bech32.
 func (a PubKey) MarshalJSON() ([]byte, error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(a.String())
 }
 
@@ -93,8 +93,9 @@ func (a PubKey) MarshalYAML() (interface{}, error) {
 
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (a *PubKey) UnmarshalJSON(data []byte) error {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var s string
+
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}

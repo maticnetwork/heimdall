@@ -353,7 +353,7 @@ func rangeQuery(cliCtx context.CLIContext, page uint64, limit uint64) ([]byte, e
 
 func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, limit uint64) ([]byte, error) {
 	result := make([]*types.EventRecord, 0, limit)
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	// if from id not found, return empty result
 	fromData, err := recordQuery(cliCtx, fromID)

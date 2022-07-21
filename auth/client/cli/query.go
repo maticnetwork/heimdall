@@ -90,7 +90,7 @@ $ %s query auth params
 			}
 
 			var params types.Params
-			var json = jsoniter.ConfigCompatibleWithStandardLibrary
+			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			if err := json.Unmarshal(bz, &params); err != nil {
 				return err
 			}

@@ -118,7 +118,7 @@ func (ss *StdSignature) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using Bech32.
 func (ss StdSignature) MarshalJSON() ([]byte, error) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(ss.String())
 }
 
@@ -130,7 +130,8 @@ func (ss StdSignature) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (ss *StdSignature) UnmarshalJSON(data []byte) error {
 	var s string
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	if err := json.Unmarshal(data, &s); err != nil {
 		return err
 	}

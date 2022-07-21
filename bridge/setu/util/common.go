@@ -126,7 +126,7 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		return false, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	err = json.Unmarshal(result.Result, &proposers)
 	if err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
@@ -156,7 +156,7 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	// unmarshall data from buffer
 	var proposers []hmtypes.Validator
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	if err := json.Unmarshal(response.Result, &proposers); err != nil {
 		logger.Error("Error unmarshalling validator data ", "error", err)
 		return false, err
@@ -224,7 +224,7 @@ func IsCurrentProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		return false, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	if err = json.Unmarshal(result.Result, &proposer); err != nil {
 		logger.Error("error unmarshalling validator", "error", err)
 		return false, err
@@ -253,7 +253,7 @@ func IsEventSender(cliCtx cliContext.CLIContext, validatorID uint64) bool {
 		return false
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	if err = json.Unmarshal(result.Result, &validator); err != nil {
 		logger.Error("error unmarshalling proposer slice", "error", err)
 		return false
@@ -358,8 +358,9 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainManagerTypes.Par
 		return nil, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var params chainManagerTypes.Params
+
 	if err = json.Unmarshal(response.Result, &params); err != nil {
 		logger.Error("Error unmarshalling chainmanager params", "url", ChainManagerParamsURL, "err", err)
 		return nil, err
@@ -380,7 +381,7 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 		return nil, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var params checkpointTypes.Params
 	if err := json.Unmarshal(response.Result, &params); err != nil {
 		logger.Error("Error unmarshalling Checkpoint params", "url", CheckpointParamsURL)
@@ -402,7 +403,7 @@ func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, e
 		return nil, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var checkpoint hmtypes.Checkpoint
 	if err := json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling buffered checkpoint", "url", BufferedCheckpointURL, "err", err)
@@ -424,7 +425,8 @@ func GetLatestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, err
 		return nil, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var checkpoint hmtypes.Checkpoint
 	if err = json.Unmarshal(response.Result, &checkpoint); err != nil {
 		logger.Error("Error unmarshalling latest checkpoint", "url", LatestCheckpointURL, "err", err)
@@ -458,7 +460,7 @@ func GetValidatorNonce(cliCtx cliContext.CLIContext, validatorID uint64) (uint64
 		return 0, 0, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	if err = json.Unmarshal(result.Result, &validator); err != nil {
 		logger.Error("error unmarshalling validator data", "error", err)
 		return 0, 0, err
@@ -477,7 +479,8 @@ func GetValidatorSet(cliCtx cliContext.CLIContext) (*hmtypes.ValidatorSet, error
 		return nil, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var validatorSet hmtypes.ValidatorSet
 	if err = json.Unmarshal(response.Result, &validatorSet); err != nil {
 		logger.Error("Error unmarshalling current validatorset data ", "error", err)
@@ -512,7 +515,8 @@ func GetClerkEventRecord(cliCtx cliContext.CLIContext, stateId int64) (*clerktyp
 		return nil, err
 	}
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
+
 	var eventRecord clerktypes.EventRecord
 	if err = json.Unmarshal(response.Result, &eventRecord); err != nil {
 		logger.Error("Error unmarshalling event record", "error", err)
@@ -542,7 +546,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 	// a minimal response of the unconfirmed txs
 	var response TendermintUnconfirmedTxs
 
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	err = json.Unmarshal(body, &response)
 	if err != nil {
 		logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)

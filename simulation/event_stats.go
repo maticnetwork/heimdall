@@ -34,7 +34,7 @@ func (es EventStats) Tally(route, op, evResult string) {
 
 // Print the event stats in JSON format.
 func (es EventStats) Print(w io.Writer) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	obj, err := json.MarshalIndent(es, "", " ")
 	if err != nil {
 		panic(err)
@@ -45,7 +45,7 @@ func (es EventStats) Print(w io.Writer) {
 
 // ExportJSON saves the event stats as a JSON file on a given path
 func (es EventStats) ExportJSON(path string) {
-	var json = jsoniter.ConfigCompatibleWithStandardLibrary
+	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	bz, err := json.MarshalIndent(es, "", " ")
 	if err != nil {
 		panic(err)

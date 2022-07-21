@@ -1,8 +1,8 @@
 package app
 
 import (
+	"encoding/json"
 	"fmt"
-	jsoniter "github.com/json-iterator/go"
 	"math/rand"
 	"os"
 	"testing"
@@ -239,7 +239,7 @@ func TestAppStateDeterminism(t *testing.T) {
 
 	numSeeds := 3
 	numTimesToRunPerSeed := 5
-	appHashList := make([]jsoniter.RawMessage, numTimesToRunPerSeed)
+	appHashList := make([]json.RawMessage, numTimesToRunPerSeed)
 
 	for i := 0; i < numSeeds; i++ {
 		config.Seed = rand.Int63()
