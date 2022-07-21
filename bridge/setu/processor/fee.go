@@ -43,7 +43,7 @@ func (fp *FeeProcessor) RegisterTasks() {
 
 // processTopupFeeEvent - processes topup fee event
 func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var vLog = types.Log{}
 	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		fp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)

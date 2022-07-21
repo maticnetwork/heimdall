@@ -140,13 +140,13 @@ func (status *ProposalStatus) Unmarshal(data []byte) error {
 
 // Marshals to JSON using string
 func (status ProposalStatus) MarshalJSON() ([]byte, error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(status.String())
 }
 
 // Unmarshals from JSON assuming Bech32 encoding
 func (status *ProposalStatus) UnmarshalJSON(data []byte) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var s string
 	err := json.Unmarshal(data, &s)
 	if err != nil {

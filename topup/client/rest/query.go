@@ -253,7 +253,7 @@ func dividendAccountRootHandlerFn(
 
 		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		result, err := json.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
@@ -345,7 +345,7 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		var accountProofStatus bool
 		if err = json.Unmarshal(res, &accountProofStatus); err != nil {

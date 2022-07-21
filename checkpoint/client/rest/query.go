@@ -254,7 +254,7 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var ackCount uint64
 		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -308,7 +308,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			validatorSetBytes []byte
 		)
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		// get start and start
 		if params.Get("start") != "" && params.Get("end") != "" {
@@ -428,7 +428,7 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var lastAckTime uint64
 		if err := json.Unmarshal(res, &lastAckTime); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -468,7 +468,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		//
 		// Ack acount
@@ -575,7 +575,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		//
 		// Get ack count
 		//
@@ -705,7 +705,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var checkpointUnmarshal hmTypes.Checkpoint
 		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

@@ -137,7 +137,7 @@ func (sp *SpanProcessor) getLastSpan() (*types.Span, error) {
 		return nil, err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	var lastSpan types.Span
 	if err = json.Unmarshal(result.Result, &lastSpan); err != nil {
@@ -198,7 +198,7 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 		return nil, err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var msg types.Span
 	if err = json.Unmarshal(result.Result, &msg); err != nil {
 		sp.Logger.Error("Error unmarshalling propose tx msg ", "error", err)
@@ -222,7 +222,7 @@ func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed common.Hash, err erro
 
 	sp.Logger.Info("Next span seed fetched")
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	if err = json.Unmarshal(response.Result, &nextSpanSeed); err != nil {
 		sp.Logger.Error("Error unmarshalling nextSpanSeed received from Heimdall Server", "error", err)
 		return nextSpanSeed, err

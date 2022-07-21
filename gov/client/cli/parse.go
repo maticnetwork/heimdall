@@ -33,7 +33,7 @@ func parseSubmitProposalFlags() (*proposal, error) {
 		return nil, err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err = json.Unmarshal(contents, proposal)
 	if err != nil {
 		return nil, err

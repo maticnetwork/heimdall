@@ -141,7 +141,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		var spanDuration uint64
 		if err = json.Unmarshal(res, &spanDuration); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

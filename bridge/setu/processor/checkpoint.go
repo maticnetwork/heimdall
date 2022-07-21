@@ -183,7 +183,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, blockHeight int64) error {
 	cp.Logger.Info("Received sendCheckpointToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	var event sdk.StringEvent
 	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
@@ -257,7 +257,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		return err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	var log = types.Log{}
 	if err = json.Unmarshal([]byte(checkpointAckStr), &log); err != nil {
@@ -568,7 +568,7 @@ func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmTyp
 
 	cp.Logger.Info("Divident account root fetched")
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	if err = json.Unmarshal(response.Result, &accountroothash); err != nil {
 		cp.Logger.Error("Error unmarshalling accountroothash received from Heimdall Server", "error", err)
 		return accountroothash, err
@@ -612,7 +612,7 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 		return 0
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var noackObject Result
 	if err := json.Unmarshal(response.Result, &noackObject); err != nil {
 		cp.Logger.Error("Error unmarshalling no-ack data ", "error", err)

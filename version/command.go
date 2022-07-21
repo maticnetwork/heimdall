@@ -31,7 +31,7 @@ var Cmd = &cobra.Command{
 		var bz []byte
 		var err error
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		switch viper.GetString(cli.OutputFlag) {
 		case "json":

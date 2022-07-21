@@ -161,7 +161,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 					return err
 				}
 
-				json := jsoniter.ConfigCompatibleWithStandardLibrary
+				var json = jsoniter.ConfigCompatibleWithStandardLibrary
 				if err := json.Unmarshal(proposerBytes, &checkpointProposer); err != nil {
 					return err
 				}

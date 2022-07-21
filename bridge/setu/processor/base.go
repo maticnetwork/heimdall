@@ -141,7 +141,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 		return false, err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var status bool
 	if err := json.Unmarshal(res.Result, &status); err != nil {
 		bp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
@@ -170,7 +170,7 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 		return false, err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	// a minimal response of the unconfirmed txs
 	var response util.TendermintUnconfirmedTxs

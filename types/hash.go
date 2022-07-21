@@ -54,7 +54,7 @@ func (aa *HeimdallHash) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using Bech32.
 func (aa HeimdallHash) MarshalJSON() ([]byte, error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	return json.Marshal(aa.String())
 }
 
@@ -65,7 +65,7 @@ func (aa HeimdallHash) MarshalYAML() (interface{}, error) {
 
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (aa *HeimdallHash) UnmarshalJSON(data []byte) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	var s string
 
 	if err := json.Unmarshal(data, &s); err != nil {

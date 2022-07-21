@@ -175,7 +175,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		var totalPower uint64
 		if err := json.Unmarshal(totalPowerBytes, &totalPower); err != nil {
@@ -289,7 +289,7 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		var status bool
 		if err = json.Unmarshal(statusBytes, &status); err != nil {
@@ -504,7 +504,7 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 		var _proposerBonusPercent int64
 		if err := json.Unmarshal(res, &_proposerBonusPercent); err != nil {

@@ -23,7 +23,7 @@ func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 
 		var spans []*bor.ResponseWithHeight
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		if err := json.Unmarshal(j, &spans); err != nil {
 			k.Logger(ctx).Error("Error Unmarshal spans", "error", err)
 			panic(err)

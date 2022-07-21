@@ -615,7 +615,7 @@ func prepareDummyLogBytes() (*bytes.Buffer, error) {
 		Removed:     false,
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 
 	reqBodyBytes := new(bytes.Buffer)
 	if err := json.NewEncoder(reqBodyBytes).Encode(log); err != nil {

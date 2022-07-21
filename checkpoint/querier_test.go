@@ -82,7 +82,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err := json.Unmarshal(res, &params)
 	require.NoError(t, err)
 	require.NotNil(t, params)
@@ -147,7 +147,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpoint() {
 
 	var checkpoint hmTypes.Checkpoint
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err = json.Unmarshal(res, &checkpoint)
 	require.NoError(t, err)
 	require.Equal(t, checkpoint, checkpointBlock)
@@ -188,7 +188,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 
 	var checkpoint hmTypes.Checkpoint
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err = json.Unmarshal(res, &checkpoint)
 	require.NoError(t, err)
 	require.Equal(t, checkpoint, checkpointBlock)
@@ -264,7 +264,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 
 	var actualRes []hmTypes.Checkpoint
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err := json.Unmarshal(res, &actualRes)
 	require.NoError(t, err)
 	require.Equal(t, checkpoints, actualRes)
@@ -315,7 +315,7 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 
 	var actualRes types.MsgCheckpoint
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
+	var json = jsoniter.ConfigCompatibleWithStandardLibrary
 	err = json.Unmarshal(res, &actualRes)
 	require.NoError(t, err)
 	require.Equal(t, checkpointBlock.StartBlock, actualRes.StartBlock)
