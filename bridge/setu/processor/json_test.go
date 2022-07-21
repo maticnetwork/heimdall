@@ -2,10 +2,12 @@ package processor
 
 import (
 	"encoding/json"
-	jsoniter "github.com/json-iterator/go"
-	"github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/require"
 	"testing"
+
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/require"
+
+	"github.com/maticnetwork/heimdall/types"
 )
 
 const validatorSetData = `
@@ -212,11 +214,16 @@ func BenchmarkJsonStandardLibrary(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		validatorSet := types.ValidatorSet{}
+
 		b.StartTimer()
+
 		err := json.Unmarshal([]byte(validatorSetData), &validatorSet)
-		_, err = json.Marshal(validatorSet)
-		b.StopTimer()
 		require.NoError(b, err)
+
+		_, err = json.Marshal(validatorSet)
+		require.NoError(b, err)
+
+		b.StopTimer()
 	}
 }
 
@@ -228,10 +235,15 @@ func BenchmarkJsoniterLibrary(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		validatorSet := types.ValidatorSet{}
 		jsonLib := jsoniter.ConfigCompatibleWithStandardLibrary
+
 		b.StartTimer()
+
 		err := jsonLib.Unmarshal([]byte(validatorSetData), &validatorSet)
-		_, err = jsonLib.Marshal(validatorSet)
-		b.StopTimer()
 		require.NoError(b, err)
+
+		_, err = jsonLib.Marshal(validatorSet)
+		require.NoError(b, err)
+
+		b.StopTimer()
 	}
 }
