@@ -409,7 +409,6 @@ func openTraceWriter(traceWriterFile string) (io.Writer, error) {
 }
 
 func showAccountCmd() *cobra.Command {
-
 	return &cobra.Command{
 		Use:   "show-account",
 		Short: "Print the account's address and public key",
@@ -437,7 +436,6 @@ func showAccountCmd() *cobra.Command {
 }
 
 func showPrivateKeyCmd() *cobra.Command {
-
 	return &cobra.Command{
 		Use:   "show-privatekey",
 		Short: "Print the account's private key",

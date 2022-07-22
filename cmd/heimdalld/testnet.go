@@ -28,7 +28,6 @@ import (
 
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "create-testnet",
 		Short: "Initialize files for a Heimdall testnet",

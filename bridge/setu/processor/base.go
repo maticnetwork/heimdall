@@ -171,6 +171,7 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 
 	// a minimal response of the unconfirmed txs
 	var response util.TendermintUnconfirmedTxs
+
 	err = jsoniter.ConfigFastest.Unmarshal(body, &response)
 	if err != nil {
 		bp.Logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)

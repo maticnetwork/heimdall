@@ -529,6 +529,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 
 	// a minimal response of the unconfirmed txs
 	var response TendermintUnconfirmedTxs
+
 	err = jsoniter.ConfigFastest.Unmarshal(body, &response)
 	if err != nil {
 		logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
