@@ -227,7 +227,27 @@ func BenchmarkJsonStandardLibrary(b *testing.B) {
 	}
 }
 
-func BenchmarkJsoniterLibrary(b *testing.B) {
+func BenchmarkJsoniterLibraryWithDefaultConfig(b *testing.B) {
+	b.ReportAllocs()
+	b.ResetTimer()
+	b.StopTimer()
+
+	for i := 0; i < b.N; i++ {
+		validatorSet := types.ValidatorSet{}
+
+		b.StartTimer()
+
+		err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal([]byte(validatorSetData), &validatorSet)
+		require.NoError(b, err)
+
+		_, err = jsoniter.ConfigFastest.Marshal(validatorSet)
+		require.NoError(b, err)
+
+		b.StopTimer()
+	}
+}
+
+func BenchmarkJsoniterLibraryWithFastestConfig(b *testing.B) {
 	b.ReportAllocs()
 	b.ResetTimer()
 	b.StopTimer()
