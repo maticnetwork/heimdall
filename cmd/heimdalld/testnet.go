@@ -28,7 +28,6 @@ import (
 
 // TestnetCmd initialises files required to start heimdall testnet
 func testnetCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	cmd := &cobra.Command{
 		Use:   "create-testnet",
@@ -183,7 +182,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				return err
 			}
 
-			appStateJSON, err := json.Marshal(appStateBytes)
+			appStateJSON, err := jsoniter.ConfigFastest.Marshal(appStateBytes)
 			if err != nil {
 				return err
 			}
@@ -198,7 +197,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// TODO move to const string flag
 			dump := viper.GetBool("signer-dump")
 			if dump {
-				signerJSON, err := json.MarshalIndent(signers, "", "  ")
+				signerJSON, err := jsoniter.ConfigFastest.MarshalIndent(signers, "", "  ")
 				if err != nil {
 					return err
 				}

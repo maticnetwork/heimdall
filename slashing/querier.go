@@ -53,8 +53,7 @@ func NewQuerier(k Keeper) sdk.Querier {
 }
 
 func queryParams(ctx sdk.Context, keeper Keeper) ([]byte, sdk.Error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	bz, err := json.Marshal(keeper.GetParams(ctx))
+	bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetParams(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -75,8 +74,7 @@ func querySigningInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte,
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	bz, err := json.Marshal(signingInfo)
+	bz, err := jsoniter.ConfigFastest.Marshal(signingInfo)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -105,8 +103,7 @@ func querySigningInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	bz, err := json.Marshal(signingInfos)
+	bz, err := jsoniter.ConfigFastest.Marshal(signingInfos)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -114,8 +111,7 @@ func querySigningInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 }
 
 func handleQueryTickCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	bz, err := json.Marshal(keeper.GetTickCount(ctx))
+	bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetTickCount(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -136,8 +132,7 @@ func querySlashingInfo(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	bz, err := json.Marshal(slashingInfo)
+	bz, err := jsoniter.ConfigFastest.Marshal(slashingInfo)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -166,8 +161,7 @@ func querySlashingInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byt
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	bz, err := json.Marshal(slashingInfos)
+	bz, err := jsoniter.ConfigFastest.Marshal(slashingInfos)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -210,8 +204,7 @@ func queryTickSlashingInfos(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	bz, err := json.Marshal(slashingInfos)
+	bz, err := jsoniter.ConfigFastest.Marshal(slashingInfos)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

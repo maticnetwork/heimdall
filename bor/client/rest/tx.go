@@ -141,9 +141,8 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
 		var spanDuration uint64
-		if err = json.Unmarshal(res, &spanDuration); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -158,7 +157,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var seed common.Hash
-		if err = json.Unmarshal(res, &seed); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &seed); err != nil {
 			return
 		}
 

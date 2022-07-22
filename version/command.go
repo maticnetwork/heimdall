@@ -31,11 +31,9 @@ var Cmd = &cobra.Command{
 		var bz []byte
 		var err error
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 		switch viper.GetString(cli.OutputFlag) {
 		case "json":
-			bz, err = json.Marshal(verInfo)
+			bz, err = jsoniter.ConfigFastest.Marshal(verInfo)
 		default:
 			bz, err = yaml.Marshal(&verInfo)
 		}

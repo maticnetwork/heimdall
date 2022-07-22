@@ -175,15 +175,13 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 		var totalPower uint64
-		if err := json.Unmarshal(totalPowerBytes, &totalPower); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(totalPowerBytes, &totalPower); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := json.Marshal(map[string]interface{}{"result": totalPower})
+		result, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": totalPower})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -289,15 +287,13 @@ func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 		var status bool
-		if err = json.Unmarshal(statusBytes, &status); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(statusBytes, &status); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		res, err := json.Marshal(map[string]interface{}{"result": status})
+		res, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": status})
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -504,15 +500,13 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 		var _proposerBonusPercent int64
-		if err := json.Unmarshal(res, &_proposerBonusPercent); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(res, &_proposerBonusPercent); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := json.Marshal(_proposerBonusPercent)
+		result, err := jsoniter.ConfigFastest.Marshal(_proposerBonusPercent)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

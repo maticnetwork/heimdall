@@ -183,10 +183,8 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, blockHeight int64) error {
 	cp.Logger.Info("Received sendCheckpointToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	var event sdk.StringEvent
-	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
 		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
@@ -257,10 +255,8 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		return err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	var log = types.Log{}
-	if err = json.Unmarshal([]byte(checkpointAckStr), &log); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal([]byte(checkpointAckStr), &log); err != nil {
 		cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -568,8 +564,7 @@ func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmTyp
 
 	cp.Logger.Info("Divident account root fetched")
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	if err = json.Unmarshal(response.Result, &accountroothash); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &accountroothash); err != nil {
 		cp.Logger.Error("Error unmarshalling accountroothash received from Heimdall Server", "error", err)
 		return accountroothash, err
 	}
@@ -612,10 +607,8 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 		return 0
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	var noAckObject Result
-	if err := json.Unmarshal(response.Result, &noAckObject); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &noAckObject); err != nil {
 		cp.Logger.Error("Error unmarshalling no-ack data ", "error", err)
 		return 0
 	}

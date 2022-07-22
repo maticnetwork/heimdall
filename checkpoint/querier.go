@@ -40,9 +40,7 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, topupKeeper topup.K
 }
 
 func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(keeper.GetParams(ctx))
+	bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetParams(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -51,9 +49,7 @@ func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 }
 
 func handleQueryAckCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(keeper.GetACKCount(ctx))
+	bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetACKCount(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -72,9 +68,7 @@ func handleQueryCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint by index %v", params.Number), err.Error()))
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(res)
+	bz, err := jsoniter.ConfigFastest.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -92,9 +86,7 @@ func handleQueryCheckpointBuffer(ctx sdk.Context, req abci.RequestQuery, keeper 
 		return nil, common.ErrNoCheckpointBufferFound(keeper.Codespace())
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(res)
+	bz, err := jsoniter.ConfigFastest.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -107,9 +99,7 @@ func handleQueryLastNoAck(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 	res := keeper.GetLastNoAck(ctx)
 
 	// send result
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(res)
+	bz, err := jsoniter.ConfigFastest.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -128,9 +118,7 @@ func handleQueryCheckpointList(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch checkpoint list with page %v and limit %v", params.Page, params.Limit), err.Error()))
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(res)
+	bz, err := jsoniter.ConfigFastest.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -186,9 +174,7 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 		queryParams.BorChainID,
 	)
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(checkpointMsg)
+	bz, err := jsoniter.ConfigFastest.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))
 	}

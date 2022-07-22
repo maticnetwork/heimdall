@@ -135,8 +135,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 
 	var params types.Params
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	err2 := json.Unmarshal(res, &params)
+	err2 := jsoniter.ConfigFastest.Unmarshal(res, &params)
 	require.Nil(t, err2)
 	require.Equal(t, defaultParams.MaxMemoCharacters, params.MaxMemoCharacters)
 	require.Equal(t, defaultParams.TxSigLimit, params.TxSigLimit)
@@ -155,7 +154,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NotEmpty(t, string(res))
 
 	var params3 types.Params
-	err3 := json.Unmarshal(res, &params3)
+	err3 := jsoniter.ConfigFastest.Unmarshal(res, &params3)
 	require.NoError(t, err3)
 	require.Equal(t, uint64(10), params.MaxMemoCharacters)
 	require.Equal(t, uint64(8), params.TxSizeCostPerByte)

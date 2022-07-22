@@ -40,9 +40,7 @@ func (rl *RootChainListener) handleLog(vLog types.Log, selectedEvent *abi.Event)
 }
 
 func (rl *RootChainListener) handleNewHeaderBlockLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -53,9 +51,7 @@ func (rl *RootChainListener) handleNewHeaderBlockLog(vLog types.Log, selectedEve
 }
 
 func (rl *RootChainListener) handleStakedLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -79,9 +75,7 @@ func (rl *RootChainListener) handleStakedLog(vLog types.Log, selectedEvent *abi.
 }
 
 func (rl *RootChainListener) handleStakeUpdateLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -99,9 +93,7 @@ func (rl *RootChainListener) handleStakeUpdateLog(vLog types.Log, selectedEvent 
 }
 
 func (rl *RootChainListener) handleSignerChangeLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -121,9 +113,7 @@ func (rl *RootChainListener) handleSignerChangeLog(vLog types.Log, selectedEvent
 }
 
 func (rl *RootChainListener) handleUnstakeInitLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -141,9 +131,7 @@ func (rl *RootChainListener) handleUnstakeInitLog(vLog types.Log, selectedEvent 
 }
 
 func (rl *RootChainListener) handleStateSyncedLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -161,9 +149,7 @@ func (rl *RootChainListener) handleStateSyncedLog(vLog types.Log, selectedEvent 
 }
 
 func (rl *RootChainListener) handleTopUpFeeLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -181,9 +167,7 @@ func (rl *RootChainListener) handleTopUpFeeLog(vLog types.Log, selectedEvent *ab
 }
 
 func (rl *RootChainListener) handleSlashedLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}
@@ -194,9 +178,7 @@ func (rl *RootChainListener) handleSlashedLog(vLog types.Log, selectedEvent *abi
 }
 
 func (rl *RootChainListener) handleUnJailedLog(vLog types.Log, selectedEvent *abi.Event) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	logBytes, err := json.Marshal(vLog)
+	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
 	}

@@ -96,9 +96,8 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return errors.New("span duration not found")
 			}
 
-			json := jsoniter.ConfigCompatibleWithStandardLibrary
 			var spanDuration uint64
-			if err := json.Unmarshal(res, &spanDuration); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 
@@ -112,7 +111,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var seed common.Hash
-			if err := json.Unmarshal(res, &seed); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &seed); err != nil {
 				return err
 			}
 

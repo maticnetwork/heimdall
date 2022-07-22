@@ -353,16 +353,15 @@ func rangeQuery(cliCtx context.CLIContext, page uint64, limit uint64) ([]byte, e
 
 func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, limit uint64) ([]byte, error) {
 	result := make([]*types.EventRecord, 0, limit)
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	// if from id not found, return empty result
 	fromData, err := recordQuery(cliCtx, fromID)
 	if err != nil {
-		return json.Marshal(result)
+		return jsoniter.ConfigFastest.Marshal(result)
 	}
 
 	var fromRecord types.EventRecord
-	if err = json.Unmarshal(fromData, &fromRecord); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(fromData, &fromRecord); err != nil {
 		return nil, err
 	}
 
@@ -374,7 +373,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 	}
 
 	rangeRecords := make([]*types.EventRecord, 0)
-	if err = json.Unmarshal(rangeData, &rangeRecords); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(rangeData, &rangeRecords); err != nil {
 		return nil, err
 	}
 
@@ -397,7 +396,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 			}
 
 			var record types.EventRecord
-			err = json.Unmarshal(recordData, &record)
+			err = jsoniter.ConfigFastest.Unmarshal(recordData, &record)
 			if err != nil {
 				return nil, err
 			}
@@ -415,7 +414,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 	}
 
 	// return result in json
-	return json.Marshal(result)
+	return jsoniter.ConfigFastest.Marshal(result)
 }
 
 //swagger:parameters clerkIsOldTx clerkEventList clerkEventById

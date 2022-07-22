@@ -23,8 +23,7 @@ func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 
 		var spans []*bor.ResponseWithHeight
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-		if err := json.Unmarshal(j, &spans); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(j, &spans); err != nil {
 			k.Logger(ctx).Error("Error Unmarshal spans", "error", err)
 			panic(err)
 		}
@@ -33,7 +32,7 @@ func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 			k.Logger(ctx).Info("overriding span", "height", span.Height, "span", span)
 
 			var heimdallSpan hmTypes.Span
-			if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(span.Result, &heimdallSpan); err != nil {
 				k.Logger(ctx).Error("Error Unmarshal heimdallSpan", "error", err)
 				panic(err)
 			}

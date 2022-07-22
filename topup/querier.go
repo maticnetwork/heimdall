@@ -83,9 +83,7 @@ func handleQueryDividendAccount(ctx sdk.Context, req abci.RequestQuery, keeper K
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(dividendAccount)
+	bz, err := jsoniter.ConfigFastest.Marshal(dividendAccount)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -137,9 +135,7 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 		accountProof := hmTypes.NewDividendAccountProof(params.UserAddress, merkleProof, index)
 
 		// json record
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-		bz, err := json.Marshal(accountProof)
+		bz, err := jsoniter.ConfigFastest.Marshal(accountProof)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
@@ -165,9 +161,7 @@ func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keepe
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(accountProofStatus)
+	bz, err := jsoniter.ConfigFastest.Marshal(accountProofStatus)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

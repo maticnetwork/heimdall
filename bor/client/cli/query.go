@@ -142,8 +142,7 @@ $ %s query bor params
 			}
 
 			var params types.Params
-			json := jsoniter.ConfigCompatibleWithStandardLibrary
-			err = json.Unmarshal(bz, &params)
+			err = jsoniter.ConfigFastest.Unmarshal(bz, &params)
 			if err != nil {
 				return err
 			}

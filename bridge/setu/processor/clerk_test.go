@@ -615,10 +615,8 @@ func prepareDummyLogBytes() (*bytes.Buffer, error) {
 		Removed:     false,
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	reqBodyBytes := new(bytes.Buffer)
-	if err := json.NewEncoder(reqBodyBytes).Encode(log); err != nil {
+	if err := jsoniter.ConfigFastest.NewEncoder(reqBodyBytes).Encode(log); err != nil {
 		return nil, err
 	}
 

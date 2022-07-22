@@ -379,8 +379,7 @@ func latestSlashInfoBytesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		var slashInfoBytes = hmTypes.BytesToHexBytes(res)
 		RestLogger.Debug("Fetched slashInfoBytes ", "SlashInfoBytes", slashInfoBytes.String())
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-		result, err := json.Marshal(&slashInfoBytes)
+		result, err := jsoniter.ConfigFastest.Marshal(&slashInfoBytes)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -557,14 +556,13 @@ func tickCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
 		var tickCount uint64
-		if err := json.Unmarshal(tickCountBytes, &tickCount); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(tickCountBytes, &tickCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := json.Marshal(&tickCount)
+		result, err := jsoniter.ConfigFastest.Marshal(&tickCount)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

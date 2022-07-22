@@ -42,9 +42,7 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 }
 
 func handleQueryTotalValidatorPower(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(keeper.GetTotalPower(ctx))
+	bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetTotalPower(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -57,9 +55,7 @@ func handleQueryCurrentValidatorSet(ctx sdk.Context, req abci.RequestQuery, keep
 	validatorSet := keeper.GetValidatorSet(ctx)
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(validatorSet)
+	bz, err := jsoniter.ConfigFastest.Marshal(validatorSet)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -80,9 +76,7 @@ func handleQuerySigner(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(validator)
+	bz, err := jsoniter.ConfigFastest.Marshal(validator)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -103,9 +97,7 @@ func handleQueryValidator(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(validator)
+	bz, err := jsoniter.ConfigFastest.Marshal(validator)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -123,9 +115,7 @@ func handleQueryValidatorStatus(ctx sdk.Context, req abci.RequestQuery, keeper K
 	status := keeper.IsCurrentValidatorByAddress(ctx, params.SignerAddress)
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(status)
+	bz, err := jsoniter.ConfigFastest.Marshal(status)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -157,9 +147,7 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	}
 
 	// json record
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(proposers)
+	bz, err := jsoniter.ConfigFastest.Marshal(proposers)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -169,10 +157,7 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 
 func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	proposer := keeper.GetCurrentProposer(ctx)
-
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.Marshal(proposer)
+	bz, err := jsoniter.ConfigFastest.Marshal(proposer)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

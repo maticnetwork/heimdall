@@ -70,10 +70,8 @@ func (sp *SlashingProcessor) RegisterTasks() {
 func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight int64) error {
 	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	var event sdk.StringEvent
-	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
@@ -126,10 +124,8 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight int64) (err error) {
 	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	var event sdk.StringEvent
-	if err = json.Unmarshal([]byte(eventBytes), &event); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
@@ -195,10 +191,8 @@ func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight 
 sendTickAckToHeimdall - sends tick ack msg to heimdall
 */
 func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes string) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -248,10 +242,8 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 sendUnjailToHeimdall - sends unjail msg to heimdall
 */
 func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes string) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -379,8 +371,7 @@ func (sp *SlashingProcessor) fetchLatestSlashInoBytes() (slashInfoBytes hmTypes.
 
 	sp.Logger.Info("Latest slashInfoBytes fetched")
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	if err := json.Unmarshal(response.Result, &slashInfoBytes); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &slashInfoBytes); err != nil {
 		sp.Logger.Error("Error unmarshalling latest slashInfoBytes received from Heimdall Server", "error", err)
 		return slashInfoBytes, err
 	}
@@ -398,8 +389,7 @@ func (sp *SlashingProcessor) fetchTickCount() (tickCount uint64, err error) {
 		return tickCount, err
 	}
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	if err = json.Unmarshal(response.Result, &tickCount); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &tickCount); err != nil {
 		sp.Logger.Error("Error unmarshalling tick count data ", "error", err)
 		return tickCount, err
 	}
@@ -419,8 +409,7 @@ func (sp *SlashingProcessor) fetchTickSlashInfoList() (slashInfoList []*hmTypes.
 
 	sp.Logger.Info("Tick SlashInfo List fetched")
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	if err = json.Unmarshal(response.Result, &slashInfoList); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &slashInfoList); err != nil {
 		sp.Logger.Error("Error unmarshalling tick slashinfo list received from Heimdall Server", "error", err)
 		return slashInfoList, err
 	}

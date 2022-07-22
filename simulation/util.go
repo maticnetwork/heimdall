@@ -49,9 +49,7 @@ func getBlockSize(r *rand.Rand, params Params, lastBlockSizeState, avgBlockSize 
 }
 
 func mustMarshalJSONIndent(o interface{}) []byte {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-
-	bz, err := json.MarshalIndent(o, "", "  ")
+	bz, err := jsoniter.ConfigFastest.MarshalIndent(o, "", "  ")
 	if err != nil {
 		panic(fmt.Sprintf("failed to JSON encode: %s", err))
 	}

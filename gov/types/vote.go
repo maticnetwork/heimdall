@@ -107,15 +107,13 @@ func (vo *VoteOption) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using string.
 func (vo VoteOption) MarshalJSON() ([]byte, error) {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	return json.Marshal(vo.String())
+	return jsoniter.ConfigFastest.Marshal(vo.String())
 }
 
 // UnmarshalJSON decodes from JSON assuming Bech32 encoding.
 func (vo *VoteOption) UnmarshalJSON(data []byte) error {
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
 	var s string
-	err := json.Unmarshal(data, &s)
+	err := jsoniter.ConfigFastest.Unmarshal(data, &s)
 	if err != nil {
 		return err
 	}

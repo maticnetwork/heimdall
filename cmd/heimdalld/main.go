@@ -409,7 +409,6 @@ func openTraceWriter(traceWriterFile string) (io.Writer, error) {
 }
 
 func showAccountCmd() *cobra.Command {
-	jsonLib := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	return &cobra.Command{
 		Use:   "show-account",
@@ -426,7 +425,7 @@ func showAccountCmd() *cobra.Command {
 				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
 			}
 
-			b, err := jsonLib.MarshalIndent(account, "", "    ")
+			b, err := jsoniter.ConfigFastest.MarshalIndent(account, "", "    ")
 			if err != nil {
 				panic(err)
 			}
@@ -438,7 +437,6 @@ func showAccountCmd() *cobra.Command {
 }
 
 func showPrivateKeyCmd() *cobra.Command {
-	jsonLib := jsoniter.ConfigCompatibleWithStandardLibrary
 
 	return &cobra.Command{
 		Use:   "show-privatekey",
@@ -454,7 +452,7 @@ func showPrivateKeyCmd() *cobra.Command {
 				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
 			}
 
-			b, err := jsonLib.MarshalIndent(account, "", "    ")
+			b, err := jsoniter.ConfigFastest.MarshalIndent(account, "", "    ")
 			if err != nil {
 				panic(err)
 			}
@@ -467,7 +465,6 @@ func showPrivateKeyCmd() *cobra.Command {
 
 // VerifyGenesis verifies the genesis file and brings it in sync with on-chain contract
 func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
-	jsonLib := jsoniter.ConfigCompatibleWithStandardLibrary
 	cmd := &cobra.Command{
 		Use:   "verify-genesis",
 		Short: "Verify if the genesis matches",
@@ -485,7 +482,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// get genesis state
 			var genesisState app.GenesisState
-			err = jsonLib.Unmarshal(genDoc.AppState, &genesisState)
+			err = jsoniter.ConfigFastest.Unmarshal(genDoc.AppState, &genesisState)
 			if err != nil {
 				return err
 			}

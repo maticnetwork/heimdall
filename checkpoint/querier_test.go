@@ -82,8 +82,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	err := json.Unmarshal(res, &params)
+	err := jsoniter.ConfigFastest.Unmarshal(res, &params)
 	require.NoError(t, err)
 	require.NotNil(t, params)
 	require.Equal(t, defaultParams.AvgCheckpointLength, params.AvgCheckpointLength)
@@ -147,8 +146,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpoint() {
 
 	var checkpoint hmTypes.Checkpoint
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	err = json.Unmarshal(res, &checkpoint)
+	err = jsoniter.ConfigFastest.Unmarshal(res, &checkpoint)
 	require.NoError(t, err)
 	require.Equal(t, checkpoint, checkpointBlock)
 }
@@ -186,12 +184,10 @@ func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
-	var checkpoint hmTypes.Checkpoint
-
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	err = json.Unmarshal(res, &checkpoint)
+	var cp hmTypes.Checkpoint
+	err = jsoniter.ConfigFastest.Unmarshal(res, &cp)
 	require.NoError(t, err)
-	require.Equal(t, checkpoint, checkpointBlock)
+	require.Equal(t, cp, checkpointBlock)
 }
 
 func (suite *QuerierTestSuite) TestQueryLastNoAck() {
@@ -264,8 +260,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 
 	var actualRes []hmTypes.Checkpoint
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	err := json.Unmarshal(res, &actualRes)
+	err := jsoniter.ConfigFastest.Unmarshal(res, &actualRes)
 	require.NoError(t, err)
 	require.Equal(t, checkpoints, actualRes)
 }
@@ -315,8 +310,7 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 
 	var actualRes types.MsgCheckpoint
 
-	json := jsoniter.ConfigCompatibleWithStandardLibrary
-	err = json.Unmarshal(res, &actualRes)
+	err = jsoniter.ConfigFastest.Unmarshal(res, &actualRes)
 	require.NoError(t, err)
 	require.Equal(t, checkpointBlock.StartBlock, actualRes.StartBlock)
 	require.Equal(t, checkpointBlock.EndBlock, actualRes.EndBlock)

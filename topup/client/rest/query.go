@@ -253,8 +253,7 @@ func dividendAccountRootHandlerFn(
 
 		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-		result, err := json.Marshal(&accountRootHash)
+		result, err := jsoniter.ConfigFastest.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -345,15 +344,13 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		json := jsoniter.ConfigCompatibleWithStandardLibrary
-
 		var accountProofStatus bool
-		if err = json.Unmarshal(res, &accountProofStatus); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &accountProofStatus); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		res, err = json.Marshal(map[string]interface{}{"result": accountProofStatus})
+		res, err = jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": accountProofStatus})
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

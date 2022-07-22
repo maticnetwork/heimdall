@@ -234,14 +234,13 @@ func BenchmarkJsoniterLibrary(b *testing.B) {
 
 	for i := 0; i < b.N; i++ {
 		validatorSet := types.ValidatorSet{}
-		jsonLib := jsoniter.ConfigCompatibleWithStandardLibrary
 
 		b.StartTimer()
 
-		err := jsonLib.Unmarshal([]byte(validatorSetData), &validatorSet)
+		err := jsoniter.ConfigFastest.Unmarshal([]byte(validatorSetData), &validatorSet)
 		require.NoError(b, err)
 
-		_, err = jsonLib.Marshal(validatorSet)
+		_, err = jsoniter.ConfigFastest.Marshal(validatorSet)
 		require.NoError(b, err)
 
 		b.StopTimer()
