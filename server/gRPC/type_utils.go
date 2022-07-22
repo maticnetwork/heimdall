@@ -3,7 +3,7 @@ package gRPC
 import (
 	"encoding/binary"
 
-	"github.com/maticnetwork/heimdall/server/gRPC/proto"
+	proto "github.com/maticnetwork/polyproto/heimdall"
 )
 
 func ConvertH160toAddress(h160 *proto.H160) [20]byte {

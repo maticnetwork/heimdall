@@ -7,8 +7,8 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/server/gRPC/proto"
 	"github.com/maticnetwork/heimdall/types"
+	proto "github.com/maticnetwork/polyproto/heimdall"
 )
 
 func (h *HeimdallGRPCServer) Span(ctx context.Context, in *proto.SpanRequest) (*proto.SpanResponse, error) {

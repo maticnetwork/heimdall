@@ -7,7 +7,7 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/server/gRPC/proto"
+	proto "github.com/maticnetwork/polyproto/heimdall"
 )
 
 func (h *HeimdallGRPCServer) StateSyncEvents(req *proto.StateSyncEventsRequest, reply proto.Heimdall_StateSyncEventsServer) error {

@@ -8,8 +8,9 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/server/gRPC/proto"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+
+	proto "github.com/maticnetwork/polyproto/heimdall"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )

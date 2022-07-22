@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/heimdall/server/gRPC/proto"
+	proto "github.com/maticnetwork/polyproto/heimdall"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	"google.golang.org/grpc"
 )
