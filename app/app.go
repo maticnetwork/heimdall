@@ -503,7 +503,7 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
 
-	if err := jsoniter.ConfigFastest.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
+	if err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
 

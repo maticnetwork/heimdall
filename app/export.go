@@ -19,7 +19,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 	result := app.mm.ExportGenesis(ctx)
 
 	// create app state
-	appState, err = jsoniter.ConfigFastest.Marshal(result)
+	appState, err = jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(result)
 
 	return appState, validators, err
 }

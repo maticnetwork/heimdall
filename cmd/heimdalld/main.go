@@ -480,7 +480,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// get genesis state
 			var genesisState app.GenesisState
-			err = jsoniter.ConfigFastest.Unmarshal(genDoc.AppState, &genesisState)
+			err = jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(genDoc.AppState, &genesisState)
 			if err != nil {
 				return err
 			}

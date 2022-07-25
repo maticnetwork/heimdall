@@ -58,7 +58,7 @@ func QueuedMsgEntry(height int64, opMsg simulation.OperationMsg) OperationEntry 
 
 // MustMarshal marshals the operation entry, panic on error.
 func (oe OperationEntry) MustMarshal() json.RawMessage {
-	out, err := jsoniter.ConfigFastest.Marshal(oe)
+	out, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(oe)
 	if err != nil {
 		panic(err)
 	}

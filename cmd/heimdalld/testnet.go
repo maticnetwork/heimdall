@@ -181,7 +181,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				return err
 			}
 
-			appStateJSON, err := jsoniter.ConfigFastest.Marshal(appStateBytes)
+			appStateJSON, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appStateBytes)
 			if err != nil {
 				return err
 			}
