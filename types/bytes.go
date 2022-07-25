@@ -2,12 +2,13 @@ package types
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
+
+	jsoniter "github.com/json-iterator/go"
+	"gopkg.in/yaml.v2"
 
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/bor/common/hexutil"
-	"gopkg.in/yaml.v2"
 )
 
 // HexBytes the main purpose of HexBytes is to enable HEX-encoding for json/encoding.
@@ -40,7 +41,7 @@ func (bz *HexBytes) Unmarshal(data []byte) error {
 
 // MarshalJSON this is the point of Bytes.
 func (bz HexBytes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(bz.String())
+	return jsoniter.ConfigFastest.Marshal(bz.String())
 }
 
 // MarshalYAML marshals to YAML using Bech32.
@@ -51,7 +52,7 @@ func (bz HexBytes) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON this is the point of Bytes.
 func (bz *HexBytes) UnmarshalJSON(data []byte) error {
 	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
