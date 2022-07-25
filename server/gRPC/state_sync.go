@@ -39,7 +39,12 @@ func (h *HeimdallGRPCServer) StateSyncEvents(req *proto.StateSyncEventsRequest, 
 			return err
 		}
 
-		eventRecords := parseEvents(result.Result)
+		eventRecords, err := parseEvents(result.Result)
+		if err != nil {
+			logger.Error("Error while parsing event records", "error", err)
+			return err
+		}
+
 		if len(eventRecords) == 0 {
 			break
 		}
@@ -59,13 +64,13 @@ func (h *HeimdallGRPCServer) StateSyncEvents(req *proto.StateSyncEventsRequest, 
 	return nil
 }
 
-func parseEvents(result json.RawMessage) []*proto.EventRecord {
+func parseEvents(result json.RawMessage) ([]*proto.EventRecord, error) {
 	var events []Event
 
 	err := json.Unmarshal(result, &events)
 	if err != nil {
 		logger.Error("Error unmarshalling event record", "error", err)
-		return nil
+		return nil, err
 	}
 
 	eventRecords := make([]*proto.EventRecord, len(events))
@@ -74,7 +79,7 @@ func parseEvents(result json.RawMessage) []*proto.EventRecord {
 		eventTime, err := time.Parse(time.RFC3339, event.RecordTime)
 		if err != nil {
 			logger.Error("Error parsing time", "error", err)
-			return nil
+			return nil, err
 		}
 
 		eventRecords[i] = &proto.EventRecord{
@@ -88,7 +93,7 @@ func parseEvents(result json.RawMessage) []*proto.EventRecord {
 		}
 	}
 
-	return eventRecords
+	return eventRecords, nil
 }
 
 func addParamsToEndpoint(endpoint string, params map[string]string) string {
