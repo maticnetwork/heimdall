@@ -233,7 +233,7 @@ func DecorateWithRestFlags(cmd *cobra.Command) {
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
 	// heimdall specific flags for gRPC server start
-	cmd.Flags().String(FlagGrpcAddr, "0.0.0.0:3131", "The address for the gRPC server to listen on")
+	cmd.Flags().String(FlagGrpcAddr, "0.0.0.0:3132", "The address for the gRPC server to listen on")
 }
 
 // RegisterRoutes register routes of all modules
