@@ -31,7 +31,7 @@ type ModuleCommunicator interface {
 	SetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
 	GetCoins(ctx sdk.Context, addr hmTypes.HeimdallAddress) sdk.Coins
 	SendCoins(ctx sdk.Context, from hmTypes.HeimdallAddress, to hmTypes.HeimdallAddress, amt sdk.Coins) sdk.Error
-	CreateValiatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
+	CreateValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo)
 }
 
 // Keeper stores all related data
@@ -447,7 +447,7 @@ func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(seque
 // Slashing api's
 // AddValidatorSigningInfo creates a signing info for validator
 func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID, valSigningInfo hmTypes.ValidatorSigningInfo) error {
-	k.moduleCommunicator.CreateValiatorSigningInfo(ctx, valID, valSigningInfo)
+	k.moduleCommunicator.CreateValidatorSigningInfo(ctx, valID, valSigningInfo)
 	return nil
 }
 

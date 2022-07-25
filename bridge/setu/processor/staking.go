@@ -1,13 +1,14 @@
 package processor
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/maticnetwork/bor/accounts/abi"
 	"github.com/maticnetwork/bor/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
@@ -63,7 +64,7 @@ func (sp *StakingProcessor) RegisterTasks() {
 
 func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -141,7 +142,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 
 func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -212,7 +213,7 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 
 func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -279,7 +280,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 
 func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}

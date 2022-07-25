@@ -24,6 +24,7 @@ require (
 	github.com/hashicorp/golang-lru v0.5.3
 	github.com/huin/goupnp v1.0.0 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
+	github.com/json-iterator/go v1.1.12
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
 	github.com/maticnetwork/bor v0.1.7-0.20200507151553-e03cd94ed12b
 	github.com/maticnetwork/polyproto v0.0.1

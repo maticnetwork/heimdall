@@ -12,5 +12,6 @@
     --rest-server
   Type=simple
   User=ubuntu
+  LimitNOFILE=65536
 [Install]
   WantedBy=multi-user.target
