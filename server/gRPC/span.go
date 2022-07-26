@@ -9,6 +9,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 	proto "github.com/maticnetwork/polyproto/heimdall"
+	protoutils "github.com/maticnetwork/polyproto/utils"
 )
 
 func (h *HeimdallGRPCServer) Span(ctx context.Context, in *proto.SpanRequest) (*proto.SpanResponse, error) {
@@ -66,7 +67,7 @@ func parseSpan(result json.RawMessage) *proto.Span {
 func parseValidator(address [20]byte, validator *types.Validator) *proto.Validator {
 	return &proto.Validator{
 		ID:               uint64(validator.ID),
-		Address:          ConvertAddressToH160(address),
+		Address:          protoutils.ConvertAddressToH160(address),
 		VotingPower:      validator.VotingPower,
 		ProposerPriority: validator.ProposerPriority,
 	}

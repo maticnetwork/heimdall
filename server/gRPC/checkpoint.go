@@ -11,6 +11,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	proto "github.com/maticnetwork/polyproto/heimdall"
+	protoutils "github.com/maticnetwork/polyproto/utils"
 	"google.golang.org/protobuf/types/known/emptypb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
@@ -80,8 +81,8 @@ func (h *HeimdallGRPCServer) FetchCheckpoint(ctx context.Context, in *proto.Fetc
 	resp.Result = &proto.Checkpoint{
 		StartBlock: checkPoint.StartBlock,
 		EndBlock:   checkPoint.EndBlock,
-		RootHash:   ConvertHashToH256(hash),
-		Proposer:   ConvertAddressToH160(address),
+		RootHash:   protoutils.ConvertHashToH256(hash),
+		Proposer:   protoutils.ConvertAddressToH160(address),
 		Timestamp:  timestamppb.New(time.Unix(int64(checkPoint.TimeStamp), 0)),
 		BorChainID: checkPoint.BorChainID,
 	}
