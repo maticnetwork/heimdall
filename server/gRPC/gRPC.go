@@ -9,6 +9,8 @@ import (
 	proto "github.com/maticnetwork/polyproto/heimdall"
 	tmLog "github.com/tendermint/tendermint/libs/log"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 const (
@@ -60,7 +62,11 @@ func withLoggingUnaryInterceptor() grpc.ServerOption {
 
 func loggingServerInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (interface{}, error) {
 	start := time.Now()
+
 	h, err := handler(ctx, req)
+	if err != nil {
+		err = status.Errorf(codes.Internal, err.Error())
+	}
 
 	logger.Info("Request", "method", info.FullMethod, "duration", time.Since(start), "error", err)
 

@@ -27,8 +27,8 @@ type Checkpoint struct {
 
 func (h *HeimdallGRPCServer) FetchCheckpointCount(ctx context.Context, in *emptypb.Empty) (*proto.FetchCheckpointCountResponse, error) {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
-	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fetchCheckpointCount))
 
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fetchCheckpointCount))
 	if err != nil {
 		logger.Error("Error while fetching checkpoint count")
 		return nil, err
