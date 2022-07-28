@@ -1,16 +1,15 @@
 package milestone_test
 
 import (
-	"math/big"
 	"testing"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/checkpoint"
-	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
-	"github.com/maticnetwork/heimdall/checkpoint/types"
 	errs "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/milestone"
+	chSim "github.com/maticnetwork/heimdall/milestone/simulation"
+	"github.com/maticnetwork/heimdall/milestone/types"
 
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -34,9 +33,9 @@ type HandlerTestSuite struct {
 func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
-	suite.handler = checkpoint.NewHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
-	suite.sideHandler = checkpoint.NewSideTxHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
-	suite.postHandler = checkpoint.NewPostTxHandler(suite.app.CheckpointKeeper, &suite.contractCaller)
+	suite.handler = milestone.NewHandler(suite.app.MilestoneKeeper, &suite.contractCaller)
+	suite.sideHandler = milestone.NewSideTxHandler(suite.app.MilestoneKeeper, &suite.contractCaller)
+	suite.postHandler = milestone.NewPostTxHandler(suite.app.MilestoneKeeper, &suite.contractCaller)
 }
 
 func TestHandlerTestSuite(t *testing.T) {
@@ -53,154 +52,130 @@ func (suite *HandlerTestSuite) TestHandler() {
 }
 
 // test handler for message
-func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
+func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.CheckpointKeeper
+	keeper := app.MilestoneKeeper
 	stakingKeeper := app.StakingKeeper
-	topupKeeper := app.TopupKeeper
 	start := uint64(0)
-	maxSize := uint64(256)
 	borChainId := "1234"
 	params := keeper.GetParams(ctx)
-	dividendAccount := hmTypes.DividendAccount{
-		User:      hmTypes.HexToHeimdallAddress("123"),
-		FeeAmount: big.NewInt(0).String(),
-	}
-	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
-	require.NoError(t, err)
+	sprintLength := params.SprintLength
 
-	// check valid checkpoint
+	// check valid milestone
 	// generate proposer for validator set
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
-	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+	lastMilestone, err := keeper.GetMilestone(ctx)
 	if err == nil {
-		start = start + lastCheckpoint.EndBlock + 1
+		start = start + lastMilestone.EndBlock + 1
 	}
 
-	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	header, err := chSim.GenRandMilestone(start, sprintLength)
 	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
-	dividendAccounts := topupKeeper.GetAllDividendAccounts(ctx)
-	accRootHash, err := types.GetAccountRootHash(dividendAccounts)
-	require.NoError(t, err)
-
-	accountRoot := hmTypes.BytesToHeimdallHash(accRootHash)
-
 	suite.Run("Success", func() {
-		msgCheckpoint := types.NewMsgCheckpointBlock(
+		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
 			header.RootHash,
-			accountRoot,
 			borChainId,
 		)
 
-		// send checkpoint to handler
-		got := suite.handler(ctx, msgCheckpoint)
-		require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
-		bufferedHeader, _ := keeper.GetCheckpointFromBuffer(ctx)
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
+		require.True(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
+		bufferedHeader, _ := keeper.GetMilestone(ctx)
 		require.Empty(t, bufferedHeader, "Should not store state")
 	})
 
 	suite.Run("Invalid Proposer", func() {
 		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
-		msgCheckpoint := types.NewMsgCheckpointBlock(
+		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
 			header.RootHash,
-			accountRoot,
 			borChainId,
 		)
 
-		// send checkpoint to handler
-		got := suite.handler(ctx, msgCheckpoint)
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 	})
 
-	suite.Run("Checkpoint not in countinuity", func() {
-		headerId := uint64(10000)
+	suite.Run("Milestone not in countinuity", func() {
 
-		err = keeper.AddCheckpoint(ctx, headerId, header)
+		err = keeper.AddMilestone(ctx, header)
 		require.NoError(t, err)
 
-		_, err = keeper.GetCheckpointByNumber(ctx, headerId)
+		_, err = keeper.GetMilestone(ctx)
 		require.NoError(t, err)
 
-		keeper.UpdateACKCount(ctx)
-		lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+		lastMilestone, err := keeper.GetMilestone(ctx)
 		if err == nil {
 			// pass wrong start
-			start = start + lastCheckpoint.EndBlock + 2
+			start = start + lastMilestone.EndBlock + 2
 		}
 
-		msgCheckpoint := types.NewMsgCheckpointBlock(
+		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			start,
-			start+256,
+			start+sprintLength,
 			header.RootHash,
-			accountRoot,
 			borChainId,
 		)
 
-		// send checkpoint to handler
-		got := suite.handler(ctx, msgCheckpoint)
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 	})
 }
 
-func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
+func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.CheckpointKeeper
+	keeper := app.MilestoneKeeper
 	stakingKeeper := app.StakingKeeper
-	topupKeeper := app.TopupKeeper
 	start := uint64(0)
-	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
-	dividendAccount := hmTypes.DividendAccount{
-		User:      hmTypes.HexToHeimdallAddress("123"),
-		FeeAmount: big.NewInt(0).String(),
-	}
-
-	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
-	require.NoError(t, err)
 
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
-	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+	lastMilestone, err := keeper.GetMilestone(ctx)
 	if err == nil {
-		start = start + lastCheckpoint.EndBlock + 1
+		start = start + lastMilestone.EndBlock + 1
 	}
 
-	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	header, err := chSim.GenRandMilestone(start, params.SprintLength)
 	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
-	// send old checkpoint
-	res := suite.SendCheckpoint(header)
+	// send old milestone
+	res := suite.SendMilestone(header)
 
-	require.True(t, res.IsOK(), "expected send-checkpoint to be  ok, got %v", res)
+	require.True(t, res.IsOK(), "expected send-milestone to be  ok, got %v", res)
 
-	// send checkpoint to handler
-	got := suite.SendCheckpoint(header)
+	// send milestone to handler
+	got := suite.SendMilestone(header)
 	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 }
 
-func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.Checkpoint) (res sdk.Result) {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	// keeper := app.CheckpointKeeper
+func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.Result) {
+	app, ctx := suite.app, suite.ctx
+	keeper := app.MilestoneKeeper
+	params := keeper.GetParams(ctx)
+	sprintLength := params.SprintLength
+	// keeper := app.MilestoneKeeper
 
 	borChainId := "1234"
-	// create checkpoint msg
+	// create milestone msg
 	msgMilestone := types.NewMsgMilestoneBlock(
 		header.Proposer,
 		header.StartBlock,
@@ -210,12 +185,12 @@ func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.Checkpoint) (res sd
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
-	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock).Return(header.RootHash.Bytes(), nil)
+	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, sprintLength).Return(header.RootHash.Bytes(), nil)
 
-	// send checkpoint to handler
-	result := suite.handler(ctx, msgCheckpoint)
-	sideResult := suite.sideHandler(ctx, msgCheckpoint)
-	suite.postHandler(ctx, msgCheckpoint, sideResult.Result)
+	// send milestone to handler
+	result := suite.handler(ctx, msgMilestone)
+	sideResult := suite.sideHandler(ctx, msgMilestone)
+	suite.postHandler(ctx, msgMilestone, sideResult.Result)
 
 	return result
 }

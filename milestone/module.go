@@ -95,7 +95,7 @@ func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 
 //____________________________________________________________________________
 
-// AppModule implements an application module for the checkpoint module.
+// AppModule implements an application module for the milestone module.
 type AppModule struct {
 	AppModuleBasic
 

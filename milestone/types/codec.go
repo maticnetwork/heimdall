@@ -5,7 +5,7 @@ import (
 )
 
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgMilestone{}, "checkpoint/MsgCheckpoint", nil)
+	cdc.RegisterConcrete(MsgMilestone{}, "milestone/MsgMilestone", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

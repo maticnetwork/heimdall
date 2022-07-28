@@ -227,8 +227,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			milestone.RootHash,
 			borChainId,
 		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
+		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
 		require.False(t, result.IsOK(), "expected send-milestone to be ok, got %v", result)
-		require.Equal(t, common.CodeNoACK, result.Code)
+		require.Equal(t, common.CodeInvalidBlockInput, result.Code)
 	})
 }

@@ -17,7 +17,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var logger = helper.Logger.With("module", "checkpoint/client/cli")
+var logger = helper.Logger.With("module", "milestone/client/cli")
 
 // GetTxCmd returns the transaction commands for this module
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
@@ -38,7 +38,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	return txCmd
 }
 
-// SendCheckpointTx send checkpoint transaction
+// SendMilestoneTx send milestone transaction
 func SendMilestoneTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "send-milestone",

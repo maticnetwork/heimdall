@@ -89,7 +89,7 @@ func (k *Keeper) SetMilestone(ctx sdk.Context, milestone hmTypes.Milestone) erro
 func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
 	store := ctx.KVStore(k.storeKey)
 
-	// create Checkpoint block and marshall
+	// create milestone block and marshall
 	out, err := k.cdc.MarshalBinaryBare(milestone)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling milestone", "error", err)
@@ -112,7 +112,7 @@ func (k *Keeper) HasStoreValue(ctx sdk.Context, key []byte) bool {
 func (k *Keeper) GetMilestone(ctx sdk.Context) (*hmTypes.Milestone, error) {
 	store := ctx.KVStore(k.storeKey)
 
-	// checkpoint block header
+	// milestone block header
 	var milestone hmTypes.Milestone
 
 	if store.Has(MilestoneKey) {
