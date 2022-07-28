@@ -51,6 +51,7 @@ const (
 	NoACKPollIntervalFlag        = "noack_poll_interval"
 	ClerkPollIntervalFlag        = "clerk_poll_interval"
 	SpanPollIntervalFlag         = "span_poll_interval"
+	MilestonePollIntervalFlag    = "milestone_poll_interval"
 	MainchainGasLimitFlag        = "main_chain_gas_limit"
 	MainchainMaxGasPriceFlag     = "main_chain_max_gas_price"
 	NoACKWaitTimeFlag            = "no_ack_wait_time"
@@ -93,6 +94,7 @@ const (
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
+	DefaultMilestonePollInterval    = 10 * time.Second
 	DefaultSHStateSyncedInterval    = 1 * time.Minute
 	DefaultSHStakeUpdateInterval    = 5 * time.Minute
 	DefaultSHMaxDepthDuration       = time.Hour
@@ -159,6 +161,7 @@ type Configuration struct {
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
 	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
+	MilestonePollInterval    time.Duration `mapstructure:"milestone_poll_interval"`
 	SHStateSyncedInterval    time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
 	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
 	SHMaxDepthDuration       time.Duration `mapstructure:"sh_max_depth_duration"`    // Max duration that allows to suggest self-healing is not needed
@@ -373,6 +376,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		NoACKPollInterval:        DefaultNoACKPollInterval,
 		ClerkPollInterval:        DefaultClerkPollInterval,
 		SpanPollInterval:         DefaultSpanPollInterval,
+		MilestonePollInterval:    DefaultMilestonePollInterval,
 		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
 		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
 		SHMaxDepthDuration:       DefaultSHMaxDepthDuration,
@@ -587,6 +591,17 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, SpanPollIntervalFlag), "Error", err)
 	}
 
+	// add MilestonePollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		MilestonePollIntervalFlag,
+		"",
+		"Set milestone interval",
+	)
+
+	if err := v.BindPFlag(MilestonePollIntervalFlag, cmd.PersistentFlags().Lookup(MilestonePollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MilestonePollIntervalFlag), "Error", err)
+	}
+
 	// add MainchainGasLimitFlag flag
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
@@ -713,6 +728,15 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		}
 	}
 
+	// get milestone poll interval from viper/cobra
+	stringConfgValue = v.GetString(MilestonePollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.MilestonePollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", MilestonePollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
 	// get time that ack service waits to clear buffer and elect new proposer from viper/cobra
 	stringConfgValue = v.GetString(NoACKWaitTimeFlag)
 	if stringConfgValue != "" {
@@ -790,6 +814,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.SpanPollInterval != 0 {
 		c.SpanPollInterval = cc.SpanPollInterval
+	}
+
+	if cc.MilestonePollInterval != 0 {
+		c.MilestonePollInterval = cc.MilestonePollInterval
 	}
 
 	if cc.NoACKWaitTime != 0 {

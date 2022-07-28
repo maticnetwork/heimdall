@@ -29,6 +29,8 @@ import (
 	gov "github.com/maticnetwork/heimdall/gov"
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/milestone"
+	milestoneTypes "github.com/maticnetwork/heimdall/milestone/types"
 	"github.com/maticnetwork/heimdall/params"
 	paramsClient "github.com/maticnetwork/heimdall/params/client"
 	"github.com/maticnetwork/heimdall/params/subspace"
@@ -69,6 +71,7 @@ var (
 		chainmanager.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
+		milestone.AppModuleBasic{},
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 		topup.AppModuleBasic{},
@@ -106,6 +109,7 @@ type HeimdallApp struct {
 	GovKeeper         gov.Keeper
 	ChainKeeper       chainmanager.Keeper
 	CheckpointKeeper  checkpoint.Keeper
+	MilestoneKeeper   milestone.Keeper
 	StakingKeeper     staking.Keeper
 	BorKeeper         bor.Keeper
 	ClerkKeeper       clerk.Keeper
@@ -209,6 +213,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		stakingTypes.StoreKey,
 		slashingTypes.StoreKey,
 		checkpointTypes.StoreKey,
+		milestoneTypes.StoreKey,
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
 		topupTypes.StoreKey,
@@ -236,6 +241,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
 	app.subspaces[slashingTypes.ModuleName] = app.ParamsKeeper.Subspace(slashingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
+	app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
 	app.subspaces[topupTypes.ModuleName] = app.ParamsKeeper.Subspace(topupTypes.DefaultParamspace)
@@ -349,6 +355,16 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		moduleCommunicator,
 	)
 
+	app.MilestoneKeeper = milestone.NewKeeper(
+		app.cdc,
+		keys[milestoneTypes.StoreKey], // target store
+		app.subspaces[milestoneTypes.ModuleName],
+		common.DefaultCodespace,
+		app.StakingKeeper,
+		app.ChainKeeper,
+		moduleCommunicator,
+	)
+
 	app.BorKeeper = bor.NewKeeper(
 		app.cdc,
 		keys[borTypes.StoreKey], // target store
@@ -392,6 +408,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
+		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
@@ -409,6 +426,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		stakingTypes.ModuleName,
 		slashingTypes.ModuleName,
 		checkpointTypes.ModuleName,
+		milestoneTypes.ModuleName,
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
 		topupTypes.ModuleName,

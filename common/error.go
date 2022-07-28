@@ -73,6 +73,11 @@ const (
 	CodeSlashInfoDetails       CodeType = 6503
 	CodeTickNotInContinuity    CodeType = 6504
 	CodeTickAckNotInContinuity CodeType = 6505
+
+	CodeNoMilestone              CodeType = 7501
+	CodeMilestoneNotInContinuity CodeType = 7502
+	CodeMilestoneInvalid         CodeType = 7503
+	CodeOldMilestone             CodeType = 7504
 )
 
 // -------- Invalid msg
@@ -149,6 +154,23 @@ func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
+}
+
+// -----------Milestone Erros
+func ErrNoMilestoneFound(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoMilestone, "Milestone Not Found")
+}
+
+func ErrMilestoneNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeMilestoneNotInContinuity, "Milestone not in continuity")
+}
+
+func ErrMilestoneInvalid(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeMilestoneInvalid, "Milestone not in continuity")
+}
+
+func ErrOldMilestone(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeOldMilestone, "Milestone already exists")
 }
 
 // ----------- Staking Errors

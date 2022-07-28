@@ -28,6 +28,7 @@ import (
 	clerktypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
+	milestoneTypes "github.com/maticnetwork/heimdall/milestone/types"
 	"github.com/maticnetwork/heimdall/types"
 	hmtypes "github.com/maticnetwork/heimdall/types"
 )
@@ -38,10 +39,12 @@ const (
 	AccountDetailsURL       = "/auth/accounts/%v"
 	LastNoAckURL            = "/checkpoints/last-no-ack"
 	CheckpointParamsURL     = "/checkpoints/params"
+	MilestoneParamsURL      = "/milestone/params"
 	ChainManagerParamsURL   = "/chainmanager/params"
 	ProposersURL            = "/staking/proposer/%v"
 	BufferedCheckpointURL   = "/checkpoints/buffer"
 	LatestCheckpointURL     = "/checkpoints/latest"
+	LatestMilestoneURL      = "/milestone/latest"
 	CountCheckpointURL      = "/checkpoints/count"
 	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/bor/latest-span"
@@ -384,6 +387,27 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	return &params, nil
 }
 
+// GetCheckpointParams return params
+func GetMilestoneParams(cliCtx cliContext.CLIContext) (*milestoneTypes.Params, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(MilestoneParamsURL),
+	)
+
+	if err != nil {
+		logger.Error("Error fetching Milestone params", "err", err)
+		return nil, err
+	}
+
+	var params milestoneTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling Checkpoint params", "url", MilestoneParamsURL)
+		return nil, err
+	}
+
+	return &params, nil
+}
+
 // GetBufferedCheckpoint return checkpoint from bueffer
 func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
@@ -424,6 +448,27 @@ func GetLatestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, err
 	}
 
 	return &checkpoint, nil
+}
+
+// GetLatestMilestone return last successful milestone
+func GetLatestMilestone(cliCtx cliContext.CLIContext) (*hmtypes.Milestone, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(LatestMilestoneURL),
+	)
+
+	if err != nil {
+		logger.Debug("Error fetching latest milestone", "err", err)
+		return nil, err
+	}
+
+	var milestone hmtypes.Milestone
+	if err = json.Unmarshal(response.Result, &milestone); err != nil {
+		logger.Error("Error unmarshalling latest milestone", "url", LatestMilestoneURL, "err", err)
+		return nil, err
+	}
+
+	return &milestone, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format
