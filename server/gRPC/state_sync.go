@@ -9,6 +9,8 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/maticnetwork/heimdall/helper"
 	proto "github.com/maticnetwork/polyproto/heimdall"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -36,13 +38,13 @@ func (h *HeimdallGRPCServer) StateSyncEvents(req *proto.StateSyncEventsRequest, 
 		result, err := helper.FetchFromAPI(cliCtx, addParamsToEndpoint(helper.GetHeimdallServerEndpoint(eventRecordList), params))
 		if err != nil {
 			logger.Error("Error while fetching event records", "error", err)
-			return err
+			return status.Errorf(codes.Internal, err.Error())
 		}
 
 		eventRecords, err := parseEvents(result.Result)
 		if err != nil {
 			logger.Error("Error while parsing event records", "error", err)
-			return err
+			return status.Errorf(codes.Internal, err.Error())
 		}
 
 		if len(eventRecords) == 0 {
@@ -55,7 +57,7 @@ func (h *HeimdallGRPCServer) StateSyncEvents(req *proto.StateSyncEventsRequest, 
 		})
 		if err != nil {
 			logger.Error("Error while sending event record", "error", err)
-			return err
+			return status.Errorf(codes.Internal, err.Error())
 		}
 
 		fromId += req.Limit
