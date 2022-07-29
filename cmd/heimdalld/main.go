@@ -344,7 +344,9 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 	// the processes produces error the rest will go and shutdown
 	g, gCtx := errgroup.WithContext(shutdownCtx)
 	// start rest
+
 	if startRestServer {
+
 		waitForREST := make(chan struct{})
 
 		g.Go(func() error {

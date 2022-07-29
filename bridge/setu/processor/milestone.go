@@ -20,7 +20,7 @@ type MilestoneProcessor struct {
 	cancelMilestoneService context.CancelFunc
 }
 
-// CheckpointContext represents checkpoint context
+// MilestoneContext represents milestone context
 type MilestoneContext struct {
 	ChainmanagerParams *chainmanagerTypes.Params
 	MilestoneParams    *milestoneTypes.Params

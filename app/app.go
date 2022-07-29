@@ -71,12 +71,12 @@ var (
 		chainmanager.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		checkpoint.AppModuleBasic{},
-		milestone.AppModuleBasic{},
 		bor.AppModuleBasic{},
 		clerk.AppModuleBasic{},
 		topup.AppModuleBasic{},
 		slashing.AppModuleBasic{},
 		gov.NewAppModuleBasic(paramsClient.ProposalHandler),
+		milestone.AppModuleBasic{},
 	)
 
 	// module account permissions
@@ -213,11 +213,11 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		stakingTypes.StoreKey,
 		slashingTypes.StoreKey,
 		checkpointTypes.StoreKey,
-		milestoneTypes.StoreKey,
 		borTypes.StoreKey,
 		clerkTypes.StoreKey,
 		topupTypes.StoreKey,
 		paramsTypes.StoreKey,
+		milestoneTypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
 
@@ -241,10 +241,10 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
 	app.subspaces[slashingTypes.ModuleName] = app.ParamsKeeper.Subspace(slashingTypes.DefaultParamspace)
 	app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
-	app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
 	app.subspaces[topupTypes.ModuleName] = app.ParamsKeeper.Subspace(topupTypes.DefaultParamspace)
+	app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
 	//
 	// Contract caller
 	//
@@ -408,10 +408,10 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
-		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
+		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -426,10 +426,10 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		stakingTypes.ModuleName,
 		slashingTypes.ModuleName,
 		checkpointTypes.ModuleName,
-		milestoneTypes.ModuleName,
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
 		topupTypes.ModuleName,
+		milestoneTypes.ModuleName,
 	)
 
 	// register message routes and query routes
@@ -465,6 +465,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
+		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
