@@ -8,10 +8,9 @@
   WorkingDirectory=/usr/local/bin
   ExecStart=/usr/local/bin/heimdalld start --home /var/lib/heimdall \
     --chain=mainnet \
-    --bridge --all \
     --rest-server
   Type=simple
-  User=ubuntu
   LimitNOFILE=65536
+  User=heimdall
 [Install]
   WantedBy=multi-user.target
