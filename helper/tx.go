@@ -3,9 +3,12 @@ package helper
 import (
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"math/big"
 	"strings"
+
+	ebind "github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	ethereum "github.com/maticnetwork/bor"
 	"github.com/maticnetwork/bor/accounts/abi/bind"
@@ -65,8 +68,33 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	callMsg.From = fromAddress
 	gasLimit, err := client.EstimateGas(context.Background(), callMsg)
 
+	chainId, err := client.ChainID(context.Background())
+	if err != nil {
+		Logger.Error("Unable to fetch ChainID", "error", gasprice)
+		return
+	}
+
 	// create auth
-	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
+	eAuth, err := ebind.NewKeyedTransactorWithChainID(ecdsaPrivateKey, chainId)
+	if err != nil {
+		Logger.Error("Error with new keyed transactor with ChainID", "error", err)
+		return
+	}
+
+	// Needed to convert eAuth to auth object, Please suggest if anybody knows how to do this better
+
+	authBytes, err := json.Marshal(eAuth)
+	if err != nil {
+		Logger.Error("Error with marshalling auth", "error", err)
+		return
+	}
+
+	err = json.Unmarshal(authBytes, auth)
+	if err != nil {
+		Logger.Error("Error with unmarshalling auth", "error", err)
+		return
+	}
+
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = gasLimit
