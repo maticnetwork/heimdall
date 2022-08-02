@@ -7,7 +7,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 

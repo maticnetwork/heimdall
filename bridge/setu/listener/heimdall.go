@@ -9,7 +9,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"

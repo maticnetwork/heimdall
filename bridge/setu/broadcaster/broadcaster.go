@@ -10,14 +10,16 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bor "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/core/types"
+	bor "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/libs/log"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // TxBroadcaster uses to broadcast transaction to each chain

@@ -5,7 +5,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/maticnetwork/bor/consensus/bor"
+	"github.com/ethereum/go-ethereum/consensus/bor"
+
 	"github.com/maticnetwork/heimdall/bor/client/rest"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
