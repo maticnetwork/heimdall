@@ -1,6 +1,6 @@
 package statesender
 
-import "github.com/maticnetwork/bor/common"
+import "github.com/ethereum/go-ethereum/common"
 
 const (
 	// StateSyncedEventID is the topic ID of StateSynced event

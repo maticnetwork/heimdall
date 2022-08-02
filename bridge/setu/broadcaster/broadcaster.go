@@ -125,7 +125,7 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 	rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
 
 	// signer
-	signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
+	signedTx, err := auth.Signer(auth.From, rawTx)
 	if err != nil {
 		tb.logger.Error("Error signing the transaction", "error", err)
 		return err

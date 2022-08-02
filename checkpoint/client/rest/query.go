@@ -13,8 +13,8 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/common"
-	ethcmn "github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"

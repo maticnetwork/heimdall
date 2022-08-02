@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
