@@ -25,6 +25,10 @@ type Params struct {
 	SprintLength uint64 `json:"sprint_length" yaml:"sprint_length"`
 }
 
+type Count struct {
+	Count uint64 `json:"count" yaml:"count"`
+}
+
 // NewParams creates a new Params object
 func NewParams(
 	sprintLength uint64,

@@ -2,6 +2,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
 
@@ -53,6 +54,7 @@ type milestone struct {
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/params", paramsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone", milestoneHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/count", milestoneCountHandlerFn(cliCtx)).Methods("GET")
 }
 
 // swagger:route GET /milestone/params milestone milistoneParams
@@ -95,6 +97,49 @@ func milestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestone), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+// swagger:route GET /checkpoints/count checkpoint checkpointCount
+// It returns the checkpoint counts
+// responses:
+//   200: checkpointCountResponse
+func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		RestLogger.Debug("Fetching number of milestone from state")
+
+		countBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCount), nil)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, countBytes, "No milestone count found"); !ok {
+			return
+		}
+
+		var count uint64
+		if err := json.Unmarshal(countBytes, &count); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		result, err := json.Marshal(map[string]interface{}{"count": count})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 

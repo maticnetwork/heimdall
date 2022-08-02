@@ -40,11 +40,12 @@ const (
 	LastNoAckURL            = "/checkpoints/last-no-ack"
 	CheckpointParamsURL     = "/checkpoints/params"
 	MilestoneParamsURL      = "/milestone/params"
+	MilestoneCountURL       = "/milestone/count"
 	ChainManagerParamsURL   = "/chainmanager/params"
 	ProposersURL            = "/staking/proposer/%v"
 	BufferedCheckpointURL   = "/checkpoints/buffer"
 	LatestCheckpointURL     = "/checkpoints/latest"
-	LatestMilestoneURL      = "/milestone/latest"
+	LatestMilestoneURL      = "/milestone"
 	CountCheckpointURL      = "/checkpoints/count"
 	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/bor/latest-span"
@@ -469,6 +470,27 @@ func GetLatestMilestone(cliCtx cliContext.CLIContext) (*hmtypes.Milestone, error
 	}
 
 	return &milestone, nil
+}
+
+// GetCheckpointParams return params
+func GetMilestoneCount(cliCtx cliContext.CLIContext) (*milestoneTypes.Count, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(MilestoneCountURL),
+	)
+
+	if err != nil {
+		logger.Error("Error fetching Milestone count", "err", err)
+		return nil, err
+	}
+
+	var count milestoneTypes.Count
+	if err := json.Unmarshal(response.Result, &count); err != nil {
+		logger.Error("Error unmarshalling Checkpoint Count", "url", MilestoneCountURL)
+		return nil, err
+	}
+
+	return &count, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format

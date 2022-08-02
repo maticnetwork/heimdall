@@ -411,7 +411,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
-		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
+		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -465,7 +465,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
-		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
+		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 

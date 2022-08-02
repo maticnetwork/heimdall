@@ -34,7 +34,7 @@ type QuerierTestSuite struct {
 func (suite *QuerierTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}
-	suite.querier = milestone.NewQuerier(suite.app.MilestoneKeeper, suite.app.StakingKeeper, suite.app.TopupKeeper, &suite.contractCaller)
+	suite.querier = milestone.NewQuerier(suite.app.MilestoneKeeper, suite.app.StakingKeeper, &suite.contractCaller)
 }
 
 // TestQuerierTestSuite

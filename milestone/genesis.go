@@ -9,9 +9,9 @@ import (
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	keeper.SetParams(ctx, data.Params)
-
 	// Add milestone
 	if data.Milestone != nil {
+
 		if err := keeper.SetMilestone(ctx, *data.Milestone); err != nil {
 			keeper.Logger(ctx).Error("InitGenesis | SetMilestone", "error", err)
 		}

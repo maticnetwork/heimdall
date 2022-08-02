@@ -7,6 +7,7 @@ const (
 	QueryProposer        = "is-proposer"
 	QueryCurrentProposer = "current-proposer"
 	StakingQuerierRoute  = "staking"
+	QueryCount           = "count"
 )
 
 // QueryBorChainID defines the params for querying with bor chain id

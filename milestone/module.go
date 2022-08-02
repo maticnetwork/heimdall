@@ -106,12 +106,11 @@ type AppModule struct {
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, sk staking.Keeper, tk topup.Keeper, contractCaller helper.IContractCaller) AppModule {
+func NewAppModule(keeper Keeper, sk staking.Keeper, contractCaller helper.IContractCaller) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
 		stakingKeeper:  sk,
-		topupKeeper:    tk,
 		contractCaller: contractCaller,
 	}
 }
@@ -141,7 +140,7 @@ func (AppModule) QuerierRoute() string {
 
 // NewQuerierHandler returns the auth module sdk.Querier.
 func (am AppModule) NewQuerierHandler() sdk.Querier {
-	return NewQuerier(am.keeper, am.stakingKeeper, am.topupKeeper, am.contractCaller)
+	return NewQuerier(am.keeper, am.stakingKeeper, am.contractCaller)
 }
 
 // InitGenesis performs genesis initialization for the auth module. It returns

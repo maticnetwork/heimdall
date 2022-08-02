@@ -126,13 +126,27 @@ func (k *Keeper) GetMilestone(ctx sdk.Context) (*hmTypes.Milestone, error) {
 
 // Params
 
-// SetParams sets the auth module's parameters.
+// SetParams sets the milestone module's parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 	k.paramSpace.SetParamSet(ctx, &params)
 }
 
-// GetParams gets the auth module's parameters.
+// GetParams gets the milestone module's parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)
+	return
+}
+
+// GetParams gets the auth module's parameters.
+func (k Keeper) GetCount(ctx sdk.Context) (count uint64) {
+	params := types.Params{}
+	k.paramSpace.GetParamSet(ctx, &params)
+
+	milestone, err := k.GetMilestone(ctx)
+	if err != nil || milestone == nil {
+		return 0
+	}
+
+	count = (milestone.EndBlock + 1) / params.SprintLength
 	return
 }

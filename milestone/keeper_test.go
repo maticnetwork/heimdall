@@ -34,7 +34,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	keeper := app.MilestoneKeeper
 
 	startBlock := uint64(0)
-	endBlock := uint64(256)
+	endBlock := uint64(63)
 	rootHash := hmTypes.HexToHeimdallHash("123")
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
@@ -59,6 +59,36 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	require.Equal(t, borChainId, result.BorChainID)
 	require.Equal(t, proposerAddress, result.Proposer)
 	require.Equal(t, timestamp, result.TimeStamp)
+}
+
+func (suite *KeeperTestSuite) TestGetCount() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.MilestoneKeeper
+
+	result := keeper.GetCount(ctx)
+	require.Equal(t, uint64(0), result)
+
+	startBlock := uint64(0)
+	endBlock := uint64(63)
+	rootHash := hmTypes.HexToHeimdallHash("123")
+	proposerAddress := hmTypes.HexToHeimdallAddress("123")
+	timestamp := uint64(time.Now().Unix())
+	borChainId := "1234"
+
+	milestone := hmTypes.CreateMilestone(
+		startBlock,
+		endBlock,
+		rootHash,
+		proposerAddress,
+		borChainId,
+		timestamp,
+	)
+	err := keeper.AddMilestone(ctx, milestone)
+	require.NoError(t, err)
+
+	result = keeper.GetCount(ctx)
+	require.Equal(t, uint64(1), result)
+
 }
 
 func (suite *KeeperTestSuite) TestHasStoreValue() {

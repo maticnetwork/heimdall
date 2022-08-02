@@ -29,13 +29,13 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 	params := k.GetParams(ctx)
-
+	sprintLength := params.SprintLength
 	//
 	//Check for the msg milestone
 	//
 
-	if msg.StartBlock+params.SprintLength-1 != msg.EndBlock {
-		logger.Error("Milestone's block length is not valid",
+	if msg.StartBlock+sprintLength-1 != msg.EndBlock {
+		logger.Error("Milestone's length is not equal to sprint length",
 			"StartBlock", msg.StartBlock,
 			"EndBlock", msg.EndBlock,
 			"SprintLength", params.SprintLength,
@@ -43,6 +43,15 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contr
 
 		return common.ErrMilestoneInvalid(k.Codespace()).Result()
 	}
+
+	// if math.Mod(float64(msg.EndBlock+1), float64(sprintLength)) != 0 {
+	// 	logger.Error("Milestone's end number does not fulfil the sprint's end condition",
+	// 		"EndBlock", msg.EndBlock,
+	// 		"SprintLength", params.SprintLength,
+	// 	)
+
+	// 	return common.ErrMilestoneInvalid(k.Codespace()).Result()
+	// }
 
 	//
 	// Validate last milestone

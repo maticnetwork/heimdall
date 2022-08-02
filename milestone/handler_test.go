@@ -93,6 +93,38 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Empty(t, bufferedHeader, "Should not store state")
 	})
 
+	suite.Run("Invalid msg based on sprint length", func() {
+		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
+		msgMilestone := types.NewMsgMilestoneBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.RootHash,
+			borChainId,
+		)
+
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		require.Equal(t, errs.CodeInvalidMsg, got.Code)
+	})
+
+	// suite.Run("Invalid msg based on end block number", func() {
+	// 	header.Proposer = hmTypes.HexToHeimdallAddress("1234")
+	// 	msgMilestone := types.NewMsgMilestoneBlock(
+	// 		header.Proposer,
+	// 		header.StartBlock-1,
+	// 		header.EndBlock-1,
+	// 		header.RootHash,
+	// 		borChainId,
+	// 	)
+
+	// 	// send milestone to handler
+	// 	got := suite.handler(ctx, msgMilestone)
+	// 	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+	// 	require.Equal(t, errs.CodeInvalidMsg, got.Code)
+	// })
+
 	suite.Run("Invalid Proposer", func() {
 		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -106,6 +138,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		// send milestone to handler
 		got := suite.handler(ctx, msgMilestone)
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		require.Equal(t, errs.CodeInvalidMsg, got.Code)
 	})
 
 	suite.Run("Milestone not in countinuity", func() {
@@ -125,7 +158,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			start,
-			start+sprintLength,
+			start+sprintLength-1,
 			header.RootHash,
 			borChainId,
 		)
@@ -133,7 +166,36 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		// send milestone to handler
 		got := suite.handler(ctx, msgMilestone)
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		require.Equal(t, errs.CodeMilestoneNotInContinuity, got.Code)
+
 	})
+
+	suite.Run("Milestone not in countinuity", func() {
+
+		_, err = keeper.GetMilestone(ctx)
+		require.NoError(t, err)
+
+		lastMilestone, err := keeper.GetMilestone(ctx)
+		if err == nil {
+			// pass wrong start
+			start = start + lastMilestone.EndBlock - 2
+		}
+
+		msgMilestone := types.NewMsgMilestoneBlock(
+			header.Proposer,
+			start,
+			start+sprintLength-1,
+			header.RootHash,
+			borChainId,
+		)
+
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		require.Equal(t, errs.CodeMilestoneNotInContinuity, got.Code)
+
+	})
+
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {

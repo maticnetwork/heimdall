@@ -76,21 +76,32 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 			return err
 		}
 
-		// fetch latest milestone
-		latestMilestone, err := util.GetLatestMilestone(mp.cliCtx)
-		if err != nil || latestMilestone == nil {
+		result, err := util.GetMilestoneCount(mp.cliCtx)
+		if err != nil || result == nil {
 			return err
 		}
 
-		// current Block should be greater than or equal to latest milestone end block + Sprint length
-		if latestMilestone.EndBlock+milestoneParams.SprintLength > currentBlockNumber {
-			mp.Logger.Debug("Current child block is less than latest milestone end block + sprint length", "currentChildBlock", currentBlockNumber, "latestMilestoneEndBlock", latestMilestone.EndBlock)
-			return nil
+		var start uint64
+
+		if result.Count != 0 {
+			// fetch latest milestone
+			latestMilestone, err := util.GetLatestMilestone(mp.cliCtx)
+			if err != nil || latestMilestone == nil {
+				return err
+			}
+
+			// current Block should be greater than or equal to latest milestone end block + Sprint length
+			if latestMilestone.EndBlock+milestoneParams.SprintLength > currentBlockNumber {
+				mp.Logger.Debug("Current child block is less than latest milestone end block + sprint length", "currentChildBlock", currentBlockNumber, "latestMilestoneEndBlock", latestMilestone.EndBlock)
+				return nil
+			}
+
+			mp.Logger.Debug("Current child block should be greater than or equal to latest milestone's endblock + sprintLength", "currentChildBlock", currentBlockNumber, "latestMilestoneEndBlock", latestMilestone.EndBlock)
+
+			start = latestMilestone.EndBlock + 1
+
 		}
 
-		mp.Logger.Debug("Current child block should be greater than or equal to latest milestone's endblock + sprintLength", "currentChildBlock", currentBlockNumber, "latestMilestoneEndBlock", latestMilestone.EndBlock)
-
-		start := latestMilestone.EndBlock + 1
 		end := start + milestoneParams.SprintLength - 1
 
 		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, end); err != nil {
@@ -109,7 +120,7 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64) error {
 	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end)
 
-	// get checkpoint params
+	// get milestone params
 	milestoneParams := milestoneContext.MilestoneParams
 
 	// Get root hash
@@ -120,7 +131,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	mp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
 
-	mp.Logger.Info("✅ Creating and broadcasting new checkpoint",
+	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", start,
 		"end", end,
 		"root", hmTypes.BytesToHeimdallHash(root),
@@ -128,7 +139,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams
 
-	// create and send checkpoint message
+	// create and send milestone message
 	msg := milestoneTypes.NewMsgMilestoneBlock(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		start,
@@ -139,7 +150,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	// return broadcast to heimdall
 	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
-		mp.Logger.Error("Error while broadcasting checkpoint to heimdall", "error", err)
+		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
 		return err
 	}
 
@@ -184,7 +195,7 @@ func (mp *MilestoneProcessor) getMilestoneContext() (*MilestoneContext, error) {
 
 	milestoneParams, err := util.GetMilestoneParams(mp.cliCtx)
 	if err != nil {
-		mp.Logger.Error("Error while fetching checkpoint params", "error", err)
+		mp.Logger.Error("Error while fetching milestone params", "error", err)
 		return nil, err
 	}
 

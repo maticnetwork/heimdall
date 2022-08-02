@@ -29,7 +29,8 @@ func NewGenesisState(
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params: DefaultParams(),
+		Params:    DefaultParams(),
+		Milestone: nil,
 	}
 }
 
