@@ -761,7 +761,7 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 // EventByID looks up a event by the topic id
 func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 	for _, event := range abiObject.Events {
-		if bytes.Equal(event.Id().Bytes(), sigdata) {
+		if bytes.Equal(event.ID.Bytes(), sigdata) {
 			return &event
 		}
 	}
