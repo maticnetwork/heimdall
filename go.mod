@@ -14,12 +14,12 @@ require (
 	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.7 // indirect
+	github.com/google/uuid v1.2.0
 	github.com/gorilla/mux v1.8.0
 	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
 	github.com/huin/goupnp v1.0.3 // indirect
 	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/rakyll/statik v0.1.6
@@ -50,7 +50,7 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220311091200-3ea059b213ed
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220802120524-fafb4242f684
 
 replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20220311095845-81690c6a53e7
 
