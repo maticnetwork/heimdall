@@ -11,7 +11,7 @@ import (
 
 	"github.com/maticnetwork/bor/common"
 	"github.com/maticnetwork/heimdall/bor/types"
-	chainmanager "github.com/maticnetwork/heimdall/chainmanager"
+	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
@@ -45,7 +45,7 @@ type Keeper struct {
 	chainKeeper chainmanager.Keeper
 }
 
-// NewKeeper create new keeper
+// NewKeeper is the constructor of Keeper
 func NewKeeper(
 	cdc *codec.Codec,
 	storeKey sdk.StoreKey,
@@ -55,8 +55,7 @@ func NewKeeper(
 	stakingKeeper staking.Keeper,
 	caller helper.ContractCaller,
 ) Keeper {
-	// create keeper
-	keeper := Keeper{
+	return Keeper{
 		cdc:            cdc,
 		storeKey:       storeKey,
 		paramSpace:     paramSpace.WithKeyTable(types.ParamKeyTable()),
@@ -65,7 +64,6 @@ func NewKeeper(
 		sk:             stakingKeeper,
 		contractCaller: caller,
 	}
-	return keeper
 }
 
 // Codespace returns the codespace
@@ -152,9 +150,6 @@ func (k *Keeper) GetAllSpans(ctx sdk.Context) (spans []*hmTypes.Span) {
 func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.Span, error) {
 	store := ctx.KVStore(k.storeKey)
 
-	// create spans
-	var spans []hmTypes.Span
-
 	// have max limit
 	if limit > 20 {
 		limit = 20
@@ -164,6 +159,7 @@ func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTy
 	iterator := hmTypes.KVStorePrefixIteratorPaginated(store, SpanPrefixKey, uint(page), uint(limit))
 
 	// loop through validators to get valid validators
+	var spans []hmTypes.Span
 	for ; iterator.Valid(); iterator.Next() {
 		var span hmTypes.Span
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err == nil {
@@ -232,7 +228,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 	// TODO remove old selection algorigthm
 	// select next producers using seed as blockheader hash
 	fn := SelectNextProducers
-	if ctx.BlockHeight() < helper.NewSelectionAlgoHeight {
+	if ctx.BlockHeight() < helper.GetNewSelectionAlgoHeight() {
 		fn = XXXSelectNextProducers
 	}
 
@@ -251,7 +247,9 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 			val.VotingPower = int64(value)
 			vals = append(vals, val)
 		}
-	} // sort by address
+	}
+
+	// sort by address
 	vals = hmTypes.SortValidatorByAddress(vals)
 
 	return vals, nil
@@ -324,7 +322,7 @@ func (k *Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 // Utils
 //
 
-// IterateSpansAndApplyFn interate spans and apply the given function.
+// IterateSpansAndApplyFn iterates spans and apply the given function.
 func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Span) error) {
 	store := ctx.KVStore(k.storeKey)
 

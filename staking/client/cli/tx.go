@@ -106,7 +106,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				topic := vLog.Topics[0].Bytes()
 				selectedEvent := helper.EventByID(abiObject, topic)
 				if selectedEvent != nil && selectedEvent.Name == eventName {
-					if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+					if err = helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 						return err
 					}
 

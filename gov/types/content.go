@@ -38,7 +38,7 @@ func ValidateAbstract(codespace sdk.CodespaceType, c Content) sdk.Error {
 		return ErrInvalidProposalContent(codespace, "proposal title cannot be blank")
 	}
 	if len(title) > MaxTitleLength {
-		return ErrInvalidProposalContent(codespace, fmt.Sprintf("proposal title is longer than max length of %d", MaxTitleLength))
+		return ErrInvalidProposalContent(codespace, fmt.Sprintf("proposal title (%d) is longer than max length of %d", len(title), MaxTitleLength))
 	}
 
 	description := c.GetDescription()
@@ -46,7 +46,7 @@ func ValidateAbstract(codespace sdk.CodespaceType, c Content) sdk.Error {
 		return ErrInvalidProposalContent(codespace, "proposal description cannot be blank")
 	}
 	if len(description) > MaxDescriptionLength {
-		return ErrInvalidProposalContent(codespace, fmt.Sprintf("proposal description is longer than max length of %d", MaxDescriptionLength))
+		return ErrInvalidProposalContent(codespace, fmt.Sprintf("proposal description(%d) is longer than max length of %d", len(description), MaxDescriptionLength))
 	}
 
 	return nil

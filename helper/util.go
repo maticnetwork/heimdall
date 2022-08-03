@@ -41,6 +41,15 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
+//go:generate mockgen -destination=./mocks/http_client_mock.go -package=mocks . HTTPClient
+type HTTPClient interface {
+	Get(string) (resp *http.Response, err error)
+}
+
+var (
+	Client HTTPClient
+)
+
 // ZeroHash represents empty hash
 var ZeroHash = common.Hash{}
 
@@ -58,6 +67,10 @@ func GetFromAddress(cliCtx context.CLIContext) types.HeimdallAddress {
 	}
 
 	return types.BytesToHeimdallAddress(GetAddress())
+}
+
+func init() {
+	Client = &http.Client{}
 }
 
 // Paginate returns the correct starting and ending index for a paginated query,
@@ -312,7 +325,10 @@ func BuildAndBroadcastMsgs(cliCtx context.CLIContext, txBldr authTypes.TxBuilder
 	if err != nil {
 		return sdk.TxResponse{}, err
 	}
-
+	// just simulate
+	if cliCtx.Simulate {
+		return sdk.TxResponse{TxHash: "0x" + hex.EncodeToString(txBytes)}, nil
+	}
 	// broadcast to a Tendermint node
 	return BroadcastTxBytes(cliCtx, txBytes, "")
 }
@@ -345,6 +361,11 @@ func BuildAndBroadcastMsgsWithCLI(cliCtx context.CLIContext, txBldr authTypes.Tx
 
 // GetSignedTxBytes returns signed tx bytes
 func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msgs []sdk.Msg) ([]byte, error) {
+	// just simulate (useful for testing)
+	if cliCtx.Simulate {
+		return nil, nil
+	}
+
 	txBldr, err := PrepareTxBuilder(cliCtx, txBldr)
 	if err != nil {
 		return nil, err
@@ -353,10 +374,6 @@ func GetSignedTxBytes(cliCtx context.CLIContext, txBldr authTypes.TxBuilder, msg
 	fromName := cliCtx.GetFromName()
 	if fromName == "" {
 		return txBldr.BuildAndSign(GetPrivKey(), msgs)
-	}
-
-	if cliCtx.Simulate {
-		return nil, nil
 	}
 
 	if !cliCtx.SkipConfirm {
@@ -775,7 +792,7 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 
 // FetchFromAPI fetches data from any URL
 func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
-	resp, err := http.Get(URL)
+	resp, err := Client.Get(URL)
 	if err != nil {
 		return result, err
 	}
@@ -789,12 +806,12 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 		}
 		// unmarshall data from buffer
 		var response rest.ResponseWithHeight
-		if err := cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
+		if err = cliCtx.Codec.UnmarshalJSON(body, &response); err != nil {
 			return result, err
 		}
 		return response, nil
 	}
 
 	Logger.Debug("Error while fetching data from URL", "status", resp.StatusCode, "URL", URL)
-	return result, fmt.Errorf("Error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
+	return result, fmt.Errorf("error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }

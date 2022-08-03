@@ -24,7 +24,7 @@ import (
 type TxBroadcaster struct {
 	logger log.Logger
 
-	cliCtx cliContext.CLIContext
+	CliCtx cliContext.CLIContext
 
 	heimdallMutex sync.Mutex
 	maticMutex    sync.Mutex
@@ -42,6 +42,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 	// current address
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 	account, err := util.GetAccount(cliCtx, address)
+
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
 
@@ -49,7 +50,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 
 	txBroadcaster := TxBroadcaster{
 		logger:    util.Logger().With("module", "txBroadcaster"),
-		cliCtx:    cliCtx,
+		CliCtx:    cliCtx,
 		lastSeqNo: account.GetSequence(),
 		accNum:    account.GetAccountNumber(),
 	}
@@ -64,7 +65,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "BroadcastToHeimdall", time.Now())
 
 	// tx encoder
-	txEncoder := helper.GetTxEncoder(tb.cliCtx.Codec)
+	txEncoder := helper.GetTxEncoder(tb.CliCtx.Codec)
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
@@ -75,7 +76,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID)
 
-	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
+	txResponse, err := helper.BuildAndBroadcastMsgs(tb.CliCtx, txBldr, []sdk.Msg{msg})
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 
@@ -83,7 +84,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 		address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 
 		// fetch from APIs
-		account, errAcc := util.GetAccount(tb.cliCtx, address)
+		account, errAcc := util.GetAccount(tb.CliCtx, address)
 		if errAcc != nil {
 			tb.logger.Error("Error fetching account from rest-api", "url", helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
 			return errAcc

@@ -19,7 +19,7 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 	cdc := app.MakeCodec()
 
 	tendermintNode := "http://localhost:26657"
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
 	viper.Set("log_level", "info")
 
 	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))

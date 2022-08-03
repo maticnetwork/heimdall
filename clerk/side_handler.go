@@ -149,7 +149,7 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 	// save event into state
 	if err := k.SetEventRecord(ctx, record); err != nil {
-		k.Logger(ctx).Error("Unable to update event record", "error", err, "id", msg.ID)
+		k.Logger(ctx).Error("Unable to update event record", "id", msg.ID, "error", err)
 		return types.ErrEventUpdate(k.Codespace()).Result()
 	}
 

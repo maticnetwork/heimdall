@@ -38,6 +38,9 @@ syncer_poll_interval = "{{ .SyncerPollInterval }}"
 noack_poll_interval = "{{ .NoACKPollInterval }}"
 clerk_poll_interval = "{{ .ClerkPollInterval }}"
 span_poll_interval = "{{ .SpanPollInterval }}"
+sh_state_synced_interval = "{{ .SHStateSyncedInterval }}"
+sh_stake_update_interval = "{{ .SHStakeUpdateInterval }}"
+sh_max_depth_duration = "{{ .SHMaxDepthDuration }}"
 
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"
@@ -48,6 +51,8 @@ main_chain_max_gas_price = "{{ .MainchainMaxGasPrice }}"
 ##### Timeout Config #####
 no_ack_wait_time = "{{ .NoACKWaitTime }}"
 
+##### chain - newSelectionAlgoHeight depends on this #####
+chain = "{{ .Chain }}"
 `
 
 var configTemplate *template.Template
@@ -60,12 +65,11 @@ func init() {
 	}
 }
 
-// ParseConfig retrieves the default environment configuration for the
-// application.
+// ParseConfig retrieves the default environment configuration for the application.
 func ParseConfig() (*Configuration, error) {
-	conf := GetDefaultHeimdallConfig()
-	err := viper.Unmarshal(conf)
-	return &conf, err
+	defaultConf := GetDefaultHeimdallConfig()
+	err := viper.Unmarshal(defaultConf)
+	return &defaultConf, err
 }
 
 // WriteConfigFile renders config using the template and writes it to

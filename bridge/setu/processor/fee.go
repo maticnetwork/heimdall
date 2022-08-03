@@ -80,7 +80,7 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 
 		// return broadcast to heimdall
 		if err := fp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
-			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "error", err)
+			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "msg", msg, "error", err)
 			return err
 		}
 	}
