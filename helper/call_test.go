@@ -74,10 +74,13 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 
 // TestDecodeValidatorStakeUpdateEvent
 func TestDecodeValidatorStakeUpdateEvent(t *testing.T) {
+	t.Parallel()
+
 	contractCallerObj, err := NewContractCaller()
 	if err != nil {
 		fmt.Println("Error creating contract caller")
 	}
+
 	testContractAddress := common.HexToAddress("0x29c40836c17f22d16a7fe953fb25da670c96d69e")
 	testTxReceipt := &ethTypes.Receipt{
 		BlockNumber: big.NewInt(1),
