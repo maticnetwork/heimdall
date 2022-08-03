@@ -3,7 +3,7 @@ module github.com/maticnetwork/heimdall
 go 1.16
 
 require (
-	github.com/RichardKnop/machinery v1.7.4
+	github.com/RichardKnop/machinery v1.10.6
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/aristanetworks/goarista v0.0.0-20191206003309-5d8d36c240c9 // indirect
 	github.com/btcsuite/btcd v0.20.1-beta // indirect
@@ -27,6 +27,7 @@ require (
 	github.com/json-iterator/go v1.1.12
 	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
 	github.com/maticnetwork/bor v0.1.7-0.20200507151553-e03cd94ed12b
+	github.com/maticnetwork/polyproto v0.0.2
 	github.com/olekukonko/tablewriter v0.0.4 // indirect
 	github.com/pborman/uuid v1.2.0
 	github.com/peterh/liner v1.2.0 // indirect
@@ -41,7 +42,7 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.4.0
 	github.com/status-im/keycard-go v0.0.0-20191119114148-6dd40a46baa0 // indirect
-	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
+	github.com/streadway/amqp v1.0.0
 	github.com/stretchr/testify v1.7.1
 	github.com/syndtr/goleveldb v1.0.1-0.20190923125748-758128399b1d
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
@@ -51,6 +52,8 @@ require (
 	github.com/tyler-smith/go-bip39 v1.0.2 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
+	google.golang.org/grpc v1.48.0
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20200619000410-60c24ae608a6 // indirect
 	gopkg.in/yaml.v2 v2.4.0
 )
