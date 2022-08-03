@@ -66,18 +66,21 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	callMsg.From = fromAddress
 	gasLimit, err := client.EstimateGas(context.Background(), callMsg)
 
-	chainId, err := client.ChainID(context.Background())
-	if err != nil {
-		Logger.Error("Unable to fetch ChainID", "error", err)
-		return
-	}
+	// chainId, err := client.ChainID(context.Background())
+	// if err != nil {
+	// 	Logger.Error("Unable to fetch ChainID", "error", err)
+	// 	return
+	// }
+
+	// // create auth
+	// auth, err = bind.NewKeyedTransactorWithChainID(ecdsaPrivateKey, chainId)
+	// if err != nil {
+	// 	Logger.Error("Unable to create auth object", "error", err)
+	// 	return
+	// }
 
 	// create auth
-	auth, err = bind.NewKeyedTransactorWithChainID(ecdsaPrivateKey, chainId)
-	if err != nil {
-		Logger.Error("Unable to create auth object", "error", err)
-		return
-	}
+	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
 
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
