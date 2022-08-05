@@ -211,6 +211,9 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 		}
 	}
 
+	// Nothing to do with sigs, Just a type check in latest geth code
+	dummyLegacyTxn := ethTypes.NewTransaction(0, common.Address{}, nil, 0, nil, nil)
+
 	if len(sideTxSigs) > 0 {
 		// sort sigs by address
 		sort.Slice(sideTxSigs, func(i, j int) bool {
@@ -219,7 +222,7 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 
 		// loop votes and append to sig to sigs
 		for _, sideTxSig := range sideTxSigs {
-			R, S, V, err := ethTypes.HomesteadSigner{}.SignatureValues(nil, sideTxSig.Sig)
+			R, S, V, err := ethTypes.HomesteadSigner{}.SignatureValues(dummyLegacyTxn, sideTxSig.Sig)
 			if err != nil {
 				return nil, err
 			}
