@@ -21,9 +21,8 @@ var (
 
 // UnpackLog unpacks log
 func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log) error {
-	var err error
 	if len(log.Data) > 0 {
-		if out, err = abiObject.Unpack(event, log.Data); err != nil {
+		if err := abiObject.UnpackIntoInterface(out, event, log.Data); err != nil {
 			return err
 		}
 	}
