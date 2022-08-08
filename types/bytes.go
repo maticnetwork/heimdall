@@ -7,8 +7,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v2"
 
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/common/hexutil"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // HexBytes the main purpose of HexBytes is to enable HEX-encoding for json/encoding.

@@ -11,9 +11,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
 
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/ethclient"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"

@@ -15,7 +15,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	chainTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"

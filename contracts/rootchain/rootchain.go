@@ -4,19 +4,21 @@
 package rootchain
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/accounts/abi/bind"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/event"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
@@ -26,8 +28,14 @@ var (
 	_ = event.NewSubscription
 )
 
+// RootchainMetaData contains all meta data concerning the Rootchain contract.
+var RootchainMetaData = &bind.MetaData{
+	ABI: "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"uint256[3][]\"}],\"name\":\"submitCheckpoint\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"headerBlockId\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"reward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"}]",
+}
+
 // RootchainABI is the input ABI used to generate the binding from.
-const RootchainABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"headerBlocks\",\"outputs\":[{\"name\":\"root\",\"type\":\"bytes32\"},{\"name\":\"start\",\"type\":\"uint256\"},{\"name\":\"end\",\"type\":\"uint256\"},{\"name\":\"createdAt\",\"type\":\"uint256\"},{\"name\":\"proposer\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"uint256[3][]\"}],\"name\":\"submitCheckpoint\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"data\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"submitHeaderBlock\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getLastChildBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentHeaderBlock\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"name\":\"proposer\",\"type\":\"address\"},{\"indexed\":true,\"name\":\"headerBlockId\",\"type\":\"uint256\"},{\"indexed\":true,\"name\":\"reward\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"start\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"end\",\"type\":\"uint256\"},{\"indexed\":false,\"name\":\"root\",\"type\":\"bytes32\"}],\"name\":\"NewHeaderBlock\",\"type\":\"event\"}]"
+// Deprecated: Use RootchainMetaData.ABI instead.
+var RootchainABI = RootchainMetaData.ABI
 
 // Rootchain is an auto generated Go binding around an Ethereum contract.
 type Rootchain struct {
@@ -137,7 +145,7 @@ func bindRootchain(address common.Address, caller bind.ContractCaller, transacto
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Rootchain *RootchainRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Rootchain *RootchainRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Rootchain.Contract.RootchainCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -156,7 +164,7 @@ func (_Rootchain *RootchainRaw) Transact(opts *bind.TransactOpts, method string,
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Rootchain *RootchainCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Rootchain *RootchainCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Rootchain.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -175,12 +183,17 @@ func (_Rootchain *RootchainTransactorRaw) Transact(opts *bind.TransactOpts, meth
 //
 // Solidity: function currentHeaderBlock() view returns(uint256)
 func (_Rootchain *RootchainCaller) CurrentHeaderBlock(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "currentHeaderBlock")
-	return *ret0, err
+	var out []interface{}
+	err := _Rootchain.contract.Call(opts, &out, "currentHeaderBlock")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // CurrentHeaderBlock is a free data retrieval call binding the contract method 0xec7e4855.
@@ -201,12 +214,17 @@ func (_Rootchain *RootchainCallerSession) CurrentHeaderBlock() (*big.Int, error)
 //
 // Solidity: function getLastChildBlock() view returns(uint256)
 func (_Rootchain *RootchainCaller) GetLastChildBlock(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Rootchain.contract.Call(opts, out, "getLastChildBlock")
-	return *ret0, err
+	var out []interface{}
+	err := _Rootchain.contract.Call(opts, &out, "getLastChildBlock")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // GetLastChildBlock is a free data retrieval call binding the contract method 0xb87e1b66.
@@ -233,16 +251,28 @@ func (_Rootchain *RootchainCaller) HeaderBlocks(opts *bind.CallOpts, arg0 *big.I
 	CreatedAt *big.Int
 	Proposer  common.Address
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _Rootchain.contract.Call(opts, &out, "headerBlocks", arg0)
+
+	outstruct := new(struct {
 		Root      [32]byte
 		Start     *big.Int
 		End       *big.Int
 		CreatedAt *big.Int
 		Proposer  common.Address
 	})
-	out := ret
-	err := _Rootchain.contract.Call(opts, out, "headerBlocks", arg0)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Root = *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+	outstruct.Start = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.End = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+	outstruct.CreatedAt = *abi.ConvertType(out[3], new(*big.Int)).(**big.Int)
+	outstruct.Proposer = *abi.ConvertType(out[4], new(common.Address)).(*common.Address)
+
+	return *outstruct, err
+
 }
 
 // HeaderBlocks is a free data retrieval call binding the contract method 0x41539d4a.
@@ -474,5 +504,6 @@ func (_Rootchain *RootchainFilterer) ParseNewHeaderBlock(log types.Log) (*Rootch
 	if err := _Rootchain.contract.UnpackLog(event, "NewHeaderBlock", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

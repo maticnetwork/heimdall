@@ -15,8 +15,8 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	authTypesMocks "github.com/maticnetwork/heimdall/auth/types/mocks"

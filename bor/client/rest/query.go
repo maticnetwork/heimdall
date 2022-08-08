@@ -22,7 +22,8 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/consensus/bor"
+	"github.com/ethereum/go-ethereum/consensus/bor"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"

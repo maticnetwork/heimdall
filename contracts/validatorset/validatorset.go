@@ -4,31 +4,38 @@
 package validatorset
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/accounts/abi/bind"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/event"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 )
 
+// ValidatorsetMetaData contains all meta data concerning the Validatorset contract.
+var ValidatorsetMetaData = &bind.MetaData{
+	ABI: "[{\"constant\":true,\"inputs\":[{\"name\":\"span\",\"type\":\"uint256\"}],\"name\":\"getSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"commitSpan\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentSpanNumber\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getNextSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getInitialValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getCurrentSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]",
+}
+
 // ValidatorsetABI is the input ABI used to generate the binding from.
-const ValidatorsetABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"span\",\"type\":\"uint256\"}],\"name\":\"getSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"commitSpan\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"currentSpanNumber\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getNextSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getInitialValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getCurrentSpan\",\"outputs\":[{\"name\":\"number\",\"type\":\"uint256\"},{\"name\":\"startBlock\",\"type\":\"uint256\"},{\"name\":\"endBlock\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getValidators\",\"outputs\":[{\"name\":\"\",\"type\":\"address[]\"},{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"}]"
+// Deprecated: Use ValidatorsetMetaData.ABI instead.
+var ValidatorsetABI = ValidatorsetMetaData.ABI
 
 // Validatorset is an auto generated Go binding around an Ethereum contract.
 type Validatorset struct {
@@ -138,7 +145,7 @@ func bindValidatorset(address common.Address, caller bind.ContractCaller, transa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Validatorset *ValidatorsetRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Validatorset *ValidatorsetRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Validatorset.Contract.ValidatorsetCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +164,7 @@ func (_Validatorset *ValidatorsetRaw) Transact(opts *bind.TransactOpts, method s
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Validatorset *ValidatorsetCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Validatorset *ValidatorsetCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Validatorset.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,51 +181,66 @@ func (_Validatorset *ValidatorsetTransactorRaw) Transact(opts *bind.TransactOpts
 
 // CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
 //
-// Solidity: function currentSpanNumber() constant returns(uint256)
+// Solidity: function currentSpanNumber() view returns(uint256)
 func (_Validatorset *ValidatorsetCaller) CurrentSpanNumber(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Validatorset.contract.Call(opts, out, "currentSpanNumber")
-	return *ret0, err
+	var out []interface{}
+	err := _Validatorset.contract.Call(opts, &out, "currentSpanNumber")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
 //
-// Solidity: function currentSpanNumber() constant returns(uint256)
+// Solidity: function currentSpanNumber() view returns(uint256)
 func (_Validatorset *ValidatorsetSession) CurrentSpanNumber() (*big.Int, error) {
 	return _Validatorset.Contract.CurrentSpanNumber(&_Validatorset.CallOpts)
 }
 
 // CurrentSpanNumber is a free data retrieval call binding the contract method 0x4dbc959f.
 //
-// Solidity: function currentSpanNumber() constant returns(uint256)
+// Solidity: function currentSpanNumber() view returns(uint256)
 func (_Validatorset *ValidatorsetCallerSession) CurrentSpanNumber() (*big.Int, error) {
 	return _Validatorset.Contract.CurrentSpanNumber(&_Validatorset.CallOpts)
 }
 
 // GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
 //
-// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getCurrentSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCaller) GetCurrentSpan(opts *bind.CallOpts) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
 	EndBlock   *big.Int
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _Validatorset.contract.Call(opts, &out, "getCurrentSpan")
+
+	outstruct := new(struct {
 		Number     *big.Int
 		StartBlock *big.Int
 		EndBlock   *big.Int
 	})
-	out := ret
-	err := _Validatorset.contract.Call(opts, out, "getCurrentSpan")
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Number = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.StartBlock = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.EndBlock = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
 }
 
 // GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
 //
-// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getCurrentSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetSession) GetCurrentSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -229,7 +251,7 @@ func (_Validatorset *ValidatorsetSession) GetCurrentSpan() (struct {
 
 // GetCurrentSpan is a free data retrieval call binding the contract method 0xaf26aa96.
 //
-// Solidity: function getCurrentSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getCurrentSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCallerSession) GetCurrentSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -240,55 +262,67 @@ func (_Validatorset *ValidatorsetCallerSession) GetCurrentSpan() (struct {
 
 // GetInitialValidators is a free data retrieval call binding the contract method 0x65b3a1e2.
 //
-// Solidity: function getInitialValidators() constant returns(address[], uint256[])
+// Solidity: function getInitialValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCaller) GetInitialValidators(opts *bind.CallOpts) ([]common.Address, []*big.Int, error) {
-	var (
-		ret0 = new([]common.Address)
-		ret1 = new([]*big.Int)
-	)
-	out := &[]interface{}{
-		ret0,
-		ret1,
+	var out []interface{}
+	err := _Validatorset.contract.Call(opts, &out, "getInitialValidators")
+
+	if err != nil {
+		return *new([]common.Address), *new([]*big.Int), err
 	}
-	err := _Validatorset.contract.Call(opts, out, "getInitialValidators")
-	return *ret0, *ret1, err
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+	out1 := *abi.ConvertType(out[1], new([]*big.Int)).(*[]*big.Int)
+
+	return out0, out1, err
+
 }
 
 // GetInitialValidators is a free data retrieval call binding the contract method 0x65b3a1e2.
 //
-// Solidity: function getInitialValidators() constant returns(address[], uint256[])
+// Solidity: function getInitialValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetSession) GetInitialValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetInitialValidators(&_Validatorset.CallOpts)
 }
 
 // GetInitialValidators is a free data retrieval call binding the contract method 0x65b3a1e2.
 //
-// Solidity: function getInitialValidators() constant returns(address[], uint256[])
+// Solidity: function getInitialValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCallerSession) GetInitialValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetInitialValidators(&_Validatorset.CallOpts)
 }
 
 // GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
 //
-// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getNextSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCaller) GetNextSpan(opts *bind.CallOpts) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
 	EndBlock   *big.Int
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _Validatorset.contract.Call(opts, &out, "getNextSpan")
+
+	outstruct := new(struct {
 		Number     *big.Int
 		StartBlock *big.Int
 		EndBlock   *big.Int
 	})
-	out := ret
-	err := _Validatorset.contract.Call(opts, out, "getNextSpan")
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Number = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.StartBlock = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.EndBlock = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
 }
 
 // GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
 //
-// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getNextSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetSession) GetNextSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -299,7 +333,7 @@ func (_Validatorset *ValidatorsetSession) GetNextSpan() (struct {
 
 // GetNextSpan is a free data retrieval call binding the contract method 0x60c8614d.
 //
-// Solidity: function getNextSpan() constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getNextSpan() view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCallerSession) GetNextSpan() (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -310,25 +344,35 @@ func (_Validatorset *ValidatorsetCallerSession) GetNextSpan() (struct {
 
 // GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
 //
-// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getSpan(uint256 span) view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCaller) GetSpan(opts *bind.CallOpts, span *big.Int) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
 	EndBlock   *big.Int
 }, error) {
-	ret := new(struct {
+	var out []interface{}
+	err := _Validatorset.contract.Call(opts, &out, "getSpan", span)
+
+	outstruct := new(struct {
 		Number     *big.Int
 		StartBlock *big.Int
 		EndBlock   *big.Int
 	})
-	out := ret
-	err := _Validatorset.contract.Call(opts, out, "getSpan", span)
-	return *ret, err
+	if err != nil {
+		return *outstruct, err
+	}
+
+	outstruct.Number = *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+	outstruct.StartBlock = *abi.ConvertType(out[1], new(*big.Int)).(**big.Int)
+	outstruct.EndBlock = *abi.ConvertType(out[2], new(*big.Int)).(**big.Int)
+
+	return *outstruct, err
+
 }
 
 // GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
 //
-// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getSpan(uint256 span) view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetSession) GetSpan(span *big.Int) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -339,7 +383,7 @@ func (_Validatorset *ValidatorsetSession) GetSpan(span *big.Int) (struct {
 
 // GetSpan is a free data retrieval call binding the contract method 0x047a6c5b.
 //
-// Solidity: function getSpan(uint256 span) constant returns(uint256 number, uint256 startBlock, uint256 endBlock)
+// Solidity: function getSpan(uint256 span) view returns(uint256 number, uint256 startBlock, uint256 endBlock)
 func (_Validatorset *ValidatorsetCallerSession) GetSpan(span *big.Int) (struct {
 	Number     *big.Int
 	StartBlock *big.Int
@@ -350,30 +394,32 @@ func (_Validatorset *ValidatorsetCallerSession) GetSpan(span *big.Int) (struct {
 
 // GetValidators is a free data retrieval call binding the contract method 0xb7ab4db5.
 //
-// Solidity: function getValidators() constant returns(address[], uint256[])
+// Solidity: function getValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCaller) GetValidators(opts *bind.CallOpts) ([]common.Address, []*big.Int, error) {
-	var (
-		ret0 = new([]common.Address)
-		ret1 = new([]*big.Int)
-	)
-	out := &[]interface{}{
-		ret0,
-		ret1,
+	var out []interface{}
+	err := _Validatorset.contract.Call(opts, &out, "getValidators")
+
+	if err != nil {
+		return *new([]common.Address), *new([]*big.Int), err
 	}
-	err := _Validatorset.contract.Call(opts, out, "getValidators")
-	return *ret0, *ret1, err
+
+	out0 := *abi.ConvertType(out[0], new([]common.Address)).(*[]common.Address)
+	out1 := *abi.ConvertType(out[1], new([]*big.Int)).(*[]*big.Int)
+
+	return out0, out1, err
+
 }
 
 // GetValidators is a free data retrieval call binding the contract method 0xb7ab4db5.
 //
-// Solidity: function getValidators() constant returns(address[], uint256[])
+// Solidity: function getValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetSession) GetValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetValidators(&_Validatorset.CallOpts)
 }
 
 // GetValidators is a free data retrieval call binding the contract method 0xb7ab4db5.
 //
-// Solidity: function getValidators() constant returns(address[], uint256[])
+// Solidity: function getValidators() view returns(address[], uint256[])
 func (_Validatorset *ValidatorsetCallerSession) GetValidators() ([]common.Address, []*big.Int, error) {
 	return _Validatorset.Contract.GetValidators(&_Validatorset.CallOpts)
 }

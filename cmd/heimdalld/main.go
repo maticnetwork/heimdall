@@ -41,7 +41,8 @@ import (
 	dbm "github.com/tendermint/tm-db"
 	"golang.org/x/sync/errgroup"
 
-	ethCommon "github.com/maticnetwork/bor/common"
+	ethCommon "github.com/ethereum/go-ethereum/common"
+
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
