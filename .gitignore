@@ -1,5 +1,7 @@
 .DS_Store
 
+helper/heimdall-params.go
+
 # ignore vendor
 vendor/
 vendor/github.com/maticnetwork/bor
