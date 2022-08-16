@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -306,7 +305,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var spanDuration uint64
-			if err := json.Unmarshal(res, &spanDuration); err != nil {
+			if err := jsoniter.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 
@@ -320,7 +319,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var seed common.Hash
-			if err := json.Unmarshal(res, &seed); err != nil {
+			if err := jsoniter.Unmarshal(res, &seed); err != nil {
 				return err
 			}
 
@@ -333,7 +332,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				seed,
 			)
 
-			result, err := json.Marshal(&msg)
+			result, err := jsoniter.Marshal(&msg)
 			if err != nil {
 				return err
 			}

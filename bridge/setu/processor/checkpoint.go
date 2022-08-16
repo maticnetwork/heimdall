@@ -191,7 +191,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	}
 
 	// var tx = sdk.TxResponse{}
-	// if err := json.Unmarshal([]byte(txBytes), &tx); err != nil {
+	// if err := jsoniter.Unmarshal([]byte(txBytes), &tx); err != nil {
 	// 	cp.Logger.Error("Error unmarshalling txResponse", "error", err)
 	// 	return err
 	// }
