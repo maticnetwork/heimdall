@@ -1,12 +1,12 @@
 package clerk
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
@@ -45,7 +45,7 @@ func handleQueryRecord(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	}
 
 	// json record
-	bz, err := json.Marshal(record)
+	bz, err := jsoniter.ConfigFastest.Marshal(record)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -64,7 +64,7 @@ func handleQueryRecordList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch record list with page %v and limit %v", params.Page, params.Limit), err.Error()))
 	}
 
-	bz, err := json.Marshal(res)
+	bz, err := jsoniter.ConfigFastest.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -83,7 +83,7 @@ func handleQueryRecordListWithTime(ctx sdk.Context, req abci.RequestQuery, keepe
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch record list with fromTime %v and toTime %v", params.FromTime, params.ToTime), err.Error()))
 	}
 
-	bz, err := json.Marshal(res)
+	bz, err := jsoniter.ConfigFastest.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

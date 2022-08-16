@@ -1,13 +1,13 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -174,8 +174,8 @@ func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAd
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
-// Create ValidatorSigningInfo used by slashing module
-func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+// CreateValidatorSigningInfo used by slashing module
+func (d ModuleCommunicator) CreateValidatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
 	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
 }
 
@@ -502,7 +502,8 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 // InitChainer initializes chain
 func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	if err := json.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
+
+	if err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
 

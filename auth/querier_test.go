@@ -1,16 +1,16 @@
 package auth_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/auth"
 	"github.com/maticnetwork/heimdall/auth/exported"
@@ -134,7 +134,8 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	defaultParams := authTypes.DefaultParams()
 
 	var params types.Params
-	err2 := json.Unmarshal(res, &params)
+
+	err2 := jsoniter.ConfigFastest.Unmarshal(res, &params)
 	require.Nil(t, err2)
 	require.Equal(t, defaultParams.MaxMemoCharacters, params.MaxMemoCharacters)
 	require.Equal(t, defaultParams.TxSigLimit, params.TxSigLimit)
@@ -153,7 +154,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NotEmpty(t, string(res))
 
 	var params3 types.Params
-	err3 := json.Unmarshal(res, &params3)
+	err3 := jsoniter.ConfigFastest.Unmarshal(res, &params3)
 	require.NoError(t, err3)
 	require.Equal(t, uint64(10), params.MaxMemoCharacters)
 	require.Equal(t, uint64(8), params.TxSizeCostPerByte)

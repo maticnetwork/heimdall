@@ -2,7 +2,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -10,8 +9,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -142,7 +143,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var spanDuration uint64
-		if err = json.Unmarshal(res, &spanDuration); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -157,7 +158,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var seed common.Hash
-		if err = json.Unmarshal(res, &seed); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &seed); err != nil {
 			return
 		}
 

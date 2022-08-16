@@ -2,7 +2,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,9 +11,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/common"
-	ethcmn "github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -255,12 +255,12 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := json.Marshal(map[string]interface{}{"result": ackCount})
+		result, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": ackCount})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -330,7 +330,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 
 			var params types.Params
-			if err = json.Unmarshal(res, &params); err != nil {
+			if err = jsoniter.ConfigFastest.Unmarshal(res, &params); err != nil {
 				RestLogger.Error("Unable to unmarshal params", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
@@ -362,7 +362,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			validatorSetBytes, height, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 			if err == nil {
-				if err = json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 					hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 					RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
 
@@ -378,7 +378,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				RootHash:   ethcmn.BytesToHash(roothash),
 			}
 
-			result, err = json.Marshal(checkpoint)
+			result, err = jsoniter.ConfigFastest.Marshal(checkpoint)
 			if err != nil {
 				RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -426,12 +426,12 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var lastAckTime uint64
-		if err := json.Unmarshal(res, &lastAckTime); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(res, &lastAckTime); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := json.Marshal(map[string]interface{}{"result": lastAckTime})
+		result, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": lastAckTime})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("Error while sending last ack time").Error())
@@ -474,7 +474,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err == nil {
 			// check content
 			if hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found") {
-				if err = json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing no-ack count", "error", err)
 				}
@@ -491,7 +491,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err == nil {
 			if len(checkpointBufferBytes) != 0 {
 				_checkpoint = new(hmTypes.Checkpoint)
-				if err = json.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing checkpoint header", "error", err)
 				}
@@ -506,7 +506,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 		if err == nil {
-			if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 				// log and ignore
 				RestLogger.Error("Error while unmarshing validator set", "error", err)
 			}
@@ -526,7 +526,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err == nil {
 			// check content
 			if hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found") {
-				if err = json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing last no-ack time", "error", err)
 				}
@@ -545,7 +545,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			LastNoACK:        time.Unix(int64(lastNoACKTime), 0),
 		}
 
-		result, err := json.Marshal(state)
+		result, err := jsoniter.ConfigFastest.Marshal(state)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -585,7 +585,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := json.Unmarshal(ackcountBytes, &ackCount); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(ackcountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -615,7 +615,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var checkpointUnmarshal hmTypes.Checkpoint
-		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &checkpointUnmarshal); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -630,7 +630,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			TimeStamp:  checkpointUnmarshal.TimeStamp,
 		}
 
-		resWithID, err := json.Marshal(checkpointWithID)
+		resWithID, err := jsoniter.ConfigFastest.Marshal(checkpointWithID)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}
@@ -699,7 +699,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var checkpointUnmarshal hmTypes.Checkpoint
-		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &checkpointUnmarshal); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -714,7 +714,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			TimeStamp:  checkpointUnmarshal.TimeStamp,
 		}
 
-		resWithID, err := json.Marshal(checkpointWithID)
+		resWithID, err := jsoniter.ConfigFastest.Marshal(checkpointWithID)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}

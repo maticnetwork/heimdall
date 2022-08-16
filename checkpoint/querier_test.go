@@ -1,7 +1,6 @@
 package checkpoint_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -10,7 +9,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -20,6 +19,7 @@ import (
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper/mocks"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // QuerierTestSuite integrate test suite context object
@@ -82,7 +82,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	err := json.Unmarshal(res, &params)
+	err := jsoniter.ConfigFastest.Unmarshal(res, &params)
 	require.NoError(t, err)
 	require.NotNil(t, params)
 	require.Equal(t, defaultParams.AvgCheckpointLength, params.AvgCheckpointLength)
@@ -145,7 +145,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpoint() {
 	require.NotNil(t, res)
 
 	var checkpoint hmTypes.Checkpoint
-	err = json.Unmarshal(res, &checkpoint)
+
+	err = jsoniter.ConfigFastest.Unmarshal(res, &checkpoint)
 	require.NoError(t, err)
 	require.Equal(t, checkpoint, checkpointBlock)
 }
@@ -183,10 +184,10 @@ func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
-	var checkpoint hmTypes.Checkpoint
-	err = json.Unmarshal(res, &checkpoint)
+	var cp hmTypes.Checkpoint
+	err = jsoniter.ConfigFastest.Unmarshal(res, &cp)
 	require.NoError(t, err)
-	require.Equal(t, checkpoint, checkpointBlock)
+	require.Equal(t, cp, checkpointBlock)
 }
 
 func (suite *QuerierTestSuite) TestQueryLastNoAck() {
@@ -258,7 +259,8 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 	require.NotNil(t, res)
 
 	var actualRes []hmTypes.Checkpoint
-	err := json.Unmarshal(res, &actualRes)
+
+	err := jsoniter.ConfigFastest.Unmarshal(res, &actualRes)
 	require.NoError(t, err)
 	require.Equal(t, checkpoints, actualRes)
 }
@@ -307,7 +309,8 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 	require.NotNil(t, res)
 
 	var actualRes types.MsgCheckpoint
-	err = json.Unmarshal(res, &actualRes)
+
+	err = jsoniter.ConfigFastest.Unmarshal(res, &actualRes)
 	require.NoError(t, err)
 	require.Equal(t, checkpointBlock.StartBlock, actualRes.StartBlock)
 	require.Equal(t, checkpointBlock.EndBlock, actualRes.EndBlock)

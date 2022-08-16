@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -77,7 +77,7 @@ $ %s query checkpoint params
 			}
 
 			var params types.Params
-			if err := json.Unmarshal(bz, &params); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(bz, &params); err != nil {
 				return nil
 			}
 			return cliCtx.PrintOutput(params)
@@ -128,7 +128,7 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var lastNoAck uint64
-			if err := json.Unmarshal(res, &lastNoAck); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &lastNoAck); err != nil {
 				return err
 			}
 
@@ -193,7 +193,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var ackCount uint64
-			if err := json.Unmarshal(res, &ackCount); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &ackCount); err != nil {
 				return err
 			}
 

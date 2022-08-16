@@ -179,6 +179,8 @@ nfpms:
     description: Polygon Blockchain
     license: GPLv3 LGPLv3
 
+    bindir: /usr/local/bin
+
     formats:
       - apk
       - deb
@@ -194,6 +196,13 @@ nfpms:
       - src: builder/files/genesis-testnet-v4.json
         dst: /etc/heimdall/genesis-testnet-v4.json
         type: config
+      - dst: /var/lib/heimdall
+        type: dir
+        file_info:
+          mode: 0777
+
+    scripts:
+      postinstall: builder/files/heimdall-post-install.sh
 
     overrides:
       rpm:
@@ -212,7 +221,6 @@ dockers:
     ids:
       - heimdalld-linux-amd64
       - heimdallcli-linux-amd64
-      - bridge-linux-amd64
     build_flag_templates:
       - --platform=linux/amd64
     extra_files:
@@ -228,7 +236,6 @@ dockers:
     ids:
       - heimdalld-linux-arm64
       - heimdallcli-linux-arm64
-      - bridge-linux-arm64
     build_flag_templates:
       - --platform=linux/arm64/v8
     extra_files:

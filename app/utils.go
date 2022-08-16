@@ -1,12 +1,12 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
@@ -88,7 +88,7 @@ func CheckExportSimulation(app App, config simTypes.Config, params simTypes.Para
 	if config.ExportParamsPath != "" {
 		fmt.Println("exporting simulation params...")
 
-		paramsBz, err := json.MarshalIndent(params, "", " ")
+		paramsBz, err := jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(params, "", " ")
 		if err != nil {
 			return err
 		}
