@@ -388,7 +388,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 				if len(ackCountBytes) == 0 {
 					if err = json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
 						// log and ignore
-						fmt.Printf("Error while unmarshing no-ack count", "error", err)
+						cliLogger.Error("Error while unmarshing no-ack count", "error", err.Error())
 					}
 				}
 			}
@@ -405,7 +405,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 					_checkpoint = new(hmTypes.Checkpoint)
 					if err = json.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
 						// log and ignore
-						fmt.Printf("Error while unmarshing checkpoint header", "error", err)
+						cliLogger.Error("Error while unmarshing checkpoint header", "error", err.Error())
 					}
 				}
 			}
@@ -420,7 +420,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 			if err == nil {
 				if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 					// log and ignore
-					fmt.Printf("Error while unmarshing validator set", "error", err)
+					cliLogger.Error("Error while unmarshing validator set", "error", err.Error())
 				}
 			}
 
@@ -440,7 +440,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 				if len(lastNoACKBytes) == 0 {
 					if err = json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
 						// log and ignore
-						fmt.Printf("Error while unmarshing last no-ack time", "error", err)
+						cliLogger.Error("Error while unmarshing last no-ack time", "error", err.Error())
 					}
 				}
 			}
