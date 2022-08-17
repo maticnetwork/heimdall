@@ -36,7 +36,6 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	return supplyQueryCmd
 }
 
-//
 func GetBalanceByAccountNumber(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "balance [address]",
@@ -74,6 +73,6 @@ func GetBalanceByAccountNumber(cdc *codec.Codec) *cobra.Command {
 
 		},
 	}
-	
+
 	return cmd
 }

@@ -289,7 +289,7 @@ func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			fmt.Printf(string(resWithID))
+			fmt.Println(string(resWithID))
 			return nil
 
 		},
@@ -344,7 +344,7 @@ func GetCheckpointList(cdc *codec.Codec) *cobra.Command {
 				return nil
 			}
 
-			fmt.Printf(string(res))
+			fmt.Println(string(res))
 			return nil
 
 		},
@@ -462,7 +462,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			fmt.Printf(string(result))
+			fmt.Println(string(result))
 			return nil
 
 		},
