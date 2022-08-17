@@ -2,17 +2,18 @@ package topup
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // NewQuerier returns a new sdk.Keeper instance.
@@ -82,7 +83,7 @@ func handleQueryDividendAccount(ctx sdk.Context, req abci.RequestQuery, keeper K
 	}
 
 	// json record
-	bz, err := json.Marshal(dividendAccount)
+	bz, err := jsoniter.ConfigFastest.Marshal(dividendAccount)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -134,7 +135,7 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 		accountProof := hmTypes.NewDividendAccountProof(params.UserAddress, merkleProof, index)
 
 		// json record
-		bz, err := json.Marshal(accountProof)
+		bz, err := jsoniter.ConfigFastest.Marshal(accountProof)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
@@ -160,7 +161,7 @@ func handleQueryVerifyAccountProof(ctx sdk.Context, req abci.RequestQuery, keepe
 	}
 
 	// json record
-	bz, err := json.Marshal(accountProofStatus)
+	bz, err := jsoniter.ConfigFastest.Marshal(accountProofStatus)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

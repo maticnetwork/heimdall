@@ -2,13 +2,13 @@
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -253,7 +253,7 @@ func dividendAccountRootHandlerFn(
 
 		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
-		result, err := json.Marshal(&accountRootHash)
+		result, err := jsoniter.ConfigFastest.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -345,12 +345,12 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var accountProofStatus bool
-		if err = json.Unmarshal(res, &accountProofStatus); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &accountProofStatus); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		res, err = json.Marshal(map[string]interface{}{"result": accountProofStatus})
+		res, err = jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": accountProofStatus})
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

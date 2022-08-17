@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -11,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
@@ -77,7 +77,7 @@ $ %s query checkpoint params
 			}
 
 			var params types.Params
-			if err := json.Unmarshal(bz, &params); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(bz, &params); err != nil {
 				return nil
 			}
 			return cliCtx.PrintOutput(params)
@@ -128,7 +128,7 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var lastNoAck uint64
-			if err := json.Unmarshal(res, &lastNoAck); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &lastNoAck); err != nil {
 				return err
 			}
 
@@ -193,7 +193,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var ackCount uint64
-			if err := json.Unmarshal(res, &ackCount); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &ackCount); err != nil {
 				return err
 			}
 
@@ -205,7 +205,7 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-//Temporary Checkpoint struct to store the Checkpoint ID
+// Temporary Checkpoint struct to store the Checkpoint ID
 type CheckpointWithID struct {
 	ID         uint64                  `json:"id"`
 	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
@@ -238,7 +238,7 @@ func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var ackCount uint64
-			if err := json.Unmarshal(ackcountBytes, &ackCount); err != nil {
+			if err := jsoniter.Unmarshal(ackcountBytes, &ackCount); err != nil {
 				return nil
 			}
 
@@ -264,7 +264,7 @@ func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var checkpointUnmarshal hmTypes.Checkpoint
-			if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+			if err = jsoniter.Unmarshal(res, &checkpointUnmarshal); err != nil {
 				return err
 			}
 
@@ -278,7 +278,7 @@ func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
 				TimeStamp:  checkpointUnmarshal.TimeStamp,
 			}
 
-			resWithID, err := json.Marshal(checkpointWithID)
+			resWithID, err := jsoniter.Marshal(checkpointWithID)
 			if err != nil {
 				return err
 			}
@@ -386,7 +386,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 			if err == nil {
 				// check content
 				if len(ackCountBytes) == 0 {
-					if err = json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
+					if err = jsoniter.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
 						// log and ignore
 						cliLogger.Error("Error while unmarshing no-ack count", "error", err.Error())
 					}
@@ -403,7 +403,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 			if err == nil {
 				if len(checkpointBufferBytes) != 0 {
 					_checkpoint = new(hmTypes.Checkpoint)
-					if err = json.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
+					if err = jsoniter.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
 						// log and ignore
 						cliLogger.Error("Error while unmarshing checkpoint header", "error", err.Error())
 					}
@@ -418,7 +418,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 
 			validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 			if err == nil {
-				if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+				if err := jsoniter.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 					// log and ignore
 					cliLogger.Error("Error while unmarshing validator set", "error", err.Error())
 				}
@@ -438,7 +438,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 			if err == nil {
 				// check content
 				if len(lastNoACKBytes) == 0 {
-					if err = json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
+					if err = jsoniter.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
 						// log and ignore
 						cliLogger.Error("Error while unmarshing last no-ack time", "error", err.Error())
 					}
@@ -457,7 +457,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 				LastNoACK:        time.Unix(int64(lastNoACKTime), 0),
 			}
 
-			result, err := json.Marshal(state)
+			result, err := jsoniter.Marshal(state)
 			if err != nil {
 				return err
 			}

@@ -74,5 +74,6 @@ func GetBalanceByAccountNumber(cdc *codec.Codec) *cobra.Command {
 
 		},
 	}
+	
 	return cmd
 }

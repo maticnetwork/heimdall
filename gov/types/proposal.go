@@ -1,12 +1,12 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 )
 
 // Proposal defines a struct used by the governance module to allow for voting
@@ -140,13 +140,13 @@ func (status *ProposalStatus) Unmarshal(data []byte) error {
 
 // Marshals to JSON using string
 func (status ProposalStatus) MarshalJSON() ([]byte, error) {
-	return json.Marshal(status.String())
+	return jsoniter.ConfigFastest.Marshal(status.String())
 }
 
 // Unmarshals from JSON assuming Bech32 encoding
 func (status *ProposalStatus) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
+	err := jsoniter.ConfigFastest.Unmarshal(data, &s)
 	if err != nil {
 		return err
 	}

@@ -3,7 +3,6 @@ package processor
 import (
 	"bytes"
 	"crypto/rand"
-	"encoding/json"
 	"io/ioutil"
 	"math/big"
 	"net/http"
@@ -13,8 +12,11 @@ import (
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/golang/mock/gomock"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/spf13/viper"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	authTypesMocks "github.com/maticnetwork/heimdall/auth/types/mocks"
@@ -24,7 +26,6 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	helperMocks "github.com/maticnetwork/heimdall/helper/mocks"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -615,7 +616,7 @@ func prepareDummyLogBytes() (*bytes.Buffer, error) {
 	}
 
 	reqBodyBytes := new(bytes.Buffer)
-	if err := json.NewEncoder(reqBodyBytes).Encode(log); err != nil {
+	if err := jsoniter.ConfigFastest.NewEncoder(reqBodyBytes).Encode(log); err != nil {
 		return nil, err
 	}
 

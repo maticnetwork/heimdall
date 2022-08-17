@@ -23,7 +23,7 @@ func TestUnpackSigAndVotes(t *testing.T) {
 	decodedPayload, err := hex.DecodeString(payload)
 	require.Empty(t, err, "Error while decoding payload")
 
-	abi, err := getABI(string(rootchain.RootchainABI))
+	abi, err := getABI(rootchain.RootchainABI)
 	require.Empty(t, err, "Error while getting RootChainABI")
 
 	// Unpacking the Payload

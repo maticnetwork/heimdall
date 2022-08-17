@@ -3,7 +3,6 @@ package processor
 import (
 	"context"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 	"math"
 	"math/big"
@@ -11,10 +10,12 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
@@ -184,13 +185,13 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	cp.Logger.Info("Received sendCheckpointToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
 	var event sdk.StringEvent
-	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
 		cp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
 
 	// var tx = sdk.TxResponse{}
-	// if err := json.Unmarshal([]byte(txBytes), &tx); err != nil {
+	// if err := jsoniter.Unmarshal([]byte(txBytes), &tx); err != nil {
 	// 	cp.Logger.Error("Error unmarshalling txResponse", "error", err)
 	// 	return err
 	// }
@@ -256,7 +257,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 	}
 
 	var log = types.Log{}
-	if err = json.Unmarshal([]byte(checkpointAckStr), &log); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal([]byte(checkpointAckStr), &log); err != nil {
 		cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -564,7 +565,7 @@ func (cp *CheckpointProcessor) fetchDividendAccountRoot() (accountroothash hmTyp
 
 	cp.Logger.Info("Divident account root fetched")
 
-	if err = json.Unmarshal(response.Result, &accountroothash); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &accountroothash); err != nil {
 		cp.Logger.Error("Error unmarshalling accountroothash received from Heimdall Server", "error", err)
 		return accountroothash, err
 	}
@@ -607,13 +608,13 @@ func (cp *CheckpointProcessor) getLastNoAckTime() uint64 {
 		return 0
 	}
 
-	var noackObject Result
-	if err := json.Unmarshal(response.Result, &noackObject); err != nil {
+	var noAckObject Result
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &noAckObject); err != nil {
 		cp.Logger.Error("Error unmarshalling no-ack data ", "error", err)
 		return 0
 	}
 
-	return noackObject.Result
+	return noAckObject.Result
 }
 
 // checkIfNoAckIsRequired - check if NoAck has to be sent or not

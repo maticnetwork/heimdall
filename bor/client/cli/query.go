@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,10 +9,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -148,7 +149,7 @@ $ %s query bor params
 			}
 
 			var params types.Params
-			err = json.Unmarshal(bz, &params)
+			err = jsoniter.ConfigFastest.Unmarshal(bz, &params)
 			if err != nil {
 				return err
 			}
@@ -304,7 +305,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var spanDuration uint64
-			if err := json.Unmarshal(res, &spanDuration); err != nil {
+			if err := jsoniter.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 
@@ -318,7 +319,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var seed common.Hash
-			if err := json.Unmarshal(res, &seed); err != nil {
+			if err := jsoniter.Unmarshal(res, &seed); err != nil {
 				return err
 			}
 
@@ -331,7 +332,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				seed,
 			)
 
-			result, err := json.Marshal(&msg)
+			result, err := jsoniter.Marshal(&msg)
 			if err != nil {
 				return err
 			}
