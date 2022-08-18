@@ -3,7 +3,7 @@ package processor
 import (
 	"bytes"
 	"crypto/rand"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"net/http"
 	"testing"
@@ -631,7 +631,7 @@ func prepareResponse(body string) *http.Response {
 		ProtoMajor:       0,
 		ProtoMinor:       0,
 		Header:           nil,
-		Body:             ioutil.NopCloser(bytes.NewReader([]byte(body))),
+		Body:             io.NopCloser(bytes.NewReader([]byte(body))),
 		ContentLength:    0,
 		TransferEncoding: nil,
 		Close:            false,

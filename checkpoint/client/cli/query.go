@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 
@@ -15,8 +16,13 @@ import (
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
+	"github.com/maticnetwork/heimdall/helper"
+	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/version"
 )
+
+var cliLogger = helper.Logger.With("module", "checkpoint/client/cli")
 
 // GetQueryCmd returns the cli query commands for this module
 func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
@@ -37,6 +43,9 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetLastNoACK(cdc),
 			GetCheckpointByNumber(cdc),
 			GetCheckpointCount(cdc),
+			GetCheckpointLatest(cdc),
+			GetCheckpointList(cdc),
+			GetOverview(cdc),
 		)...,
 	)
 
@@ -190,6 +199,272 @@ func GetCheckpointCount(cdc *codec.Codec) *cobra.Command {
 
 			fmt.Printf("Total number of checkpoint so far : %d\n", ackCount)
 			return nil
+		},
+	}
+
+	return cmd
+}
+
+// Temporary Checkpoint struct to store the Checkpoint ID
+type CheckpointWithID struct {
+	ID         uint64                  `json:"id"`
+	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
+	StartBlock uint64                  `json:"start_block"`
+	EndBlock   uint64                  `json:"end_block"`
+	RootHash   hmTypes.HeimdallHash    `json:"root_hash"`
+	BorChainID string                  `json:"bor_chain_id"`
+	TimeStamp  uint64                  `json:"timestamp"`
+}
+
+// GetCheckpointLatest get the latest checkpoint
+func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "checkpoint-latest",
+		Short: "show the latest checkpoint",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			//
+			// Get ack count
+			//
+			ackcountBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
+			if err != nil {
+				return err
+			}
+
+			if len(ackcountBytes) == 0 {
+				fmt.Printf("Not found")
+				return nil
+			}
+
+			var ackCount uint64
+			if err := jsoniter.Unmarshal(ackcountBytes, &ackCount); err != nil {
+				return nil
+			}
+
+			//
+			// Last checkpoint key
+			//
+
+			lastCheckpointKey := ackCount
+
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryCheckpointParams(lastCheckpointKey))
+			if err != nil {
+				return err
+			}
+
+			//
+			// Get checkpoint
+			//
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
+			if err != nil {
+				return nil
+			}
+
+			var checkpointUnmarshal hmTypes.Checkpoint
+			if err = jsoniter.Unmarshal(res, &checkpointUnmarshal); err != nil {
+				return err
+			}
+
+			checkpointWithID := &CheckpointWithID{
+				ID:         ackCount,
+				Proposer:   checkpointUnmarshal.Proposer,
+				StartBlock: checkpointUnmarshal.StartBlock,
+				EndBlock:   checkpointUnmarshal.EndBlock,
+				RootHash:   checkpointUnmarshal.RootHash,
+				BorChainID: checkpointUnmarshal.BorChainID,
+				TimeStamp:  checkpointUnmarshal.TimeStamp,
+			}
+
+			resWithID, err := jsoniter.Marshal(checkpointWithID)
+			if err != nil {
+				return err
+			}
+
+			//error if checkpoint not found
+			if len(resWithID) == 0 {
+				fmt.Printf("No checkpoint found")
+				return nil
+			}
+
+			fmt.Println(string(resWithID))
+			return nil
+
+		},
+	}
+
+	return cmd
+}
+
+// GetLastNoACK get last no ack time
+func GetCheckpointList(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "checkpoint-list",
+		Short: "get checkpoint list",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			pageStr := viper.GetString(FlagPage)
+			if pageStr == "" {
+				return fmt.Errorf("page can't be empty")
+			}
+
+			limitStr := viper.GetString(FlagLimit)
+			if limitStr == "" {
+				return fmt.Errorf("limit can't be empty")
+			}
+
+			page, err := strconv.ParseUint(pageStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			limit, err := strconv.ParseUint(limitStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(hmTypes.NewQueryPaginationParams(page, limit))
+			if err != nil {
+				return err
+			}
+
+			// query checkpoint
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointList), queryParams)
+			if err != nil {
+				return err
+			}
+
+			// check content
+			if len(res) == 0 {
+				fmt.Printf("checkpoint list not found")
+				return nil
+			}
+
+			fmt.Println(string(res))
+			return nil
+
+		},
+	}
+
+	cmd.Flags().Uint64(FlagPage, 0, "--page=<page number here>")
+	cmd.Flags().Uint64(FlagLimit, 0, "--id=<limit here>")
+
+	if err := cmd.MarkFlagRequired(FlagPage); err != nil {
+		cliLogger.Error("GetCheckpointList | MarkFlagRequired | FlagPage", "Error", err)
+	}
+
+	if err := cmd.MarkFlagRequired(FlagLimit); err != nil {
+		cliLogger.Error("GetCheckpointList | MarkFlagRequired | FlagLimit", "Error", err)
+	}
+
+	return cmd
+}
+
+type stateDump struct {
+	ACKCount         uint64               `json:"ack_count"`
+	CheckpointBuffer *hmTypes.Checkpoint  `json:"checkpoint_buffer"`
+	ValidatorCount   int                  `json:"validator_count"`
+	ValidatorSet     hmTypes.ValidatorSet `json:"validator_set"`
+	LastNoACK        time.Time            `json:"last_noack_time"`
+}
+
+// GetOverview gives the complete state dump of heimdall
+func GetOverview(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "overview",
+		Short: "get overview",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			var ackCountInt uint64
+
+			ackCountBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryAckCount), nil)
+			if err == nil {
+				// check content
+				if len(ackCountBytes) == 0 {
+					if err = jsoniter.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
+						// log and ignore
+						cliLogger.Error("Error while unmarshing no-ack count", "error", err.Error())
+					}
+				}
+			}
+
+			//
+			// Checkpoint buffer
+			//
+
+			var _checkpoint *hmTypes.Checkpoint
+
+			checkpointBufferBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpointBuffer), nil)
+			if err == nil {
+				if len(checkpointBufferBytes) != 0 {
+					_checkpoint = new(hmTypes.Checkpoint)
+					if err = jsoniter.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
+						// log and ignore
+						cliLogger.Error("Error while unmarshing checkpoint header", "error", err.Error())
+					}
+				}
+			}
+
+			//
+			// Current validator set
+			//
+
+			var validatorSet hmTypes.ValidatorSet
+
+			validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
+			if err == nil {
+				if err := jsoniter.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+					// log and ignore
+					cliLogger.Error("Error while unmarshing validator set", "error", err.Error())
+				}
+			}
+
+			// validator count
+			validatorCount := len(validatorSet.Validators)
+
+			//
+			// Last no-ack
+			//
+
+			// last no ack
+			var lastNoACKTime uint64
+
+			lastNoACKBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLastNoAck), nil)
+			if err == nil {
+				// check content
+				if len(lastNoACKBytes) == 0 {
+					if err = jsoniter.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
+						// log and ignore
+						cliLogger.Error("Error while unmarshing last no-ack time", "error", err.Error())
+					}
+				}
+			}
+
+			//
+			// State dump
+			//
+
+			state := stateDump{
+				ACKCount:         ackCountInt,
+				CheckpointBuffer: _checkpoint,
+				ValidatorCount:   validatorCount,
+				ValidatorSet:     validatorSet,
+				LastNoACK:        time.Unix(int64(lastNoACKTime), 0),
+			}
+
+			result, err := jsoniter.Marshal(state)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(result))
+			return nil
+
 		},
 	}
 
