@@ -44,19 +44,6 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contr
 		return common.ErrMilestoneInvalid(k.Codespace()).Result()
 	}
 
-	// if math.Mod(float64(msg.EndBlock+1), float64(sprintLength)) != 0 {
-	// 	logger.Error("Milestone's end number does not fulfil the sprint's end condition",
-	// 		"EndBlock", msg.EndBlock,
-	// 		"SprintLength", params.SprintLength,
-	// 	)
-
-	// 	return common.ErrMilestoneInvalid(k.Codespace()).Result()
-	// }
-
-	//
-	// Validate last milestone
-	//
-
 	// fetch last milestone from store
 	if lastMilestone, err := k.GetMilestone(ctx); err == nil {
 		// make sure new milestone is in continuity
