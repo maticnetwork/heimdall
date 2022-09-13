@@ -74,6 +74,7 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 		return err
 	}
 
+	mp.Logger.Info("isProposer Value", "isProposer", isProposer)
 	if isProposer {
 
 		//fetch the block head number from bor chain
