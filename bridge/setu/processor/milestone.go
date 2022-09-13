@@ -54,6 +54,11 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 
+	if util.GetBlockHeight(mp.cliCtx) < helper.MilestoneAlgoHeight {
+		mp.Logger.Error("Less than fork height")
+		return nil
+	}
+
 	// fetch milestone context
 	milestoneContext, err := mp.getMilestoneContext()
 	if err != nil {
@@ -99,6 +104,15 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 			mp.Logger.Debug("Current child block should be greater than or equal to latest milestone's endblock + sprintLength", "currentChildBlock", currentBlockNumber, "latestMilestoneEndBlock", latestMilestone.EndBlock)
 
 			start = latestMilestone.EndBlock + 1
+
+		} else {
+
+			start = helper.BorMilestoneForkHeight
+			// current Block should be greater than or equal to BorMilestoneHeight + Sprint length
+			if helper.BorMilestoneForkHeight+milestoneParams.SprintLength > currentBlockNumber {
+				mp.Logger.Debug("Current child block is less than BorMilestoneForkHeight + sprint length", "currentChildBlock", currentBlockNumber)
+				return nil
+			}
 
 		}
 
