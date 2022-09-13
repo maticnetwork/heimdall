@@ -55,8 +55,8 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 
 	//if util.GetBlockHeight(mp.cliCtx) < helper.MilestoneAlgoHeight {
-	if util.GetBlockHeight(mp.cliCtx) < 300 {
-		mp.Logger.Error("Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "fork height", 300)
+	if util.GetBlockHeight(mp.cliCtx) < 100 {
+		mp.Logger.Error("Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "fork height", 100)
 		return nil
 	}
 
