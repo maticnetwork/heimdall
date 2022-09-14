@@ -108,8 +108,7 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 
 		} else {
 
-			//start = helper.BorMilestoneForkHeight
-			start = 500
+			start = helper.BorMilestoneBlockHeight
 			// current Block should be greater than or equal to BorMilestoneHeight + Sprint length
 			if helper.BorMilestoneBlockHeight+milestoneParams.SprintLength > currentBlockNumber {
 				mp.Logger.Debug("Current child block is less than BorMilestoneForkHeight + sprint length", "currentChildBlock", currentBlockNumber)
