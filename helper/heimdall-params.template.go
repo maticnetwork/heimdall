@@ -22,6 +22,8 @@ const (
 	NetworkName             = "{{ .NetworkName }}"
 	NewSelectionAlgoHeight  = {{ .BlockHeight }}
 	SpanOverrideBlockHeight = {{ .SpanOverrideBlockHeight }}
+	MilestoneAlgoHeight     = {{ .MilestoneAlgoHeight }}
+	BorMilestoneBlockHeight = {{ .BorMilestoneBlockHeight }}
 )
 `))
 
@@ -29,6 +31,8 @@ var tomlConfig struct {
 	NetworkName             string `toml:"network_name"`
 	NewSelectionAlgoHeight  int    `toml:"new_selection_algo_height"`
 	SpanOverrideBlockHeight int    `toml:"span_override_height"`
+	MilestoneAlgoHeight     int    `toml:"milestone_algo_height"`
+	BorMilestoneBlockHeight int    `toml:"bor_milestone_block_height"`
 }
 
 var networks = []string{
@@ -59,10 +63,14 @@ func main() {
 		NetworkName             string
 		BlockHeight             int
 		SpanOverrideBlockHeight int
+		MilestoneAlgoHeight     int
+		BorMilestoneBlockHeight int
 	}{
 		NetworkName:             tomlConfig.NetworkName,
 		BlockHeight:             tomlConfig.NewSelectionAlgoHeight,
 		SpanOverrideBlockHeight: tomlConfig.SpanOverrideBlockHeight,
+		MilestoneAlgoHeight:     tomlConfig.MilestoneAlgoHeight,
+		BorMilestoneBlockHeight: tomlConfig.BorMilestoneBlockHeight,
 	})
 }
 

@@ -1,3 +1,5 @@
 network_name = "mainnet"
 new_selection_algo_height = 375300
 span_override_height = 8664000
+milestone_algo_height=0
+bor_milestone_block_height=0

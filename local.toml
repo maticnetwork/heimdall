@@ -1,0 +1,5 @@
+network_name = "local"
+new_selection_algo_height = 0
+span_override_height = 0
+milestone_algo_height=50
+bor_milestone_block_height=128

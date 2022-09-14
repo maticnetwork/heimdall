@@ -115,8 +115,8 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 
 			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
 		}
-	} else if err != nil && msg.StartBlock != 0 {
-		logger.Error("First milestone to start from block 0", "Error", err)
+	} else if err != nil && msg.StartBlock != helper.BorMilestoneBlockHeight {
+		logger.Error("First milestone to start from", "block", helper.BorMilestoneBlockHeight, "Error", err)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
