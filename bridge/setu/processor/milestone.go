@@ -54,8 +54,9 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 
+	//Milestone proposing mechanism will work only after specific block height
 	if util.GetBlockHeight(mp.cliCtx) < helper.MilestoneAlgoHeight {
-		mp.Logger.Error("Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "fork height", 100)
+		mp.Logger.Info("Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "fork height", 100)
 		return nil
 	}
 
@@ -73,7 +74,6 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 		return err
 	}
 
-	mp.Logger.Info("isProposer Value", "isProposer", isProposer)
 	if isProposer {
 
 		//fetch the block head number from bor chain
