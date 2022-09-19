@@ -75,16 +75,9 @@ type BaseListener struct {
 	storageClient *leveldb.DB
 }
 
-type blockType string
-
-const (
-	finalized blockType = "finalized"
-	latest    blockType = "latest"
-)
-
 type blockHeader struct {
-	header    *types.Header // block header
-	blockType blockType     // block type
+	header      *types.Header // block header
+	isFinalized bool          // if the block is a finalized block or not
 }
 
 // NewBaseListener creates a new BaseListener.
@@ -188,10 +181,10 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 			if err == nil && header != nil {
 				if number != nil {
 					// finalized was requested
-					bHeader = &blockHeader{header: header, blockType: finalized}
+					bHeader = &blockHeader{header: header, isFinalized: true}
 				} else {
 					// latest was requested
-					bHeader = &blockHeader{header: header, blockType: latest}
+					bHeader = &blockHeader{header: header, isFinalized: false}
 				}
 			}
 
@@ -199,7 +192,7 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 			if err != nil && number != nil {
 				header, err = bl.chainClient.HeaderByNumber(ctx, nil)
 				if err == nil && header != nil {
-					bHeader = &blockHeader{header: header, blockType: latest}
+					bHeader = &blockHeader{header: header, isFinalized: false}
 				}
 			}
 

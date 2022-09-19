@@ -102,7 +102,7 @@ func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
 	//
 	// If incoming header is a `latest` header, rely on `requiredConfirmations` to get
 	// finalized block range.
-	if newHeader.blockType == latest {
+	if !newHeader.isFinalized {
 		// This check is only useful when the L1 blocks received are < requiredConfirmations
 		// just for the below headerNumber -= requiredConfirmations math operation
 		confirmationBlocks := big.NewInt(0).SetUint64(requiredConfirmations)
