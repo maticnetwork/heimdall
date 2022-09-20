@@ -2,14 +2,13 @@ package listener
 
 import (
 	"context"
+	"math/big"
 	"strconv"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
-
-	"github.com/ethereum/go-ethereum/core/types"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -45,18 +44,18 @@ func (hl *HeimdallListener) Start() error {
 	}
 
 	hl.Logger.Info("Start polling for events", "pollInterval", pollInterval)
-	hl.StartPolling(headerCtx, pollInterval)
+	hl.StartPolling(headerCtx, pollInterval, nil)
 
 	return nil
 }
 
 // ProcessHeader -
-func (hl *HeimdallListener) ProcessHeader(*types.Header) {
+func (hl *HeimdallListener) ProcessHeader(_ *blockHeader) {
 
 }
 
 // StartPolling - starts polling for heimdall events
-func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
+func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.Duration, _ *big.Int) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
 
