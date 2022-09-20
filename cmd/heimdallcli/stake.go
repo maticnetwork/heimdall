@@ -1,15 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"math/big"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
@@ -148,7 +149,7 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Par
 	}
 
 	var params chainmanagerTypes.Params
-	if err := json.Unmarshal(response.Result, &params); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &params); err != nil {
 		return nil, err
 	}
 

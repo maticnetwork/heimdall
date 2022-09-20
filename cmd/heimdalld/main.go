@@ -20,18 +20,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
-	"golang.org/x/sync/errgroup"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCommon "github.com/maticnetwork/bor/common"
-	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
-	restServer "github.com/maticnetwork/heimdall/server"
-	"github.com/maticnetwork/heimdall/version"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tcmd "github.com/tendermint/tendermint/cmd/tendermint/commands"
-
 	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
@@ -45,12 +39,18 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
+	"golang.org/x/sync/errgroup"
+
+	ethCommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	bridgeCmd "github.com/maticnetwork/heimdall/bridge/cmd"
 	"github.com/maticnetwork/heimdall/helper"
+	restServer "github.com/maticnetwork/heimdall/server"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
+	"github.com/maticnetwork/heimdall/version"
 )
 
 var logger = helper.Logger.With("module", "cmd/heimdalld")
@@ -427,7 +427,7 @@ func showAccountCmd() *cobra.Command {
 				PubKey:  "0x" + hex.EncodeToString(pubObject[:]),
 			}
 
-			b, err := json.MarshalIndent(account, "", "    ")
+			b, err := jsoniter.ConfigFastest.MarshalIndent(account, "", "    ")
 			if err != nil {
 				panic(err)
 			}
@@ -453,7 +453,7 @@ func showPrivateKeyCmd() *cobra.Command {
 				PrivKey: "0x" + hex.EncodeToString(privObject[:]),
 			}
 
-			b, err := json.MarshalIndent(account, "", "    ")
+			b, err := jsoniter.ConfigFastest.MarshalIndent(account, "", "    ")
 			if err != nil {
 				panic(err)
 			}
@@ -483,7 +483,7 @@ func VerifyGenesis(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 
 			// get genesis state
 			var genesisState app.GenesisState
-			err = json.Unmarshal(genDoc.AppState, &genesisState)
+			err = jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(genDoc.AppState, &genesisState)
 			if err != nil {
 				return err
 			}

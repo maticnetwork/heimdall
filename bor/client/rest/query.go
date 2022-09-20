@@ -12,7 +12,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -21,8 +20,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/consensus/bor"
+	"github.com/ethereum/go-ethereum/consensus/bor"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -396,7 +397,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var spanDuration uint64
-		if err := json.Unmarshal(spanDurationBytes, &spanDuration); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(spanDurationBytes, &spanDuration); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -418,7 +419,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -439,7 +440,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		if err = json.Unmarshal(validatorSetBytes, &_validatorSet); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(validatorSetBytes, &_validatorSet); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall JSON").Error())
 			return
 		}
@@ -460,7 +461,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var selectedProducers []hmTypes.Validator
-		if err := json.Unmarshal(nextProducerBytes, &selectedProducers); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(nextProducerBytes, &selectedProducers); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -477,7 +478,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			chainID,
 		)
 
-		result, err := json.Marshal(&msg)
+		result, err := jsoniter.ConfigFastest.Marshal(&msg)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -522,13 +523,13 @@ func loadSpanOverrides() {
 	}
 
 	var spans []*bor.ResponseWithHeight
-	if err := json.Unmarshal(j, &spans); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(j, &spans); err != nil {
 		return
 	}
 
 	for _, span := range spans {
 		var heimdallSpan bor.HeimdallSpan
-		if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(span.Result, &heimdallSpan); err != nil {
 			continue
 		}
 

@@ -5,10 +5,11 @@ import (
 	"errors"
 
 	"github.com/cbergoon/merkletree"
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/tendermint/crypto/sha3"
+
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/tendermint/crypto/sha3"
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not

@@ -1,13 +1,15 @@
 package bor
 
 import (
-	"encoding/json"
 	"reflect"
 	"testing"
 
-	"github.com/maticnetwork/bor/common"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/stretchr/testify/require"
+
+	"github.com/ethereum/go-ethereum/common"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 const testValidators = `[
@@ -83,7 +85,7 @@ func TestSelectNextProducers(t *testing.T) {
 	}
 
 	var validators []hmTypes.Validator
-	err := json.Unmarshal([]byte(testValidators), &validators)
+	err := jsoniter.ConfigFastest.Unmarshal([]byte(testValidators), &validators)
 	require.NoError(t, err)
 	require.Equal(t, 5, len(validators), "Total validators should be 5")
 
