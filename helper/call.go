@@ -480,6 +480,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		Logger.Info("Latest finalized block on main chain obtained", "Block", latestFinalizedBlock.Number.Uint64(), "receipt block", receiptBlockNumber)
 
 		if receiptBlockNumber > latestFinalizedBlock.Number.Uint64() {
+			Logger.Info("[Testing] Not enough confirmations")
 			return nil, errors.New("not enough confirmations")
 		}
 	} else {
