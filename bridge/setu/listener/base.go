@@ -154,6 +154,7 @@ func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	for {
 		select {
 		case newHeader := <-bl.HeaderChannel:
+			bl.Logger.Info("New header received", "number", newHeader.header.Number.Uint64(), "isFinalized", newHeader.isFinalized)
 			bl.impl.ProcessHeader(newHeader)
 		case <-ctx.Done():
 			bl.Logger.Info("Header process stopped")
@@ -182,6 +183,7 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 				if number != nil {
 					// finalized was requested
 					bHeader = &blockHeader{header: header, isFinalized: true}
+					bl.Logger.Info("[Polling] Fetched finalized L1 header", "number", header.Number.Uint64())
 				} else {
 					// latest was requested
 					bHeader = &blockHeader{header: header, isFinalized: false}
@@ -190,9 +192,11 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 
 			// if error occured and finalized was requested, fall back to latest block
 			if err != nil && number != nil {
+				bl.Logger.Info("[Polling] Failed in fetching finalized header, fallback to latest header", "number", number.Uint64())
 				header, err = bl.chainClient.HeaderByNumber(ctx, nil)
 				if err == nil && header != nil {
 					bHeader = &blockHeader{header: header, isFinalized: false}
+					bl.Logger.Info("[Polling] Fetched latest L1 header", "number", header.Number.Uint64())
 				}
 			}
 

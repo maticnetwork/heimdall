@@ -85,7 +85,7 @@ func (rl *RootChainListener) Start() error {
 
 // ProcessHeader - process headerblock from rootchain
 func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
-	rl.Logger.Debug("New block detected", "blockNumber", newHeader.header.Number)
+	rl.Logger.Info("New rootchain block detected", "blockNumber", newHeader.header.Number, "isFinalized", newHeader.isFinalized)
 
 	// fetch context
 	rootchainContext, err := rl.getRootChainContext()
@@ -127,7 +127,7 @@ func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
 			return
 		}
 
-		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
+		rl.Logger.Info("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
 			// TODO(manav2401): can this condition be simplified to result > headerNumber?
@@ -150,6 +150,8 @@ func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
 	if err = rl.storageClient.Put([]byte(lastRootBlockKey), []byte(to.String()), nil); err != nil {
 		rl.Logger.Error("rl.storageClient.Put", "Error", err)
 	}
+
+	rl.Logger.Info("Fetching events from L1", "from", from.Uint64(), "to", to.Uint64())
 
 	// Handle events
 	rl.queryAndBroadcastEvents(rootchainContext, from, to)

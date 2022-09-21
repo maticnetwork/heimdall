@@ -477,7 +477,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 	// If latest finalized block is available, use it to check if receipt is finalized or not.
 	// Else, fallback to the `requiredConfirmations` value
 	if latestFinalizedBlock != nil {
-		Logger.Debug("Latest finalized block on main chain obtained", "Block", latestFinalizedBlock.Number.Uint64(), "receipt block", receiptBlockNumber)
+		Logger.Info("Latest finalized block on main chain obtained", "Block", latestFinalizedBlock.Number.Uint64(), "receipt block", receiptBlockNumber)
 
 		if receiptBlockNumber > latestFinalizedBlock.Number.Uint64() {
 			return nil, errors.New("not enough confirmations")
@@ -490,7 +490,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 			return nil, err
 		}
 
-		Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64(), "receipt block", receiptBlockNumber)
+		Logger.Info("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64(), "receipt block", receiptBlockNumber)
 
 		diff := latestBlk.Number.Uint64() - receiptBlockNumber
 		if diff < requiredConfirmations {

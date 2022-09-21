@@ -45,7 +45,7 @@ func (ml *MaticChainListener) Start() error {
 
 // ProcessHeader - process headerblock from maticchain
 func (ml *MaticChainListener) ProcessHeader(newHeader *blockHeader) {
-	ml.Logger.Debug("New block detected", "blockNumber", newHeader.header.Number)
+	ml.Logger.Info("New childchain block detected", "blockNumber", newHeader.header.Number, "isFinalized", newHeader.isFinalized)
 	// Marshall header block and publish to queue
 	headerBytes, err := newHeader.header.MarshalJSON()
 	if err != nil {
