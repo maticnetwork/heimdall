@@ -10,6 +10,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/tendermint/crypto/sha3"
 )
 
 // ValidateCheckpoint - Validates if checkpoint rootHash matches or not

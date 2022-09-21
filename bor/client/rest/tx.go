@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package rest
 
 import (
@@ -19,7 +19,8 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-//It represents Propose Span msg.
+// It represents Propose Span msg.
+//
 //swagger:response borProposeSpanResponse
 type borProposeSpanResponse struct {
 	//in:body
