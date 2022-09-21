@@ -20,7 +20,7 @@ require (
 	github.com/huin/goupnp v1.0.3 // indirect
 	github.com/json-iterator/go v1.1.12
 	github.com/klauspost/compress v1.13.6 // indirect
-	github.com/maticnetwork/polyproto v0.0.2
+	github.com/maticnetwork/polyproto v0.0.3-0.20220920110744-42abea480915
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/rakyll/statik v0.1.7

@@ -18,6 +18,8 @@ const (
 	eventRecordList      = "/clerk/event-record/list"
 	fetchCheckpointCount = "/checkpoints/count"
 	fetchCheckpoint      = "/checkpoints/%s"
+	fetchMilestoneCount  = "/milestone/count"
+	fetchMilestone       = "/milestone"
 )
 
 var logger tmLog.Logger

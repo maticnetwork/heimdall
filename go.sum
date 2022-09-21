@@ -555,6 +555,12 @@ github.com/maticnetwork/cosmos-sdk v0.37.5-0.20220311095845-81690c6a53e7 h1:8NoE
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20220311095845-81690c6a53e7/go.mod h1:uW55Ru86N5o3L8SVkVL1TPE+mV/WRM2la8sC3TR/Ajc=
 github.com/maticnetwork/polyproto v0.0.2 h1:cPxuxbIDItdwGnucc3lZB58U8Zfe1mH73PWTGd15554=
 github.com/maticnetwork/polyproto v0.0.2/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
+github.com/maticnetwork/polyproto v0.0.3-0.20220920093256-81ec3cadf039 h1:FrKbxtaJ4IsdyzaS/uiL2SiZuxW1exlWf4DuAPBJkEY=
+github.com/maticnetwork/polyproto v0.0.3-0.20220920093256-81ec3cadf039/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
+github.com/maticnetwork/polyproto v0.0.3-0.20220920105025-6351b078f113 h1:eFgB5igWr6QUXRdHtBnvpqaa1HBWC9rw5qCSOEmD4xU=
+github.com/maticnetwork/polyproto v0.0.3-0.20220920105025-6351b078f113/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
+github.com/maticnetwork/polyproto v0.0.3-0.20220920110744-42abea480915 h1:71UNO7/pKnQV4TnvyvTGqfFMVdG5MsFPoVgnxZq4BsE=
+github.com/maticnetwork/polyproto v0.0.3-0.20220920110744-42abea480915/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220803122020-9c20f6000900 h1:mtI3GQCzvC5tRIGSUKo+PfS1FIUAGmMGXHUMxhPsV68=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220803122020-9c20f6000900/go.mod h1:90S74348uYSGfWwNIgvzQiRRakSH/c7VVt1TR5mzIuY=
 github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd/go.mod h1:9ELz6aaclSIGnZBoaSLZ3NAl1VTufbOrXBPvtcy6WiQ=
@@ -1275,6 +1281,7 @@ google.golang.org/grpc v1.41.0/go.mod h1:U3l9uK9J0sini8mHphKoXyaqDA/8VyGnDee1zzI
 google.golang.org/grpc v1.42.0/go.mod h1:k+4IHHFw41K8+bbowsex27ge2rCb65oeWqe4jJ590SU=
 google.golang.org/grpc v1.48.0 h1:rQOsyJ/8+ufEDJd/Gdsz7HG220Mh9HAhFHRGnIjda0w=
 google.golang.org/grpc v1.48.0/go.mod h1:vN9eftEi1UMyUsIF80+uQXhHjbXYbm0uXoFCACuMGWk=
+google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0 h1:TLkBREm4nIsEcexnCjgQd5GQWaHcqMzwQV0TX9pq8S0=
 google.golang.org/grpc/cmd/protoc-gen-go-grpc v1.2.0/go.mod h1:DNq5QpG7LJqD2AamLZ7zvKE0DEpVl2BSEVjFycAAjRY=
 google.golang.org/protobuf v0.0.0-20200109180630-ec00e32a8dfd/go.mod h1:DFci5gLYBciE7Vtevhsrf46CRTquxDuWsQurQQe4oz8=
 google.golang.org/protobuf v0.0.0-20200221191635-4d8936d0db64/go.mod h1:kwYJMbMJ01Woi6D6+Kah6886xMZcty6N08ah7+eCXa0=
