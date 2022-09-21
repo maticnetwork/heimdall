@@ -130,8 +130,7 @@ func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			// TODO(manav2401): can this condition be simplified to result > headerNumber?
-			if result >= newHeader.header.Number.Uint64() {
+			if result >= headerNumber.Uint64() {
 				return
 			}
 
