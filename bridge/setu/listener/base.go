@@ -196,6 +196,10 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 				}
 			}
 
+			if err != nil {
+				bl.Logger.Error("Error in fetching block header while polling", "err", err)
+			}
+
 			// push data to the channel
 			if bHeader != nil {
 				bl.HeaderChannel <- bHeader
