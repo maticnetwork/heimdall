@@ -6,7 +6,6 @@ import (
 
 	"github.com/cbergoon/merkletree"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/tendermint/crypto/sha3"
 
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
