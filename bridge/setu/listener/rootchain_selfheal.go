@@ -204,6 +204,11 @@ func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) 
 		return true, err
 	}
 
+	// Skip if there are no topics, temporary fix for panic
+	if len(event.Topics) == 0 {
+		return true, nil
+	}
+
 	topic := event.Topics[0].Bytes()
 	for _, abiObject := range rl.abis {
 		selectedEvent := helper.EventByID(abiObject, topic)
