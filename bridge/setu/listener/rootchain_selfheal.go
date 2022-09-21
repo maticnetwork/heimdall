@@ -206,7 +206,7 @@ func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) 
 
 	// Skip if there are no topics, temporary fix for panic
 	if len(event.Topics) == 0 {
-		rl.Logger.Info("No topics in event, skipping", "tx hash", event.TxHash)
+		rl.Logger.Info("No topics in event, skipping", "tx hash", event.TxHash, "block hash", event.BlockHash, "block number", event.BlockNumber)
 		return true, nil
 	}
 
