@@ -13,7 +13,7 @@ import (
 )
 
 func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
-	if ctx.BlockHeight() == int64(helper.SpanOverrideBlockHeight) {
+	if ctx.BlockHeight() == helper.GetSpanOverrideHeight() {
 		k.Logger(ctx).Info("overriding span BeginBlocker", "height", ctx.BlockHeight())
 
 		j, ok := rest.SPAN_OVERRIDES[helper.GenesisDoc.ChainID]
