@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package rest
 
 import (
@@ -15,7 +15,8 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-//It represents the milestone parameters
+// It represents the milestone parameters
+//
 //swagger:response milestoneParamsResponse
 type milestoneParamsResponse struct {
 	//in:body
@@ -31,7 +32,8 @@ type params struct {
 	SprintLength int `json:"sprint_length"`
 }
 
-//It represents the milestone
+// It represents the milestone
+//
 //swagger:response milestoneResponse
 type milestoneResponse struct {
 	//in:body
@@ -53,14 +55,17 @@ type milestone struct {
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/params", paramsHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone", milestoneHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/count", milestoneCountHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone", milestoneLatestHandlerFn(cliCtx)).Methods("GET")
+	//r.HandleFunc("/milestone/count", milestoneCountHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
 }
 
 // swagger:route GET /milestone/params milestone milistoneParams
 // It returns the milestone parameters
 // responses:
-//   200: milestoneParamsResponse
+//
+//	200: milestoneParamsResponse
+//
 // HTTP request handler to query the auth params values
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -85,8 +90,9 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /milestone milestone milestone
 // It returns the milestone
 // responses:
-//   200: milestoneResponse
-func milestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+//
+//	200: milestoneResponse
+func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -94,7 +100,7 @@ func milestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		// fetch checkpoint
-		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestone), nil)
+		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -108,7 +114,8 @@ func milestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /checkpoints/count checkpoint checkpointCount
 // It returns the checkpoint counts
 // responses:
-//   200: checkpointCountResponse
+//
+//	200: checkpointCountResponse
 func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -116,7 +123,7 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		RestLogger.Debug("Fetching number of milestone from state")
+		RestLogger.Error("Fetching number of milestone from state")
 
 		countBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCount), nil)
 		if err != nil {
@@ -129,11 +136,14 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		RestLogger.Error("Fetching number of milestone from state")
 		var count uint64
 		if err := json.Unmarshal(countBytes, &count); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			//hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
+		RestLogger.Error("Fetching number of milestone from state")
 
 		result, err := json.Marshal(map[string]interface{}{"count": count})
 		if err != nil {
@@ -145,6 +155,40 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, result)
+	}
+}
+
+func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get milestone number
+		number, ok := rest.ParseUint64OrReturnBadRequest(w, vars["number"])
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryMilestoneParams(number))
+		if err != nil {
+			return
+		}
+
+		// query checkpoint
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByNumber), queryParams)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 

@@ -45,7 +45,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contr
 	}
 
 	// fetch last milestone from store
-	if lastMilestone, err := k.GetMilestone(ctx); err == nil {
+	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil {
 		// make sure new milestone is in continuity
 		if lastMilestone.EndBlock+1 != msg.StartBlock {
 			logger.Error("Milestone not in continuity ",

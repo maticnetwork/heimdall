@@ -2,12 +2,14 @@ package milestone
 
 import (
 	"errors"
+	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/maticnetwork/heimdall/chainmanager"
+	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/milestone/types"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
@@ -17,6 +19,7 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 	MilestoneKey = []byte{0x20} // Key to store milestone
+	CountKey     = []byte{0x30} //Key to store the count
 
 )
 
@@ -75,21 +78,30 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", types.ModuleName)
 }
 
-// SetMilestone store the milestone in the store
-func (k *Keeper) SetMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
-	err := k.AddMilestone(ctx, milestone)
-	if err != nil {
+// AddMilestone adds milestone into final blocks
+func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
+
+	milestoneNumber := k.GetCount(ctx) + 1 //GetCount gives the number of previous milestone
+
+	key := GetMilestoneKey(milestoneNumber)
+	if err := k.addMilestone(ctx, key, milestone); err != nil {
 		return err
 	}
+
+	pruningNumber := milestoneNumber - 100
+
+	k.PruneMilestone(ctx, pruningNumber) //Prune the old milestone to reduce the memory consumption
+	k.SetCount(ctx, milestoneNumber)
+	k.Logger(ctx).Info("Adding good milestone to state", "milestone", milestone, "milestoneNumber", milestoneNumber)
 
 	return nil
 }
 
 // addMilestone adds milestone to store
-func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
+func (k *Keeper) addMilestone(ctx sdk.Context, key []byte, milestone hmTypes.Milestone) error {
 	store := ctx.KVStore(k.storeKey)
 
-	// create milestone block and marshall
+	// create Checkpoint block and marshall
 	out, err := k.cdc.MarshalBinaryBare(milestone)
 	if err != nil {
 		k.Logger(ctx).Error("Error marshalling milestone", "error", err)
@@ -97,31 +109,62 @@ func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) erro
 	}
 
 	// store in key provided
-	store.Set(MilestoneKey, out)
+	store.Set(key, out)
 
 	return nil
+}
+
+// GetMilestoneKey appends prefix to milestoneNumber
+func GetMilestoneKey(milestoneNumber uint64) []byte {
+	milestoneNumberBytes := []byte(strconv.FormatUint(milestoneNumber, 10))
+	return append(MilestoneKey, milestoneNumberBytes...)
+}
+
+// GetMilestoneByNumber to get milestone by milestone number
+func (k *Keeper) GetMilestoneByNumber(ctx sdk.Context, number uint64) (*hmTypes.Milestone, error) {
+	store := ctx.KVStore(k.storeKey)
+	milestoneKey := GetMilestoneKey(number)
+
+	var _milestone hmTypes.Milestone
+
+	if store.Has(milestoneKey) {
+		if err := k.cdc.UnmarshalBinaryBare(store.Get(milestoneKey), &_milestone); err != nil {
+			return nil, err
+		}
+
+		return &_milestone, nil
+	}
+
+	return nil, errors.New("Invalid milestone Index")
+}
+
+// GetLastMilestone gets last milestone, milestone number = GetCount()
+func (k *Keeper) GetLastMilestone(ctx sdk.Context) (*hmTypes.Milestone, error) {
+	store := ctx.KVStore(k.storeKey)
+	Count := k.GetCount(ctx)
+
+	lastMilestoneKey := GetMilestoneKey(Count)
+
+	// fetch milestone and unmarshall
+	var _milestone hmTypes.Milestone
+
+	if store.Has(lastMilestoneKey) {
+		err := k.cdc.UnmarshalBinaryBare(store.Get(lastMilestoneKey), &_milestone)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to fetch last milestone from store", "number", Count)
+			return nil, err
+		} else {
+			return &_milestone, nil
+		}
+	}
+
+	return nil, cmn.ErrNoMilestoneFound(k.Codespace())
 }
 
 // HasStoreValue check if value exists in store or not
 func (k *Keeper) HasStoreValue(ctx sdk.Context, key []byte) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(key)
-}
-
-// GetMilestone gives the milestone
-func (k *Keeper) GetMilestone(ctx sdk.Context) (*hmTypes.Milestone, error) {
-	store := ctx.KVStore(k.storeKey)
-
-	// milestone block header
-	var milestone hmTypes.Milestone
-
-	if store.Has(MilestoneKey) {
-		// Get milestone and unmarshall
-		err := k.cdc.UnmarshalBinaryBare(store.Get(MilestoneKey), &milestone)
-		return &milestone, err
-	}
-
-	return nil, errors.New("No milestone found")
 }
 
 // Params
@@ -137,16 +180,43 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	return
 }
 
-// GetParams gets the auth module's parameters.
-func (k Keeper) GetCount(ctx sdk.Context) (count uint64) {
-	params := types.Params{}
-	k.paramSpace.GetParamSet(ctx, &params)
+// SetCount set the count number
+func (k *Keeper) SetCount(ctx sdk.Context, number uint64) {
+	store := ctx.KVStore(k.storeKey)
+	// convert timestamp to bytes
+	value := []byte(strconv.FormatUint(number, 10))
+	// set no-ack
+	store.Set(CountKey, value)
+}
 
-	milestone, err := k.GetMilestone(ctx)
-	if err != nil || milestone == nil {
-		return 0
+// GetCount returns count
+func (k *Keeper) GetCount(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	// check if count is there
+	if store.Has(CountKey) {
+		// get current count
+		result, err := strconv.ParseUint(string(store.Get(CountKey)), 10, 64)
+		if err == nil {
+			return result
+		}
 	}
 
-	count = (milestone.EndBlock + 1) / params.SprintLength
-	return
+	return uint64(0)
+}
+
+// FlushCheckpointBuffer flushes Checkpoint Buffer
+func (k *Keeper) PruneMilestone(ctx sdk.Context, number uint64) {
+
+	store := ctx.KVStore(k.storeKey)
+	if number <= 0 {
+		return
+	}
+
+	milestoneKey := GetMilestoneKey(number)
+
+	if !store.Has(milestoneKey) {
+		return
+	}
+
+	store.Delete(milestoneKey)
 }

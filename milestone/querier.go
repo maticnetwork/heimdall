@@ -2,6 +2,7 @@ package milestone
 
 import (
 	"encoding/json"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/common"
@@ -18,8 +19,11 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, contractCaller help
 		case types.QueryParams:
 			return handleQueryParams(ctx, req, keeper)
 
-		case types.QueryMilestone:
-			return handleQueryMilestone(ctx, req, keeper)
+		case types.QueryLatestMilestone:
+			return handleQueryLatestMilestone(ctx, req, keeper)
+
+		case types.QueryMilestoneByNumber:
+			return handleQueryMilestoneByNumber(ctx, req, keeper)
 
 		case types.QueryCount:
 			return handleQueryCount(ctx, req, keeper)
@@ -39,8 +43,31 @@ func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	return bz, nil
 }
 
-func handleQueryMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	res, err := keeper.GetMilestone(ctx)
+func handleQueryLatestMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	res, err := keeper.GetLastMilestone(ctx)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch milestone", err.Error()))
+	}
+
+	if res == nil {
+		return nil, common.ErrNoMilestoneFound(keeper.Codespace())
+	}
+
+	bz, err := json.Marshal(res)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
+func handleQueryMilestoneByNumber(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryMilestoneParams
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	res, err := keeper.GetMilestoneByNumber(ctx, params.Number)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch milestone", err.Error()))
 	}

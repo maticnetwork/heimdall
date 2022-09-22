@@ -12,7 +12,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 	// Add milestone
 	if data.Milestone != nil {
 
-		if err := keeper.SetMilestone(ctx, *data.Milestone); err != nil {
+		if err := keeper.AddMilestone(ctx, *data.Milestone); err != nil {
 			keeper.Logger(ctx).Error("InitGenesis | SetMilestone", "error", err)
 		}
 	}
@@ -23,7 +23,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	params := keeper.GetParams(ctx)
 
-	milestone, _ := keeper.GetMilestone(ctx)
+	milestone, _ := keeper.GetLastMilestone(ctx)
 
 	return types.NewGenesisState(
 		params,

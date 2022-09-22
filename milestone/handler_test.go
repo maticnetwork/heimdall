@@ -66,7 +66,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
-	lastMilestone, err := keeper.GetMilestone(ctx)
+	lastMilestone, err := keeper.GetLastMilestone(ctx)
 	if err == nil {
 		start = start + lastMilestone.EndBlock + 1
 	}
@@ -89,7 +89,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		// send milestone to handler
 		got := suite.handler(ctx, msgMilestone)
 		require.True(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
-		bufferedHeader, _ := keeper.GetMilestone(ctx)
+		bufferedHeader, _ := keeper.GetLastMilestone(ctx)
 		require.Empty(t, bufferedHeader, "Should not store state")
 	})
 
@@ -146,10 +146,10 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		err = keeper.AddMilestone(ctx, header)
 		require.NoError(t, err)
 
-		_, err = keeper.GetMilestone(ctx)
+		_, err = keeper.GetLastMilestone(ctx)
 		require.NoError(t, err)
 
-		lastMilestone, err := keeper.GetMilestone(ctx)
+		lastMilestone, err := keeper.GetLastMilestone(ctx)
 		if err == nil {
 			// pass wrong start
 			start = start + lastMilestone.EndBlock + 2
@@ -172,10 +172,10 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 
 	suite.Run("Milestone not in countinuity", func() {
 
-		_, err = keeper.GetMilestone(ctx)
+		_, err = keeper.GetLastMilestone(ctx)
 		require.NoError(t, err)
 
-		lastMilestone, err := keeper.GetMilestone(ctx)
+		lastMilestone, err := keeper.GetLastMilestone(ctx)
 		if err == nil {
 			// pass wrong start
 			start = start + lastMilestone.EndBlock - 2
@@ -208,7 +208,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
-	lastMilestone, err := keeper.GetMilestone(ctx)
+	lastMilestone, err := keeper.GetLastMilestone(ctx)
 	if err == nil {
 		start = start + lastMilestone.EndBlock + 1
 	}

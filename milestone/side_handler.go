@@ -96,7 +96,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	//
 
 	// fetch last milestone from store
-	if lastMilestone, err := k.GetMilestone(ctx); err == nil {
+	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil {
 		// make sure new milestoen is after tip
 		if lastMilestone.EndBlock > msg.StartBlock {
 			logger.Error("Milestone already exists",
@@ -127,7 +127,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add milestone to store with root hash
-	if err := k.SetMilestone(ctx, hmTypes.Milestone{
+	if err := k.AddMilestone(ctx, hmTypes.Milestone{
 		StartBlock: msg.StartBlock,
 		EndBlock:   msg.EndBlock,
 		RootHash:   msg.RootHash,

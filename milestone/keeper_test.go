@@ -51,7 +51,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	err := keeper.AddMilestone(ctx, milestone)
 	require.NoError(t, err)
 
-	result, err := keeper.GetMilestone(ctx)
+	result, err := keeper.GetLastMilestone(ctx)
 	require.NoError(t, err)
 	require.Equal(t, startBlock, result.StartBlock)
 	require.Equal(t, endBlock, result.EndBlock)

@@ -88,8 +88,8 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
-	path := []string{types.QueryMilestone}
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestone)
+	path := []string{types.QueryLatestMilestone}
+	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone)
 
 	startBlock := uint64(0)
 	endBlock := uint64(255)
@@ -106,7 +106,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpointBuffer() {
 		borChainId,
 		timestamp,
 	)
-	err := app.MilestoneKeeper.SetMilestone(ctx, milestoneBlock)
+	err := app.MilestoneKeeper.AddMilestone(ctx, milestoneBlock)
 	require.NoError(t, err)
 
 	req := abci.RequestQuery{

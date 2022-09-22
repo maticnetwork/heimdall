@@ -10,6 +10,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/milestone/types"
@@ -31,7 +32,8 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 	supplyQueryCmd.AddCommand(
 		client.GetCommands(
 			GetQueryParams(cdc),
-			GetMilestone(cdc),
+			GetLatestMilestone(cdc),
+			GetMilestoneByNumber(cdc),
 		)...,
 	)
 
@@ -72,14 +74,14 @@ $ %s query milestone params
 }
 
 // GetMilestone get milestone
-func GetMilestone(cdc *codec.Codec) *cobra.Command {
+func GetLatestMilestone(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "milestone",
-		Short: "show milestone present",
+		Use:   "latest",
+		Short: "show latest milestone",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestone), nil)
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone), nil)
 			if err != nil {
 				return err
 			}
@@ -91,6 +93,41 @@ func GetMilestone(cdc *codec.Codec) *cobra.Command {
 			fmt.Println(string(res))
 			return nil
 		},
+	}
+
+	return cmd
+}
+
+// GetHeaderFromIndex get checkpoint given header index
+func GetMilestoneByNumber(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "",
+		Short: "get milestone by number",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+			number := viper.GetUint64(FlagMilestoneNumber)
+
+			// get query params
+			queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryMilestoneParams(number))
+			if err != nil {
+				return err
+			}
+
+			// fetch checkpoint
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByNumber), queryParams)
+			if err != nil {
+				return err
+			}
+
+			fmt.Println(string(res))
+			return nil
+		},
+	}
+
+	cmd.Flags().Uint64(FlagMilestoneNumber, 0, "--number=<milesstone-number>")
+
+	if err := cmd.MarkFlagRequired(FlagMilestoneNumber); err != nil {
+		logger.Error("GetMilestoneByNumber | MarkFlagRequired | FlagMilestoneNumber", "Error", err)
 	}
 
 	return cmd
