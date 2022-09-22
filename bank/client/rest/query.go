@@ -1,3 +1,4 @@
+//nolint
 package rest
 
 import (
@@ -13,6 +14,43 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+//It represents the bank balance of particluar account
+//swagger:response bankBalanceByAddressResponse
+type bankBalanceByAddressResponse struct {
+	//in:body
+	Output bankBalanceByAddress `json:"output"`
+}
+
+type bankBalanceByAddress struct {
+	Height string        `json:"height"`
+	Result []bankBalance `json:"result"`
+}
+
+type bankBalance struct {
+
+	//Denomination of the token
+	Denom string `json:"denom"`
+	//Amount of token in the bank
+	Amount string `json:"amount"`
+}
+
+//swagger:parameters bankBalanceByAddress
+type Address struct {
+
+	//Address of the account
+	//required:true
+	//in:path
+	Address string `json:"address"`
+
+	//Address of the account
+	//in:query
+	Height string `json:"height"`
+}
+
+// swagger:route GET /bank/balances/{address} bank bankBalanceByAddress
+// It returns the matic balance of particular address
+// responses:
+//   200: bankBalanceByAddressResponse
 // QueryBalancesRequestHandlerFn query accountREST Handler
 func QueryBalancesRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

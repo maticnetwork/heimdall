@@ -13,11 +13,9 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/topup/simulation"
-
 	topupCli "github.com/maticnetwork/heimdall/topup/client/cli"
 	topupRest "github.com/maticnetwork/heimdall/topup/client/rest"
-
+	"github.com/maticnetwork/heimdall/topup/simulation"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"

@@ -12,6 +12,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	tendermintLogger "github.com/tendermint/tendermint/libs/log"
+	rpcserver "github.com/tendermint/tendermint/rpc/lib/server"
 
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/version"
@@ -103,8 +104,14 @@ func DecorateWithBridgeRootFlags(cmd *cobra.Command, v *viper.Viper, loggerInsta
 
 // initMetrics initializes metrics server with the default handler
 func initMetrics() {
+	cfg := rpcserver.DefaultConfig()
+
 	metricsServer = http.Server{
-		Addr: ":2112",
+		Addr:              ":2112",
+		ReadTimeout:       cfg.ReadTimeout,
+		ReadHeaderTimeout: cfg.ReadTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		MaxHeaderBytes:    cfg.MaxHeaderBytes,
 	}
 
 	http.Handle("/metrics", promhttp.Handler())

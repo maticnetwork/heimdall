@@ -7,9 +7,9 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 )
 
 // Big batch of reflect types for topic reconstruction.
@@ -22,7 +22,7 @@ var (
 // UnpackLog unpacks log
 func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log) error {
 	if len(log.Data) > 0 {
-		if err := abiObject.Unpack(out, event, log.Data); err != nil {
+		if err := abiObject.UnpackIntoInterface(out, event, log.Data); err != nil {
 			return err
 		}
 	}

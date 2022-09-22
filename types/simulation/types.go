@@ -8,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 )
 
 type WeightedProposalContent interface {
@@ -86,7 +87,7 @@ func NoOpMsg(route string) OperationMsg {
 
 // log entry text for this operation msg
 func (om OperationMsg) String() string {
-	out, err := json.Marshal(om)
+	out, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(om)
 	if err != nil {
 		panic(err)
 	}
@@ -96,7 +97,7 @@ func (om OperationMsg) String() string {
 
 // MustMarshal Marshals the operation msg, panic on error
 func (om OperationMsg) MustMarshal() json.RawMessage {
-	out, err := json.Marshal(om)
+	out, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(om)
 	if err != nil {
 		panic(err)
 	}

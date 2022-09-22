@@ -280,13 +280,16 @@ func (suite *KeeperTestSuite) TestAddValidatorSetChange() {
 	require.Equal(t, prevValSet.TotalVotingPower()+valToBeAdded.VotingPower, currentValSet.TotalVotingPower(), "Total VotingPower should be increased")
 }
 
-/* Validator Set changes When
-	1. When ackCount changes
-	2. When new validator joins
-	3. When validator updates stake
-	4. When signer is updatedctx
-	5. When Validator Exits
-**/
+/*
+	 Validator Set changes When
+		1. When ackCount changes
+		2. When new validator joins
+		3. When validator updates stake
+		4. When signer is updatedctx
+		5. When Validator Exits
+
+*
+*/
 func (suite *KeeperTestSuite) TestUpdateValidatorSetChange() {
 	// create sub test to check if validator remove
 	t, app, ctx := suite.T(), suite.app, suite.ctx

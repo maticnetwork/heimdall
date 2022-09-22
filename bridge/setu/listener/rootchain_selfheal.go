@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
@@ -193,6 +193,12 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 }
 
 func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) (bool, error) {
+	// Check existence of topics beforehand and ignore if no topic exists
+	// (TODO): Identify issue of empty events: See Jira POS-818
+	if len(event.Topics) == 0 {
+		return true, nil
+	}
+
 	blockTime, err := rl.contractConnector.GetMainChainBlockTime(ctx, event.BlockNumber)
 	if err != nil {
 		rl.Logger.Error("Unable to get block time", "error", err)

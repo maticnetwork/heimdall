@@ -18,13 +18,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/accounts/keystore"
-	ethCommon "github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/console"
-	"github.com/maticnetwork/bor/crypto"
-	"github.com/maticnetwork/heimdall/file"
-	"github.com/maticnetwork/heimdall/version"
-	"github.com/pborman/uuid"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	ethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/console/prompt"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
@@ -34,6 +32,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/file"
+	"github.com/maticnetwork/heimdall/version"
 
 	"github.com/maticnetwork/heimdall/app"
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
@@ -252,7 +253,7 @@ func generateKeystore(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			id := uuid.NewRandom()
+			id, err := uuid.NewRandom()
 			if err != nil {
 				return err
 			}
@@ -365,13 +366,13 @@ func toISO8601(t time.Time) string {
 // promptPassphrase prompts the user for a passphrase.  Set confirmation to true
 // to require the user to confirm the passphrase.
 func promptPassphrase(confirmation bool) (string, error) {
-	passphrase, err := console.Stdin.PromptPassword("Passphrase: ")
+	passphrase, err := prompt.Stdin.PromptPassword("Passphrase: ")
 	if err != nil {
 		return "", err
 	}
 
 	if confirmation {
-		confirm, err := console.Stdin.PromptPassword("Repeat passphrase: ")
+		confirm, err := prompt.Stdin.PromptPassword("Repeat passphrase: ")
 		if err != nil {
 			return "", err
 		}

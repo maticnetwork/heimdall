@@ -14,6 +14,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/module"
 	abci "github.com/tendermint/tendermint/abci/types"
 
+	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	slashingCli "github.com/maticnetwork/heimdall/slashing/client/cli"
 	"github.com/maticnetwork/heimdall/slashing/client/rest"
@@ -23,8 +24,6 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
-
-	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 )
 
 var (

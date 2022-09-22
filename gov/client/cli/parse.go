@@ -1,10 +1,10 @@
 package cli
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
 
 	govutils "github.com/maticnetwork/heimdall/gov/client/utils"
@@ -33,7 +33,7 @@ func parseSubmitProposalFlags() (*proposal, error) {
 		return nil, err
 	}
 
-	err = json.Unmarshal(contents, proposal)
+	err = jsoniter.ConfigFastest.Unmarshal(contents, proposal)
 	if err != nil {
 		return nil, err
 	}
