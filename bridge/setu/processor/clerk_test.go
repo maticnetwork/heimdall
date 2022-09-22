@@ -26,6 +26,10 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	helperMocks "github.com/maticnetwork/heimdall/helper/mocks"
+<<<<<<< HEAD
+=======
+	"github.com/spf13/viper"
+>>>>>>> 9d4bc759c5d7530d4cdde6a1e7cfaab80ad6b645
 )
 
 const (

@@ -179,7 +179,7 @@ func heimdallStart(shutdownCtx context.Context, ctx *server.Context, appCreator 
 		Use:   "start",
 		Short: "Run the full node",
 		Long: `Run the full node application with Tendermint in process.
-Starting rest server is provided with the flag --rest-server and starting bridge with 
+Starting rest server is provided with the flag --rest-server and starting bridge with
 the flag --bridge when starting Tendermint in process.
 Pruning options can be provided via the '--pruning' flag. The options are as follows:
 
