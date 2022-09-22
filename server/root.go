@@ -173,9 +173,10 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 			}
 
 		}),
-		ReadTimeout:    cfg.ReadTimeout,
-		WriteTimeout:   cfg.WriteTimeout,
-		MaxHeaderBytes: cfg.MaxHeaderBytes,
+		ReadTimeout:       cfg.ReadTimeout,
+		ReadHeaderTimeout: cfg.ReadTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		MaxHeaderBytes:    cfg.MaxHeaderBytes,
 		BaseContext: func(_ net.Listener) ctx.Context {
 			return shutdownCtx
 		},

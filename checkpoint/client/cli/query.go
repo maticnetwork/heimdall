@@ -239,7 +239,7 @@ func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
 
 			var ackCount uint64
 			if err := jsoniter.Unmarshal(ackcountBytes, &ackCount); err != nil {
-				return nil
+				return err
 			}
 
 			//
@@ -260,7 +260,7 @@ func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCheckpoint), queryParams)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			var checkpointUnmarshal hmTypes.Checkpoint

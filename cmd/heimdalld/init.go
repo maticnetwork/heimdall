@@ -36,7 +36,7 @@ type initHeimdallConfig struct {
 	forceInit   bool
 }
 
-func heimdallInit(ctx *server.Context, cdc *codec.Codec, initConfig *initHeimdallConfig, config *cfg.Config) error {
+func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallConfig, config *cfg.Config) error {
 	// do not execute init if forceInit is false and genesis.json already exists (or we do not have permission to write to file)
 	if !initConfig.forceInit {
 		_, err := os.Stat(config.GenesisFile())
