@@ -516,14 +516,30 @@ func prepareMockData(b *testing.B) *gomock.Controller {
 	mockHttpClient := helperMocks.NewMockHTTPClient(mockCtrl)
 	mockNodeQuerier := authTypesMocks.NewMockNodeQuerier(mockCtrl)
 
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(chainManagerParamsUrl).Return(prepareResponse(chainManagerParamsResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getAccountUrl).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getAccountUrl2).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(isOldTxUrl).Return(prepareResponse(isOldTxResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(checkpointCountUrl).Return(prepareResponse(checkpointCountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(unconfirmedTxsUrl).Return(prepareResponse(unconfirmedTxsResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getUnconfirmedTxnCountUrl).Return(prepareResponse(getUnconfirmedTxnCountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getValidatorSetUrl).Return(prepareResponse(getValidatorSetResponse), nil).AnyTimes()
+
 	helper.Client = mockHttpClient
 
 	mockNodeQuerier.EXPECT().QueryWithData(gomock.Any(), gomock.Any()).Return([]byte(getAccountWIthHeightResponseForAccountRetriever), int64(0), nil).AnyTimes()

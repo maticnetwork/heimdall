@@ -169,7 +169,7 @@ func GetValidatorStatus(cdc *codec.Codec) *cobra.Command {
 
 			statusBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryValidatorStatus), queryParams)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			// error if no checkpoint found
@@ -185,7 +185,7 @@ func GetValidatorStatus(cdc *codec.Codec) *cobra.Command {
 
 			res, err := json.Marshal(map[string]interface{}{"result": status})
 			if err != nil {
-				return nil
+				return err
 			}
 
 			fmt.Println(string(res))
@@ -253,7 +253,7 @@ func GetCurentProposer(cdc *codec.Codec) *cobra.Command {
 
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCurrentProposer), nil)
 			if err != nil {
-				return nil
+				return err
 			}
 
 			// error if no checkpoint found

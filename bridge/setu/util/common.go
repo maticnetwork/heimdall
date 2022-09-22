@@ -522,6 +522,8 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
 	if err != nil {
 		logger.Error("Error fetching mempool txs count", "error", err)
 		return 0

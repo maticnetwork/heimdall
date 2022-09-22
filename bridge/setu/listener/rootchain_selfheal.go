@@ -193,6 +193,12 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 }
 
 func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) (bool, error) {
+	// Check existence of topics beforehand and ignore if no topic exists
+	// (TODO): Identify issue of empty events: See Jira POS-818
+	if len(event.Topics) == 0 {
+		return true, nil
+	}
+
 	blockTime, err := rl.contractConnector.GetMainChainBlockTime(ctx, event.BlockNumber)
 	if err != nil {
 		rl.Logger.Error("Unable to get block time", "error", err)

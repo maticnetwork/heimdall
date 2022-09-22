@@ -164,6 +164,8 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 	}
 
 	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
 	if err != nil {
 		bp.Logger.Error("Error fetching mempool tx", "error", err)
 		return false, err
