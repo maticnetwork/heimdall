@@ -3,8 +3,7 @@ package processor
 import (
 	"bytes"
 	"crypto/rand"
-	"encoding/json"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"net/http"
 	"testing"
@@ -13,8 +12,11 @@ import (
 	"github.com/RichardKnop/machinery/v1"
 	"github.com/RichardKnop/machinery/v1/config"
 	"github.com/golang/mock/gomock"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/spf13/viper"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	authTypesMocks "github.com/maticnetwork/heimdall/auth/types/mocks"
@@ -24,7 +26,6 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	helperMocks "github.com/maticnetwork/heimdall/helper/mocks"
-	"github.com/spf13/viper"
 )
 
 const (
@@ -515,14 +516,30 @@ func prepareMockData(b *testing.B) *gomock.Controller {
 	mockHttpClient := helperMocks.NewMockHTTPClient(mockCtrl)
 	mockNodeQuerier := authTypesMocks.NewMockNodeQuerier(mockCtrl)
 
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(chainManagerParamsUrl).Return(prepareResponse(chainManagerParamsResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getAccountUrl).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getAccountUrl2).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(isOldTxUrl).Return(prepareResponse(isOldTxResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(checkpointCountUrl).Return(prepareResponse(checkpointCountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(unconfirmedTxsUrl).Return(prepareResponse(unconfirmedTxsResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getUnconfirmedTxnCountUrl).Return(prepareResponse(getUnconfirmedTxnCountResponse), nil).AnyTimes()
+
+	//nolint: bodyclose
 	mockHttpClient.EXPECT().Get(getValidatorSetUrl).Return(prepareResponse(getValidatorSetResponse), nil).AnyTimes()
+
 	helper.Client = mockHttpClient
 
 	mockNodeQuerier.EXPECT().QueryWithData(gomock.Any(), gomock.Any()).Return([]byte(getAccountWIthHeightResponseForAccountRetriever), int64(0), nil).AnyTimes()
@@ -615,7 +632,7 @@ func prepareDummyLogBytes() (*bytes.Buffer, error) {
 	}
 
 	reqBodyBytes := new(bytes.Buffer)
-	if err := json.NewEncoder(reqBodyBytes).Encode(log); err != nil {
+	if err := jsoniter.ConfigFastest.NewEncoder(reqBodyBytes).Encode(log); err != nil {
 		return nil, err
 	}
 
@@ -630,7 +647,7 @@ func prepareResponse(body string) *http.Response {
 		ProtoMajor:       0,
 		ProtoMinor:       0,
 		Header:           nil,
-		Body:             ioutil.NopCloser(bytes.NewReader([]byte(body))),
+		Body:             io.NopCloser(bytes.NewReader([]byte(body))),
 		ContentLength:    0,
 		TransferEncoding: nil,
 		Close:            false,

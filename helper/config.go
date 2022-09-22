@@ -10,17 +10,18 @@ import (
 	"strings"
 	"time"
 
-	ethCrypto "github.com/maticnetwork/bor/crypto"
-	"github.com/maticnetwork/bor/eth"
-	"github.com/maticnetwork/bor/ethclient"
-	"github.com/maticnetwork/bor/rpc"
-	"github.com/maticnetwork/heimdall/file"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/eth"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+
+	"github.com/maticnetwork/heimdall/file"
 
 	cfg "github.com/tendermint/tendermint/config"
 	tmTypes "github.com/tendermint/tendermint/types"

@@ -8,7 +8,7 @@ import (
 
 	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/bor/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // DividendAccount contains burned Fee amount

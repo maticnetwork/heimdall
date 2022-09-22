@@ -7,5 +7,5 @@ numOfValidators: 3
 numOfNonValidators: 0
 ethURL: http://ganache:9545
 devnetType: docker
-borDockerBuildContext: "https://github.com/cffls/bor.git#develop"
+borDockerBuildContext: "https://github.com/maticnetwork/bor.git#develop"
 heimdallDockerBuildContext: "../../heimdall"

@@ -2,7 +2,8 @@ package types
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 

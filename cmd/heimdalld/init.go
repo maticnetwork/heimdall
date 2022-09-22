@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -10,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	cfg "github.com/tendermint/tendermint/config"
@@ -36,7 +36,7 @@ type initHeimdallConfig struct {
 	forceInit   bool
 }
 
-func heimdallInit(ctx *server.Context, cdc *codec.Codec, initConfig *initHeimdallConfig, config *cfg.Config) error {
+func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallConfig, config *cfg.Config) error {
 	// do not execute init if forceInit is false and genesis.json already exists (or we do not have permission to write to file)
 	if !initConfig.forceInit {
 		_, err := os.Stat(config.GenesisFile())
@@ -123,7 +123,7 @@ func heimdallInit(ctx *server.Context, cdc *codec.Codec, initConfig *initHeimdal
 	}
 
 	// app state json
-	appStateJSON, err := json.Marshal(appStateBytes)
+	appStateJSON, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appStateBytes)
 	if err != nil {
 		return err
 	}

@@ -4,31 +4,38 @@
 package slashmanager
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/accounts/abi/bind"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/event"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 )
 
+// SlashmanagerMetaData contains all meta data concerning the Slashmanager contract.
+var SlashmanagerMetaData = &bind.MetaData{
+	ABI: "[{\"constant\":true,\"inputs\":[],\"name\":\"proposerRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\"}],\"name\":\"drainTokens\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"jailCheckpoints\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"updateSlashedAmounts\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contractRegistry\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"slashingNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newReportRate\",\"type\":\"uint256\"}],\"name\":\"updateReportRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reportRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"VOTE_TYPE\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newProposerRate\",\"type\":\"uint256\"}],\"name\":\"updateProposerRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"_heimdallId\",\"type\":\"string\"}],\"name\":\"setHeimdallId\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"logger\",\"outputs\":[{\"internalType\":\"contractStakingInfo\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"heimdallId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_logger\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_heimdallId\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]",
+}
+
 // SlashmanagerABI is the input ABI used to generate the binding from.
-const SlashmanagerABI = "[{\"constant\":true,\"inputs\":[],\"name\":\"proposerRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"value\",\"type\":\"uint256\"},{\"internalType\":\"address\",\"name\":\"token\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"destination\",\"type\":\"address\"}],\"name\":\"drainTokens\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"jailCheckpoints\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"bytes\",\"name\":\"data\",\"type\":\"bytes\"},{\"internalType\":\"bytes\",\"name\":\"sigs\",\"type\":\"bytes\"}],\"name\":\"updateSlashedAmounts\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[],\"name\":\"renounceOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"registry\",\"outputs\":[{\"internalType\":\"contractRegistry\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"owner\",\"outputs\":[{\"internalType\":\"address\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isOwner\",\"outputs\":[{\"internalType\":\"bool\",\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"slashingNonce\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newReportRate\",\"type\":\"uint256\"}],\"name\":\"updateReportRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"reportRate\",\"outputs\":[{\"internalType\":\"uint256\",\"name\":\"\",\"type\":\"uint256\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"VOTE_TYPE\",\"outputs\":[{\"internalType\":\"uint8\",\"name\":\"\",\"type\":\"uint8\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"uint256\",\"name\":\"newProposerRate\",\"type\":\"uint256\"}],\"name\":\"updateProposerRate\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"string\",\"name\":\"_heimdallId\",\"type\":\"string\"}],\"name\":\"setHeimdallId\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"logger\",\"outputs\":[{\"internalType\":\"contractStakingInfo\",\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"transferOwnership\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"heimdallId\",\"outputs\":[{\"internalType\":\"bytes32\",\"name\":\"\",\"type\":\"bytes32\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"inputs\":[{\"internalType\":\"address\",\"name\":\"_registry\",\"type\":\"address\"},{\"internalType\":\"address\",\"name\":\"_logger\",\"type\":\"address\"},{\"internalType\":\"string\",\"name\":\"_heimdallId\",\"type\":\"string\"}],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"constructor\"},{\"anonymous\":false,\"inputs\":[{\"indexed\":true,\"internalType\":\"address\",\"name\":\"previousOwner\",\"type\":\"address\"},{\"indexed\":true,\"internalType\":\"address\",\"name\":\"newOwner\",\"type\":\"address\"}],\"name\":\"OwnershipTransferred\",\"type\":\"event\"}]"
+// Deprecated: Use SlashmanagerMetaData.ABI instead.
+var SlashmanagerABI = SlashmanagerMetaData.ABI
 
 // Slashmanager is an auto generated Go binding around an Ethereum contract.
 type Slashmanager struct {
@@ -138,7 +145,7 @@ func bindSlashmanager(address common.Address, caller bind.ContractCaller, transa
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Slashmanager *SlashmanagerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Slashmanager *SlashmanagerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Slashmanager.Contract.SlashmanagerCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +164,7 @@ func (_Slashmanager *SlashmanagerRaw) Transact(opts *bind.TransactOpts, method s
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Slashmanager *SlashmanagerCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Slashmanager *SlashmanagerCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Slashmanager.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,260 +181,310 @@ func (_Slashmanager *SlashmanagerTransactorRaw) Transact(opts *bind.TransactOpts
 
 // VOTETYPE is a free data retrieval call binding the contract method 0xd5b844eb.
 //
-// Solidity: function VOTE_TYPE() constant returns(uint8)
+// Solidity: function VOTE_TYPE() view returns(uint8)
 func (_Slashmanager *SlashmanagerCaller) VOTETYPE(opts *bind.CallOpts) (uint8, error) {
-	var (
-		ret0 = new(uint8)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "VOTE_TYPE")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "VOTE_TYPE")
+
+	if err != nil {
+		return *new(uint8), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(uint8)).(*uint8)
+
+	return out0, err
+
 }
 
 // VOTETYPE is a free data retrieval call binding the contract method 0xd5b844eb.
 //
-// Solidity: function VOTE_TYPE() constant returns(uint8)
+// Solidity: function VOTE_TYPE() view returns(uint8)
 func (_Slashmanager *SlashmanagerSession) VOTETYPE() (uint8, error) {
 	return _Slashmanager.Contract.VOTETYPE(&_Slashmanager.CallOpts)
 }
 
 // VOTETYPE is a free data retrieval call binding the contract method 0xd5b844eb.
 //
-// Solidity: function VOTE_TYPE() constant returns(uint8)
+// Solidity: function VOTE_TYPE() view returns(uint8)
 func (_Slashmanager *SlashmanagerCallerSession) VOTETYPE() (uint8, error) {
 	return _Slashmanager.Contract.VOTETYPE(&_Slashmanager.CallOpts)
 }
 
 // HeimdallId is a free data retrieval call binding the contract method 0xfbc3dd36.
 //
-// Solidity: function heimdallId() constant returns(bytes32)
+// Solidity: function heimdallId() view returns(bytes32)
 func (_Slashmanager *SlashmanagerCaller) HeimdallId(opts *bind.CallOpts) ([32]byte, error) {
-	var (
-		ret0 = new([32]byte)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "heimdallId")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "heimdallId")
+
+	if err != nil {
+		return *new([32]byte), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([32]byte)).(*[32]byte)
+
+	return out0, err
+
 }
 
 // HeimdallId is a free data retrieval call binding the contract method 0xfbc3dd36.
 //
-// Solidity: function heimdallId() constant returns(bytes32)
+// Solidity: function heimdallId() view returns(bytes32)
 func (_Slashmanager *SlashmanagerSession) HeimdallId() ([32]byte, error) {
 	return _Slashmanager.Contract.HeimdallId(&_Slashmanager.CallOpts)
 }
 
 // HeimdallId is a free data retrieval call binding the contract method 0xfbc3dd36.
 //
-// Solidity: function heimdallId() constant returns(bytes32)
+// Solidity: function heimdallId() view returns(bytes32)
 func (_Slashmanager *SlashmanagerCallerSession) HeimdallId() ([32]byte, error) {
 	return _Slashmanager.Contract.HeimdallId(&_Slashmanager.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Slashmanager *SlashmanagerCaller) IsOwner(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "isOwner")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "isOwner")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Slashmanager *SlashmanagerSession) IsOwner() (bool, error) {
 	return _Slashmanager.Contract.IsOwner(&_Slashmanager.CallOpts)
 }
 
 // IsOwner is a free data retrieval call binding the contract method 0x8f32d59b.
 //
-// Solidity: function isOwner() constant returns(bool)
+// Solidity: function isOwner() view returns(bool)
 func (_Slashmanager *SlashmanagerCallerSession) IsOwner() (bool, error) {
 	return _Slashmanager.Contract.IsOwner(&_Slashmanager.CallOpts)
 }
 
 // JailCheckpoints is a free data retrieval call binding the contract method 0x556b2ce9.
 //
-// Solidity: function jailCheckpoints() constant returns(uint256)
+// Solidity: function jailCheckpoints() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) JailCheckpoints(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "jailCheckpoints")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "jailCheckpoints")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // JailCheckpoints is a free data retrieval call binding the contract method 0x556b2ce9.
 //
-// Solidity: function jailCheckpoints() constant returns(uint256)
+// Solidity: function jailCheckpoints() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) JailCheckpoints() (*big.Int, error) {
 	return _Slashmanager.Contract.JailCheckpoints(&_Slashmanager.CallOpts)
 }
 
 // JailCheckpoints is a free data retrieval call binding the contract method 0x556b2ce9.
 //
-// Solidity: function jailCheckpoints() constant returns(uint256)
+// Solidity: function jailCheckpoints() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) JailCheckpoints() (*big.Int, error) {
 	return _Slashmanager.Contract.JailCheckpoints(&_Slashmanager.CallOpts)
 }
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Slashmanager *SlashmanagerCaller) Logger(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "logger")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "logger")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Slashmanager *SlashmanagerSession) Logger() (common.Address, error) {
 	return _Slashmanager.Contract.Logger(&_Slashmanager.CallOpts)
 }
 
 // Logger is a free data retrieval call binding the contract method 0xf24ccbfe.
 //
-// Solidity: function logger() constant returns(address)
+// Solidity: function logger() view returns(address)
 func (_Slashmanager *SlashmanagerCallerSession) Logger() (common.Address, error) {
 	return _Slashmanager.Contract.Logger(&_Slashmanager.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Slashmanager *SlashmanagerCaller) Owner(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "owner")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "owner")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Slashmanager *SlashmanagerSession) Owner() (common.Address, error) {
 	return _Slashmanager.Contract.Owner(&_Slashmanager.CallOpts)
 }
 
 // Owner is a free data retrieval call binding the contract method 0x8da5cb5b.
 //
-// Solidity: function owner() constant returns(address)
+// Solidity: function owner() view returns(address)
 func (_Slashmanager *SlashmanagerCallerSession) Owner() (common.Address, error) {
 	return _Slashmanager.Contract.Owner(&_Slashmanager.CallOpts)
 }
 
 // ProposerRate is a free data retrieval call binding the contract method 0x3199e305.
 //
-// Solidity: function proposerRate() constant returns(uint256)
+// Solidity: function proposerRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) ProposerRate(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "proposerRate")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "proposerRate")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // ProposerRate is a free data retrieval call binding the contract method 0x3199e305.
 //
-// Solidity: function proposerRate() constant returns(uint256)
+// Solidity: function proposerRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) ProposerRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ProposerRate(&_Slashmanager.CallOpts)
 }
 
 // ProposerRate is a free data retrieval call binding the contract method 0x3199e305.
 //
-// Solidity: function proposerRate() constant returns(uint256)
+// Solidity: function proposerRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) ProposerRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ProposerRate(&_Slashmanager.CallOpts)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Slashmanager *SlashmanagerCaller) Registry(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "registry")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "registry")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Slashmanager *SlashmanagerSession) Registry() (common.Address, error) {
 	return _Slashmanager.Contract.Registry(&_Slashmanager.CallOpts)
 }
 
 // Registry is a free data retrieval call binding the contract method 0x7b103999.
 //
-// Solidity: function registry() constant returns(address)
+// Solidity: function registry() view returns(address)
 func (_Slashmanager *SlashmanagerCallerSession) Registry() (common.Address, error) {
 	return _Slashmanager.Contract.Registry(&_Slashmanager.CallOpts)
 }
 
 // ReportRate is a free data retrieval call binding the contract method 0xc25593be.
 //
-// Solidity: function reportRate() constant returns(uint256)
+// Solidity: function reportRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) ReportRate(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "reportRate")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "reportRate")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // ReportRate is a free data retrieval call binding the contract method 0xc25593be.
 //
-// Solidity: function reportRate() constant returns(uint256)
+// Solidity: function reportRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) ReportRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ReportRate(&_Slashmanager.CallOpts)
 }
 
 // ReportRate is a free data retrieval call binding the contract method 0xc25593be.
 //
-// Solidity: function reportRate() constant returns(uint256)
+// Solidity: function reportRate() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) ReportRate() (*big.Int, error) {
 	return _Slashmanager.Contract.ReportRate(&_Slashmanager.CallOpts)
 }
 
 // SlashingNonce is a free data retrieval call binding the contract method 0xa2d32176.
 //
-// Solidity: function slashingNonce() constant returns(uint256)
+// Solidity: function slashingNonce() view returns(uint256)
 func (_Slashmanager *SlashmanagerCaller) SlashingNonce(opts *bind.CallOpts) (*big.Int, error) {
-	var (
-		ret0 = new(*big.Int)
-	)
-	out := ret0
-	err := _Slashmanager.contract.Call(opts, out, "slashingNonce")
-	return *ret0, err
+	var out []interface{}
+	err := _Slashmanager.contract.Call(opts, &out, "slashingNonce")
+
+	if err != nil {
+		return *new(*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(*big.Int)).(**big.Int)
+
+	return out0, err
+
 }
 
 // SlashingNonce is a free data retrieval call binding the contract method 0xa2d32176.
 //
-// Solidity: function slashingNonce() constant returns(uint256)
+// Solidity: function slashingNonce() view returns(uint256)
 func (_Slashmanager *SlashmanagerSession) SlashingNonce() (*big.Int, error) {
 	return _Slashmanager.Contract.SlashingNonce(&_Slashmanager.CallOpts)
 }
 
 // SlashingNonce is a free data retrieval call binding the contract method 0xa2d32176.
 //
-// Solidity: function slashingNonce() constant returns(uint256)
+// Solidity: function slashingNonce() view returns(uint256)
 func (_Slashmanager *SlashmanagerCallerSession) SlashingNonce() (*big.Int, error) {
 	return _Slashmanager.Contract.SlashingNonce(&_Slashmanager.CallOpts)
 }
@@ -728,5 +785,6 @@ func (_Slashmanager *SlashmanagerFilterer) ParseOwnershipTransferred(log types.L
 	if err := _Slashmanager.contract.UnpackLog(event, "OwnershipTransferred", log); err != nil {
 		return nil, err
 	}
+	event.Raw = log
 	return event, nil
 }

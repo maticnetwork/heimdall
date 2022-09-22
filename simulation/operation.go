@@ -5,6 +5,8 @@ import (
 	"math/rand"
 	"sort"
 
+	jsoniter "github.com/json-iterator/go"
+
 	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
@@ -56,7 +58,7 @@ func QueuedMsgEntry(height int64, opMsg simulation.OperationMsg) OperationEntry 
 
 // MustMarshal marshals the operation entry, panic on error.
 func (oe OperationEntry) MustMarshal() json.RawMessage {
-	out, err := json.Marshal(oe)
+	out, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(oe)
 	if err != nil {
 		panic(err)
 	}

@@ -1,3 +1,4 @@
+//nolint
 package tx
 
 import (
@@ -29,6 +30,22 @@ type (
 	}
 )
 
+//swagger:parameters txsEncode
+type txsEncode struct {
+
+	//Body
+	//required:true
+	//in:body
+	Input txsEncodeInput `json:"input"`
+}
+
+type txsEncodeInput struct {
+	Tx StdTx `json:"tx"`
+}
+
+// swagger:route POST /txs/encode  txs txsEncode
+// It Encode the transaction
+// responses:
 // EncodeTxRequestHandlerFn returns the encode tx REST handler. In particular,
 // it takes a json-formatted transaction, encodes it to the Amino wire protocol,
 // and responds with base64-encoded bytes.

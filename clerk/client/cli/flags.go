@@ -9,4 +9,6 @@ const (
 	FlagRecordID        = "id"
 	FlagData            = "data"
 	FlagBorChainId      = "bor-chain-id"
+	FlagPage            = "page"
+	FlagLimit           = "limit"
 )

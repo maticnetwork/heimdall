@@ -7,10 +7,11 @@ import (
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/accounts/abi"
-	ethCommon "github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	ethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rpc"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -70,19 +71,11 @@ func (rl *RootChainListener) Start() error {
 	// start header process
 	go rl.StartHeaderProcess(headerCtx)
 
-	// subscribe to new head
-	subscription, err := rl.contractConnector.MainChainClient.SubscribeNewHead(ctx, rl.HeaderChannel)
-	if err != nil {
-		// start go routine to poll for new header using client object
-		rl.Logger.Info("Start polling for rootchain header blocks", "pollInterval", helper.GetConfig().SyncerPollInterval)
+	// start go routine to poll for new header using client object
+	rl.Logger.Info("Start polling for rootchain header blocks", "pollInterval", helper.GetConfig().SyncerPollInterval)
 
-		go rl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval)
-	} else {
-		// start go routine to listen new header using subscription
-		go rl.StartSubscription(ctx, subscription)
-	}
-
-	rl.Logger.Info("Subscribed to new head")
+	// start polling for the finalized block in main chain (available post-merge)
+	go rl.StartPolling(ctx, helper.GetConfig().SyncerPollInterval, big.NewInt(int64(rpc.FinalizedBlockNumber)))
 
 	// Start self-healing process
 	go rl.startSelfHealing(ctx)
@@ -91,8 +84,8 @@ func (rl *RootChainListener) Start() error {
 }
 
 // ProcessHeader - process headerblock from rootchain
-func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
-	rl.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
+	rl.Logger.Debug("New block detected", "blockNumber", newHeader.header.Number)
 
 	// fetch context
 	rootchainContext, err := rl.getRootChainContext()
@@ -101,19 +94,29 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 	}
 
 	requiredConfirmations := rootchainContext.ChainmanagerParams.MainchainTxConfirmations
-	latestNumber := newHeader.Number
+	headerNumber := newHeader.header.Number
+	from := headerNumber
 
-	// confirmation
-	confirmationBlocks := big.NewInt(0).SetUint64(requiredConfirmations)
-	if latestNumber.Cmp(confirmationBlocks) <= 0 {
-		rl.Logger.Error("Block number less than Confirmations required", "blockNumber", latestNumber.Uint64, "confirmationsRequired", confirmationBlocks.Uint64)
-		return
+	// If incoming header is a `finalized` header, it can directly be considered as
+	// the upper cap (i.e. the `to` value)
+	//
+	// If incoming header is a `latest` header, rely on `requiredConfirmations` to get
+	// finalized block range.
+	if !newHeader.isFinalized {
+		// This check is only useful when the L1 blocks received are < requiredConfirmations
+		// just for the below headerNumber -= requiredConfirmations math operation
+		confirmationBlocks := big.NewInt(0).SetUint64(requiredConfirmations)
+		if headerNumber.Cmp(confirmationBlocks) <= 0 {
+			rl.Logger.Error("Block number less than Confirmations required", "blockNumber", headerNumber.Uint64, "confirmationsRequired", confirmationBlocks.Uint64)
+			return
+		}
+
+		// subtract the `confirmationBlocks` to only consider blocks before that
+		headerNumber = headerNumber.Sub(headerNumber, confirmationBlocks)
+
+		// update the `from` value
+		from = headerNumber
 	}
-
-	latestNumber = latestNumber.Sub(latestNumber, confirmationBlocks)
-
-	// default fromBlock
-	fromBlock := latestNumber
 
 	// get last block from storage
 	hasLastBlock, _ := rl.storageClient.Has([]byte(lastRootBlockKey), nil)
@@ -127,27 +130,28 @@ func (rl *RootChainListener) ProcessHeader(newHeader *types.Header) {
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
-			if result >= newHeader.Number.Uint64() {
+			if result >= headerNumber.Uint64() {
 				return
 			}
 
-			fromBlock = big.NewInt(0).SetUint64(result + 1)
+			from = big.NewInt(0).SetUint64(result + 1)
 		}
 	}
 
-	// Prepare blocks range
-	toBlock := latestNumber
-	if toBlock.Cmp(fromBlock) == -1 {
-		fromBlock = toBlock
+	to := headerNumber
+
+	// Prepare block range
+	if to.Cmp(from) == -1 {
+		from = to
 	}
 
 	// Set last block to storage
-	if err = rl.storageClient.Put([]byte(lastRootBlockKey), []byte(toBlock.String()), nil); err != nil {
+	if err = rl.storageClient.Put([]byte(lastRootBlockKey), []byte(to.String()), nil); err != nil {
 		rl.Logger.Error("rl.storageClient.Put", "Error", err)
 	}
 
 	// Handle events
-	rl.queryAndBroadcastEvents(rootchainContext, fromBlock, toBlock)
+	rl.queryAndBroadcastEvents(rootchainContext, from, to)
 }
 
 // queryAndBroadcastEvents fetches supported events from the rootchain and handles all of them

@@ -3,13 +3,15 @@ package processor
 import (
 	"bytes"
 	"encoding/hex"
-	"encoding/json"
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
@@ -70,7 +72,7 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
 	var event sdk.StringEvent
-	if err := json.Unmarshal([]byte(eventBytes), &event); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
@@ -114,17 +116,17 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 }
 
 /*
-	sendTickToRootchain - create and submit tick tx to rootchain to slashing faulty validators
-	1. Fetch sigs from heimdall using txHash
-	2. Fetch slashing info from heimdall via Rest call
-	3. Verify if this tick tx is already submitted to rootchain using nonce data
-	4. create tick tx and submit to rootchain
+sendTickToRootchain - create and submit tick tx to rootchain to slashing faulty validators
+1. Fetch sigs from heimdall using txHash
+2. Fetch slashing info from heimdall via Rest call
+3. Verify if this tick tx is already submitted to rootchain using nonce data
+4. create tick tx and submit to rootchain
 */
 func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight int64) (err error) {
 	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
 	var event sdk.StringEvent
-	if err = json.Unmarshal([]byte(eventBytes), &event); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
 		sp.Logger.Error("Error unmarshalling event from heimdall", "error", err)
 		return err
 	}
@@ -191,7 +193,7 @@ sendTickAckToHeimdall - sends tick ack msg to heimdall
 */
 func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -242,7 +244,7 @@ sendUnjailToHeimdall - sends unjail msg to heimdall
 */
 func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -370,7 +372,7 @@ func (sp *SlashingProcessor) fetchLatestSlashInoBytes() (slashInfoBytes hmTypes.
 
 	sp.Logger.Info("Latest slashInfoBytes fetched")
 
-	if err := json.Unmarshal(response.Result, &slashInfoBytes); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &slashInfoBytes); err != nil {
 		sp.Logger.Error("Error unmarshalling latest slashInfoBytes received from Heimdall Server", "error", err)
 		return slashInfoBytes, err
 	}
@@ -388,7 +390,7 @@ func (sp *SlashingProcessor) fetchTickCount() (tickCount uint64, err error) {
 		return tickCount, err
 	}
 
-	if err = json.Unmarshal(response.Result, &tickCount); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &tickCount); err != nil {
 		sp.Logger.Error("Error unmarshalling tick count data ", "error", err)
 		return tickCount, err
 	}
@@ -408,7 +410,7 @@ func (sp *SlashingProcessor) fetchTickSlashInfoList() (slashInfoList []*hmTypes.
 
 	sp.Logger.Info("Tick SlashInfo List fetched")
 
-	if err = json.Unmarshal(response.Result, &slashInfoList); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &slashInfoList); err != nil {
 		sp.Logger.Error("Error unmarshalling tick slashinfo list received from Heimdall Server", "error", err)
 		return slashInfoList, err
 	}
