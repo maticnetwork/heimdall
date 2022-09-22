@@ -8,24 +8,17 @@ require (
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.37.4
-	github.com/deckarep/golang-set v1.7.1 // indirect
-	github.com/edsrzf/mmap-go v1.0.0 // indirect
-	github.com/elastic/gosigar v0.10.5 // indirect
-	github.com/fatih/color v1.9.0 // indirect
-	github.com/fjl/memsize v0.0.0-20190710130421-bcb5799ab5e5 // indirect
+	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/go-kit/kit v0.9.0
-	github.com/gogo/protobuf v1.3.0
+	github.com/gogo/protobuf v1.3.1
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.7 // indirect
-	github.com/gorilla/mux v1.7.3
-	github.com/hashicorp/golang-lru v0.5.3
-	github.com/huin/goupnp v1.0.0 // indirect
-	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
-	github.com/karalabe/usb v0.0.0-20191104083709-911d15fe12a9 // indirect
-	github.com/maticnetwork/bor v0.1.7-0.20200507151553-e03cd94ed12b
-	github.com/olekukonko/tablewriter v0.0.4 // indirect
-	github.com/pborman/uuid v1.2.0
+	github.com/google/uuid v1.2.0
+	github.com/gorilla/mux v1.8.0
+	github.com/hashicorp/golang-lru v0.5.5-0.20210104140557-80c98217689d
+	github.com/json-iterator/go v1.1.12
+	github.com/maticnetwork/polyproto v0.0.2
 	github.com/peterh/liner v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
@@ -51,7 +44,8 @@ require (
 	golang.org/x/net v0.0.0-20210917221730-978cfadd31cf // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
 	golang.org/x/sys v0.0.0-20220615213510-4f61da869c0c // indirect
-	gopkg.in/olebedev/go-duktape.v3 v3.0.0-20200619000410-60c24ae608a6 // indirect
+	google.golang.org/grpc v1.48.0
+	google.golang.org/protobuf v1.28.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
