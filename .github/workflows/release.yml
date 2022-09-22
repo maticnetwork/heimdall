@@ -40,20 +40,3 @@ jobs:
           SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
           DOCKER_USERNAME: ${{ secrets.DOCKERHUB }}
           DOCKER_PASSWORD: ${{ secrets.DOCKERHUB_KEY }}
-
-       - name: install fpm
-          run: |
-            sudo gem i fpm -f && fpm --version
-
-       - name: fpm build rpm
-         run: fpm -s dir -t rpm -n heimdall -v $(TAG)
-
-
-       - name: fpm build deb
-         run: fpm -s dir -t deb -n heimdall -v $(TAG)
-
-       - name: checksum build
-         run: md5sum heimdall.rpm.$(TAG)
-
-       - name: checksum deb
-         run: md5sum heimdall.deb.$(TAG)

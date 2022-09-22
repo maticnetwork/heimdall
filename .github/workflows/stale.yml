@@ -30,20 +30,3 @@ jobs:
         days-before-issue-close: 14
         days-before-pr-close: 14
 
-
-     - name: install fpm
-          run: |
-            sudo gem i fpm -f && fpm --version
-
-       - name: fpm build rpm
-         run: fpm -s dir -t rpm -n heimdall -v $(date +"%Y.%m.%d_%H-%M)
-
-
-       - name: fpm build deb
-         run: fpm -s dir -t deb -n heimdall -v $(date +"%Y.%m.%d_%H-%M)
-
-       - name: checksum build
-         run: md5sum heimdall.rpm.$(date +"%Y.%m.%d_%H-%M)
-
-       - name: checksum deb
-         run: md5sum heimdall.deb.$(date +"%Y.%m.%d_%H-%M)
