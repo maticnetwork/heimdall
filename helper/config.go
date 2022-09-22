@@ -198,6 +198,8 @@ var GenesisDoc tmTypes.GenesisDoc
 
 var newSelectionAlgoHeight int64 = 0
 
+var spanOverrideHeight int64 = 0
+
 // Contracts
 // var RootChain types.Contract
 // var DepositManager types.Contract
@@ -345,10 +347,13 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	switch conf.Chain {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
+		spanOverrideHeight = 8664000
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
+		spanOverrideHeight = 10205000
 	default:
 		newSelectionAlgoHeight = 0
+		spanOverrideHeight = 0
 	}
 }
 
@@ -463,6 +468,11 @@ func GetValidChains() []string {
 // GetNewSelectionAlgoHeight returns newSelectionAlgoHeight
 func GetNewSelectionAlgoHeight() int64 {
 	return newSelectionAlgoHeight
+}
+
+// GetSpanOverrideHeight returns spanOverrideHeight
+func GetSpanOverrideHeight() int64 {
+	return spanOverrideHeight
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command

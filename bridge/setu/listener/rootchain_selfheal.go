@@ -19,14 +19,14 @@ import (
 var (
 	stateSyncedCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "self_healing",
-		Subsystem: helper.NetworkName,
+		Subsystem: helper.GetConfig().Chain,
 		Name:      "StateSynced",
 		Help:      "The total number of missing StateSynced events",
 	}, []string{"id", "contract_address", "block_number", "tx_hash"})
 
 	stakeUpdateCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "self_healing",
-		Subsystem: helper.NetworkName,
+		Subsystem: helper.GetConfig().Chain,
 		Name:      "StakeUpdate",
 		Help:      "The total number of missing StakeUpdate events",
 	}, []string{"id", "nonce", "contract_address", "block_number", "tx_hash"})
