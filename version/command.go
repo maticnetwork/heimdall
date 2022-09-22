@@ -1,14 +1,13 @@
 package version
 
 import (
-	"encoding/json"
 	"fmt"
 
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
-	yaml "gopkg.in/yaml.v2"
-
 	"github.com/tendermint/tendermint/libs/cli"
+	"gopkg.in/yaml.v2"
 )
 
 const flagLong = "long"
@@ -34,7 +33,7 @@ var Cmd = &cobra.Command{
 
 		switch viper.GetString(cli.OutputFlag) {
 		case "json":
-			bz, err = json.Marshal(verInfo)
+			bz, err = jsoniter.ConfigFastest.Marshal(verInfo)
 		default:
 			bz, err = yaml.Marshal(&verInfo)
 		}

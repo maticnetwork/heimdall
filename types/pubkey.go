@@ -2,16 +2,16 @@ package types
 
 import (
 	"encoding/hex"
-	"encoding/json"
 
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmTypes "github.com/tendermint/tendermint/types"
 	"gopkg.in/yaml.v2"
 
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/common/hexutil"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // PubKey pubkey
@@ -82,7 +82,7 @@ func (a *PubKey) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using Bech32.
 func (a PubKey) MarshalJSON() ([]byte, error) {
-	return json.Marshal(a.String())
+	return jsoniter.ConfigFastest.Marshal(a.String())
 }
 
 // MarshalYAML marshals to YAML using Bech32.
@@ -93,7 +93,7 @@ func (a PubKey) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (a *PubKey) UnmarshalJSON(data []byte) error {
 	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(data, &s); err != nil {
 		return err
 	}
 

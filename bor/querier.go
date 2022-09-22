@@ -1,10 +1,10 @@
 package bor
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
@@ -39,7 +39,7 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 
 func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	if len(path) == 0 {
-		bz, err := json.Marshal(keeper.GetParams(ctx))
+		bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetParams(ctx))
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
@@ -49,28 +49,28 @@ func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 
 	switch path[0] {
 	case types.ParamSpan:
-		bz, err := json.Marshal(keeper.GetParams(ctx).SpanDuration)
+		bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetParams(ctx).SpanDuration)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
 
 		return bz, nil
 	case types.ParamSprint:
-		bz, err := json.Marshal(keeper.GetParams(ctx).SprintDuration)
+		bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetParams(ctx).SprintDuration)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
 
 		return bz, nil
 	case types.ParamProducerCount:
-		bz, err := json.Marshal(keeper.GetParams(ctx).ProducerCount)
+		bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetParams(ctx).ProducerCount)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
 
 		return bz, nil
 	case types.ParamLastEthBlock:
-		bz, err := json.Marshal(keeper.GetLastEthBlock(ctx))
+		bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetLastEthBlock(ctx))
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
@@ -83,6 +83,7 @@ func queryParams(ctx sdk.Context, path []string, req abci.RequestQuery, keeper K
 
 func handleQuerySpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var params types.QuerySpanParams
+
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
@@ -98,7 +99,7 @@ func handleQuerySpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]b
 	}
 
 	// json record
-	bz, err := json.Marshal(span)
+	bz, err := jsoniter.ConfigFastest.Marshal(span)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -117,7 +118,7 @@ func handleQuerySpanList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not fetch span list with page %v and limit %v", params.Page, params.Limit), err.Error()))
 	}
 
-	bz, err := json.Marshal(res)
+	bz, err := jsoniter.ConfigFastest.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -131,7 +132,7 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	spans := keeper.GetAllSpans(ctx)
 	if len(spans) == 0 {
 		// json record
-		bz, err := json.Marshal(defaultSpan)
+		bz, err := jsoniter.ConfigFastest.Marshal(defaultSpan)
 		if err != nil {
 			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 		}
@@ -151,7 +152,7 @@ func handleQueryLatestSpan(ctx sdk.Context, req abci.RequestQuery, keeper Keeper
 	}
 
 	// json record
-	bz, err := json.Marshal(span)
+	bz, err := jsoniter.ConfigFastest.Marshal(span)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -170,7 +171,7 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next producers from keeper", err.Error())))
 	}
 
-	bz, err := json.Marshal(nextProducers)
+	bz, err := jsoniter.ConfigFastest.Marshal(nextProducers)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
@@ -186,7 +187,7 @@ func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	}
 
 	// json record
-	bz, err := json.Marshal(nextSpanSeed)
+	bz, err := jsoniter.ConfigFastest.Marshal(nextSpanSeed)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

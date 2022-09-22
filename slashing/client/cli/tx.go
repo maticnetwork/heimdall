@@ -16,7 +16,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var logger = helper.Logger.With("module", "staking/client/cli")
+var logger = helper.Logger.With("module", "slashing/client/cli")
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	slashingTxCmd := &cobra.Command{

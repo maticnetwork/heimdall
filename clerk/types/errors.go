@@ -27,7 +27,7 @@ func ErrEventRecordInvalid(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeEventRecordInvalid, "Event record is invalid")
 }
 
-//  ErrEventUpdates represent event update error
+// ErrEventUpdates represent event update error
 func ErrEventUpdate(codespace sdk.CodespaceType) sdk.Error {
 	return sdk.NewError(codespace, CodeEventRecordUpdate, "Event record update error")
 }

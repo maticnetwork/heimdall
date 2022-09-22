@@ -1,17 +1,17 @@
 package processor
 
 import (
-	"encoding/json"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
 	topupTypes "github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // FeeProcessor - process fee related events
@@ -45,7 +45,7 @@ func (fp *FeeProcessor) RegisterTasks() {
 // processTopupFeeEvent - processes topup fee event
 func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		fp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}

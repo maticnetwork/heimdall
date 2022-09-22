@@ -1,6 +1,6 @@
 package stakinginfo
 
-import "github.com/maticnetwork/bor/common"
+import "github.com/ethereum/go-ethereum/common"
 
 const (
 	// StakeUpdateEventID is the topic ID of StakeUpdate event

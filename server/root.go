@@ -29,10 +29,12 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 
 	// unnamed import of statik for swagger UI support
+	"github.com/maticnetwork/heimdall/server/gRPC"
 	_ "github.com/maticnetwork/heimdall/server/statik"
 )
 
 const shutdownTimeout = 10 * time.Second
+const FlagGrpcAddr = "grpc-addr"
 
 func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router), restCh chan struct{}) error {
 	// init vars for the Light Client Rest server
@@ -73,6 +75,12 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	g.Go(func() error {
 		return startRPCServer(mainCtx, listener, router, logger, cfg)
 	})
+
+	// Setup gRPC server
+	gRPCLogger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "gRPC-server")
+	if err := gRPC.SetupGRPCServer(mainCtx, cdc, viper.GetString(FlagGrpcAddr), gRPCLogger); err != nil {
+		return err
+	}
 
 	g.Go(func() error {
 		// wait for os interrupt, then close Listener
@@ -165,9 +173,10 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 			}
 
 		}),
-		ReadTimeout:    cfg.ReadTimeout,
-		WriteTimeout:   cfg.WriteTimeout,
-		MaxHeaderBytes: cfg.MaxHeaderBytes,
+		ReadTimeout:       cfg.ReadTimeout,
+		ReadHeaderTimeout: cfg.ReadTimeout,
+		WriteTimeout:      cfg.WriteTimeout,
+		MaxHeaderBytes:    cfg.MaxHeaderBytes,
 		BaseContext: func(_ net.Listener) ctx.Context {
 			return shutdownCtx
 		},
@@ -224,6 +233,8 @@ func DecorateWithRestFlags(cmd *cobra.Command) {
 	// heimdall specific flags for rest server start
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
+	// heimdall specific flags for gRPC server start
+	cmd.Flags().String(FlagGrpcAddr, "0.0.0.0:3132", "The address for the gRPC server to listen on")
 }
 
 // RegisterRoutes register routes of all modules
