@@ -45,7 +45,7 @@ const (
 	ProposersURL            = "/staking/proposer/%v"
 	BufferedCheckpointURL   = "/checkpoints/buffer"
 	LatestCheckpointURL     = "/checkpoints/latest"
-	LatestMilestoneURL      = "/milestone"
+	LatestMilestoneURL      = "/milestone/latest"
 	CountCheckpointURL      = "/checkpoints/count"
 	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/bor/latest-span"
