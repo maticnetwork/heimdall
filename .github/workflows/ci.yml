@@ -143,7 +143,7 @@ jobs:
           if: always()
           run: |
             cd matic-cli/devnet
-            docker compose down
+            docker compose down --remove-orphans
             cd -
             mkdir -p ${{ github.run_id }}/matic-cli
             sudo mv heimdall ${{ github.run_id }}
