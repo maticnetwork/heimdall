@@ -39,6 +39,7 @@ $ heimdalld rest-server
 ### Run bridge
 ```bash 
 $ heimdalld bridge 
+```
 
 ### Develop using Docker
 
