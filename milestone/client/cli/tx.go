@@ -84,12 +84,15 @@ func SendMilestoneTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("root hash cannot be empty")
 			}
 
+			milestoneID := viper.GetString(FlagMilestoneID)
+
 			msg := types.NewMsgMilestoneBlock(
 				proposer,
 				startBlock,
 				endBlock,
 				hmTypes.HexToHeimdallHash(rootHashStr),
 				borChainID,
+				milestoneID,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
@@ -101,6 +104,7 @@ func SendMilestoneTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagRootHash, "r", "", "--root-hash=<root-hash>")
 	cmd.Flags().String(FlagBorChainID, "", "--bor-chain-id=<bor-chain-id>")
 	cmd.Flags().Bool(FlagAutoConfigure, false, "--auto-configure=true/false")
+	cmd.Flags().String(FlagMilestoneID, "0000", "--milestone-id=<milestone-id>")
 
 	if err := cmd.MarkFlagRequired(FlagRootHash); err != nil {
 		logger.Error("SendCheckpointTx | MarkFlagRequired | FlagRootHash", "Error", err)

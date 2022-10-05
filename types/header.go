@@ -17,12 +17,13 @@ type Checkpoint struct {
 
 // Milestone block header struct
 type Milestone struct {
-	Proposer   HeimdallAddress `json:"proposer"`
-	StartBlock uint64          `json:"start_block"`
-	EndBlock   uint64          `json:"end_block"`
-	RootHash   HeimdallHash    `json:"root_hash"`
-	BorChainID string          `json:"bor_chain_id"`
-	TimeStamp  uint64          `json:"timestamp"`
+	Proposer    HeimdallAddress `json:"proposer"`
+	StartBlock  uint64          `json:"start_block"`
+	EndBlock    uint64          `json:"end_block"`
+	RootHash    HeimdallHash    `json:"root_hash"`
+	BorChainID  string          `json:"bor_chain_id"`
+	MilestoneID string          `json:"milestone_id"`
+	TimeStamp   uint64          `json:"timestamp"`
 }
 
 // CreateBlock generate new block
@@ -51,15 +52,17 @@ func CreateMilestone(
 	rootHash HeimdallHash,
 	proposer HeimdallAddress,
 	borChainID string,
+	milestoneID string,
 	timestamp uint64,
 ) Milestone {
 	return Milestone{
-		StartBlock: start,
-		EndBlock:   end,
-		RootHash:   rootHash,
-		Proposer:   proposer,
-		BorChainID: borChainID,
-		TimeStamp:  timestamp,
+		StartBlock:  start,
+		EndBlock:    end,
+		RootHash:    rootHash,
+		Proposer:    proposer,
+		BorChainID:  borChainID,
+		MilestoneID: milestoneID,
+		TimeStamp:   timestamp,
 	}
 }
 
@@ -88,12 +91,13 @@ func (m Checkpoint) String() string {
 // String returns human redable string
 func (m Milestone) String() string {
 	return fmt.Sprintf(
-		"Milestone {%v (%d:%d) %v %v %v}",
+		"Milestone {%v (%d:%d) %v %v %v %v}",
 		m.Proposer.String(),
 		m.StartBlock,
 		m.EndBlock,
 		m.RootHash.Hex(),
 		m.BorChainID,
+		m.MilestoneID,
 		m.TimeStamp,
 	)
 }

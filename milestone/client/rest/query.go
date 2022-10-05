@@ -58,6 +58,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/latest", milestoneLatestHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/count", milestoneCountHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/latestNoAck", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
 }
 
 // swagger:route GET /milestone/params milestone milistoneParams
@@ -189,6 +190,25 @@ func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		cliCtx = cliCtx.WithHeight(height)
 
 		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func milestoneLatestNoAckFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// fetch checkpoint
+		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone), nil)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 

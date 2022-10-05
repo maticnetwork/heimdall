@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package rest
 
 import (
@@ -14,7 +14,8 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
-//It represents New milestone msg.
+// It represents New milestone msg.
+//
 //swagger:response milestoneNewResponse
 type milestoneNewResponse struct {
 	//in:body
@@ -58,11 +59,12 @@ type (
 	HeaderBlockReq struct {
 		BaseReq rest.BaseReq `json:"base_req"`
 
-		Proposer   hmTypes.HeimdallAddress `json:"proposer"`
-		RootHash   hmTypes.HeimdallHash    `json:"root_Hash"`
-		StartBlock uint64                  `json:"start_block"`
-		EndBlock   uint64                  `json:"end_block"`
-		BorChainID string                  `json:"bor_chain_id"`
+		Proposer    hmTypes.HeimdallAddress `json:"proposer"`
+		RootHash    hmTypes.HeimdallHash    `json:"root_Hash"`
+		StartBlock  uint64                  `json:"start_block"`
+		EndBlock    uint64                  `json:"end_block"`
+		BorChainID  string                  `json:"bor_chain_id"`
+		MilestoneID string                  `json:"milestone_id"`
 	}
 )
 
@@ -76,12 +78,13 @@ type milestoneNewParam struct {
 }
 
 type milestoneNewInput struct {
-	BaseReq    BaseReq `json:"base_req"`
-	Proposer   string  `json:"proposer"`
-	RootHash   string  `json:"root_Hash"`
-	StartBlock string  `json:"start_block"`
-	EndBlock   string  `json:"end_block"`
-	BorChainID string  `json:"bor_chain_id"`
+	BaseReq     BaseReq `json:"base_req"`
+	Proposer    string  `json:"proposer"`
+	RootHash    string  `json:"root_Hash"`
+	StartBlock  string  `json:"start_block"`
+	EndBlock    string  `json:"end_block"`
+	BorChainID  string  `json:"bor_chain_id"`
+	MilestoneID string  `json:"milestone_id"`
 }
 
 type BaseReq struct {
@@ -117,6 +120,7 @@ func newMilestoneHandler(cliCtx context.CLIContext) http.HandlerFunc {
 			req.EndBlock,
 			req.RootHash,
 			req.BorChainID,
+			req.MilestoneID,
 		)
 
 		// send response

@@ -20,11 +20,12 @@ var _ sdk.Msg = &MsgMilestone{}
 
 // MsgMilestone represents milestone
 type MsgMilestone struct {
-	Proposer   types.HeimdallAddress `json:"proposer"`
-	StartBlock uint64                `json:"start_block"`
-	EndBlock   uint64                `json:"end_block"`
-	RootHash   types.HeimdallHash    `json:"root_hash"`
-	BorChainID string                `json:"bor_chain_id"`
+	Proposer    types.HeimdallAddress `json:"proposer"`
+	StartBlock  uint64                `json:"start_block"`
+	EndBlock    uint64                `json:"end_block"`
+	RootHash    types.HeimdallHash    `json:"root_hash"`
+	BorChainID  string                `json:"bor_chain_id"`
+	MilestoneID string                `json:"milestone_id"`
 }
 
 // NewMsgMilestoneBlock creates new milestone message using mentioned arguments
@@ -34,13 +35,15 @@ func NewMsgMilestoneBlock(
 	endBlock uint64,
 	roothash types.HeimdallHash,
 	borChainID string,
+	milestoneID string,
 ) MsgMilestone {
 	return MsgMilestone{
-		Proposer:   proposer,
-		StartBlock: startBlock,
-		EndBlock:   endBlock,
-		RootHash:   roothash,
-		BorChainID: borChainID,
+		Proposer:    proposer,
+		StartBlock:  startBlock,
+		EndBlock:    endBlock,
+		RootHash:    roothash,
+		BorChainID:  borChainID,
+		MilestoneID: milestoneID,
 	}
 }
 
@@ -94,5 +97,6 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
 		msg.RootHash.Bytes(),
 		new(big.Int).SetUint64(borChainID).Bytes(),
+		[]byte(msg.MilestoneID),
 	)
 }

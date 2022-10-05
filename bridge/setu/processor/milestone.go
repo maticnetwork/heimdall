@@ -8,6 +8,7 @@ import (
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	milestoneTypes "github.com/maticnetwork/heimdall/milestone/types"
+	"github.com/pborman/uuid"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -129,12 +130,15 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		return err
 	}
 
+	milestoneId := uuid.NewRandom().String() + string(helper.GetAddress())
+
 	mp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", start,
 		"end", end,
 		"root", hmTypes.BytesToHeimdallHash(root),
+		"milestoneId",
 	)
 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams
@@ -146,6 +150,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		end,
 		hmTypes.BytesToHeimdallHash(root),
 		chainParams.BorChainID,
+		milestoneId,
 	)
 
 	// return broadcast to heimdall

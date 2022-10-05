@@ -2,13 +2,14 @@ package types
 
 // query endpoints supported by the auth Querier
 const (
-	QueryParams            = "params"
-	QueryLatestMilestone   = "milestone-latest"
-	QueryMilestoneByNumber = "milestone-by-number"
-	QueryProposer          = "is-proposer"
-	QueryCurrentProposer   = "current-proposer"
-	StakingQuerierRoute    = "staking"
-	QueryCount             = "count"
+	QueryParams               = "params"
+	QueryLatestMilestone      = "milestone-latest"
+	QueryMilestoneByNumber    = "milestone-by-number"
+	QueryProposer             = "is-proposer"
+	QueryCurrentProposer      = "current-proposer"
+	StakingQuerierRoute       = "staking"
+	QueryCount                = "count"
+	QueryLatestNoAckMilestone = "latest-no-ack-milestone"
 )
 
 // QueryBorChainID defines the params for querying with bor chain id

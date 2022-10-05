@@ -10,6 +10,7 @@ var (
 
 	AttributeKeyNewProposer = "new-proposer"
 	AttributeKeyRootHash    = "root-hash"
+	AttributeKeyMilestoneID = "milestone-id"
 
 	AttributeValueCategory = ModuleName
 )

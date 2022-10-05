@@ -17,10 +17,11 @@ import (
 )
 
 var (
-	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
-	MilestoneKey = []byte{0x20} // Key to store milestone
-	CountKey     = []byte{0x30} //Key to store the count
-
+	DefaultValue          = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
+	MilestoneKey          = []byte{0x20} // Key to store milestone
+	CountKey              = []byte{0x30} //Key to store the count
+	MilestoneNoAckKey     = []byte{0x40} //Key to store the NoAckMilestone
+	MilestoneLastNoAckKey = []byte{0x50} //Key to store the Latest NoAckMilestone
 )
 
 // ModuleCommunicator manages different module interaction
@@ -219,4 +220,44 @@ func (k *Keeper) PruneMilestone(ctx sdk.Context, number uint64) {
 	}
 
 	store.Delete(milestoneKey)
+}
+
+// SetLastNoAck set last no-ack object
+func (k *Keeper) SetNoAckMilestone(ctx sdk.Context, milestoneId string) {
+	store := ctx.KVStore(k.storeKey)
+
+	milestoneNoAckKey := GetMilestoneNoAckKey(milestoneId)
+	value := []byte("milestoneId")
+
+	// set no-ack-milestone
+	store.Set(milestoneNoAckKey, value)
+	store.Set(MilestoneLastNoAckKey, value)
+}
+
+// GetLastNoAckMilestone returns last no ack milestone
+func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) string {
+	store := ctx.KVStore(k.storeKey)
+	// check if ack count is there
+	if store.Has(MilestoneLastNoAckKey) {
+		// get current ACK count
+		result := string(store.Get(MilestoneLastNoAckKey))
+		return result
+	}
+	return ""
+}
+
+// GetLastNoAckMilestone returns last no ack milestone
+func (k *Keeper) GetNoAckMilestone(ctx sdk.Context, milestoneId string) bool {
+	store := ctx.KVStore(k.storeKey)
+	// check if No Ack Milestone is there
+	if store.Has(GetMilestoneNoAckKey(milestoneId)) {
+		return true
+	}
+	return false
+}
+
+// GetMilestoneKey appends prefix to milestoneNumber
+func GetMilestoneNoAckKey(milestoneId string) []byte {
+	milestoneNoAckBytes := []byte(milestoneId)
+	return append(MilestoneNoAckKey, milestoneNoAckBytes...)
 }

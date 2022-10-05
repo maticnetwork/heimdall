@@ -10,4 +10,5 @@ const (
 	FlagMilestoneNumber = "number"
 	FlagHeaderNumber    = "header"
 	FlagAutoConfigure   = "auto-configure"
+	FlagMilestoneID     = "milestone-id"
 )

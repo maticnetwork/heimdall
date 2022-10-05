@@ -18,6 +18,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
 	borChainID := "1234"
+	milestoneID := "00000"
 
 	milestone := hmTypes.CreateMilestone(
 		startBlock,
@@ -25,6 +26,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		rootHash,
 		proposerAddress,
 		borChainID,
+		milestoneID,
 		timestamp,
 	)
 
