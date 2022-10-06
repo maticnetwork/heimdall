@@ -179,6 +179,14 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 
 	borChainId := "1234"
 
+	_ = types.NewMsgMilestoneBlock(
+		milestone.Proposer,
+		milestone.StartBlock,
+		milestone.EndBlock,
+		milestone.RootHash,
+		borChainId,
+	)
+
 	suite.Run("Failure", func() {
 		// create milestone msg
 		msgMilestone := types.NewMsgMilestoneBlock(
