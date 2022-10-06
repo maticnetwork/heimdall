@@ -10,6 +10,7 @@ const (
 	StakingQuerierRoute       = "staking"
 	QueryCount                = "count"
 	QueryLatestNoAckMilestone = "latest-no-ack-milestone"
+	QueryNoAckMilestoneByID   = "no-ack-milestone-by-id"
 )
 
 // QueryBorChainID defines the params for querying with bor chain id
@@ -31,4 +32,13 @@ type QueryBorChainID struct {
 // NewQueryBorChainID creates a new instance of QueryBorChainID with give chain id
 func NewQueryBorChainID(chainID string) QueryBorChainID {
 	return QueryBorChainID{BorChainID: chainID}
+}
+
+type QueryMilestoneID struct {
+	MilestoneID string
+}
+
+// NewQueryMilestoneParams creates a new instance of QueryMilestoneHeaderIndex.
+func NewQueryMilestoneID(id string) QueryMilestoneID {
+	return QueryMilestoneID{MilestoneID: id}
 }

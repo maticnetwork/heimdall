@@ -42,6 +42,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
 	borChainId := "1234"
+	milestoneID := "0000"
 
 	milestoneMock := hmTypes.CreateMilestone(
 		startBlock,
@@ -49,6 +50,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		rootHash,
 		proposerAddress,
 		borChainId,
+		milestoneID,
 		timestamp,
 	)
 

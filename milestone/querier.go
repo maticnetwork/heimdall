@@ -31,6 +31,9 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, contractCaller help
 		case types.QueryLatestNoAckMilestone:
 			return handleQueryLatestNoAckMilestone(ctx, req, keeper)
 
+		case types.QueryNoAckMilestoneByID:
+			return handleQueryNoAckMilestoneByID(ctx, req, keeper)
+
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -98,6 +101,21 @@ func handleQueryCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]
 
 func handleQueryLatestNoAckMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	res := keeper.GetLastNoAckMilestone(ctx)
+
+	bz, err := json.Marshal(res)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
+func handleQueryNoAckMilestoneByID(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var ID types.QueryMilestoneID
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &ID); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse milestoneID: %s", err))
+	}
+	res := keeper.GetNoAckMilestone(ctx, ID.MilestoneID)
 
 	bz, err := json.Marshal(res)
 	if err != nil {

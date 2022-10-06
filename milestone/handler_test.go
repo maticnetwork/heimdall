@@ -58,6 +58,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	stakingKeeper := app.StakingKeeper
 	start := uint64(0)
 	borChainId := "1234"
+	milestoneID := "0000"
 	params := keeper.GetParams(ctx)
 	sprintLength := params.SprintLength
 
@@ -84,6 +85,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.EndBlock,
 			header.RootHash,
 			borChainId,
+			milestoneID,
 		)
 
 		// send milestone to handler
@@ -101,6 +103,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.EndBlock,
 			header.RootHash,
 			borChainId,
+			milestoneID,
 		)
 
 		// send milestone to handler
@@ -133,6 +136,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.EndBlock,
 			header.RootHash,
 			borChainId,
+			milestoneID,
 		)
 
 		// send milestone to handler
@@ -161,6 +165,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			start+sprintLength-1,
 			header.RootHash,
 			borChainId,
+			milestoneID,
 		)
 
 		// send milestone to handler
@@ -187,6 +192,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			start+sprintLength-1,
 			header.RootHash,
 			borChainId,
+			milestoneID,
 		)
 
 		// send milestone to handler
@@ -237,6 +243,7 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 	// keeper := app.MilestoneKeeper
 
 	borChainId := "1234"
+	milestoneID := "00000"
 	// create milestone msg
 	msgMilestone := types.NewMsgMilestoneBlock(
 		header.Proposer,
@@ -244,6 +251,7 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 		header.EndBlock,
 		header.RootHash,
 		borChainId,
+		milestoneID,
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)

@@ -39,6 +39,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
 	borChainId := "1234"
+	milestoneID := "0000"
 
 	milestone := hmTypes.CreateMilestone(
 		startBlock,
@@ -46,6 +47,7 @@ func (suite *KeeperTestSuite) TestAddCheckpoint() {
 		rootHash,
 		proposerAddress,
 		borChainId,
+		milestoneID,
 		timestamp,
 	)
 	err := keeper.AddMilestone(ctx, milestone)
@@ -74,6 +76,7 @@ func (suite *KeeperTestSuite) TestGetCount() {
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
 	borChainId := "1234"
+	milestoneID := "0000"
 
 	milestone := hmTypes.CreateMilestone(
 		startBlock,
@@ -81,6 +84,7 @@ func (suite *KeeperTestSuite) TestGetCount() {
 		rootHash,
 		proposerAddress,
 		borChainId,
+		milestoneID,
 		timestamp,
 	)
 	err := keeper.AddMilestone(ctx, milestone)
@@ -88,6 +92,63 @@ func (suite *KeeperTestSuite) TestGetCount() {
 
 	result = keeper.GetCount(ctx)
 	require.Equal(t, uint64(1), result)
+
+}
+
+func (suite *KeeperTestSuite) TestGetNoAckMilestone() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.MilestoneKeeper
+
+	result := keeper.GetCount(ctx)
+	require.Equal(t, uint64(0), result)
+
+	milestoneID := "0000"
+
+	keeper.SetNoAckMilestone(ctx, milestoneID)
+
+	val := keeper.GetNoAckMilestone(ctx, "0000")
+	require.True(t, val)
+
+	val = keeper.GetNoAckMilestone(ctx, "00001")
+	require.False(t, val)
+
+	val = keeper.GetNoAckMilestone(ctx, "")
+	require.False(t, val)
+
+	milestoneID = "0001"
+	keeper.SetNoAckMilestone(ctx, milestoneID)
+
+	val = keeper.GetNoAckMilestone(ctx, "0001")
+	require.True(t, val)
+
+	val = keeper.GetNoAckMilestone(ctx, "0000")
+	require.True(t, val)
+
+}
+
+func (suite *KeeperTestSuite) TestLastNoAckMilestone() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.MilestoneKeeper
+
+	result := keeper.GetCount(ctx)
+	require.Equal(t, uint64(0), result)
+
+	milestoneID := "0000"
+
+	val := keeper.GetLastNoAckMilestone(ctx)
+	require.NotEqual(t, val, milestoneID)
+
+	keeper.SetNoAckMilestone(ctx, milestoneID)
+
+	val = keeper.GetLastNoAckMilestone(ctx)
+	require.Equal(t, val, milestoneID)
+
+	milestoneID = "0001"
+
+	keeper.SetNoAckMilestone(ctx, milestoneID)
+
+	val = keeper.GetLastNoAckMilestone(ctx)
+	require.Equal(t, val, milestoneID)
 
 }
 

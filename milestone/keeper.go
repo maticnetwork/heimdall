@@ -227,7 +227,7 @@ func (k *Keeper) SetNoAckMilestone(ctx sdk.Context, milestoneId string) {
 	store := ctx.KVStore(k.storeKey)
 
 	milestoneNoAckKey := GetMilestoneNoAckKey(milestoneId)
-	value := []byte("milestoneId")
+	value := []byte(milestoneId)
 
 	// set no-ack-milestone
 	store.Set(milestoneNoAckKey, value)
