@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/helper"
 )
 

@@ -7,15 +7,15 @@ import (
 	"os"
 	"testing"
 
-	"github.com/maticnetwork/bor/common"
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
 )
 
-//  Test - to decode signers from checkpoint sigs data
+// Test - to decode signers from checkpoint sigs data
 func TestCheckpointsigs(t *testing.T) {
 	tendermintNode := "tcp://localhost:26657"
 	viper.Set(NodeFlag, tendermintNode)

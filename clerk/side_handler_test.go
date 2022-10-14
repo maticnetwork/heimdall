@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/clerk"
 	"github.com/maticnetwork/heimdall/clerk/types"
@@ -59,9 +59,7 @@ func TestSideHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(SideHandlerTestSuite))
 }
 
-//
 // Test cases
-//
 func (suite *SideHandlerTestSuite) TestSideHandler() {
 	t, ctx := suite.T(), suite.ctx
 

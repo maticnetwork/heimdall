@@ -8,7 +8,7 @@ import (
 
 	"github.com/cbergoon/merkletree"
 	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/maticnetwork/bor/crypto"
+	"github.com/ethereum/go-ethereum/crypto"
 )
 
 // DividendAccount contains burned Fee amount
@@ -63,7 +63,7 @@ func SortDividendAccountByAddress(dividendAccounts []DividendAccount) []Dividend
 	return dividendAccounts
 }
 
-//CalculateHash hashes the values of a DividendAccount
+// CalculateHash hashes the values of a DividendAccount
 func (da DividendAccount) CalculateHash() ([]byte, error) {
 	fee, _ := big.NewInt(0).SetString(da.FeeAmount, 10)
 	divAccountHash := crypto.Keccak256(appendBytes32(
@@ -94,7 +94,7 @@ func convertTo32(input []byte) (output [32]byte, err error) {
 	return
 }
 
-//Equals tests for equality of two Contents
+// Equals tests for equality of two Contents
 func (da DividendAccount) Equals(other merkletree.Content) (bool, error) {
 	return da.User.Equals(other.(DividendAccount).User), nil
 }

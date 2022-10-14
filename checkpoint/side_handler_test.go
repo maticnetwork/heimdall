@@ -7,7 +7,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	borCommon "github.com/maticnetwork/bor/common"
+	borCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/app"
 	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint"

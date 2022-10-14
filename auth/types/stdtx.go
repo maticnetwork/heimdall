@@ -5,8 +5,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/rlp"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/rlp"
 )
 
 var (
@@ -144,7 +145,7 @@ func (ss StdSignature) String() string {
 		return ""
 	}
 
-	return common.ToHex(ss)
+	return hexutil.Encode(ss)
 }
 
 //

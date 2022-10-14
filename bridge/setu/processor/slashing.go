@@ -8,9 +8,9 @@ import (
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
@@ -103,11 +103,11 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 }
 
 /*
-	sendTickToRootchain - create and submit tick tx to rootchain to slashing faulty validators
-	1. Fetch sigs from heimdall using txHash
-	2. Fetch slashing info from heimdall via Rest call
-	3. Verify if this tick tx is already submitted to rootchain using nonce data
-	4. create tick tx and submit to rootchain
+sendTickToRootchain - create and submit tick tx to rootchain to slashing faulty validators
+1. Fetch sigs from heimdall using txHash
+2. Fetch slashing info from heimdall via Rest call
+3. Verify if this tick tx is already submitted to rootchain using nonce data
+4. create tick tx and submit to rootchain
 */
 func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight int64) (err error) {
 	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)

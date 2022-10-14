@@ -5,8 +5,8 @@ import (
 	"encoding/json"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"

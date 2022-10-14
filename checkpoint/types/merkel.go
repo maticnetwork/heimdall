@@ -5,8 +5,8 @@ import (
 	"errors"
 
 	"github.com/cbergoon/merkletree"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/rpc"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/tendermint/crypto/sha3"
 	"golang.org/x/sync/errgroup"
 

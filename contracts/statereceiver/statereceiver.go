@@ -4,31 +4,38 @@
 package statereceiver
 
 import (
+	"errors"
 	"math/big"
 	"strings"
 
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/accounts/abi/bind"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/event"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/event"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
 var (
+	_ = errors.New
 	_ = big.NewInt
 	_ = strings.NewReader
 	_ = ethereum.NotFound
-	_ = abi.U256
 	_ = bind.Bind
 	_ = common.Big1
 	_ = types.BloomLookup
 	_ = event.NewSubscription
 )
 
+// StatereceiverMetaData contains all meta data concerning the Statereceiver contract.
+var StatereceiverMetaData = &bind.MetaData{
+	ABI: "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"states\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"recordBytes\",\"type\":\"bytes\"}],\"name\":\"commitState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getPendingStates\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"SYSTEM_ADDRESS\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isValidatorSetContract\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"stateId\",\"type\":\"uint256\"}],\"name\":\"proposeState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"isProducer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"isValidator\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]",
+}
+
 // StatereceiverABI is the input ABI used to generate the binding from.
-const StatereceiverABI = "[{\"constant\":true,\"inputs\":[{\"name\":\"\",\"type\":\"uint256\"}],\"name\":\"states\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"recordBytes\",\"type\":\"bytes\"}],\"name\":\"commitState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"getPendingStates\",\"outputs\":[{\"name\":\"\",\"type\":\"uint256[]\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"SYSTEM_ADDRESS\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"validatorSet\",\"outputs\":[{\"name\":\"\",\"type\":\"address\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"vote\",\"type\":\"bytes\"},{\"name\":\"sigs\",\"type\":\"bytes\"},{\"name\":\"txBytes\",\"type\":\"bytes\"},{\"name\":\"proof\",\"type\":\"bytes\"}],\"name\":\"validateValidatorSet\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[],\"name\":\"isValidatorSetContract\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":false,\"inputs\":[{\"name\":\"stateId\",\"type\":\"uint256\"}],\"name\":\"proposeState\",\"outputs\":[],\"payable\":false,\"stateMutability\":\"nonpayable\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"isProducer\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"},{\"constant\":true,\"inputs\":[{\"name\":\"signer\",\"type\":\"address\"}],\"name\":\"isValidator\",\"outputs\":[{\"name\":\"\",\"type\":\"bool\"}],\"payable\":false,\"stateMutability\":\"view\",\"type\":\"function\"}]"
+// Deprecated: Use StatereceiverMetaData.ABI instead.
+var StatereceiverABI = StatereceiverMetaData.ABI
 
 // Statereceiver is an auto generated Go binding around an Ethereum contract.
 type Statereceiver struct {
@@ -138,7 +145,7 @@ func bindStatereceiver(address common.Address, caller bind.ContractCaller, trans
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Statereceiver *StatereceiverRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Statereceiver *StatereceiverRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Statereceiver.Contract.StatereceiverCaller.contract.Call(opts, result, method, params...)
 }
 
@@ -157,7 +164,7 @@ func (_Statereceiver *StatereceiverRaw) Transact(opts *bind.TransactOpts, method
 // sets the output to result. The result type might be a single field for simple
 // returns, a slice of interfaces for anonymous returns and a struct for named
 // returns.
-func (_Statereceiver *StatereceiverCallerRaw) Call(opts *bind.CallOpts, result interface{}, method string, params ...interface{}) error {
+func (_Statereceiver *StatereceiverCallerRaw) Call(opts *bind.CallOpts, result *[]interface{}, method string, params ...interface{}) error {
 	return _Statereceiver.Contract.contract.Call(opts, result, method, params...)
 }
 
@@ -174,182 +181,217 @@ func (_Statereceiver *StatereceiverTransactorRaw) Transact(opts *bind.TransactOp
 
 // SYSTEMADDRESS is a free data retrieval call binding the contract method 0x3434735f.
 //
-// Solidity: function SYSTEM_ADDRESS() constant returns(address)
+// Solidity: function SYSTEM_ADDRESS() view returns(address)
 func (_Statereceiver *StatereceiverCaller) SYSTEMADDRESS(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Statereceiver.contract.Call(opts, out, "SYSTEM_ADDRESS")
-	return *ret0, err
+	var out []interface{}
+	err := _Statereceiver.contract.Call(opts, &out, "SYSTEM_ADDRESS")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // SYSTEMADDRESS is a free data retrieval call binding the contract method 0x3434735f.
 //
-// Solidity: function SYSTEM_ADDRESS() constant returns(address)
+// Solidity: function SYSTEM_ADDRESS() view returns(address)
 func (_Statereceiver *StatereceiverSession) SYSTEMADDRESS() (common.Address, error) {
 	return _Statereceiver.Contract.SYSTEMADDRESS(&_Statereceiver.CallOpts)
 }
 
 // SYSTEMADDRESS is a free data retrieval call binding the contract method 0x3434735f.
 //
-// Solidity: function SYSTEM_ADDRESS() constant returns(address)
+// Solidity: function SYSTEM_ADDRESS() view returns(address)
 func (_Statereceiver *StatereceiverCallerSession) SYSTEMADDRESS() (common.Address, error) {
 	return _Statereceiver.Contract.SYSTEMADDRESS(&_Statereceiver.CallOpts)
 }
 
 // GetPendingStates is a free data retrieval call binding the contract method 0x21ec23b6.
 //
-// Solidity: function getPendingStates() constant returns(uint256[])
+// Solidity: function getPendingStates() view returns(uint256[])
 func (_Statereceiver *StatereceiverCaller) GetPendingStates(opts *bind.CallOpts) ([]*big.Int, error) {
-	var (
-		ret0 = new([]*big.Int)
-	)
-	out := ret0
-	err := _Statereceiver.contract.Call(opts, out, "getPendingStates")
-	return *ret0, err
+	var out []interface{}
+	err := _Statereceiver.contract.Call(opts, &out, "getPendingStates")
+
+	if err != nil {
+		return *new([]*big.Int), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new([]*big.Int)).(*[]*big.Int)
+
+	return out0, err
+
 }
 
 // GetPendingStates is a free data retrieval call binding the contract method 0x21ec23b6.
 //
-// Solidity: function getPendingStates() constant returns(uint256[])
+// Solidity: function getPendingStates() view returns(uint256[])
 func (_Statereceiver *StatereceiverSession) GetPendingStates() ([]*big.Int, error) {
 	return _Statereceiver.Contract.GetPendingStates(&_Statereceiver.CallOpts)
 }
 
 // GetPendingStates is a free data retrieval call binding the contract method 0x21ec23b6.
 //
-// Solidity: function getPendingStates() constant returns(uint256[])
+// Solidity: function getPendingStates() view returns(uint256[])
 func (_Statereceiver *StatereceiverCallerSession) GetPendingStates() ([]*big.Int, error) {
 	return _Statereceiver.Contract.GetPendingStates(&_Statereceiver.CallOpts)
 }
 
 // IsProducer is a free data retrieval call binding the contract method 0xf5521022.
 //
-// Solidity: function isProducer(address signer) constant returns(bool)
+// Solidity: function isProducer(address signer) view returns(bool)
 func (_Statereceiver *StatereceiverCaller) IsProducer(opts *bind.CallOpts, signer common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Statereceiver.contract.Call(opts, out, "isProducer", signer)
-	return *ret0, err
+	var out []interface{}
+	err := _Statereceiver.contract.Call(opts, &out, "isProducer", signer)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsProducer is a free data retrieval call binding the contract method 0xf5521022.
 //
-// Solidity: function isProducer(address signer) constant returns(bool)
+// Solidity: function isProducer(address signer) view returns(bool)
 func (_Statereceiver *StatereceiverSession) IsProducer(signer common.Address) (bool, error) {
 	return _Statereceiver.Contract.IsProducer(&_Statereceiver.CallOpts, signer)
 }
 
 // IsProducer is a free data retrieval call binding the contract method 0xf5521022.
 //
-// Solidity: function isProducer(address signer) constant returns(bool)
+// Solidity: function isProducer(address signer) view returns(bool)
 func (_Statereceiver *StatereceiverCallerSession) IsProducer(signer common.Address) (bool, error) {
 	return _Statereceiver.Contract.IsProducer(&_Statereceiver.CallOpts, signer)
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
 //
-// Solidity: function isValidator(address signer) constant returns(bool)
+// Solidity: function isValidator(address signer) view returns(bool)
 func (_Statereceiver *StatereceiverCaller) IsValidator(opts *bind.CallOpts, signer common.Address) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Statereceiver.contract.Call(opts, out, "isValidator", signer)
-	return *ret0, err
+	var out []interface{}
+	err := _Statereceiver.contract.Call(opts, &out, "isValidator", signer)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
 //
-// Solidity: function isValidator(address signer) constant returns(bool)
+// Solidity: function isValidator(address signer) view returns(bool)
 func (_Statereceiver *StatereceiverSession) IsValidator(signer common.Address) (bool, error) {
 	return _Statereceiver.Contract.IsValidator(&_Statereceiver.CallOpts, signer)
 }
 
 // IsValidator is a free data retrieval call binding the contract method 0xfacd743b.
 //
-// Solidity: function isValidator(address signer) constant returns(bool)
+// Solidity: function isValidator(address signer) view returns(bool)
 func (_Statereceiver *StatereceiverCallerSession) IsValidator(signer common.Address) (bool, error) {
 	return _Statereceiver.Contract.IsValidator(&_Statereceiver.CallOpts, signer)
 }
 
 // IsValidatorSetContract is a free data retrieval call binding the contract method 0xd79e60b7.
 //
-// Solidity: function isValidatorSetContract() constant returns(bool)
+// Solidity: function isValidatorSetContract() view returns(bool)
 func (_Statereceiver *StatereceiverCaller) IsValidatorSetContract(opts *bind.CallOpts) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Statereceiver.contract.Call(opts, out, "isValidatorSetContract")
-	return *ret0, err
+	var out []interface{}
+	err := _Statereceiver.contract.Call(opts, &out, "isValidatorSetContract")
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // IsValidatorSetContract is a free data retrieval call binding the contract method 0xd79e60b7.
 //
-// Solidity: function isValidatorSetContract() constant returns(bool)
+// Solidity: function isValidatorSetContract() view returns(bool)
 func (_Statereceiver *StatereceiverSession) IsValidatorSetContract() (bool, error) {
 	return _Statereceiver.Contract.IsValidatorSetContract(&_Statereceiver.CallOpts)
 }
 
 // IsValidatorSetContract is a free data retrieval call binding the contract method 0xd79e60b7.
 //
-// Solidity: function isValidatorSetContract() constant returns(bool)
+// Solidity: function isValidatorSetContract() view returns(bool)
 func (_Statereceiver *StatereceiverCallerSession) IsValidatorSetContract() (bool, error) {
 	return _Statereceiver.Contract.IsValidatorSetContract(&_Statereceiver.CallOpts)
 }
 
 // States is a free data retrieval call binding the contract method 0x017a9105.
 //
-// Solidity: function states(uint256 ) constant returns(bool)
+// Solidity: function states(uint256 ) view returns(bool)
 func (_Statereceiver *StatereceiverCaller) States(opts *bind.CallOpts, arg0 *big.Int) (bool, error) {
-	var (
-		ret0 = new(bool)
-	)
-	out := ret0
-	err := _Statereceiver.contract.Call(opts, out, "states", arg0)
-	return *ret0, err
+	var out []interface{}
+	err := _Statereceiver.contract.Call(opts, &out, "states", arg0)
+
+	if err != nil {
+		return *new(bool), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(bool)).(*bool)
+
+	return out0, err
+
 }
 
 // States is a free data retrieval call binding the contract method 0x017a9105.
 //
-// Solidity: function states(uint256 ) constant returns(bool)
+// Solidity: function states(uint256 ) view returns(bool)
 func (_Statereceiver *StatereceiverSession) States(arg0 *big.Int) (bool, error) {
 	return _Statereceiver.Contract.States(&_Statereceiver.CallOpts, arg0)
 }
 
 // States is a free data retrieval call binding the contract method 0x017a9105.
 //
-// Solidity: function states(uint256 ) constant returns(bool)
+// Solidity: function states(uint256 ) view returns(bool)
 func (_Statereceiver *StatereceiverCallerSession) States(arg0 *big.Int) (bool, error) {
 	return _Statereceiver.Contract.States(&_Statereceiver.CallOpts, arg0)
 }
 
 // ValidatorSet is a free data retrieval call binding the contract method 0x9426e226.
 //
-// Solidity: function validatorSet() constant returns(address)
+// Solidity: function validatorSet() view returns(address)
 func (_Statereceiver *StatereceiverCaller) ValidatorSet(opts *bind.CallOpts) (common.Address, error) {
-	var (
-		ret0 = new(common.Address)
-	)
-	out := ret0
-	err := _Statereceiver.contract.Call(opts, out, "validatorSet")
-	return *ret0, err
+	var out []interface{}
+	err := _Statereceiver.contract.Call(opts, &out, "validatorSet")
+
+	if err != nil {
+		return *new(common.Address), err
+	}
+
+	out0 := *abi.ConvertType(out[0], new(common.Address)).(*common.Address)
+
+	return out0, err
+
 }
 
 // ValidatorSet is a free data retrieval call binding the contract method 0x9426e226.
 //
-// Solidity: function validatorSet() constant returns(address)
+// Solidity: function validatorSet() view returns(address)
 func (_Statereceiver *StatereceiverSession) ValidatorSet() (common.Address, error) {
 	return _Statereceiver.Contract.ValidatorSet(&_Statereceiver.CallOpts)
 }
 
 // ValidatorSet is a free data retrieval call binding the contract method 0x9426e226.
 //
-// Solidity: function validatorSet() constant returns(address)
+// Solidity: function validatorSet() view returns(address)
 func (_Statereceiver *StatereceiverCallerSession) ValidatorSet() (common.Address, error) {
 	return _Statereceiver.Contract.ValidatorSet(&_Statereceiver.CallOpts)
 }

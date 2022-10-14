@@ -7,7 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 )

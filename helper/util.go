@@ -23,9 +23,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/keys"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/common"
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -220,6 +220,9 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 		}
 	}
 
+	// Nothing to do with sigs, Just a type check in latest geth code
+	dummyLegacyTxn := ethTypes.NewTransaction(0, common.Address{}, nil, 0, nil, nil)
+
 	if len(sideTxSigs) > 0 {
 		// sort sigs by address
 		sort.Slice(sideTxSigs, func(i, j int) bool {
@@ -228,7 +231,7 @@ func GetSideTxSigs(txHash []byte, sideTxData []byte, unFilteredVotes []*tmTypes.
 
 		// loop votes and append to sig to sigs
 		for _, sideTxSig := range sideTxSigs {
-			R, S, V, err := ethTypes.HomesteadSigner{}.SignatureValues(nil, sideTxSig.Sig)
+			R, S, V, err := ethTypes.HomesteadSigner{}.SignatureValues(dummyLegacyTxn, sideTxSig.Sig)
 			if err != nil {
 				return nil, err
 			}
@@ -759,7 +762,7 @@ func UnpackSigAndVotes(payload []byte, abi abi.ABI) (votes []byte, sigs []byte, 
 // EventByID looks up a event by the topic id
 func EventByID(abiObject *abi.ABI, sigdata []byte) *abi.Event {
 	for _, event := range abiObject.Events {
-		if bytes.Equal(event.Id().Bytes(), sigdata) {
+		if bytes.Equal(event.ID.Bytes(), sigdata) {
 			return &event
 		}
 	}

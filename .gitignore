@@ -2,7 +2,7 @@
 
 # ignore vendor
 vendor/
-vendor/github.com/maticnetwork/bor
+vendor/github.com/ethereum/go-ethereum
 vendor/github.com/tendermint/iavl
 
 # ignore build

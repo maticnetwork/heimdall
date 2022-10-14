@@ -10,8 +10,8 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 	"gopkg.in/yaml.v2"
 
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/common/hexutil"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // PubKey pubkey

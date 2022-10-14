@@ -4,7 +4,7 @@ import (
 	"math/big"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -32,7 +32,7 @@ func NewMsgUnjail(from types.HeimdallAddress, id uint64, txHash types.HeimdallHa
 	}
 }
 
-//nolint
+// nolint
 func (msg MsgUnjail) Route() string { return RouterKey }
 func (msg MsgUnjail) Type() string  { return "unjail" }
 func (msg MsgUnjail) GetSigners() []sdk.AccAddress {
@@ -109,9 +109,9 @@ func (msg MsgTick) ValidateBasic() sdk.Error {
 
 // GetSideSignBytes returns side sign bytes
 func (msg MsgTick) GetSideSignBytes() []byte {
-	uintType, _ := abi.NewType("uint256", nil)
-	addressType, _ := abi.NewType("address", nil)
-	bytesType, _ := abi.NewType("bytes", nil)
+	uintType, _ := abi.NewType("uint256", "", nil)
+	addressType, _ := abi.NewType("address", "", nil)
+	bytesType, _ := abi.NewType("bytes", "", nil)
 
 	arguments := abi.Arguments{
 		{

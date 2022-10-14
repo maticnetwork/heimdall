@@ -7,11 +7,11 @@ import (
 	"math/big"
 	"strings"
 
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/accounts/abi/bind"
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/crypto"
-	"github.com/maticnetwork/bor/ethclient"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -63,8 +63,19 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	callMsg.From = fromAddress
 	gasLimit, err := client.EstimateGas(context.Background(), callMsg)
 
+	chainId, err := client.ChainID(context.Background())
+	if err != nil {
+		Logger.Error("Unable to fetch ChainID", "error", err)
+		return
+	}
+
 	// create auth
-	auth = bind.NewKeyedTransactor(ecdsaPrivateKey)
+	auth, err = bind.NewKeyedTransactorWithChainID(ecdsaPrivateKey, chainId)
+	if err != nil {
+		Logger.Error("Unable to create auth object", "error", err)
+		return
+	}
+
 	auth.GasPrice = gasprice
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasLimit = uint64(gasLimit) // uint64(gasLimit)

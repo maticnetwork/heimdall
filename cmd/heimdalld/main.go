@@ -16,7 +16,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethCommon "github.com/maticnetwork/bor/common"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/spf13/cast"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
