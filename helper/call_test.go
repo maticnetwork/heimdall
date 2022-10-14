@@ -5,7 +5,8 @@ import (
 	"os"
 	"testing"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -24,7 +25,7 @@ const (
 	testTendermintNode = "tcp://localhost:26657"
 )
 
-//  TestCheckpointSigs decodes signers from checkpoint sigs data
+// TestCheckpointSigs decodes signers from checkpoint sigs data
 func TestCheckpointSigs(t *testing.T) {
 	t.Parallel()
 
@@ -76,8 +77,8 @@ func FetchSigners(voteBytes []byte, sigInput []byte) ([]string, error) {
 	return signersList, nil
 }
 
-//  TestPopulateABIs tests that package level ABIs cache works as expected
-//  by not invoking json methods after contracts ABIs' init
+// TestPopulateABIs tests that package level ABIs cache works as expected
+// by not invoking json methods after contracts ABIs' init
 func TestPopulateABIs(t *testing.T) {
 	t.Parallel()
 

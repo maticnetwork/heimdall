@@ -3,12 +3,10 @@ package milestone
 import (
 	"strconv"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/milestone/types"
@@ -39,11 +37,30 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 	// logger
 	logger := k.Logger(ctx)
-	contextCtx := context.NewCLIContext()
-	logger.Error("In SideHandler", "Block Height", util.GetBlockHeight(contextCtx), "RootHash", msg.RootHash)
+	logger.Error("In SideHandler", "RootHash", msg.RootHash)
 
 	// validate milestone
-	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.RootHash, contractCaller, sprintLength)
+	count := k.GetCount(ctx)
+	lastMilestone, err := k.GetLastMilestone(ctx)
+
+	if count != uint64(0) && err != nil {
+		logger.Error("Error while receiving the last milestone in the side handler")
+		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
+
+	}
+
+	if count != uint64(0) && msg.StartBlock != lastMilestone.EndBlock+1 {
+		logger.Error("Milestone is not in continuity to last stored milestone",
+			"startBlock", msg.StartBlock,
+			"endBlock", msg.EndBlock,
+			"rootHash", msg.RootHash,
+			"milestoneId", msg.MilestoneID,
+			"error", err,
+		)
+		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
+	}
+
+	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.RootHash, msg.MilestoneID, contractCaller, sprintLength)
 	if err != nil {
 		logger.Error("Error validating milestone",
 			"startBlock", msg.StartBlock,
@@ -52,6 +69,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 			"milestoneId", msg.MilestoneID,
 			"error", err,
 		)
+
 	} else if validMilestone {
 		// vote `yes` if milestone is valid
 		result.Result = abci.SideTxResultType_Yes
@@ -98,8 +116,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
-	contextCtx := context.NewCLIContext()
-	logger.Error("In PostHandler", "Block Height", util.GetBlockHeight(contextCtx), "RootHash", msg.RootHash)
+	logger.Error("In PostHandler", "RootHash", msg.RootHash)
 
 	//
 	// Validate last milestone

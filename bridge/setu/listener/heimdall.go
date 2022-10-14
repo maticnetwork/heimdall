@@ -2,17 +2,16 @@ package listener
 
 import (
 	"context"
-	"encoding/json"
+	"math/big"
 	"strconv"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/helper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 )
 
@@ -45,18 +44,18 @@ func (hl *HeimdallListener) Start() error {
 	}
 
 	hl.Logger.Info("Start polling for events", "pollInterval", pollInterval)
-	hl.StartPolling(headerCtx, pollInterval)
+	hl.StartPolling(headerCtx, pollInterval, nil)
 
 	return nil
 }
 
 // ProcessHeader -
-func (hl *HeimdallListener) ProcessHeader(*types.Header) {
+func (hl *HeimdallListener) ProcessHeader(_ *blockHeader) {
 
 }
 
 // StartPolling - starts polling for heimdall events
-func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
+func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.Duration, _ *big.Int) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
 
@@ -182,7 +181,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight int64) {
 	hl.Logger.Info("Received block event from Heimdall", "eventType", event.Type)
 
-	eventBytes, err := json.Marshal(event)
+	eventBytes, err := jsoniter.ConfigFastest.Marshal(event)
 	if err != nil {
 		hl.Logger.Error("Error while parsing block event", "eventType", event.Type, "error", err)
 		return

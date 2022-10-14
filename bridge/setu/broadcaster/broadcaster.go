@@ -10,14 +10,16 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bor "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/core/types"
+	bor "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/libs/log"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // TxBroadcaster uses to broadcast transaction to each chain
@@ -123,7 +125,7 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 	rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
 
 	// signer
-	signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
+	signedTx, err := auth.Signer(auth.From, rawTx)
 	if err != nil {
 		tb.logger.Error("Error signing the transaction", "error", err)
 		return err

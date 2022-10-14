@@ -1,14 +1,14 @@
-//nolint
+// nolint
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -26,7 +26,8 @@ type isOldTx struct {
 	Result bool   `json:"result"`
 }
 
-//It represents the dividend account information
+// It represents the dividend account information
+//
 //swagger:response topupDividendAccountResponse
 type topupDividendAccountResponse struct {
 	//in:body
@@ -121,7 +122,9 @@ type topupTxParams struct {
 // swagger:route GET /topup/isoldtx topup topupIsOldTx
 // It returns whether the transaction is old
 // responses:
-//   200: topupIsOldTxResponse
+//
+//	200: topupIsOldTxResponse
+//
 // Returns topup tx status information
 func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +183,9 @@ type topupAddress struct {
 // swagger:route GET /topup/dividend-account/{address} topup topupDividendAccountByAddress
 // It returns the Dividend Account information by User Address
 // responses:
-//   200: topupDividendAccountResponse
+//
+//	200: topupDividendAccountResponse
+//
 // Returns Dividend Account information by User Address
 func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +228,9 @@ func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 // swagger:route GET /topup/dividend-account-root topup topupDividendAccountRoot
 // It returns the genesis account roothash
 // responses:
-//   200: topupDividendAccountRootResponse
+//
+//	200: topupDividendAccountRootResponse
+//
 // dividendAccountRootHandlerFn returns genesis accountroothash
 func dividendAccountRootHandlerFn(
 	cliCtx context.CLIContext,
@@ -242,7 +249,7 @@ func dividendAccountRootHandlerFn(
 			return
 		}
 
-		// error if no checkpoint found
+		// error if AccountRoot not found
 		if !hmRest.ReturnNotFoundIfNoContent(w, res, "Dividend AccountRoot not found") {
 			RestLogger.Error("AccountRoot not found ", "Error", err.Error())
 
@@ -253,7 +260,7 @@ func dividendAccountRootHandlerFn(
 
 		RestLogger.Debug("Fetched Dividend accountRootHash ", "AccountRootHash", accountRootHash)
 
-		result, err := json.Marshal(&accountRootHash)
+		result, err := jsoniter.ConfigFastest.Marshal(&accountRootHash)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -270,7 +277,9 @@ func dividendAccountRootHandlerFn(
 // swagger:route GET /topup/account-proof/{address} topup topupDividendAccountProofByAddress
 // It returns the account proof by User Address
 // responses:
-//   200: topupDividendAccountProofResponse
+//
+//	200: topupDividendAccountProofResponse
+//
 // Returns Merkle path for dividendAccountID using dividend Account Tree
 func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -313,7 +322,9 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /topup/account-proof/{address}/verify topup topupDividendAccountProofVerify
 // It returns true if given Merkle path for dividendAccountID is valid
 // responses:
-//   200: topupDividendAccountProofVerifyResponse
+//
+//	200: topupDividendAccountProofVerifyResponse
+//
 // VerifyAccountProofHandlerFn - Returns true if given Merkle path for dividendAccountID is valid
 func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -345,12 +356,12 @@ func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var accountProofStatus bool
-		if err = json.Unmarshal(res, &accountProofStatus); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &accountProofStatus); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		res, err = json.Marshal(map[string]interface{}{"result": accountProofStatus})
+		res, err = jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": accountProofStatus})
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

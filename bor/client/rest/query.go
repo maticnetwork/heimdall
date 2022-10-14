@@ -1,14 +1,17 @@
 // Package classification HiemdallRest API
-//     Schemes: http
-//     BasePath: /
-//     Version: 0.0.1
-//     title: Heimdall APIs
-//     Consumes:
-//     - application/json
-//	   Host:localhost:1317
-//     - application/json
+//
+//	    Schemes: http
+//	    BasePath: /
+//	    Version: 0.0.1
+//	    title: Heimdall APIs
+//	    Consumes:
+//	    - application/json
+//		   Host:localhost:1317
+//	    - application/json
+//
+// nolint
+//
 //swagger:meta
-//nolint
 package rest
 
 import (
@@ -21,8 +24,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/consensus/bor"
+	spanFromBor "github.com/ethereum/go-ethereum/consensus/bor/heimdall/span"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -64,7 +69,8 @@ type validatorSet struct {
 	Proposer   validator   `json:"Proposer"`
 }
 
-//It represents the list of spans
+// It represents the list of spans
+//
 //swagger:response borSpanListResponse
 type borSpanListResponse struct {
 	//in:body
@@ -76,7 +82,8 @@ type borSpanList struct {
 	Result []span `json:"result"`
 }
 
-//It represents the span
+// It represents the span
+//
 //swagger:response borSpanResponse
 type borSpanResponse struct {
 	//in:body
@@ -88,7 +95,8 @@ type borSpan struct {
 	Result span   `json:"result"`
 }
 
-//It represents the bor span parameters
+// It represents the bor span parameters
+//
 //swagger:response borSpanParamsResponse
 type borSpanParamsResponse struct {
 	//in:body
@@ -110,7 +118,8 @@ type spanParams struct {
 	ProducerCount int64 `json:"producer_count"`
 }
 
-//It represents the next span seed
+// It represents the next span seed
+//
 //swagger:response borNextSpanSeedRespose
 type borNextSpanSeedRespose struct {
 	//in:body
@@ -187,7 +196,8 @@ type borSpanListParam struct {
 // swagger:route GET /bor/span/list bor borSpanList
 // It returns the list of Bor Span
 // responses:
-//   200: borSpanListResponse
+//
+//	200: borSpanListResponse
 func spanListHandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
@@ -246,7 +256,8 @@ type borSpanById struct {
 // swagger:route GET /bor/span/{id} bor borSpanById
 // It returns the span based on ID
 // responses:
-//   200: borSpanResponse
+//
+//	200: borSpanResponse
 func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -306,7 +317,8 @@ func spanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /bor/latest-span bor borSpanLatest
 // It returns the latest-span
 // responses:
-//   200: borSpanResponse
+//
+//	200: borSpanResponse
 func latestSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -357,7 +369,8 @@ type borPrepareNextSpanParam struct {
 // swagger:route GET /bor/prepare-next-span bor borPrepareNextSpan
 // It returns the prepared next span
 // responses:
-//   200: borSpanResponse
+//
+//	200: borSpanResponse
 func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -396,7 +409,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var spanDuration uint64
-		if err := json.Unmarshal(spanDurationBytes, &spanDuration); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(spanDurationBytes, &spanDuration); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -418,7 +431,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -439,7 +452,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var _validatorSet hmTypes.ValidatorSet
-		if err = json.Unmarshal(validatorSetBytes, &_validatorSet); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(validatorSetBytes, &_validatorSet); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to unmarshall JSON").Error())
 			return
 		}
@@ -460,7 +473,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var selectedProducers []hmTypes.Validator
-		if err := json.Unmarshal(nextProducerBytes, &selectedProducers); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(nextProducerBytes, &selectedProducers); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -477,7 +490,7 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			chainID,
 		)
 
-		result, err := json.Marshal(&msg)
+		result, err := jsoniter.ConfigFastest.Marshal(&msg)
 		if err != nil {
 			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -492,7 +505,8 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /bor/params bor borSpanParams
 // It returns the span parameters
 // responses:
-//   200: borSpanParamsResponse
+//
+//	200: borSpanParamsResponse
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -513,6 +527,14 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+// ResponseWithHeight defines a response object type that wraps an original
+// response with a height.
+// TODO:Link it with bor
+type ResponseWithHeight struct {
+	Height string          `json:"height"`
+	Result json.RawMessage `json:"result"`
+}
+
 func loadSpanOverrides() {
 	spanOverrides = map[uint64]*HeimdallSpanResultWithHeight{}
 
@@ -521,14 +543,14 @@ func loadSpanOverrides() {
 		return
 	}
 
-	var spans []*bor.ResponseWithHeight
-	if err := json.Unmarshal(j, &spans); err != nil {
+	var spans []*ResponseWithHeight
+	if err := jsoniter.ConfigFastest.Unmarshal(j, &spans); err != nil {
 		return
 	}
 
 	for _, span := range spans {
-		var heimdallSpan bor.HeimdallSpan
-		if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
+		var heimdallSpan spanFromBor.HeimdallSpan
+		if err := jsoniter.ConfigFastest.Unmarshal(span.Result, &heimdallSpan); err != nil {
 			continue
 		}
 

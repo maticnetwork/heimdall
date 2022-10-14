@@ -10,17 +10,18 @@ import (
 	"strings"
 	"time"
 
-	ethCrypto "github.com/maticnetwork/bor/crypto"
-	"github.com/maticnetwork/bor/eth"
-	"github.com/maticnetwork/bor/ethclient"
-	"github.com/maticnetwork/bor/rpc"
-	"github.com/maticnetwork/heimdall/file"
+	ethCrypto "github.com/ethereum/go-ethereum/crypto"
+	"github.com/ethereum/go-ethereum/eth"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+
+	"github.com/maticnetwork/heimdall/file"
 
 	cfg "github.com/tendermint/tendermint/config"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -200,6 +201,8 @@ var GenesisDoc tmTypes.GenesisDoc
 
 var newSelectionAlgoHeight int64 = 0
 
+var spanOverrideHeight int64 = 0
+
 // Contracts
 // var RootChain types.Contract
 // var DepositManager types.Contract
@@ -347,10 +350,13 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	switch conf.Chain {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
+		spanOverrideHeight = 8664000
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
+		spanOverrideHeight = 10205000
 	default:
 		newSelectionAlgoHeight = 0
+		spanOverrideHeight = 0
 	}
 }
 
@@ -466,6 +472,11 @@ func GetValidChains() []string {
 // GetNewSelectionAlgoHeight returns newSelectionAlgoHeight
 func GetNewSelectionAlgoHeight() int64 {
 	return newSelectionAlgoHeight
+}
+
+// GetSpanOverrideHeight returns spanOverrideHeight
+func GetSpanOverrideHeight() int64 {
+	return spanOverrideHeight
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command

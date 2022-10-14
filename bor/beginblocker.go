@@ -4,7 +4,7 @@ import (
 	"encoding/json"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/consensus/bor"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/bor/client/rest"
@@ -12,8 +12,16 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+// ResponseWithHeight defines a response object type that wraps an original
+// response with a height.
+// TODO:Link it with bor
+type ResponseWithHeight struct {
+	Height string          `json:"height"`
+	Result json.RawMessage `json:"result"`
+}
+
 func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
-	if ctx.BlockHeight() == int64(helper.SpanOverrideBlockHeight) {
+	if ctx.BlockHeight() == helper.GetSpanOverrideHeight() {
 		k.Logger(ctx).Info("overriding span BeginBlocker", "height", ctx.BlockHeight())
 
 		j, ok := rest.SPAN_OVERRIDES[helper.GenesisDoc.ChainID]
@@ -22,8 +30,9 @@ func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 			return
 		}
 
-		var spans []*bor.ResponseWithHeight
-		if err := json.Unmarshal(j, &spans); err != nil {
+		var spans []*ResponseWithHeight
+
+		if err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(j, &spans); err != nil {
 			k.Logger(ctx).Error("Error Unmarshal spans", "error", err)
 			panic(err)
 		}
@@ -32,7 +41,7 @@ func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 			k.Logger(ctx).Info("overriding span", "height", span.Height, "span", span)
 
 			var heimdallSpan hmTypes.Span
-			if err := json.Unmarshal(span.Result, &heimdallSpan); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(span.Result, &heimdallSpan); err != nil {
 				k.Logger(ctx).Error("Error Unmarshal heimdallSpan", "error", err)
 				panic(err)
 			}

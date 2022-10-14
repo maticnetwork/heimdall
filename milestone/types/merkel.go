@@ -1,7 +1,6 @@
 package types
 
 import (
-	"bytes"
 	"errors"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -9,7 +8,7 @@ import (
 )
 
 // ValidateMilestone - Validates if milestone rootHash matches or not
-func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, contractCaller helper.IContractCaller, sprintLength uint64) (bool, error) {
+func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, sprintLength uint64) (bool, error) {
 
 	if start+sprintLength-1 != end {
 		return false, errors.New("Invalid milestone, difference in start and end block is not equal to sprint length")
@@ -21,16 +20,12 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 	}
 
 	// Compare RootHash
-	root, err := contractCaller.GetRootHash(start, end, sprintLength)
+	vote, err := contractCaller.GetVoteOnRootHash(start, end, sprintLength, rootHash.String(), milestoneID)
 	if err != nil {
 		return false, err
 	}
 
-	if bytes.Equal(root, rootHash.Bytes()) {
-		return true, nil
-	}
-
-	return false, nil
+	return vote, nil
 }
 
 func convertTo32(input []byte) (output [32]byte, err error) {

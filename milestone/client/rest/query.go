@@ -58,7 +58,9 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/latest", milestoneLatestHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/count", milestoneCountHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/latestNoAck", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/lastNoAck", latestNoAckMilestoneHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/noAck/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
+
 }
 
 // swagger:route GET /milestone/params milestone milistoneParams
@@ -124,8 +126,6 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		RestLogger.Error("Fetching number of milestone from state")
-
 		countBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCount), nil)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
@@ -137,14 +137,11 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		RestLogger.Error("Fetching number of milestone from state")
 		var count uint64
 		if err := json.Unmarshal(countBytes, &count); err != nil {
-			//hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
-
-		RestLogger.Error("Fetching number of milestone from state")
 
 		result, err := json.Marshal(map[string]interface{}{"count": count})
 		if err != nil {
@@ -193,7 +190,7 @@ func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func milestoneLatestNoAckFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
@@ -207,8 +204,73 @@ func milestoneLatestNoAckFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		// check content
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, result, "No last ack milestone found"); !ok {
+			return
+		}
+
+		var milestoneID string
+		if err := json.Unmarshal(result, &milestoneID); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err := json.Marshal(map[string]interface{}{"result": milestoneID})
+		if err != nil {
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, result)
+		rest.PostProcessResponse(w, cliCtx, res)
+
+	}
+}
+
+func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get milestone number
+		id := vars["id"]
+
+		// get query params
+		queryID, err := cliCtx.Codec.MarshalJSON(types.NewQueryMilestoneID(id))
+		if err != nil {
+			return
+		}
+
+		// query checkpoint
+		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID), queryID)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var val bool
+		if err := json.Unmarshal(result, &val); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err := json.Marshal(map[string]interface{}{"result": val})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+
+		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
 

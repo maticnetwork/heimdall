@@ -9,12 +9,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+	"github.com/ethereum/go-ethereum/rpc"
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/common"
-	ethTypes "github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/ethclient"
-	"github.com/maticnetwork/bor/rpc"
 
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -34,6 +34,7 @@ var ContractsABIsMap = make(map[string]*abi.ABI)
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
+	GetVoteOnRootHash(start uint64, end uint64, milestoneLength uint64, rootHash string, milestoneID string) (bool, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
@@ -292,6 +293,29 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	}
 
 	return common.FromHex(rootHash), nil
+}
+
+// GetRootHash get root hash from bor chain
+func (c *ContractCaller) GetVoteOnRootHash(start uint64, end uint64, milestoneLength uint64, rootHash string, milestoneID string) (bool, error) {
+	noOfBlock := end - start + 1
+
+	if start > end {
+		return false, errors.New("start is greater than end")
+	}
+
+	if noOfBlock > milestoneLength {
+		return false, errors.New("number of headers requested exceeds")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
+	defer cancel()
+
+	vote, err := c.MaticChainClient.GetVoteOnRootHash(ctx, start, end, rootHash, milestoneID)
+	if err != nil {
+		return false, errors.New("could not fetch vote from matic chain")
+	}
+
+	return vote, nil
 }
 
 // GetLastChildBlock fetch current child block

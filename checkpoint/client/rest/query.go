@@ -1,8 +1,7 @@
-//nolint
+// nolint
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -12,9 +11,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
-	"github.com/maticnetwork/bor/common"
-	ethcmn "github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+	ethcmn "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -22,7 +22,8 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-//It represents the checkpoint parameters
+// It represents the checkpoint parameters
+//
 //swagger:response checkpointParamsResponse
 type checkpointParamsResponse struct {
 	//in:body
@@ -41,7 +42,8 @@ type params struct {
 	ChildChainBlockInterval int `json:"child_chain_block_interval"`
 }
 
-//It represents the checkpoint
+// It represents the checkpoint
+//
 //swagger:response checkpointResponse
 type checkpointResponse struct {
 	//in:body
@@ -61,7 +63,8 @@ type checkpoint struct {
 	Timestamp  int64  `json:"timestamp"`
 }
 
-//It represents the checkpoint prepare
+// It represents the checkpoint prepare
+//
 //swagger:response checkpointPrepareResponse
 type checkpointPrepareResponse struct {
 	//in:body
@@ -80,7 +83,8 @@ type prepareCheckpoint struct {
 	RootHash   string `json:"root_hash"`
 }
 
-//It represents the checkpoint list
+// It represents the checkpoint list
+//
 //swagger:response checkpointListResponse
 type checkpointListResponse struct {
 	//in:body
@@ -92,7 +96,8 @@ type checkpointListStructure struct {
 	Result []checkpoint `json:"result"`
 }
 
-//It represents the last-no-ack
+// It represents the last-no-ack
+//
 //swagger:response lastNoAckResponse
 type lastNoAckResponse struct {
 	//in:body
@@ -108,7 +113,8 @@ type lastNoAck struct {
 	Result int64 `json:"result"`
 }
 
-//It represents the checkpoint count
+// It represents the checkpoint count
+//
 //swagger:response checkpointCountResponse
 type checkpointCountResponse struct {
 	//in:body
@@ -124,7 +130,8 @@ type checkpointCount struct {
 	Result int64 `json:"result"`
 }
 
-//It represents the overview
+// It represents the overview
+//
 //swagger:response overviewResponse
 type overviewResponse struct {
 	//in:body
@@ -185,7 +192,9 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 // swagger:route GET /checkpoints/params checkpoint checkpointParams
 // It returns the checkpoint parameters
 // responses:
-//   200: checkpointParamsResponse
+//
+//	200: checkpointParamsResponse
+//
 // HTTP request handler to query the auth params values
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +219,8 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /checkpoints/buffer checkpoint checkpointBuffer
 // It returns the checkpoint buffer
 // responses:
-//   200: checkpointResponse
+//
+//	200: checkpointResponse
 func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -233,7 +243,8 @@ func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /checkpoints/count checkpoint checkpointCount
 // It returns the checkpoint counts
 // responses:
-//   200: checkpointCountResponse
+//
+//	200: checkpointCountResponse
 func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -255,12 +266,12 @@ func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := json.Unmarshal(ackCountBytes, &ackCount); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(ackCountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := json.Marshal(map[string]interface{}{"result": ackCount})
+		result, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": ackCount})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -290,7 +301,8 @@ type checkpointPrepareParams struct {
 // swagger:route GET /checkpoints/prepare checkpoint checkpointPrepare
 // It returns the prepared checkpoint
 // responses:
-//   200: checkpointPrepareResponse
+//
+//	200: checkpointPrepareResponse
 func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -330,7 +342,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			}
 
 			var params types.Params
-			if err = json.Unmarshal(res, &params); err != nil {
+			if err = jsoniter.ConfigFastest.Unmarshal(res, &params); err != nil {
 				RestLogger.Error("Unable to unmarshal params", "Start", start, "End", end, "Error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
@@ -362,7 +374,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			validatorSetBytes, height, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 			if err == nil {
-				if err = json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 					hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 					RestLogger.Error("Unable to get validator set to form proposer", "Error", err)
 
@@ -378,7 +390,7 @@ func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				RootHash:   ethcmn.BytesToHash(roothash),
 			}
 
-			result, err = json.Marshal(checkpoint)
+			result, err = jsoniter.ConfigFastest.Marshal(checkpoint)
 			if err != nil {
 				RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 				hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -406,7 +418,8 @@ type HeaderBlockResult struct {
 // swagger:route GET /checkpoints/last-no-ack checkpoint checkpointLastNoAck
 // It returns the last no ack
 // responses:
-//   200: lastNoAckResponse
+//
+//	200: lastNoAckResponse
 func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -426,12 +439,12 @@ func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var lastAckTime uint64
-		if err := json.Unmarshal(res, &lastAckTime); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(res, &lastAckTime); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		result, err := json.Marshal(map[string]interface{}{"result": lastAckTime})
+		result, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": lastAckTime})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("Error while sending last ack time").Error())
@@ -455,7 +468,9 @@ type stateDump struct {
 // swagger:route GET /overview checkpoint overview
 // It returns the complete overview
 // responses:
-//   200: overviewResponse
+//
+//	200: overviewResponse
+//
 // get all state-dump of heimdall
 func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -474,7 +489,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err == nil {
 			// check content
 			if hmRest.ReturnNotFoundIfNoContent(w, ackCountBytes, "No ack count found") {
-				if err = json.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(ackCountBytes, &ackCountInt); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing no-ack count", "error", err)
 				}
@@ -491,7 +506,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err == nil {
 			if len(checkpointBufferBytes) != 0 {
 				_checkpoint = new(hmTypes.Checkpoint)
-				if err = json.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(checkpointBufferBytes, _checkpoint); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing checkpoint header", "error", err)
 				}
@@ -506,7 +521,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 		if err == nil {
-			if err := json.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 				// log and ignore
 				RestLogger.Error("Error while unmarshing validator set", "error", err)
 			}
@@ -526,7 +541,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if err == nil {
 			// check content
 			if hmRest.ReturnNotFoundIfNoContent(w, lastNoACKBytes, "No last-no-ack count found") {
-				if err = json.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(lastNoACKBytes, &lastNoACKTime); err != nil {
 					// log and ignore
 					RestLogger.Error("Error while unmarshing last no-ack time", "error", err)
 				}
@@ -545,7 +560,7 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			LastNoACK:        time.Unix(int64(lastNoACKTime), 0),
 		}
 
-		result, err := json.Marshal(state)
+		result, err := jsoniter.ConfigFastest.Marshal(state)
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -560,7 +575,9 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /checkpoints/latest checkpoint checkpointLatest
 // It returns the last checkpoint from the store
 // responses:
-//   200: checkpointResponse
+//
+//	200: checkpointResponse
+//
 // get last checkpoint from store
 func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -585,7 +602,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var ackCount uint64
-		if err := json.Unmarshal(ackcountBytes, &ackCount); err != nil {
+		if err := jsoniter.ConfigFastest.Unmarshal(ackcountBytes, &ackCount); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -615,7 +632,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var checkpointUnmarshal hmTypes.Checkpoint
-		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &checkpointUnmarshal); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -630,7 +647,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			TimeStamp:  checkpointUnmarshal.TimeStamp,
 		}
 
-		resWithID, err := json.Marshal(checkpointWithID)
+		resWithID, err := jsoniter.ConfigFastest.Marshal(checkpointWithID)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}
@@ -645,7 +662,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-//Temporary Checkpoint struct to store the Checkpoint ID
+// Temporary Checkpoint struct to store the Checkpoint ID
 type CheckpointWithID struct {
 	ID         uint64                  `json:"id"`
 	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
@@ -668,7 +685,9 @@ type checkpointID struct {
 // swagger:route GET /checkpoints/{id} checkpoint checkpointById
 // It returns the checkpoint by ID
 // responses:
-//   200: checkpointResponse
+//
+//	200: checkpointResponse
+//
 // get checkpoint by checkppint number from store
 func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -699,7 +718,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var checkpointUnmarshal hmTypes.Checkpoint
-		if err = json.Unmarshal(res, &checkpointUnmarshal); err != nil {
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &checkpointUnmarshal); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -714,7 +733,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			TimeStamp:  checkpointUnmarshal.TimeStamp,
 		}
 
-		resWithID, err := json.Marshal(checkpointWithID)
+		resWithID, err := jsoniter.ConfigFastest.Marshal(checkpointWithID)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 		}
@@ -747,7 +766,8 @@ type checkpointListParams struct {
 // swagger:route GET /checkpoints/list checkpoint checkpointList
 // It returns the checkpoints list
 // responses:
-//   200: checkpointListResponse
+//
+//	200: checkpointListResponse
 func checkpointListhandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {

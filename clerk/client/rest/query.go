@@ -1,8 +1,7 @@
-//nolint
+// nolint
 package rest
 
 import (
-	"encoding/json"
 	"fmt"
 	"net/http"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/gorilla/mux"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -86,7 +86,9 @@ type clerkEventID struct {
 // swagger:route GET /clerk/event-record/{recordID} clerk clerkEventById
 // It returns the clerk event based on ID
 // responses:
-//   200: clerkEventByIdResponse
+//
+//	200: clerkEventByIdResponse
+//
 // recordHandlerFn returns record by record id
 func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +138,8 @@ type clerkEventListParams struct {
 // swagger:route GET /clerk/event-record/list clerk clerkEventList
 // It returns the clerk events list
 // responses:
-//   200: clerkEventListResponse
+//
+//	200: clerkEventListResponse
 func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
@@ -243,7 +246,9 @@ type clerkTxParams struct {
 // swagger:route GET /clerk/isoldtx clerk clerkIsOldTx
 // It checks for whether the transaction is old or new.
 // responses:
-//   200: clerkIsOldTxResponse
+//
+//	200: clerkIsOldTxResponse
+//
 // DepositTxStatusHandlerFn returns deposit tx status information
 func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -357,11 +362,11 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 	// if from id not found, return empty result
 	fromData, err := recordQuery(cliCtx, fromID)
 	if err != nil {
-		return json.Marshal(result)
+		return jsoniter.ConfigFastest.Marshal(result)
 	}
 
 	var fromRecord types.EventRecord
-	if err = json.Unmarshal(fromData, &fromRecord); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(fromData, &fromRecord); err != nil {
 		return nil, err
 	}
 
@@ -373,7 +378,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 	}
 
 	rangeRecords := make([]*types.EventRecord, 0)
-	if err = json.Unmarshal(rangeData, &rangeRecords); err != nil {
+	if err = jsoniter.ConfigFastest.Unmarshal(rangeData, &rangeRecords); err != nil {
 		return nil, err
 	}
 
@@ -396,7 +401,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 			}
 
 			var record types.EventRecord
-			err = json.Unmarshal(recordData, &record)
+			err = jsoniter.ConfigFastest.Unmarshal(recordData, &record)
 			if err != nil {
 				return nil, err
 			}
@@ -414,7 +419,7 @@ func tillTimeRangeQuery(cliCtx context.CLIContext, fromID uint64, toTime int64, 
 	}
 
 	// return result in json
-	return json.Marshal(result)
+	return jsoniter.ConfigFastest.Marshal(result)
 }
 
 //swagger:parameters clerkIsOldTx clerkEventList clerkEventById

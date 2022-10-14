@@ -5,7 +5,7 @@ package mocks
 import (
 	big "math/big"
 
-	common "github.com/maticnetwork/bor/common"
+	common "github.com/ethereum/go-ethereum/common"
 	erc20 "github.com/maticnetwork/heimdall/contracts/erc20"
 
 	heimdalltypes "github.com/maticnetwork/heimdall/types"
@@ -24,7 +24,7 @@ import (
 
 	statesender "github.com/maticnetwork/heimdall/contracts/statesender"
 
-	types "github.com/maticnetwork/bor/core/types"
+	types "github.com/ethereum/go-ethereum/core/types"
 
 	validatorset "github.com/maticnetwork/heimdall/contracts/validatorset"
 )
@@ -683,6 +683,29 @@ func (_m *IContractCaller) GetRootHash(start uint64, end uint64, checkpointLengt
 	var r1 error
 	if rf, ok := ret.Get(1).(func(uint64, uint64, uint64) error); ok {
 		r1 = rf(start, end, checkpointLength)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// GetVoteOnRootHash provides a mock function with given fields: start, end, milestoneLength,rootHash, milestoneID
+func (_m *IContractCaller) GetVoteOnRootHash(start uint64, end uint64, milestoneLength uint64, rootHash string, milestoneID string) (bool, error) {
+	ret := _m.Called(start, end, milestoneLength,rootHash,milestoneID)
+
+	var r0 bool
+	if rf, ok := ret.Get(0).(func(uint64, uint64, uint64,string,string) bool); ok {
+		r0 = rf(start, end, milestoneLength,rootHash,milestoneID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(bool)
+		}
+	}
+
+	var r1 error
+	if rf, ok := ret.Get(1).(func(uint64, uint64, uint64,string,string) error); ok {
+		r1 = rf(start, end, milestoneLength,rootHash,milestoneID)
 	} else {
 		r1 = ret.Error(1)
 	}

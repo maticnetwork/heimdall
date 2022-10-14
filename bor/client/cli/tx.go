@@ -1,7 +1,6 @@
 package cli
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"strconv"
@@ -10,10 +9,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -97,7 +98,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var spanDuration uint64
-			if err := json.Unmarshal(res, &spanDuration); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 
@@ -111,7 +112,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var seed common.Hash
-			if err := json.Unmarshal(res, &seed); err != nil {
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &seed); err != nil {
 				return err
 			}
 
