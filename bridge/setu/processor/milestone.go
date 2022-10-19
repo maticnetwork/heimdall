@@ -138,7 +138,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		"start", start,
 		"end", end,
 		"root", hmTypes.BytesToHeimdallHash(root),
-		"milestoneId",
+		"milestoneId", milestoneId,
 	)
 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams

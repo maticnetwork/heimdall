@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"log"
 
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -22,6 +23,7 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 	// Compare RootHash
 	vote, err := contractCaller.GetVoteOnRootHash(start, end, sprintLength, rootHash.String(), milestoneID)
 	if err != nil {
+		log.Printf("err %v", err)
 		return false, err
 	}
 
