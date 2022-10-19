@@ -112,7 +112,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	// Skip handler if milestone is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		logger.Debug("Skipping new milestone since side-tx didn't get yes votes", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash, "milestoneId", msg.MilestoneID)
-		k.SetNoAckMilestone(ctx, msg.MilestoneID)
+		k.SetNoAckMilestone(ctx, "AA")
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
@@ -129,8 +129,9 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			logger.Error(" already exists",
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock,
+				"milestoneId", msg.MilestoneID,
 			)
-			k.SetNoAckMilestone(ctx, msg.MilestoneID)
+			k.SetNoAckMilestone(ctx, "BB")
 			return common.ErrOldMilestone(k.Codespace()).Result()
 		}
 
@@ -138,14 +139,15 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		if lastMilestone.EndBlock+1 != msg.StartBlock {
 			logger.Error("milestone not in countinuity",
 				"currentTip", lastMilestone.EndBlock,
-				"startBlock", msg.StartBlock)
+				"startBlock", msg.StartBlock,
+				"milestoneId", msg.MilestoneID)
 
-			k.SetNoAckMilestone(ctx, msg.MilestoneID)
+			k.SetNoAckMilestone(ctx, "CC")
 			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
 		}
 	} else if err != nil && msg.StartBlock != 0 {
-		logger.Error("First milestone to start from", "block", 0, "Error", err)
-		k.SetNoAckMilestone(ctx, msg.MilestoneID)
+		logger.Error("First milestone to start from", "block", 0, "milestoneId", msg.MilestoneID, "Error", err)
+		k.SetNoAckMilestone(ctx, "DD")
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
@@ -165,7 +167,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		MilestoneID: msg.MilestoneID,
 		TimeStamp:   timeStamp,
 	}); err != nil {
-		k.SetNoAckMilestone(ctx, msg.MilestoneID)
+		k.SetNoAckMilestone(ctx, "EE")
 		logger.Error("Failed to set milestone ", "Error", err)
 	}
 
