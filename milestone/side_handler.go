@@ -37,7 +37,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 	// logger
 	logger := k.Logger(ctx)
-	logger.Error("In SideHandler", "RootHash", msg.RootHash)
+	logger.Error("In SideHandler", "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
 
 	// validate milestone
 	count := k.GetCount(ctx)
@@ -116,7 +116,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
-	logger.Error("In PostHandler", "RootHash", msg.RootHash)
+	logger.Error("In PostHandler", "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
 
 	//
 	// Validate last milestone
