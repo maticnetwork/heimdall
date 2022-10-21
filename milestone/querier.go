@@ -102,8 +102,9 @@ func handleQueryCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]
 func handleQueryLatestNoAckMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	res := keeper.GetLastNoAckMilestone(ctx)
 	count := keeper.GetCount(ctx)
+	res1, err := keeper.GetLastMilestone(ctx)
 	logger := keeper.Logger(ctx)
-	logger.Error("In Querier", "res", res, "count", count)
+	logger.Error("In Querier", "res", res, "count", count, "Milestone", res1)
 	res = "testing"
 	bz, err := json.Marshal(res)
 	if err != nil {
