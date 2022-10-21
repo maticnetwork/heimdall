@@ -259,6 +259,8 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		RestLogger.Error("Rest Logger for val", "val", val)
+
 		res, err := json.Marshal(map[string]interface{}{"result": val})
 		if err != nil {
 			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
