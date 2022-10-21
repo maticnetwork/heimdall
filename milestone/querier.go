@@ -101,7 +101,7 @@ func handleQueryCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]
 
 func handleQueryLatestNoAckMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	res := keeper.GetLastNoAckMilestone(ctx)
-
+	res = "testing"
 	bz, err := json.Marshal(res)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
