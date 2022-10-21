@@ -194,6 +194,7 @@ func (k *Keeper) SetCount(ctx sdk.Context, number uint64) {
 // GetCount returns count
 func (k *Keeper) GetCount(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
+	k.SetNoAckMilestone(ctx, "Vaibhav")
 	v := store.Has(MilestoneLastNoAckKey)
 	fmt.Printf("GetCOUNT/lASTnOAckKey %v", v)
 
