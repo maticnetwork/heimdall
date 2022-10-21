@@ -132,6 +132,11 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				"milestoneId", msg.MilestoneID,
 			)
 			k.SetNoAckMilestone(ctx, "BB")
+
+			logger.Error("Rest Logsss",
+				"val", k.GetLastNoAckMilestone(ctx),
+			)
+
 			return common.ErrOldMilestone(k.Codespace()).Result()
 		}
 
