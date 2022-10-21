@@ -19,9 +19,9 @@ import (
 
 var (
 	DefaultValue          = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
-	MilestoneKey          = []byte{0x20} // Key to store milestone
+	MilestoneKey          = []byte{0x20} // Prefix Key for  storing milestone
 	CountKey              = []byte{0x30} //Key to store the count
-	MilestoneNoAckKey     = []byte{0x40} //Key to store the NoAckMilestone
+	MilestoneNoAckKey     = []byte{0x40} //Prefix Key to store the NoAckMilestone
 	MilestoneLastNoAckKey = []byte{0x50} //Key to store the Latest NoAckMilestone
 )
 
@@ -194,6 +194,9 @@ func (k *Keeper) SetCount(ctx sdk.Context, number uint64) {
 // GetCount returns count
 func (k *Keeper) GetCount(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
+	v := store.Has(MilestoneLastNoAckKey)
+	fmt.Printf("GetCOUNT/lASTnOAckKey %v", v)
+
 	// check if count is there
 	if store.Has(CountKey) {
 		// get current count
@@ -246,8 +249,11 @@ func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) string {
 	if store.Has(MilestoneLastNoAckKey) {
 		// get current ACK count
 		logger.Error("In Keeper/ GetLastNOAckMilestone", "val", 2)
+
 		result := string(store.Get(MilestoneLastNoAckKey))
+
 		logger.Error("In Keeper/ GetLastNOAckMilestone", "result", result, "val", 3)
+
 		return result
 	}
 	logger.Error("In Keeper/ GetLastNOAckMilestone", "val", 4)
