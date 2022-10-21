@@ -238,11 +238,17 @@ func (k *Keeper) SetNoAckMilestone(ctx sdk.Context, milestoneId string) {
 func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) string {
 	store := ctx.KVStore(k.storeKey)
 	// check if ack count is there
+	logger := k.Logger(ctx)
+	logger.Error("In Keeper/ GetLastNOAckMilestone", "val", 1)
+
 	if store.Has(MilestoneLastNoAckKey) {
 		// get current ACK count
+		logger.Error("In Keeper/ GetLastNOAckMilestone", "val", 2)
 		result := string(store.Get(MilestoneLastNoAckKey))
+		logger.Error("In Keeper/ GetLastNOAckMilestone", "result", result, "val", 3)
 		return result
 	}
+	logger.Error("In Keeper/ GetLastNOAckMilestone", "val", 4)
 	return ""
 }
 
