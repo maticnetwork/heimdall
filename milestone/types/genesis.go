@@ -9,28 +9,29 @@ import (
 
 // GenesisState is the milestone state that must be provided at genesis.
 type GenesisState struct {
-	Params Params `json:"params" yaml:"params"`
-
-	Milestone *hmTypes.Milestone `json:"milestone" yaml:"milestone"`
+	Params          Params              `json:"params" yaml:"params"`
+	Milestones      []hmTypes.Milestone `json:"milestones" yaml:"milestones"`
+	NoAckMilestones []hmTypes.Milestone `json:"no_ack_milestones" yaml:"no_ack_milestones"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	params Params,
-	milestone *hmTypes.Milestone,
+	milestones []hmTypes.Milestone,
+	noAckMilestones []hmTypes.Milestone,
+
 ) GenesisState {
 	return GenesisState{
-		Params: params,
-
-		Milestone: milestone,
+		Params:          params,
+		Milestones:      milestones,
+		NoAckMilestones: noAckMilestones,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:    DefaultParams(),
-		Milestone: nil,
+		Params: DefaultParams(),
 	}
 }
 

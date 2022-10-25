@@ -210,9 +210,7 @@ func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.Weigh
 	return nil
 }
 
-//
 // Internal methods
-//
 func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes.GenesisState) error {
 
 	return nil
