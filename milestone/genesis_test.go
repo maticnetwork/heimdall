@@ -2,13 +2,11 @@ package milestone_test
 
 import (
 	"testing"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/milestone"
 	"github.com/maticnetwork/heimdall/milestone/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -32,43 +30,43 @@ func TestGenesisTestSuite(t *testing.T) {
 	suite.Run(t, new(GenesisTestSuite))
 }
 
-func (suite *GenesisTestSuite) TestInitExportGenesis() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
+// func (suite *GenesisTestSuite) TestInitExportGenesis() {
+// 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	startBlock := uint64(0)
-	endBlock := uint64(256)
-	rootHash := hmTypes.HexToHeimdallHash("123")
+// 	startBlock := uint64(0)
+// 	endBlock := uint64(256)
+// 	rootHash := hmTypes.HexToHeimdallHash("123")
 
-	proposerAddress := hmTypes.HexToHeimdallAddress("123")
-	timestamp := uint64(time.Now().Unix())
-	borChainId := "1234"
-	milestoneID := "0000"
+// 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
+// 	timestamp := uint64(time.Now().Unix())
+// 	borChainId := "1234"
+// 	milestoneID := "0000"
 
-	milestoneMock := hmTypes.CreateMilestone(
-		startBlock,
-		endBlock,
-		rootHash,
-		proposerAddress,
-		borChainId,
-		milestoneID,
-		timestamp,
-	)
+// 	milestoneMock := hmTypes.CreateMilestone(
+// 		startBlock,
+// 		endBlock,
+// 		rootHash,
+// 		proposerAddress,
+// 		borChainId,
+// 		milestoneID,
+// 		timestamp,
+// 	)
 
-	params := types.DefaultParams()
-	genesisState := types.NewGenesisState(
-		params,
-		&milestoneMock,
-	)
+// 	params := types.DefaultParams()
+// 	genesisState := types.NewGenesisState(
+// 		params,
+// 		&milestoneMock,
+// 	)
 
-	milestone.InitGenesis(ctx, app.MilestoneKeeper, genesisState)
+// 	milestone.InitGenesis(ctx, app.MilestoneKeeper, genesisState)
 
-	actualParams := milestone.ExportGenesis(ctx, app.MilestoneKeeper)
+// 	actualParams := milestone.ExportGenesis(ctx, app.MilestoneKeeper)
 
-	require.Equal(t, genesisState.Milestones, actualParams.Milestones)
-	require.Equal(t, genesisState.NoAckMilestones, actualParams.NoAckMilestones)
+// 	require.Equal(t, genesisState.Milestones, actualParams.Milestones)
+// 	require.Equal(t, genesisState.NoAckMilestones, actualParams.NoAckMilestones)
 
-	require.Equal(t, genesisState.Params, actualParams.Params)
-}
+// 	require.Equal(t, genesisState.Params, actualParams.Params)
+// }
 
 func (suite *GenesisTestSuite) TestInitExportGenesisWithNilMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
