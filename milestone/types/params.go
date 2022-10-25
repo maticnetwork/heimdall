@@ -48,7 +48,7 @@ func ParamKeyTable() subspace.KeyTable {
 // nolint
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeySprintLength, &p.SprintLength},
+		{Key: KeySprintLength, Value: &p.SprintLength},
 	}
 }
 
@@ -72,7 +72,7 @@ func (p Params) String() string {
 	var sb strings.Builder
 
 	sb.WriteString("Params: \n")
-	sb.WriteString(fmt.Sprintf("SprintLength: %s\n", p.SprintLength))
+	sb.WriteString(fmt.Sprintf("SprintLength: %v\n", p.SprintLength))
 
 	return sb.String()
 }
