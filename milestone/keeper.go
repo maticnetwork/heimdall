@@ -2,7 +2,6 @@ package milestone
 
 import (
 	"errors"
-	"fmt"
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -242,7 +241,6 @@ func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) string {
 	// check if ack count is there
 	logger := k.Logger(ctx)
 	logger.Error("In Keeper/ GetLastNOAckMilestone", "val", 1)
-	fmt.Printf("store: %+v", k.storeKey)
 
 	if store.Has(MilestoneLastNoAckKey) {
 		// get current ACK count

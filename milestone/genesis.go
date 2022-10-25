@@ -47,10 +47,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	params := keeper.GetParams(ctx)
 
-	milestone, _ := keeper.GetLastMilestone(ctx)
-
 	return types.NewGenesisState(
 		params,
-		milestone,
+		nil,
+		nil,
 	)
 }
