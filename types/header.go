@@ -75,6 +75,15 @@ func SortHeaders(headers []Checkpoint) []Checkpoint {
 	return headers
 }
 
+// SortHeaders sorts array of headers on the basis for timestamps
+func SortMilestone(milestones []Milestone) []Milestone {
+	sort.Slice(milestones, func(i, j int) bool {
+		return milestones[i].TimeStamp < milestones[j].TimeStamp
+	})
+
+	return milestones
+}
+
 // String returns human redable string
 func (m Checkpoint) String() string {
 	return fmt.Sprintf(
