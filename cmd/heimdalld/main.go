@@ -39,6 +39,12 @@ import (
 	tmTypes "github.com/tendermint/tendermint/types"
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
+	"go.opentelemetry.io/otel/propagation"
+	"go.opentelemetry.io/otel/sdk/resource"
+	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"golang.org/x/sync/errgroup"
 
 	ethCommon "github.com/ethereum/go-ethereum/common"
@@ -75,6 +81,13 @@ const (
 	FlagHaltHeight   = "halt-height"
 	FlagHaltTime     = "halt-time"
 )
+
+// Open Collector Flags
+var (
+	FlagOpenTracing           = "open-tracing"
+	FlagOpenCollectorEndpoint = "open-collector-endpoint"
+)
+
 const (
 	nodeDirPerm = 0755
 )
@@ -256,10 +269,55 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 
+	cmd.Flags().Bool(FlagOpenTracing, false, "start open tracing")
+	cmd.Flags().String(FlagOpenCollectorEndpoint, helper.DefaultOpenCollectorEndpoint, "Default OpenTelemetry Collector Endpoint")
+
 	// add support for all Tendermint-specific command line options
 	tcmd.AddNodeFlags(cmd)
 
 	return cmd
+}
+
+func startOpenTracing(cmd *cobra.Command) error {
+	opentracingEnabled, _ := cmd.Flags().GetBool(FlagOpenTracing)
+	if opentracingEnabled {
+		openCollectorEndpoint, _ := cmd.Flags().GetString(FlagOpenCollectorEndpoint)
+		ctx := context.Background()
+
+		res, err := resource.New(ctx,
+			resource.WithAttributes(
+				// the service name used to display traces in backends
+				semconv.ServiceNameKey.String("heimdall"),
+			),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create open telemetry resource for service: %v", err)
+		}
+
+		// Set up a trace exporter
+		traceExporter, err := otlptracegrpc.New(
+			ctx,
+			otlptracegrpc.WithInsecure(),
+			otlptracegrpc.WithEndpoint(openCollectorEndpoint),
+		)
+		if err != nil {
+			return fmt.Errorf("failed to create open telemetry tracer exporter for service: %v", err)
+		}
+
+		// Register the trace exporter with a TracerProvider, using a batch
+		// span processor to aggregate spans before export.
+		bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
+		tracerProvider := sdktrace.NewTracerProvider(
+			sdktrace.WithSampler(sdktrace.AlwaysSample()),
+			sdktrace.WithResource(res),
+			sdktrace.WithSpanProcessor(bsp),
+		)
+		otel.SetTracerProvider(tracerProvider)
+
+		// set global propagator to tracecontext (the default is no-op).
+		otel.SetTextMapPropagator(propagation.TraceContext{})
+	}
+	return nil
 }
 
 func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) error {
@@ -339,6 +397,8 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 			f.Close()
 		}
 	}
+
+	startOpenTracing(cmd)
 
 	// using group context makes sense in case that if one of
 	// the processes produces error the rest will go and shutdown
