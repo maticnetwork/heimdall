@@ -123,7 +123,7 @@ const (
 	MaxStateSyncSize = 30000
 
 	// Default Open Collector Endpoint
-	DefaultOpenCollectorEndpoint = "http://localhost:4317"
+	DefaultOpenCollectorEndpoint = "localhost:4317"
 )
 
 var (

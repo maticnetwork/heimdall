@@ -46,6 +46,7 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"golang.org/x/sync/errgroup"
+	"google.golang.org/grpc"
 
 	ethCommon "github.com/ethereum/go-ethereum/common"
 
@@ -278,7 +279,7 @@ which accepts a path for the resulting pprof file.
 	return cmd
 }
 
-func startOpenTracing(cmd *cobra.Command) error {
+func startOpenTracing(cmd *cobra.Command) (*sdktrace.TracerProvider, *context.Context, error) {
 	opentracingEnabled, _ := cmd.Flags().GetBool(FlagOpenTracing)
 	if opentracingEnabled {
 		openCollectorEndpoint, _ := cmd.Flags().GetString(FlagOpenCollectorEndpoint)
@@ -291,7 +292,7 @@ func startOpenTracing(cmd *cobra.Command) error {
 			),
 		)
 		if err != nil {
-			return fmt.Errorf("failed to create open telemetry resource for service: %v", err)
+			return nil, nil, fmt.Errorf("failed to create open telemetry resource for service: %v", err)
 		}
 
 		// Set up a trace exporter
@@ -299,9 +300,10 @@ func startOpenTracing(cmd *cobra.Command) error {
 			ctx,
 			otlptracegrpc.WithInsecure(),
 			otlptracegrpc.WithEndpoint(openCollectorEndpoint),
+			otlptracegrpc.WithDialOption(grpc.WithBlock()),
 		)
 		if err != nil {
-			return fmt.Errorf("failed to create open telemetry tracer exporter for service: %v", err)
+			return nil, nil, fmt.Errorf("failed to create open telemetry tracer exporter for service: %v", err)
 		}
 
 		// Register the trace exporter with a TracerProvider, using a batch
@@ -316,8 +318,9 @@ func startOpenTracing(cmd *cobra.Command) error {
 
 		// set global propagator to tracecontext (the default is no-op).
 		otel.SetTextMapPropagator(propagation.TraceContext{})
+		return tracerProvider, &ctx, nil
 	}
-	return nil
+	return nil, nil, nil
 }
 
 func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server.Context, appCreator server.AppCreator, cdc *codec.Codec, startRestServer bool, startBridge bool) error {
@@ -398,7 +401,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		}
 	}
 
-	startOpenTracing(cmd)
+	tracerProvider, traceCtx, _ := startOpenTracing(cmd)
 
 	// using group context makes sense in case that if one of
 	// the processes produces error the rest will go and shutdown
@@ -429,6 +432,12 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		// until something in the group returns non-nil error
 		<-gCtx.Done()
 		ctx.Logger.Info("exiting...")
+
+		if tracerProvider != nil {
+			if err := tracerProvider.Shutdown(*traceCtx); err == nil {
+				ctx.Logger.Info("Shutting Down OpenTelemetry")
+			}
+		}
 
 		if cpuProfileCleanup != nil {
 			cpuProfileCleanup()
