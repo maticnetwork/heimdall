@@ -40,6 +40,7 @@ import (
 	tmtime "github.com/tendermint/tendermint/types/time"
 	dbm "github.com/tendermint/tm-db"
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/exporters/otlp/otlptrace"
 	"go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc"
 	"go.opentelemetry.io/otel/propagation"
 	"go.opentelemetry.io/otel/sdk/resource"
@@ -296,18 +297,32 @@ func startOpenTracing(cmd *cobra.Command) (*sdktrace.TracerProvider, *context.Co
 		}
 
 		// Set up a trace exporter
-		traceExporter, err := otlptracegrpc.New(
-			ctx,
-			otlptracegrpc.WithInsecure(),
-			otlptracegrpc.WithEndpoint(openCollectorEndpoint),
-			otlptracegrpc.WithDialOption(grpc.WithBlock()),
-		)
-		if err != nil {
-			return nil, nil, fmt.Errorf("failed to create open telemetry tracer exporter for service: %v", err)
+		var traceExporter *otlptrace.Exporter
+		traceExporterReady := make(chan *otlptrace.Exporter, 1)
+
+		go func() {
+			traceExporter, _ := otlptracegrpc.New(
+				ctx,
+				otlptracegrpc.WithInsecure(),
+				otlptracegrpc.WithEndpoint(openCollectorEndpoint),
+				otlptracegrpc.WithDialOption(grpc.WithBlock()),
+			)
+			traceExporterReady <- traceExporter
+		}()
+
+		select {
+		case traceExporter = <-traceExporterReady:
+			fmt.Println("TraceExporter Ready")
+		case <-time.After(5 * time.Second):
+			fmt.Println("TraceExporter Timed Out in 5 Seconds")
 		}
 
 		// Register the trace exporter with a TracerProvider, using a batch
 		// span processor to aggregate spans before export.
+		if traceExporter == nil {
+			return nil, nil, nil
+		}
+
 		bsp := sdktrace.NewBatchSpanProcessor(traceExporter)
 		tracerProvider := sdktrace.NewTracerProvider(
 			sdktrace.WithSampler(sdktrace.AlwaysSample()),
