@@ -12,25 +12,29 @@ type GenesisState struct {
 	Params Params `json:"params" yaml:"params"`
 
 	Milestone *hmTypes.Milestone `json:"milestone" yaml:"milestone"`
+
+	LastNoAckMilestone *hmTypes.Milestone `json:"last_no_ack_milestone" yaml:"last_no_ack_milestone"`
 }
 
 // NewGenesisState creates a new genesis state.
 func NewGenesisState(
 	params Params,
 	milestone *hmTypes.Milestone,
+	lastNoAckMilestone *hmTypes.Milestone,
 ) GenesisState {
 	return GenesisState{
-		Params: params,
-
-		Milestone: milestone,
+		Params:             params,
+		Milestone:          milestone,
+		LastNoAckMilestone: lastNoAckMilestone,
 	}
 }
 
 // DefaultGenesisState returns a default genesis state
 func DefaultGenesisState() GenesisState {
 	return GenesisState{
-		Params:    DefaultParams(),
-		Milestone: nil,
+		Params:             DefaultParams(),
+		Milestone:          nil,
+		LastNoAckMilestone: nil,
 	}
 }
 

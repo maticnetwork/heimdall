@@ -10,10 +10,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 )
 
-//
-// Create test app
-//
-
 // createTestApp returns context and app
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLIContext) {
 	genesisState := app.NewDefaultGenesisState()
@@ -29,6 +25,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	milestoneGenesis := types.NewGenesisState(
 		types.DefaultGenesisState().Params,
 		types.DefaultGenesisState().Milestone,
+		nil,
 	)
 
 	genesisState[types.ModuleName] = app.Codec().MustMarshalJSON(milestoneGenesis)
