@@ -57,8 +57,8 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/params", paramsHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/latest", milestoneLatestHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/count", milestoneCountHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/lastNoAck", latestNoAckMilestoneHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/noAck/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
 
 }
