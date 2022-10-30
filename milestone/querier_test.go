@@ -214,3 +214,48 @@ func (suite *QuerierTestSuite) TestQueryNoAckMilestoneByID() {
 	require.Equal(t, val, true)
 
 }
+
+func (suite *QuerierTestSuite) TestSetNoAckMilestone() {
+	t, app, ctx, _ := suite.T(), suite.app, suite.ctx, suite.querier
+
+	milestoneID := "00000"
+
+	startBlock := uint64(0)
+	endBlock := uint64(255)
+	rootHash := hmTypes.HexToHeimdallHash("123")
+	proposerAddress := hmTypes.HexToHeimdallAddress("123")
+	timestamp := uint64(time.Now().Unix())
+	borChainId := "1234"
+
+	milestoneBlock := hmTypes.CreateMilestone(
+		startBlock,
+		endBlock,
+		rootHash,
+		proposerAddress,
+		borChainId,
+		milestoneID,
+		timestamp,
+	)
+	app.MilestoneKeeper.AddMilestone(ctx, milestoneBlock)
+
+	milstoneBlockTemp, _ := app.MilestoneKeeper.GetLastMilestone(ctx)
+	require.Equal(t, milstoneBlockTemp.MilestoneID, milestoneBlock.MilestoneID)
+
+	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
+
+	res := app.MilestoneKeeper.GetLastNoAckMilestone(ctx)
+
+	require.Equal(t, res, "00000")
+
+	var ct sdk.Context
+	ct = app.BaseApp.NewContext(false, abci.Header{})
+
+	//app.MilestoneKeeper.AddMilestone(ct, milestoneBlock)
+
+	milstoneBlockTemp, _ = app.MilestoneKeeper.GetLastMilestone(ct)
+	require.Equal(t, milstoneBlockTemp.MilestoneID, milestoneBlock.MilestoneID)
+
+	res = app.MilestoneKeeper.GetLastNoAckMilestone(ct)
+	require.Equal(t, res, "00000")
+
+}
