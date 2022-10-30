@@ -17,7 +17,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		}
 	}
 
-	keeper.SetNoAckMilestone(ctx, (*data.Milestone).MilestoneID)
+	keeper.SetNoAckMilestone(ctx, data.LastNoAckMilestone)
 
 }
 
