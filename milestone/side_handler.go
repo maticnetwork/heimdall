@@ -108,16 +108,31 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 // PostHandleMsgMilestone handles msg milestone
 func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
+	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Skip handler if milestone is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		logger.Debug("Skipping new milestone since side-tx didn't get yes votes", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash, "milestoneId", msg.MilestoneID)
-		k.SetNoAckMilestone(ctx, msg.MilestoneID)
+		k.SetNoAckMilestone(ctx, hmTypes.Milestone{
+			StartBlock:  msg.StartBlock,
+			EndBlock:    msg.EndBlock,
+			RootHash:    msg.RootHash,
+			Proposer:    msg.Proposer,
+			BorChainID:  msg.BorChainID,
+			MilestoneID: msg.MilestoneID,
+			TimeStamp:   timeStamp,
+		})
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
 	logger.Error("In PostHandler", "RootHash", msg.RootHash)
-	logger.Error("LastNoAck", "MilestoneID", k.GetLastNoAckMilestone(ctx))
+
+	lastNoAckMilestone, err := k.GetLastNoAckMilestone(ctx)
+	if lastNoAckMilestone != nil && err == nil {
+
+		logger.Error("LastNoAck", "Milestone", lastNoAckMilestone.MilestoneID)
+	}
+
 	mile, err := k.GetLastMilestone(ctx)
 	if mile != nil && err == nil {
 		logger.Error("LastMilestone122", "Milestone", mile.MilestoneID)
@@ -135,8 +150,22 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				"startBlock", msg.StartBlock,
 				"milestoneID", msg.MilestoneID,
 			)
-			k.SetNoAckMilestone(ctx, "BB")
-			logger.Error("LastNoAck134", "MilestoneID", k.GetLastNoAckMilestone(ctx))
+			err := k.SetNoAckMilestone(ctx, hmTypes.Milestone{
+				StartBlock:  msg.StartBlock,
+				EndBlock:    msg.EndBlock,
+				RootHash:    msg.RootHash,
+				Proposer:    msg.Proposer,
+				BorChainID:  msg.BorChainID,
+				MilestoneID: msg.MilestoneID,
+				TimeStamp:   timeStamp,
+			})
+
+			lastNoAckMilestone, err := k.GetLastNoAckMilestone(ctx)
+			if lastNoAckMilestone != nil && err == nil {
+
+				logger.Error("LastNoAck", "Milestone", lastNoAckMilestone.MilestoneID)
+			}
+
 			mile, err := k.GetLastMilestone(ctx)
 			if mile != nil && err == nil {
 				logger.Error("LastMilestone142", "Milestone", mile.MilestoneID)
@@ -153,21 +182,19 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				"milestoneID", msg.MilestoneID,
 			)
 
-			k.SetNoAckMilestone(ctx, msg.MilestoneID)
-			logger.Error("LastNoAck134", "MilestoneID", k.GetLastNoAckMilestone(ctx))
+			//k.SetNoAckMilestone(ctx, msg.MilestoneID)
+			//logger.Error("LastNoAck134", "MilestoneID", k.GetLastNoAckMilestone(ctx))
 			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
 		}
 	} else if err != nil && msg.StartBlock != 0 {
 		logger.Error("First milestone to start from", "block", 0, "Error", err)
-		k.SetNoAckMilestone(ctx, msg.MilestoneID)
+		//k.SetNoAckMilestone(ctx, msg.MilestoneID)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
 	//
 	// Save milestone to buffer store
 	//
-
-	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add milestone to store with root hash
 	if err := k.AddMilestone(ctx, hmTypes.Milestone{
@@ -179,7 +206,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		MilestoneID: msg.MilestoneID,
 		TimeStamp:   timeStamp,
 	}); err != nil {
-		k.SetNoAckMilestone(ctx, msg.MilestoneID)
+		//k.SetNoAckMilestone(ctx, msg.MilestoneID)
 		logger.Error("Failed to set milestone ", "Error", err)
 	}
 

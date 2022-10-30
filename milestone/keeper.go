@@ -223,27 +223,50 @@ func (k *Keeper) PruneMilestone(ctx sdk.Context, number uint64) {
 }
 
 // SetLastNoAck set last no-ack object
-func (k *Keeper) SetNoAckMilestone(ctx sdk.Context, milestoneId string) {
+func (k *Keeper) SetNoAckMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
 	store := ctx.KVStore(k.storeKey)
 
-	milestoneNoAckKey := GetMilestoneNoAckKey(milestoneId)
-	value := []byte(milestoneId)
+	//milestoneNoAckKey := GetMilestoneNoAckKey(milestoneId)
+	//value := []byte(milestoneId)
 
+	// create Checkpoint block and marshall
+	out, err := k.cdc.MarshalBinaryBare(milestone)
+	if err != nil {
+		k.Logger(ctx).Error("Error marshalling milestone", "error", err)
+		return err
+	}
+
+	// store in key provided
+	store.Set(MilestoneLastNoAckKey, out)
+	return nil
 	// set no-ack-milestone
-	store.Set(milestoneNoAckKey, value)
-	store.Set(MilestoneLastNoAckKey, value)
+	//store.Set(milestoneNoAckKey, value)
+	//store.Set(MilestoneLastNoAckKey, value)
 }
 
 // GetLastNoAckMilestone returns last no ack milestone
-func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) string {
+func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) (*hmTypes.Milestone, error) {
 	store := ctx.KVStore(k.storeKey)
 	// check if ack count is there
+	// if store.Has(MilestoneLastNoAckKey) {
+	// 	// get current ACK count
+	// 	result := string(store.Get(MilestoneLastNoAckKey))
+	// 	return result
+	// }
+
+	var _milestone hmTypes.Milestone
+
 	if store.Has(MilestoneLastNoAckKey) {
-		// get current ACK count
-		result := string(store.Get(MilestoneLastNoAckKey))
-		return result
+		err := k.cdc.UnmarshalBinaryBare(store.Get(MilestoneLastNoAckKey), &_milestone)
+		if err != nil {
+			k.Logger(ctx).Error("Unable to fetch last no ack milestone from store")
+			return nil, err
+		} else {
+			return &_milestone, nil
+		}
 	}
-	return ""
+
+	return nil, cmn.ErrNoMilestoneFound(k.Codespace())
 }
 
 // GetLastNoAckMilestone returns last no ack milestone

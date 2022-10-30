@@ -96,62 +96,62 @@ func (suite *KeeperTestSuite) TestGetCount() {
 
 }
 
-func (suite *KeeperTestSuite) TestGetNoAckMilestone() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.MilestoneKeeper
+// func (suite *KeeperTestSuite) TestGetNoAckMilestone() {
+// 	t, app, ctx := suite.T(), suite.app, suite.ctx
+// 	keeper := app.MilestoneKeeper
 
-	result := keeper.GetCount(ctx)
-	require.Equal(t, uint64(0), result)
+// 	result := keeper.GetCount(ctx)
+// 	require.Equal(t, uint64(0), result)
 
-	milestoneID := "0000"
+// 	milestoneID := "0000"
 
-	keeper.SetNoAckMilestone(ctx, milestoneID)
+// 	keeper.SetNoAckMilestone(ctx, milestoneID)
 
-	val := keeper.GetNoAckMilestone(ctx, "0000")
-	require.True(t, val)
+// 	val := keeper.GetNoAckMilestone(ctx, "0000")
+// 	require.True(t, val)
 
-	val = keeper.GetNoAckMilestone(ctx, "00001")
-	require.False(t, val)
+// 	val = keeper.GetNoAckMilestone(ctx, "00001")
+// 	require.False(t, val)
 
-	val = keeper.GetNoAckMilestone(ctx, "")
-	require.False(t, val)
+// 	val = keeper.GetNoAckMilestone(ctx, "")
+// 	require.False(t, val)
 
-	milestoneID = "0001"
-	keeper.SetNoAckMilestone(ctx, milestoneID)
+// 	milestoneID = "0001"
+// 	keeper.SetNoAckMilestone(ctx, milestoneID)
 
-	val = keeper.GetNoAckMilestone(ctx, "0001")
-	require.True(t, val)
+// 	val = keeper.GetNoAckMilestone(ctx, "0001")
+// 	require.True(t, val)
 
-	val = keeper.GetNoAckMilestone(ctx, "0000")
-	require.True(t, val)
+// 	val = keeper.GetNoAckMilestone(ctx, "0000")
+// 	require.True(t, val)
 
-}
+// }
 
-func (suite *KeeperTestSuite) TestLastNoAckMilestone() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.MilestoneKeeper
+// func (suite *KeeperTestSuite) TestLastNoAckMilestone() {
+// 	t, app, ctx := suite.T(), suite.app, suite.ctx
+// 	keeper := app.MilestoneKeeper
 
-	result := keeper.GetCount(ctx)
-	require.Equal(t, uint64(0), result)
+// 	result := keeper.GetCount(ctx)
+// 	require.Equal(t, uint64(0), result)
 
-	milestoneID := "0000"
+// 	milestoneID := "0000"
 
-	val := keeper.GetLastNoAckMilestone(ctx)
-	require.NotEqual(t, val, milestoneID)
+// 	val := keeper.GetLastNoAckMilestone(ctx)
+// 	require.NotEqual(t, val, milestoneID)
 
-	keeper.SetNoAckMilestone(ctx, milestoneID)
+// 	keeper.SetNoAckMilestone(ctx, milestoneID)
 
-	val = keeper.GetLastNoAckMilestone(ctx)
-	require.Equal(t, val, milestoneID)
+// 	val = keeper.GetLastNoAckMilestone(ctx)
+// 	require.Equal(t, val, milestoneID)
 
-	milestoneID = "0001"
+// 	milestoneID = "0001"
 
-	keeper.SetNoAckMilestone(ctx, milestoneID)
+// 	keeper.SetNoAckMilestone(ctx, milestoneID)
 
-	val = keeper.GetLastNoAckMilestone(ctx)
-	require.Equal(t, val, milestoneID)
+// 	val = keeper.GetLastNoAckMilestone(ctx)
+// 	require.Equal(t, val, milestoneID)
 
-}
+// }
 
 // func (suite *KeeperTestSuite) TestHasStoreValue() {
 // 	t, app, ctx := suite.T(), suite.app, suite.ctx

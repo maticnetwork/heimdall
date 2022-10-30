@@ -17,7 +17,12 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		}
 	}
 
-	keeper.SetNoAckMilestone(ctx, data.LastNoAckMilestone)
+	if data.Milestone != nil {
+
+		if err := keeper.SetNoAckMilestone(ctx, *data.LastNoAckMilestone); err != nil {
+			keeper.Logger(ctx).Error("InitGenesis | SetMilestone", "error", err)
+		}
+	}
 
 }
 
@@ -26,7 +31,7 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	params := keeper.GetParams(ctx)
 
 	milestone, _ := keeper.GetLastMilestone(ctx)
-	noAckMilestoneID := keeper.GetLastNoAckMilestone(ctx)
+	noAckMilestoneID, _ := keeper.GetLastNoAckMilestone(ctx)
 
 	return types.NewGenesisState(
 		params,

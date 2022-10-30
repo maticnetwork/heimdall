@@ -12,7 +12,6 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/common"
-	errs "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/milestone"
 	chSim "github.com/maticnetwork/heimdall/milestone/simulation"
@@ -182,147 +181,147 @@ func (suite *SideHandlerTestSuite) TestPostHandler() {
 	require.Equal(t, sdk.CodeUnknownRequest, result.Code)
 }
 
-func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.MilestoneKeeper
-	stakingKeeper := app.StakingKeeper
-	start := uint64(0)
-	params := keeper.GetParams(ctx)
-	sprintLength := params.SprintLength
+// func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
+// 	t, app, ctx := suite.T(), suite.app, suite.ctx
+// 	keeper := app.MilestoneKeeper
+// 	stakingKeeper := app.StakingKeeper
+// 	start := uint64(0)
+// 	params := keeper.GetParams(ctx)
+// 	sprintLength := params.SprintLength
 
-	// check valid milestone
-	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
-	stakingKeeper.IncrementAccum(ctx, 1)
+// 	// check valid milestone
+// 	// generate proposer for validator set
+// 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+// 	stakingKeeper.IncrementAccum(ctx, 1)
 
-	lastMilestone, err := keeper.GetLastMilestone(ctx)
-	if err == nil {
-		start = start + lastMilestone.EndBlock + 1
-	}
+// 	lastMilestone, err := keeper.GetLastMilestone(ctx)
+// 	if err == nil {
+// 		start = start + lastMilestone.EndBlock + 1
+// 	}
 
-	milestone, err := chSim.GenRandMilestone(start, sprintLength)
-	require.NoError(t, err)
+// 	milestone, err := chSim.GenRandMilestone(start, sprintLength)
+// 	require.NoError(t, err)
 
-	// add current proposer to header
-	milestone.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
+// 	// add current proposer to header
+// 	milestone.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
-	borChainId := "1234"
+// 	borChainId := "1234"
 
-	suite.Run("Failure", func() {
-		// create milestone msg
-		msgMilestone := types.NewMsgMilestoneBlock(
-			milestone.Proposer,
-			milestone.StartBlock,
-			milestone.EndBlock,
-			milestone.RootHash,
-			borChainId,
-			"00000",
-		)
+// 	suite.Run("Failure", func() {
+// 		// create milestone msg
+// 		msgMilestone := types.NewMsgMilestoneBlock(
+// 			milestone.Proposer,
+// 			milestone.StartBlock,
+// 			milestone.EndBlock,
+// 			milestone.RootHash,
+// 			borChainId,
+// 			"00000",
+// 		)
 
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
-		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
+// 		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
+// 		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 
-		lastMilestone, err = keeper.GetLastMilestone(ctx)
-		require.Nil(t, lastMilestone)
-		require.Error(t, err)
+// 		lastMilestone, err = keeper.GetLastMilestone(ctx)
+// 		require.Nil(t, lastMilestone)
+// 		require.Error(t, err)
 
-		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
-		require.Equal(t, lastNoAckMilestone, "00000")
+// 		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
+// 		require.Equal(t, lastNoAckMilestone, "00000")
 
-		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00000")
-		require.True(t, IsNoAckMilestone)
+// 		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00000")
+// 		require.True(t, IsNoAckMilestone)
 
-		IsNoAckMilestone = keeper.GetNoAckMilestone(ctx, "WrongID")
-		require.False(t, IsNoAckMilestone)
+// 		IsNoAckMilestone = keeper.GetNoAckMilestone(ctx, "WrongID")
+// 		require.False(t, IsNoAckMilestone)
 
-	})
+// 	})
 
-	suite.Run("Success", func() {
-		// create milestone msg
-		msgMilestone := types.NewMsgMilestoneBlock(
-			milestone.Proposer,
-			milestone.StartBlock,
-			milestone.EndBlock,
-			milestone.RootHash,
-			borChainId,
-			"00001",
-		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
-		require.True(t, result.IsOK(), "expected send-milestone to be ok, got %v", result)
+// 	suite.Run("Success", func() {
+// 		// create milestone msg
+// 		msgMilestone := types.NewMsgMilestoneBlock(
+// 			milestone.Proposer,
+// 			milestone.StartBlock,
+// 			milestone.EndBlock,
+// 			milestone.RootHash,
+// 			borChainId,
+// 			"00001",
+// 		)
+// 		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
+// 		require.True(t, result.IsOK(), "expected send-milestone to be ok, got %v", result)
 
-		bufferedHeader, err := keeper.GetLastMilestone(ctx)
-		require.Equal(t, bufferedHeader.StartBlock, milestone.StartBlock)
-		require.Equal(t, bufferedHeader.EndBlock, milestone.EndBlock)
-		require.Equal(t, bufferedHeader.RootHash, milestone.RootHash)
-		require.Equal(t, bufferedHeader.Proposer, milestone.Proposer)
-		require.Equal(t, bufferedHeader.BorChainID, milestone.BorChainID)
-		require.Empty(t, err, "Unable to set milestone, Error: %v", err)
+// 		bufferedHeader, err := keeper.GetLastMilestone(ctx)
+// 		require.Equal(t, bufferedHeader.StartBlock, milestone.StartBlock)
+// 		require.Equal(t, bufferedHeader.EndBlock, milestone.EndBlock)
+// 		require.Equal(t, bufferedHeader.RootHash, milestone.RootHash)
+// 		require.Equal(t, bufferedHeader.Proposer, milestone.Proposer)
+// 		require.Equal(t, bufferedHeader.BorChainID, milestone.BorChainID)
+// 		require.Empty(t, err, "Unable to set milestone, Error: %v", err)
 
-		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
-		require.NotEqual(t, lastNoAckMilestone, "00001")
+// 		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
+// 		require.NotEqual(t, lastNoAckMilestone, "00001")
 
-		lastNoAckMilestone = keeper.GetLastNoAckMilestone(ctx)
-		require.Equal(t, lastNoAckMilestone, "00000")
+// 		lastNoAckMilestone = keeper.GetLastNoAckMilestone(ctx)
+// 		require.Equal(t, lastNoAckMilestone, "00000")
 
-		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00001")
-		require.False(t, IsNoAckMilestone)
+// 		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00001")
+// 		require.False(t, IsNoAckMilestone)
 
-	})
+// 	})
 
-	suite.Run("Pre Exist", func() {
-		// create milestone msg
-		msgMilestone := types.NewMsgMilestoneBlock(
-			milestone.Proposer,
-			milestone.StartBlock,
-			milestone.EndBlock,
-			milestone.RootHash,
-			borChainId,
-			"00002",
-		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
-		require.False(t, result.IsOK(), "expected send-milestone to be not ok, got %v", result)
+// 	suite.Run("Pre Exist", func() {
+// 		// create milestone msg
+// 		msgMilestone := types.NewMsgMilestoneBlock(
+// 			milestone.Proposer,
+// 			milestone.StartBlock,
+// 			milestone.EndBlock,
+// 			milestone.RootHash,
+// 			borChainId,
+// 			"00002",
+// 		)
+// 		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
+// 		require.False(t, result.IsOK(), "expected send-milestone to be not ok, got %v", result)
 
-		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
-		require.Equal(t, lastNoAckMilestone, "00002")
+// 		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
+// 		require.Equal(t, lastNoAckMilestone, "00002")
 
-		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00002")
-		require.True(t, IsNoAckMilestone)
+// 		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00002")
+// 		require.True(t, IsNoAckMilestone)
 
-	})
+// 	})
 
-	suite.Run("Not in continuity", func() {
-		// create milestone msg
-		msgMilestone := types.NewMsgMilestoneBlock(
-			milestone.Proposer,
-			milestone.StartBlock+64+1,
-			milestone.EndBlock+64+1,
-			milestone.RootHash,
-			borChainId,
-			"00003",
-		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
-		require.False(t, result.IsOK(), "expected send-milestone to be not ok, got %v", result)
+// 	suite.Run("Not in continuity", func() {
+// 		// create milestone msg
+// 		msgMilestone := types.NewMsgMilestoneBlock(
+// 			milestone.Proposer,
+// 			milestone.StartBlock+64+1,
+// 			milestone.EndBlock+64+1,
+// 			milestone.RootHash,
+// 			borChainId,
+// 			"00003",
+// 		)
+// 		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
+// 		require.False(t, result.IsOK(), "expected send-milestone to be not ok, got %v", result)
 
-		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
-		require.Equal(t, lastNoAckMilestone, "00003")
+// 		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
+// 		require.Equal(t, lastNoAckMilestone, "00003")
 
-		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00003")
-		require.True(t, IsNoAckMilestone)
+// 		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00003")
+// 		require.True(t, IsNoAckMilestone)
 
-	})
+// 	})
 
-	suite.Run("Replay", func() {
-		// create milestone msg
-		msgMilestone := types.NewMsgMilestoneBlock(
-			milestone.Proposer,
-			milestone.StartBlock,
-			milestone.EndBlock,
-			milestone.RootHash,
-			borChainId,
-			milestone.MilestoneID,
-		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
-		require.False(t, result.IsOK(), "expected send-milestone to be ok, got %v", result)
-		require.Equal(t, common.CodeInvalidBlockInput, result.Code)
-	})
-}
+// 	suite.Run("Replay", func() {
+// 		// create milestone msg
+// 		msgMilestone := types.NewMsgMilestoneBlock(
+// 			milestone.Proposer,
+// 			milestone.StartBlock,
+// 			milestone.EndBlock,
+// 			milestone.RootHash,
+// 			borChainId,
+// 			milestone.MilestoneID,
+// 		)
+// 		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
+// 		require.False(t, result.IsOK(), "expected send-milestone to be ok, got %v", result)
+// 		require.Equal(t, common.CodeInvalidBlockInput, result.Code)
+// 	})
+// }

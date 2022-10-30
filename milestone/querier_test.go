@@ -126,130 +126,130 @@ func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 	require.Equal(t, milestone, milestoneBlock)
 }
 
-func (suite *QuerierTestSuite) TestQueryLastNoAckMilestone() {
-	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+// func (suite *QuerierTestSuite) TestQueryLastNoAckMilestone() {
+// 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
-	path := []string{types.QueryLatestNoAckMilestone}
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone)
+// 	path := []string{types.QueryLatestNoAckMilestone}
+// 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone)
 
-	milestoneID := "00000"
+// 	milestoneID := "00000"
 
-	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
+// 	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
 
-	req := abci.RequestQuery{
-		Path: route,
-		Data: []byte{},
-	}
+// 	req := abci.RequestQuery{
+// 		Path: route,
+// 		Data: []byte{},
+// 	}
 
-	res, err1 := querier(ctx, path, req)
-	require.NoError(t, err1)
-	require.NotNil(t, res)
+// 	res, err1 := querier(ctx, path, req)
+// 	require.NoError(t, err1)
+// 	require.NotNil(t, res)
 
-	var _milestoneID string
+// 	var _milestoneID string
 
-	err2 := json.Unmarshal(res, &_milestoneID)
+// 	err2 := json.Unmarshal(res, &_milestoneID)
 
-	require.NoError(t, err2)
-	require.Equal(t, _milestoneID, milestoneID)
+// 	require.NoError(t, err2)
+// 	require.Equal(t, _milestoneID, milestoneID)
 
-	milestoneID = "00001"
-	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
+// 	milestoneID = "00001"
+// 	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
 
-	res, err1 = querier(ctx, path, req)
-	require.NoError(t, err1)
-	require.NotNil(t, res)
+// 	res, err1 = querier(ctx, path, req)
+// 	require.NoError(t, err1)
+// 	require.NotNil(t, res)
 
-	err2 = json.Unmarshal(res, &_milestoneID)
+// 	err2 = json.Unmarshal(res, &_milestoneID)
 
-	require.NoError(t, err2)
-	require.Equal(t, _milestoneID, milestoneID)
+// 	require.NoError(t, err2)
+// 	require.Equal(t, _milestoneID, milestoneID)
 
-}
+// }
 
-func (suite *QuerierTestSuite) TestQueryNoAckMilestoneByID() {
-	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+// func (suite *QuerierTestSuite) TestQueryNoAckMilestoneByID() {
+// 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
-	path := []string{types.QueryNoAckMilestoneByID}
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID)
+// 	path := []string{types.QueryNoAckMilestoneByID}
+// 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID)
 
-	milestoneID := "00000"
+// 	milestoneID := "00000"
 
-	req := abci.RequestQuery{
-		Path: route,
-		Data: app.Codec().MustMarshalJSON(types.NewQueryMilestoneID(milestoneID)),
-	}
+// 	req := abci.RequestQuery{
+// 		Path: route,
+// 		Data: app.Codec().MustMarshalJSON(types.NewQueryMilestoneID(milestoneID)),
+// 	}
 
-	res, err1 := querier(ctx, path, req)
-	require.NoError(t, err1)
-	require.NotNil(t, res)
+// 	res, err1 := querier(ctx, path, req)
+// 	require.NoError(t, err1)
+// 	require.NotNil(t, res)
 
-	var val bool
+// 	var val bool
 
-	err2 := json.Unmarshal(res, &val)
+// 	err2 := json.Unmarshal(res, &val)
 
-	require.NoError(t, err2)
-	require.Equal(t, val, false)
+// 	require.NoError(t, err2)
+// 	require.Equal(t, val, false)
 
-	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
+// 	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
 
-	res, err1 = querier(ctx, path, req)
-	require.NoError(t, err1)
-	require.NotNil(t, res)
+// 	res, err1 = querier(ctx, path, req)
+// 	require.NoError(t, err1)
+// 	require.NotNil(t, res)
 
-	err2 = json.Unmarshal(res, &val)
+// 	err2 = json.Unmarshal(res, &val)
 
-	require.NoError(t, err2)
-	require.Equal(t, val, true)
+// 	require.NoError(t, err2)
+// 	require.Equal(t, val, true)
 
-	milestoneID = "00001"
-	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
+// 	milestoneID = "00001"
+// 	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
 
-	res, err1 = querier(ctx, path, req)
-	require.NoError(t, err1)
-	require.NotNil(t, res)
+// 	res, err1 = querier(ctx, path, req)
+// 	require.NoError(t, err1)
+// 	require.NotNil(t, res)
 
-	err2 = json.Unmarshal(res, &val)
+// 	err2 = json.Unmarshal(res, &val)
 
-	require.NoError(t, err2)
-	require.Equal(t, val, true)
+// 	require.NoError(t, err2)
+// 	require.Equal(t, val, true)
 
-}
+// }
 
-func (suite *QuerierTestSuite) TestSetNoAckMilestone() {
-	t, app, ctx, _ := suite.T(), suite.app, suite.ctx, suite.querier
+// func (suite *QuerierTestSuite) TestSetNoAckMilestone() {
+// 	t, app, ctx, _ := suite.T(), suite.app, suite.ctx, suite.querier
 
-	milestoneID := "00000"
+// 	milestoneID := "00000"
 
-	startBlock := uint64(0)
-	endBlock := uint64(255)
-	rootHash := hmTypes.HexToHeimdallHash("123")
-	proposerAddress := hmTypes.HexToHeimdallAddress("123")
-	timestamp := uint64(time.Now().Unix())
-	borChainId := "1234"
+// 	startBlock := uint64(0)
+// 	endBlock := uint64(255)
+// 	rootHash := hmTypes.HexToHeimdallHash("123")
+// 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
+// 	timestamp := uint64(time.Now().Unix())
+// 	borChainId := "1234"
 
-	milestoneBlock := hmTypes.CreateMilestone(
-		startBlock,
-		endBlock,
-		rootHash,
-		proposerAddress,
-		borChainId,
-		milestoneID,
-		timestamp,
-	)
-	app.MilestoneKeeper.AddMilestone(ctx, milestoneBlock)
+// 	milestoneBlock := hmTypes.CreateMilestone(
+// 		startBlock,
+// 		endBlock,
+// 		rootHash,
+// 		proposerAddress,
+// 		borChainId,
+// 		milestoneID,
+// 		timestamp,
+// 	)
+// 	app.MilestoneKeeper.AddMilestone(ctx, milestoneBlock)
 
-	milstoneBlockTemp, _ := app.MilestoneKeeper.GetLastMilestone(ctx)
-	require.Equal(t, milstoneBlockTemp.MilestoneID, milestoneBlock.MilestoneID)
+// 	milstoneBlockTemp, _ := app.MilestoneKeeper.GetLastMilestone(ctx)
+// 	require.Equal(t, milstoneBlockTemp.MilestoneID, milestoneBlock.MilestoneID)
 
-	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
+// 	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
 
-	res := app.MilestoneKeeper.GetLastNoAckMilestone(ctx)
+// 	res := app.MilestoneKeeper.GetLastNoAckMilestone(ctx)
 
-	require.Equal(t, res, "00000")
+// 	require.Equal(t, res, "00000")
 
-	time.Sleep(300 * time.Second)
+// 	time.Sleep(300 * time.Second)
 
-	res = app.MilestoneKeeper.GetLastNoAckMilestone(ctx)
-	require.Equal(t, res, "00000")
+// 	res = app.MilestoneKeeper.GetLastNoAckMilestone(ctx)
+// 	require.Equal(t, res, "00000")
 
-}
+// }
