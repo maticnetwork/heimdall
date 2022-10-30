@@ -247,15 +247,9 @@ func (suite *QuerierTestSuite) TestSetNoAckMilestone() {
 
 	require.Equal(t, res, "00000")
 
-	var ct sdk.Context
-	ct = app.BaseApp.NewContext(false, abci.Header{})
+	time.Sleep(300 * time.Second)
 
-	//app.MilestoneKeeper.AddMilestone(ct, milestoneBlock)
-
-	milstoneBlockTemp, _ = app.MilestoneKeeper.GetLastMilestone(ct)
-	require.Equal(t, milstoneBlockTemp.MilestoneID, milestoneBlock.MilestoneID)
-
-	res = app.MilestoneKeeper.GetLastNoAckMilestone(ct)
+	res = app.MilestoneKeeper.GetLastNoAckMilestone(ctx)
 	require.Equal(t, res, "00000")
 
 }

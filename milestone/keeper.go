@@ -20,8 +20,8 @@ var (
 	DefaultValue          = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 	MilestoneKey          = []byte{0x20} // Key to store milestone
 	CountKey              = []byte{0x30} //Key to store the count
-	MilestoneNoAckKey     = []byte{0x40} //Key to store the NoAckMilestone
-	MilestoneLastNoAckKey = []byte{0x50} //Key to store the Latest NoAckMilestone
+	MilestoneNoAckKey     = []byte{0x21} //Key to store the NoAckMilestone
+	MilestoneLastNoAckKey = []byte{0x22} //Key to store the Latest NoAckMilestone
 )
 
 // ModuleCommunicator manages different module interaction
