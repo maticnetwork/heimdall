@@ -117,7 +117,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	}
 
 	logger.Error("In PostHandler", "RootHash", msg.RootHash)
-
+	logger.Error("LastNoAck", "MilestoneID", k.GetLastNoAckMilestone(ctx))
 	//
 	// Validate last milestone
 	//
