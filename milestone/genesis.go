@@ -17,9 +17,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		}
 	}
 
-	if data.LastNoAckMilestone != nil {
-		keeper.SetNoAckMilestone(ctx, (*data.Milestone).MilestoneID)
-	}
+	keeper.SetNoAckMilestone(ctx, (*data.Milestone).MilestoneID)
 
 }
 
@@ -28,10 +26,11 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	params := keeper.GetParams(ctx)
 
 	milestone, _ := keeper.GetLastMilestone(ctx)
+	noAckMilestoneID := keeper.GetLastNoAckMilestone(ctx)
 
 	return types.NewGenesisState(
 		params,
 		milestone,
-		nil,
+		noAckMilestoneID,
 	)
 }

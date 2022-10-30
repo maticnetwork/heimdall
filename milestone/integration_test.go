@@ -25,7 +25,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	milestoneGenesis := types.NewGenesisState(
 		types.DefaultGenesisState().Params,
 		types.DefaultGenesisState().Milestone,
-		nil,
+		types.DefaultGenesisState().LastNoAckMilestone,
 	)
 
 	genesisState[types.ModuleName] = app.Codec().MustMarshalJSON(milestoneGenesis)
