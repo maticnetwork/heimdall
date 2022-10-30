@@ -129,18 +129,24 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			logger.Error(" already exists",
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock,
+				"milestoneID", msg.MilestoneID,
 			)
-			k.SetNoAckMilestone(ctx, msg.MilestoneID)
+			k.SetNoAckMilestone(ctx, "BB")
+			logger.Error("LastNoAck134", "MilestoneID", k.GetLastNoAckMilestone(ctx))
 			return common.ErrOldMilestone(k.Codespace()).Result()
+
 		}
 
 		// check if new milestone's start block start from current tip
 		if lastMilestone.EndBlock+1 != msg.StartBlock {
 			logger.Error("milestone not in countinuity",
 				"currentTip", lastMilestone.EndBlock,
-				"startBlock", msg.StartBlock)
+				"startBlock", msg.StartBlock,
+				"milestoneID", msg.MilestoneID,
+			)
 
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
+			logger.Error("LastNoAck134", "MilestoneID", k.GetLastNoAckMilestone(ctx))
 			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
 		}
 	} else if err != nil && msg.StartBlock != 0 {
