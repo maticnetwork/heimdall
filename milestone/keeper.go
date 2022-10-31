@@ -226,9 +226,6 @@ func (k *Keeper) PruneMilestone(ctx sdk.Context, number uint64) {
 func (k *Keeper) SetNoAckMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
 	store := ctx.KVStore(k.storeKey)
 
-	//milestoneNoAckKey := GetMilestoneNoAckKey(milestoneId)
-	//value := []byte(milestoneId)
-
 	// create Checkpoint block and marshall
 	out, err := k.cdc.MarshalBinaryBare(milestone)
 	if err != nil {
@@ -238,10 +235,26 @@ func (k *Keeper) SetNoAckMilestone(ctx sdk.Context, milestone hmTypes.Milestone)
 
 	// store in key provided
 	store.Set(MilestoneLastNoAckKey, out)
+
 	return nil
-	// set no-ack-milestone
-	//store.Set(milestoneNoAckKey, value)
-	//store.Set(MilestoneLastNoAckKey, value)
+	// store := ctx.KVStore(k.storeKey)
+
+	// //milestoneNoAckKey := GetMilestoneNoAckKey(milestoneId)
+	// //value := []byte(milestoneId)
+
+	// // create Checkpoint block and marshall
+	// out, err := k.cdc.MarshalBinaryBare(milestone)
+	// if err != nil {
+	// 	k.Logger(ctx).Error("Error marshalling milestone", "error", err)
+	// 	return err
+	// }
+
+	// // store in key provided
+	// store.Set(MilestoneLastNoAckKey, out)
+	// return nil
+	// // set no-ack-milestone
+	// //store.Set(milestoneNoAckKey, value)
+	// //store.Set(MilestoneLastNoAckKey, value)
 }
 
 // GetLastNoAckMilestone returns last no ack milestone
