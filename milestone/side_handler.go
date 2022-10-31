@@ -170,8 +170,27 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			if mile != nil && err == nil {
 				logger.Error("LastMilestone142", "Milestone", mile.MilestoneID)
 			}
-			return common.ErrOldMilestone(k.Codespace()).Result()
 
+			// TX bytes
+			txBytes := ctx.TxBytes()
+			hash := tmTypes.Tx(txBytes).Hash()
+
+			// Emit event for milestone
+			ctx.EventManager().EmitEvents(sdk.Events{
+				sdk.NewEvent(
+					types.EventTypeMilestone,
+					sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),                                  // action
+					sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
+					sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
+					sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
+					sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+					sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+					sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+					sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+					sdk.NewAttribute(types.AttributeKeyMilestoneID, msg.MilestoneID),
+				),
+			})
+			return common.ErrOldMilestone(k.Codespace()).Result()
 		}
 
 		// check if new milestone's start block start from current tip
