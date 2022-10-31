@@ -130,12 +130,12 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	lastNoAckMilestone, err := k.GetLastNoAckMilestone(ctx)
 	if lastNoAckMilestone != nil && err == nil {
 
-		logger.Error("LastNoAck", "Milestone", lastNoAckMilestone.MilestoneID)
+		logger.Error("LastNoAck133", "Milestone", lastNoAckMilestone.MilestoneID)
 	}
 
 	mile, err := k.GetLastMilestone(ctx)
 	if mile != nil && err == nil {
-		logger.Error("LastMilestone122", "Milestone", mile.MilestoneID)
+		logger.Error("LastMilestone138", "Milestone", mile.MilestoneID)
 	}
 	//
 	// Validate last milestone
@@ -163,7 +163,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			lastNoAckMilestone, err := k.GetLastNoAckMilestone(ctx)
 			if lastNoAckMilestone != nil && err == nil {
 
-				logger.Error("LastNoAck", "Milestone", lastNoAckMilestone.MilestoneID)
+				logger.Error("LastNoAck166", "Milestone", lastNoAckMilestone.MilestoneID)
 			}
 
 			mile, err := k.GetLastMilestone(ctx)
