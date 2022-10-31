@@ -190,7 +190,10 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 					sdk.NewAttribute(types.AttributeKeyMilestoneID, msg.MilestoneID),
 				),
 			})
-			return common.ErrOldMilestone(k.Codespace()).Result()
+
+			return sdk.Result{
+				Events: ctx.EventManager().Events(),
+			}
 		}
 
 		// check if new milestone's start block start from current tip
