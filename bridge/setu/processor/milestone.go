@@ -130,7 +130,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		return err
 	}
 
-	milestoneId := uuid.NewRandom().String() + string(helper.GetAddress())
+	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
 
 	mp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
 
@@ -164,7 +164,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 // startPolling - polls heimdall and checks if new span needs to be proposed
 func (mp *MilestoneProcessor) startPolling(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(1 * time.Second)
 	// stop ticker when everything done
 	defer ticker.Stop()
 
