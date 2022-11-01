@@ -63,6 +63,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	// work begins
 	sendStateSyncedToHeimdallCtx, sendStateSyncedToHeimdallSpan := tracing.StartSpan(otelCtx, "sendStateSyncedToHeimdall")
 	defer tracing.EndSpan(sendStateSyncedToHeimdallSpan)
+
 	start := time.Now()
 
 	var vLog = types.Log{}

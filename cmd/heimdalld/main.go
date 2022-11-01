@@ -298,6 +298,7 @@ func startOpenTracing(cmd *cobra.Command) (*sdktrace.TracerProvider, *context.Co
 
 		// Set up a trace exporter
 		var traceExporter *otlptrace.Exporter
+
 		traceExporterReady := make(chan *otlptrace.Exporter, 1)
 
 		go func() {
@@ -333,8 +334,10 @@ func startOpenTracing(cmd *cobra.Command) (*sdktrace.TracerProvider, *context.Co
 
 		// set global propagator to tracecontext (the default is no-op).
 		otel.SetTextMapPropagator(propagation.TraceContext{})
+
 		return tracerProvider, &ctx, nil
 	}
+
 	return nil, nil, nil
 }
 
