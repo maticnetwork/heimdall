@@ -157,11 +157,13 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 
 		_, BroadcastToHeimdallSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "BroadcastToHeimdall")
 		// return broadcast to heimdall
-		if err = cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		err = cp.txBroadcaster.BroadcastToHeimdall(msg, event)
+		tracing.EndSpan(BroadcastToHeimdallSpan)
+
+		if err != nil {
 			cp.Logger.Error("Error while broadcasting clerk Record to heimdall", "error", err)
 			return err
 		}
-		tracing.EndSpan(BroadcastToHeimdallSpan)
 	}
 
 	return nil
