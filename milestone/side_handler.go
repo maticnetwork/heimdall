@@ -150,6 +150,9 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	}); err != nil {
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 		logger.Error("Failed to set milestone ", "Error", err)
+	} else {
+		logger.Error("Heree in Posthandler")
+
 	}
 
 	// TX bytes
