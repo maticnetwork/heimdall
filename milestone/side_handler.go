@@ -149,7 +149,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock,
 			)
-			logger.Error("In Posthandler->", "Start Block", msg.StartBlock, "End Block", msg.EndBlock, "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
+			logger.Error("In Posthandler152->", "Start Block", msg.StartBlock, "End Block", msg.EndBlock, "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 			return sdk.Result{
@@ -196,6 +196,8 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 		logger.Error("Failed to set milestone ", "Error", err)
 	}
+
+	logger.Error("Added to the list")
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
