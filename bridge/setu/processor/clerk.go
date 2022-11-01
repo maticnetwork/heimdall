@@ -85,8 +85,17 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	} else {
 		defer util.LogElapsedTimeForStateSyncedEvent(event, "sendStateSyncedToHeimdall", start)
 
+		tracing.SetAttributes(sendStateSyncedToHeimdallSpan, []attribute.KeyValue{
+			attribute.String("event", eventName),
+			attribute.Int64("id", event.Id.Int64()),
+			attribute.String("contract", event.ContractAddress.String()),
+		}...)
+
 		_, isOldTxSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "isOldTx")
-		if isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.ClerkEvent, event); isOld {
+		isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.ClerkEvent, event)
+		tracing.EndSpan(isOldTxSpan)
+
+		if isOld {
 			cp.Logger.Info("Ignoring task to send deposit to heimdall as already processed",
 				"event", eventName,
 				"id", event.Id,
@@ -97,15 +106,9 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"logIndex", uint64(vLog.Index),
 				"blockNumber", vLog.BlockNumber,
 			)
+
 			return nil
 		}
-		tracing.EndSpan(isOldTxSpan)
-
-		tracing.SetAttributes(sendStateSyncedToHeimdallSpan, []attribute.KeyValue{
-			attribute.String("event", eventName),
-			attribute.Int64("id", event.Id.Int64()),
-			attribute.String("contract", event.ContractAddress.String()),
-		}...)
 
 		cp.Logger.Debug(
 			"⬜ New event found",
@@ -144,11 +147,13 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		// Check if we have the same transaction in mempool or not
 		// Don't drop the transaction. Keep retrying after `util.RetryStateSyncTaskDelay = 24 seconds`,
 		// until the transaction in mempool is processed or cancelled.
-		if inMempool, _ := cp.checkTxAgainstMempool(msg, event); inMempool {
+		inMempool, _ := cp.checkTxAgainstMempool(msg, event)
+		tracing.EndSpan(checkTxAgainstMempoolSpan)
+
+		if inMempool {
 			cp.Logger.Info("Similar transaction already in mempool, retrying in sometime", "event", eventName, "retry delay", util.RetryStateSyncTaskDelay)
 			return tasks.NewErrRetryTaskLater("transaction already in mempool", util.RetryStateSyncTaskDelay)
 		}
-		tracing.EndSpan(checkTxAgainstMempoolSpan)
 
 		_, BroadcastToHeimdallSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "BroadcastToHeimdall")
 		// return broadcast to heimdall
