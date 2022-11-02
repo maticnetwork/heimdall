@@ -37,7 +37,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 	// logger
 	logger := k.Logger(ctx)
-	logger.Error("In SideHandler->", "Start Block", msg.StartBlock, "End Block", msg.EndBlock, "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
+	logger.Error("Entered the Sidehandler for Milestone", "start", msg.StartBlock, "end", msg.EndBlock, "rootHash", msg.RootHash, "milestoneID", msg.MilestoneID)
 
 	// validate milestone
 	count := k.GetCount(ctx)
@@ -109,7 +109,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
 	timeStamp := uint64(ctx.BlockTime().Unix())
-	logger.Error("Enter the Posthandler")
+	logger.Error("Entered the Posthandler for Milestone", "start", msg.StartBlock, "end", msg.EndBlock, "rootHash", msg.RootHash, "milestoneID", msg.MilestoneID)
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
@@ -197,7 +197,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		logger.Error("Failed to set milestone ", "Error", err)
 	}
 
-	logger.Error("Added to the list")
+	logger.Error("Milestone added to the list")
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

@@ -164,7 +164,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 // startPolling - polls heimdall and checks if new span needs to be proposed
 func (mp *MilestoneProcessor) startPolling(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(1 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	// stop ticker when everything done
 	defer ticker.Stop()
 
