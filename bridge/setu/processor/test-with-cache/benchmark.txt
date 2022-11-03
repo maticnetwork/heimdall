@@ -1,0 +1,16 @@
+# go test -run=XXX -bench=.
+
+goos: darwin
+goarch: amd64
+pkg: github.com/maticnetwork/heimdall/bridge/setu/processor
+cpu: Intel(R) Core(TM) i9-8950HK CPU @ 2.90GHz
+
+BenchmarkSendStateSyncedToHeimdall-12           6163	    205357 ns/op	   48922 B/op	     497 allocs/op
+BenchmarkIsOldTx-12                             41040	     29076 ns/op	   10793 B/op	      70 allocs/op
+BenchmarkSendTaskWithDelay-12                   7339	    171231 ns/op	    6543 B/op	      96 allocs/op
+BenchmarkCalculateTaskDelay-12                  5390	    215635 ns/op	   87042 B/op	     473 allocs/op
+BenchmarkGetUnconfirmedTxnCount-12              54997	     23236 ns/op	    8138 B/op	      54 allocs/op
+
+
+PASS
+ok  	github.com/maticnetwork/heimdall/bridge/setu/processor	56.333s
