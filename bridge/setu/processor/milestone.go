@@ -71,12 +71,6 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 
 	if isProposer {
 
-		//fetch the block head number from bor chain
-		currentBlockNumber, err := mp.getCurrentChildBlock()
-		if err != nil {
-			return err
-		}
-
 		result, err := util.GetMilestoneCount(mp.cliCtx)
 		if err != nil || result == nil {
 			return err
@@ -91,14 +85,6 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 				return err
 			}
 
-			// current Block should be greater than or equal to latest milestone end block + Sprint length
-			if latestMilestone.EndBlock+milestoneParams.SprintLength > currentBlockNumber {
-				mp.Logger.Debug("Current child block is less than latest milestone end block + sprint length", "currentChildBlock", currentBlockNumber, "latestMilestoneEndBlock", latestMilestone.EndBlock)
-				return nil
-			}
-
-			mp.Logger.Debug("Current child block should be greater than or equal to latest milestone's endblock + sprintLength", "currentChildBlock", currentBlockNumber, "latestMilestoneEndBlock", latestMilestone.EndBlock)
-
 			start = latestMilestone.EndBlock + 1
 
 		}
@@ -109,6 +95,7 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
 			return err
 		}
+
 	} else {
 		mp.Logger.Info("I am not the current milestone proposer")
 		return
@@ -130,15 +117,15 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		return err
 	}
 
-	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
+	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String() + "-" + string(rune(end))
 
-	mp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
+	mp.Logger.Info("Root hash calculated")
 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", start,
 		"end", end,
 		"root", hmTypes.BytesToHeimdallHash(root),
-		"milestoneId",
+		"milestoneId", milestoneId,
 	)
 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams

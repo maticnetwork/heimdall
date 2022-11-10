@@ -137,6 +137,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 		return sdk.Result{
+			Code:   common.ErrBadBlockDetails(k.Codespace()).Code(),
 			Events: ctx.EventManager().Events(),
 		}
 
@@ -153,6 +154,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 			return sdk.Result{
+				Code:   common.ErrOldMilestone(k.Codespace()).Code(),
 				Events: ctx.EventManager().Events(),
 			}
 		}
@@ -168,6 +170,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 			return sdk.Result{
+				Code:   common.ErrMilestoneNotInContinuity(k.Codespace()).Code(),
 				Events: ctx.EventManager().Events(),
 			}
 		}
@@ -179,6 +182,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 		return sdk.Result{
+			Code:   common.ErrMilestoneInvalid(k.Codespace()).Code(),
 			Events: ctx.EventManager().Events(),
 		}
 
