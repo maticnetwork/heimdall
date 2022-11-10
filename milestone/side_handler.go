@@ -110,7 +110,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	logger := k.Logger(ctx)
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	logger.Error("Entered the Posthandler for Milestone", "start", msg.StartBlock, "end", msg.EndBlock, "rootHash", msg.RootHash, "milestoneID", msg.MilestoneID)
-
+	logger.Error("In Posthandler113->", "NoAckMilestoneID", k.GetLastNoAckMilestone(ctx))
 	// TX bytes
 	txBytes := ctx.TxBytes()
 	hash := tmTypes.Tx(txBytes).Hash()
@@ -151,6 +151,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				"startBlock", msg.StartBlock,
 			)
 			logger.Error("In Posthandler152->", "Start Block", msg.StartBlock, "End Block", msg.EndBlock, "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
+			logger.Error("In Posthandler155->", "NoAckMilestoneID", k.GetLastNoAckMilestone(ctx))
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 			return sdk.Result{
