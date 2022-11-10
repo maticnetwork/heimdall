@@ -58,7 +58,7 @@ func handlerMsgTick(ctx sdk.Context, msg types.MsgTick, k Keeper, contractCaller
 	// check if tick msgs are in continuity
 	tickCount := k.GetTickCount(ctx)
 	if msg.ID != tickCount+1 {
-		k.Logger(ctx).Error("Tick not in countinuity", "msgID", msg.ID, "expectedMsgID", tickCount+1)
+		k.Logger(ctx).Error("Tick not in continuity", "msgID", msg.ID, "expectedMsgID", tickCount+1)
 		return hmCommon.ErrTickNotInContinuity(k.Codespace()).Result()
 	}
 
@@ -169,7 +169,7 @@ func handleMsgTickAck(ctx sdk.Context, msg types.MsgTickAck, k Keeper, contractC
 	// check if tick ack msgs are in continuity
 	tickCount := k.GetTickCount(ctx)
 	if msg.ID != tickCount {
-		k.Logger(ctx).Error("Tick-ack not in countinuity", "msgID", msg.ID, "expectedMsgID", tickCount)
+		k.Logger(ctx).Error("Tick-ack not in continuity", "msgID", msg.ID, "expectedMsgID", tickCount)
 		return hmCommon.ErrTickAckNotInContinuity(k.Codespace()).Result()
 	}
 
