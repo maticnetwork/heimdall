@@ -119,7 +119,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String() + "-" + string(end)
 
-	mp.Logger.Info("Root hash calculated")
+	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(root))
 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", start,
