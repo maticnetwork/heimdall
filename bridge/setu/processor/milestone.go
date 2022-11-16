@@ -115,11 +115,12 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(root))
 
-	mp.Logger.Info("✅ Creating and broadcasting new milestone",
+	mp.Logger.Error("✅ Creating and broadcasting new milestone",
 		"start", start,
 		"end", end,
 		"root", hmTypes.BytesToHeimdallHash(root),
 		"milestoneId", milestoneId,
+		"milestoneLength", milestoneLength,
 	)
 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams
