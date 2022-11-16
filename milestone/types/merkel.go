@@ -8,9 +8,9 @@ import (
 )
 
 // ValidateMilestone - Validates if milestone rootHash matches or not
-func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, sprintLength uint64) (bool, error) {
+func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, milestoneLength uint64) (bool, error) {
 
-	if start+sprintLength-1 != end {
+	if start+milestoneLength-1 != end {
 		return false, errors.New("Invalid milestone, difference in start and end block is not equal to sprint length")
 	}
 
@@ -20,7 +20,7 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 	}
 
 	// Compare RootHash
-	vote, err := contractCaller.GetVoteOnRootHash(start, end, sprintLength, rootHash.String(), milestoneID)
+	vote, err := contractCaller.GetVoteOnRootHash(start, end, milestoneLength, rootHash.String(), milestoneID)
 	if err != nil {
 		return false, err
 	}

@@ -33,6 +33,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contr
 	//Check for the msg milestone
 	//
 
+	return common.ErrMilestoneInvalid(k.Codespace()).Result()
+
 	if msg.StartBlock+milestoneLength-1 != msg.EndBlock {
 		logger.Error("Milestone's length doesn't match the  milestone length set in configuration",
 			"StartBlock", msg.StartBlock,
