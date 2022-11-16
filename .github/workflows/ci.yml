@@ -68,8 +68,8 @@ jobs:
       - name: Upload govulncheck report
         uses: actions/upload-artifact@v3
         with:
-          name: govulncheck-raw-report
-          path: govulncheck-raw-report.json
+          name: raw-report
+          path: raw-report.json
 
       - name: "Run tests"
         run: make tests
