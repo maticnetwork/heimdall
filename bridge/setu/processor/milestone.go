@@ -24,7 +24,6 @@ type MilestoneProcessor struct {
 // MilestoneContext represents milestone context
 type MilestoneContext struct {
 	ChainmanagerParams *chainmanagerTypes.Params
-	MilestoneParams    *milestoneTypes.Params
 }
 
 // Start starts new block subscription
@@ -36,10 +35,10 @@ func (mp *MilestoneProcessor) Start() error {
 
 	mp.cancelMilestoneService = cancelMilestoneService
 
-	// start polling for span
-	mp.Logger.Info("Start polling for milestone", "pollInterval", helper.GetConfig().MilestonePollInterval)
+	// start polling for milestone
+	mp.Logger.Info("Start polling for milestone", "milestoneLength", helper.GetConfig().MilestoneLength, "pollInterval", helper.GetConfig().MilestonePollInterval)
 
-	go mp.startPolling(milestoneCtx, helper.GetConfig().MilestonePollInterval)
+	go mp.startPolling(milestoneCtx, helper.GetConfig().MilestoneLength, helper.GetConfig().MilestonePollInterval)
 
 	return nil
 }
@@ -53,15 +52,13 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 // 1. check if i am the proposer for next milestone
 // 2. check if milestone has to be proposed
 // 3. if so, propose milestone to heimdall.
-func (mp *MilestoneProcessor) checkAndPropose() (err error) {
+func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error) {
 
 	// fetch milestone context
 	milestoneContext, err := mp.getMilestoneContext()
 	if err != nil {
 		return err
 	}
-
-	milestoneParams := milestoneContext.MilestoneParams
 
 	isProposer, err := util.IsProposer(mp.cliCtx)
 	if err != nil {
@@ -89,9 +86,9 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 
 		}
 
-		end := start + milestoneParams.SprintLength - 1
+		end := start + milestoneLength - 1
 
-		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, end); err != nil {
+		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, end, milestoneLength); err != nil {
 			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
 			return err
 		}
@@ -105,19 +102,16 @@ func (mp *MilestoneProcessor) checkAndPropose() (err error) {
 }
 
 // sendMilestoneToHeimdall - creates milestone msg and broadcasts to heimdall
-func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64) error {
+func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64, milestoneLength uint64) error {
 	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end)
 
-	// get milestone params
-	milestoneParams := milestoneContext.MilestoneParams
-
 	// Get root hash
-	root, err := mp.contractConnector.GetRootHash(start, end, milestoneParams.SprintLength)
+	root, err := mp.contractConnector.GetRootHash(start, end, milestoneLength)
 	if err != nil {
 		return err
 	}
 
-	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String() + "-" + string(end)
+	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
 
 	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(root))
 
@@ -150,15 +144,15 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 }
 
 // startPolling - polls heimdall and checks if new span needs to be proposed
-func (mp *MilestoneProcessor) startPolling(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(5 * time.Second)
+func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength uint64, interval time.Duration) {
+	ticker := time.NewTicker(interval)
 	// stop ticker when everything done
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			mp.checkAndPropose()
+			mp.checkAndPropose(milestoneLength)
 		case <-ctx.Done():
 			mp.Logger.Info("Polling stopped")
 			ticker.Stop()
@@ -185,15 +179,8 @@ func (mp *MilestoneProcessor) getMilestoneContext() (*MilestoneContext, error) {
 		return nil, err
 	}
 
-	milestoneParams, err := util.GetMilestoneParams(mp.cliCtx)
-	if err != nil {
-		mp.Logger.Error("Error while fetching milestone params", "error", err)
-		return nil, err
-	}
-
 	return &MilestoneContext{
 		ChainmanagerParams: chainmanagerParams,
-		MilestoneParams:    milestoneParams,
 	}, nil
 }
 

@@ -30,9 +30,7 @@ func RandomizedGenState(simState *module.SimulationState) {
 		timestamp,
 	)
 
-	params := types.DefaultParams()
 	genesisState := types.NewGenesisState(
-		params,
 		&milestone,
 	)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(genesisState)

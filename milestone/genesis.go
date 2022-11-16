@@ -8,7 +8,6 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
-	keeper.SetParams(ctx, data.Params)
 	// Add milestone
 	if data.Milestone != nil {
 
@@ -21,12 +20,10 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
-	params := keeper.GetParams(ctx)
 
 	milestone, _ := keeper.GetLastMilestone(ctx)
 
 	return types.NewGenesisState(
-		params,
 		milestone,
 	)
 }

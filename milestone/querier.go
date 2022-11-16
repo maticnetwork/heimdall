@@ -41,7 +41,8 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, contractCaller help
 }
 
 func handleQueryParams(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	bz, err := json.Marshal(keeper.GetParams(ctx))
+	bz, err := json.Marshal(helper.GetConfig().MilestoneLength)
+
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

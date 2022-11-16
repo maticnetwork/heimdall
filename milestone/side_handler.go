@@ -32,8 +32,7 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 // SideHandleMsgMilestone handles MsgMilestone message for external call
 func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	// get params
-	params := k.GetParams(ctx)
-	sprintLength := params.SprintLength
+	milestoneLength := helper.GetConfig().MilestoneLength
 
 	// logger
 	logger := k.Logger(ctx)
@@ -60,7 +59,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
-	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.RootHash, msg.MilestoneID, contractCaller, sprintLength)
+	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.RootHash, msg.MilestoneID, contractCaller, milestoneLength)
 	if err != nil {
 		logger.Error("Error validating milestone",
 			"startBlock", msg.StartBlock,
@@ -109,8 +108,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
 	timeStamp := uint64(ctx.BlockTime().Unix())
-	logger.Error("Entered the Posthandler for Milestone", "start", msg.StartBlock, "end", msg.EndBlock, "rootHash", msg.RootHash, "milestoneID", msg.MilestoneID)
-	logger.Error("In Posthandler113->", "NoAckMilestoneID", k.GetLastNoAckMilestone(ctx))
+
 	// TX bytes
 	txBytes := ctx.TxBytes()
 	hash := tmTypes.Tx(txBytes).Hash()
@@ -149,12 +147,10 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock,
 			)
-			logger.Error("In Posthandler152->", "Start Block", msg.StartBlock, "End Block", msg.EndBlock, "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
-			logger.Error("In Posthandler155->", "NoAckMilestoneID", k.GetLastNoAckMilestone(ctx))
+
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 			return sdk.Result{
-				//Code:   common.ErrOldMilestone(k.Codespace()).Code(),
 				Events: ctx.EventManager().Events(),
 			}
 		}
@@ -165,8 +161,6 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock)
 
-			logger.Error("In Posthandler168->", "Start Block", msg.StartBlock, "End Block", msg.EndBlock, "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
-
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 			return sdk.Result{
@@ -176,7 +170,6 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 
 	} else if err != nil && msg.StartBlock != 0 {
 		logger.Error("First milestone to start from", "block", 0, "Error", err)
-		logger.Error("In Posthandler179->", "Start Block", msg.StartBlock, "End Block", msg.EndBlock, "RootHash", msg.RootHash, "MilestoneID", msg.MilestoneID)
 
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
@@ -198,8 +191,6 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 		logger.Error("Failed to set milestone ", "Error", err)
 	}
-
-	logger.Error("Milestone added to the list")
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),

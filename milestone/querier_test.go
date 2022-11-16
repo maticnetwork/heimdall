@@ -8,6 +8,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
@@ -64,9 +65,7 @@ func (suite *QuerierTestSuite) TestInvalidQuery() {
 func (suite *QuerierTestSuite) TestQueryParams() {
 	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
-	var params types.Params
-
-	defaultParams := types.DefaultParams()
+	milestoneLength := helper.GetConfig().MilestoneLength
 
 	path := []string{types.QueryParams}
 
@@ -79,10 +78,11 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	err := json.Unmarshal(res, &params)
+	var milestoneLengthTemp uint64
+
+	err := json.Unmarshal(res, &milestoneLengthTemp)
 	require.NoError(t, err)
-	require.NotNil(t, params)
-	require.Equal(t, defaultParams.SprintLength, params.SprintLength)
+	require.Equal(t, milestoneLengthTemp, milestoneLength)
 }
 
 func (suite *QuerierTestSuite) TestQueryLatestMilestone() {

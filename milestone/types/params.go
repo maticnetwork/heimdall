@@ -10,19 +10,19 @@ import (
 
 // Default parameter values
 const (
-	DefaultSprintLength uint64 = 64
+	DefaultMilestoneLength uint64 = 64
 )
 
 // Parameter keys
 var (
-	KeySprintLength = []byte("SprintLength")
+	KeyMilestoneLength = []byte("MilestoneLength")
 )
 
 var _ subspace.ParamSet = &Params{}
 
 // Params defines the parameters for the auth module.
 type Params struct {
-	SprintLength uint64 `json:"sprint_length" yaml:"sprint_length"`
+	MilestoneLength uint64 `json:"milestone_length" yaml:"milestone_length"`
 }
 
 type Count struct {
@@ -31,10 +31,10 @@ type Count struct {
 
 // NewParams creates a new Params object
 func NewParams(
-	sprintLength uint64,
+	milestoneLength uint64,
 ) Params {
 	return Params{
-		SprintLength: sprintLength,
+		MilestoneLength: milestoneLength,
 	}
 }
 
@@ -48,7 +48,7 @@ func ParamKeyTable() subspace.KeyTable {
 // nolint
 func (p *Params) ParamSetPairs() subspace.ParamSetPairs {
 	return subspace.ParamSetPairs{
-		{KeySprintLength, &p.SprintLength},
+		{KeyMilestoneLength, &p.MilestoneLength},
 	}
 }
 
@@ -63,7 +63,7 @@ func (p Params) Equal(p2 Params) bool {
 // DefaultParams returns a default set of parameters.
 func DefaultParams() Params {
 	return Params{
-		SprintLength: DefaultSprintLength,
+		MilestoneLength: DefaultMilestoneLength,
 	}
 }
 
@@ -72,15 +72,15 @@ func (p Params) String() string {
 	var sb strings.Builder
 
 	sb.WriteString("Params: \n")
-	sb.WriteString(fmt.Sprintf("SprintLength: %s\n", p.SprintLength))
+	sb.WriteString(fmt.Sprintf("MilestoneLength: %s\n", p.MilestoneLength))
 
 	return sb.String()
 }
 
 // Validate checks that the parameters have valid values.
 func (p Params) Validate() error {
-	if p.SprintLength == 0 {
-		return fmt.Errorf("Sprint Length should be non-zero")
+	if p.MilestoneLength == 0 {
+		return fmt.Errorf("Milestone Length should be non-zero")
 	}
 
 	return nil

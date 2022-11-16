@@ -486,7 +486,7 @@ func GetMilestoneCount(cliCtx cliContext.CLIContext) (*milestoneTypes.Count, err
 
 	var count milestoneTypes.Count
 	if err := json.Unmarshal(response.Result, &count); err != nil {
-		logger.Error("Error unmarshalling Checkpoint Count", "url", MilestoneCountURL)
+		logger.Error("Error unmarshalling milestone Count", "url", MilestoneCountURL)
 		return nil, err
 	}
 

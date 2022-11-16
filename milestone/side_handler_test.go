@@ -12,7 +12,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/common"
-	errs "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	"github.com/maticnetwork/heimdall/milestone"
 	chSim "github.com/maticnetwork/heimdall/milestone/simulation"
@@ -66,10 +66,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 	keeper := app.MilestoneKeeper
 
 	start := uint64(0)
-	params := keeper.GetParams(ctx)
-	sprintLength := params.SprintLength
+	milestoneLength := helper.GetConfig().MilestoneLength
 
-	milestone, err := chSim.GenRandMilestone(start, sprintLength)
+	milestone, err := chSim.GenRandMilestone(start, milestoneLength)
 	require.NoError(t, err)
 
 	borChainId := "1234"
@@ -88,7 +87,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, sprintLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
+		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
@@ -112,7 +111,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, sprintLength, milestone.RootHash.String(), milestone.MilestoneID).Return(false, nil)
+		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(false, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
@@ -138,7 +137,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, sprintLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
+		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
@@ -164,7 +163,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, sprintLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
+		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail as milestone is not in continuity to latest stored milestone ")
@@ -187,8 +186,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 	keeper := app.MilestoneKeeper
 	stakingKeeper := app.StakingKeeper
 	start := uint64(0)
-	params := keeper.GetParams(ctx)
-	sprintLength := params.SprintLength
+	milestoneLength := helper.GetConfig().MilestoneLength
 
 	// check valid milestone
 	// generate proposer for validator set
@@ -200,7 +198,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 		start = start + lastMilestone.EndBlock + 1
 	}
 
-	milestone, err := chSim.GenRandMilestone(start, sprintLength)
+	milestone, err := chSim.GenRandMilestone(start, milestoneLength)
 	require.NoError(t, err)
 
 	// add current proposer to header
@@ -219,8 +217,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			"00000",
 		)
 
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
-		require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
+		_ = suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
 
 		lastMilestone, err = keeper.GetLastMilestone(ctx)
 		require.Nil(t, lastMilestone)
@@ -247,8 +244,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			borChainId,
 			"00001",
 		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
-		require.True(t, result.IsOK(), "expected send-milestone to be ok, got %v", result)
+		_ = suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
 
 		bufferedHeader, err := keeper.GetLastMilestone(ctx)
 		require.Equal(t, bufferedHeader.StartBlock, milestone.StartBlock)
@@ -279,8 +275,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			borChainId,
 			"00002",
 		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
-		require.False(t, result.IsOK(), "expected send-milestone to be not ok, got %v", result)
+		_ = suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
 
 		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
 		require.Equal(t, lastNoAckMilestone, "00002")
@@ -300,8 +295,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			borChainId,
 			"00003",
 		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
-		require.False(t, result.IsOK(), "expected send-milestone to be not ok, got %v", result)
+		_ = suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
 
 		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
 		require.Equal(t, lastNoAckMilestone, "00003")
@@ -319,10 +313,10 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			milestone.EndBlock,
 			milestone.RootHash,
 			borChainId,
-			milestone.MilestoneID,
+			"00004",
 		)
-		result := suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
-		require.False(t, result.IsOK(), "expected send-milestone to be ok, got %v", result)
-		require.Equal(t, common.CodeInvalidBlockInput, result.Code)
+		_ = suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_No)
+		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
+		require.Equal(t, lastNoAckMilestone, "00004")
 	})
 }

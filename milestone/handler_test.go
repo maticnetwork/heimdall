@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
 	errs "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/milestone"
 	chSim "github.com/maticnetwork/heimdall/milestone/simulation"
 	"github.com/maticnetwork/heimdall/milestone/types"
@@ -59,8 +60,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	start := uint64(0)
 	borChainId := "1234"
 	milestoneID := "0000"
-	params := keeper.GetParams(ctx)
-	sprintLength := params.SprintLength
+	milestoneLength := helper.GetConfig().MilestoneLength
 
 	// check valid milestone
 	// generate proposer for validator set
@@ -72,7 +72,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		start = start + lastMilestone.EndBlock + 1
 	}
 
-	header, err := chSim.GenRandMilestone(start, sprintLength)
+	header, err := chSim.GenRandMilestone(start, milestoneLength)
 	require.NoError(t, err)
 
 	// add current proposer to header
@@ -112,22 +112,6 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeInvalidMsg, got.Code)
 	})
 
-	// suite.Run("Invalid msg based on end block number", func() {
-	// 	header.Proposer = hmTypes.HexToHeimdallAddress("1234")
-	// 	msgMilestone := types.NewMsgMilestoneBlock(
-	// 		header.Proposer,
-	// 		header.StartBlock-1,
-	// 		header.EndBlock-1,
-	// 		header.RootHash,
-	// 		borChainId,
-	// 	)
-
-	// 	// send milestone to handler
-	// 	got := suite.handler(ctx, msgMilestone)
-	// 	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
-	// 	require.Equal(t, errs.CodeInvalidMsg, got.Code)
-	// })
-
 	suite.Run("Invalid Proposer", func() {
 		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -162,7 +146,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			start,
-			start+sprintLength-1,
+			start+milestoneLength-1,
 			header.RootHash,
 			borChainId,
 			milestoneID,
@@ -189,7 +173,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			start,
-			start+sprintLength-1,
+			start+milestoneLength-1,
 			header.RootHash,
 			borChainId,
 			milestoneID,
@@ -209,7 +193,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 	keeper := app.MilestoneKeeper
 	stakingKeeper := app.StakingKeeper
 	start := uint64(0)
-	params := keeper.GetParams(ctx)
+	milestoneLength := helper.GetConfig().MilestoneLength
 
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
@@ -219,7 +203,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 		start = start + lastMilestone.EndBlock + 1
 	}
 
-	header, err := chSim.GenRandMilestone(start, params.SprintLength)
+	header, err := chSim.GenRandMilestone(start, milestoneLength)
 	require.NoError(t, err)
 
 	// add current proposer to header
@@ -236,10 +220,9 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 }
 
 func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.Result) {
-	app, ctx := suite.app, suite.ctx
-	keeper := app.MilestoneKeeper
-	params := keeper.GetParams(ctx)
-	sprintLength := params.SprintLength
+	_, ctx := suite.app, suite.ctx
+
+	milestoneLength := helper.GetConfig().MilestoneLength
 	// keeper := app.MilestoneKeeper
 
 	borChainId := "1234"
@@ -255,7 +238,8 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
-	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, sprintLength).Return(header.RootHash.Bytes(), nil)
+	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, milestoneLength).Return(header.RootHash.Bytes(), nil)
+	suite.contractCaller.On("GetVoteOnRootHash", header.StartBlock, header.EndBlock, milestoneLength, header.RootHash.String(), header.MilestoneID).Return(true, nil)
 
 	// send milestone to handler
 	result := suite.handler(ctx, msgMilestone)

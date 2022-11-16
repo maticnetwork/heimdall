@@ -54,9 +54,8 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		timestamp,
 	)
 
-	params := types.DefaultParams()
 	genesisState := types.NewGenesisState(
-		params,
+
 		&milestoneMock,
 	)
 
@@ -65,15 +64,12 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	actualParams := milestone.ExportGenesis(ctx, app.MilestoneKeeper)
 
 	require.Equal(t, genesisState.Milestone, actualParams.Milestone)
-	require.Equal(t, genesisState.Params, actualParams.Params)
 }
 
 func (suite *GenesisTestSuite) TestInitExportGenesisWithNilMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	params := types.DefaultParams()
 	genesisState := types.NewGenesisState(
-		params,
 		nil,
 	)
 
@@ -82,5 +78,4 @@ func (suite *GenesisTestSuite) TestInitExportGenesisWithNilMilestone() {
 	actualParams := milestone.ExportGenesis(ctx, app.MilestoneKeeper)
 
 	require.Nil(t, actualParams.Milestone)
-	require.Equal(t, genesisState.Params, actualParams.Params)
 }

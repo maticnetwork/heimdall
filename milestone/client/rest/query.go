@@ -85,8 +85,22 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		var milestoneLength uint64
+		if err := json.Unmarshal(res, &milestoneLength); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		result, err := json.Marshal(map[string]interface{}{"milestone_length": milestoneLength})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
 		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
+		rest.PostProcessResponse(w, cliCtx, result)
 	}
 }
 
@@ -247,7 +261,6 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// query checkpoint
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID), queryID)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

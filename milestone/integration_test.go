@@ -24,10 +24,7 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 
 	helper.SetTestConfig(helper.GetDefaultHeimdallConfig())
 
-	params := types.NewParams(64)
-
 	milestoneGenesis := types.NewGenesisState(
-		types.DefaultGenesisState().Params,
 		types.DefaultGenesisState().Milestone,
 	)
 
@@ -46,7 +43,6 @@ func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context, context.CLICo
 	)
 	app.Commit()
 	app.BeginBlock(abci.RequestBeginBlock{Header: abci.Header{Height: app.LastBlockHeight() + 1}})
-	app.MilestoneKeeper.SetParams(ctx, params)
 
 	return app, ctx, cliCtx
 }
