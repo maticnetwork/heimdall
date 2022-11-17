@@ -6,7 +6,6 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/milestone"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	"github.com/stretchr/testify/require"
@@ -29,7 +28,7 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (suite *KeeperTestSuite) TestAddCheckpoint() {
+func (suite *KeeperTestSuite) TestAddMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.MilestoneKeeper
 
@@ -150,12 +149,4 @@ func (suite *KeeperTestSuite) TestLastNoAckMilestone() {
 	val = keeper.GetLastNoAckMilestone(ctx)
 	require.Equal(t, val, milestoneID)
 
-}
-
-func (suite *KeeperTestSuite) TestHasStoreValue() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.CheckpointKeeper
-	key := milestone.MilestoneKey
-	result := keeper.HasStoreValue(ctx, key)
-	require.True(t, result)
 }

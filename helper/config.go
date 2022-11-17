@@ -55,7 +55,6 @@ const (
 	MilestonePollIntervalFlag    = "milestone_poll_interval"
 	MainchainGasLimitFlag        = "main_chain_gas_limit"
 	MainchainMaxGasPriceFlag     = "main_chain_max_gas_price"
-	MilestoneLengthFlag          = "milestone_length"
 
 	NoACKWaitTimeFlag = "no_ack_wait_time"
 	ChainFlag         = "chain"
@@ -102,8 +101,6 @@ const (
 	DefaultSHStakeUpdateInterval    = 5 * time.Minute
 	DefaultSHMaxDepthDuration       = time.Hour
 
-	DefaultMilestoneLength = uint64(64)
-
 	DefaultMainchainGasLimit = uint64(5000000)
 
 	DefaultMainchainMaxGasPrice = 400000000000 // 400 Gwei
@@ -127,6 +124,9 @@ const (
 
 	// New max state sync size after hardfork
 	MaxStateSyncSize = 30000
+
+	//Milestone Length
+	MilestoneLength = uint64(64)
 )
 
 var (
@@ -171,8 +171,6 @@ type Configuration struct {
 	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
 	SHMaxDepthDuration       time.Duration `mapstructure:"sh_max_depth_duration"`    // Max duration that allows to suggest self-healing is not needed
 
-	MilestoneLength uint64 `mapstructure:"milestone_length"` // Length of the milestone
-
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
 
@@ -180,8 +178,6 @@ type Configuration struct {
 	LogsType string `mapstructure:"logs_type"` // if true, enable logging in json format
 	// current chain - newSelectionAlgoHeight depends on this
 	Chain string `mapstructure:"chain"`
-
-	MilestoneLengthFlag uint64 `mapstructure:"milestone_length"` // Milestone length
 }
 
 var conf Configuration
@@ -394,8 +390,6 @@ func GetDefaultHeimdallConfig() Configuration {
 		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
 		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
 		SHMaxDepthDuration:       DefaultSHMaxDepthDuration,
-
-		MilestoneLength: DefaultMilestoneLength,
 
 		NoACKWaitTime: NoACKWaitTime,
 
@@ -624,17 +618,6 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MilestonePollIntervalFlag), "Error", err)
 	}
 
-	// add MilestoneLengthFlag flag
-	cmd.PersistentFlags().Uint64(
-		MilestoneLengthFlag,
-		0,
-		"Set milestone length",
-	)
-
-	if err := v.BindPFlag(MilestoneLengthFlag, cmd.PersistentFlags().Lookup(MilestoneLengthFlag)); err != nil {
-		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MilestoneLengthFlag), "Error", err)
-	}
-
 	// add MainchainGasLimitFlag flag
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
@@ -770,12 +753,6 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		}
 	}
 
-	// get milestone length from viper/cobra
-	uint64ConfgValue := v.GetUint64(MilestoneLengthFlag)
-	if uint64ConfgValue != 0 {
-		c.MilestoneLength = uint64ConfgValue
-	}
-
 	// get time that ack service waits to clear buffer and elect new proposer from viper/cobra
 	stringConfgValue = v.GetString(NoACKWaitTimeFlag)
 	if stringConfgValue != "" {
@@ -786,7 +763,7 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 	}
 
 	// get mainchain gas limit from viper/cobra
-	uint64ConfgValue = v.GetUint64(MainchainGasLimitFlag)
+	uint64ConfgValue := v.GetUint64(MainchainGasLimitFlag)
 	if uint64ConfgValue != 0 {
 		c.MainchainGasLimit = uint64ConfgValue
 	}
@@ -857,10 +834,6 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.MilestonePollInterval != 0 {
 		c.MilestonePollInterval = cc.MilestonePollInterval
-	}
-
-	if cc.MilestoneLength != 0 {
-		c.MilestoneLength = cc.MilestoneLength
 	}
 
 	if cc.NoACKWaitTime != 0 {

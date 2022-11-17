@@ -60,7 +60,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	start := uint64(0)
 	borChainId := "1234"
 	milestoneID := "0000"
-	milestoneLength := helper.GetConfig().MilestoneLength
+	milestoneLength := helper.MilestoneLength
 
 	// check valid milestone
 	// generate proposer for validator set
@@ -193,7 +193,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 	keeper := app.MilestoneKeeper
 	stakingKeeper := app.StakingKeeper
 	start := uint64(0)
-	milestoneLength := helper.GetConfig().MilestoneLength
+	milestoneLength := helper.MilestoneLength
 
 	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
@@ -222,7 +222,8 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.Result) {
 	_, ctx := suite.app, suite.ctx
 
-	milestoneLength := helper.GetConfig().MilestoneLength
+	milestoneLength := helper.MilestoneLength
+
 	// keeper := app.MilestoneKeeper
 
 	borChainId := "1234"

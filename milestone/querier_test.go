@@ -65,7 +65,7 @@ func (suite *QuerierTestSuite) TestInvalidQuery() {
 func (suite *QuerierTestSuite) TestQueryParams() {
 	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
-	milestoneLength := helper.GetConfig().MilestoneLength
+	milestoneLength := helper.MilestoneLength
 
 	path := []string{types.QueryParams}
 

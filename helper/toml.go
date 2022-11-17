@@ -42,9 +42,6 @@ sh_state_synced_interval = "{{ .SHStateSyncedInterval }}"
 sh_stake_update_interval = "{{ .SHStakeUpdateInterval }}"
 sh_max_depth_duration = "{{ .SHMaxDepthDuration }}"
 
-###Milestone Length####
-milestone_length="{{ .MilestoneLength }}"
-
 
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"

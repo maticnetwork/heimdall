@@ -28,12 +28,11 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 // handleMsgMilestone Validates milestone transaction
 func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
-	milestoneLength := helper.GetConfig().MilestoneLength
+	milestoneLength := helper.MilestoneLength
+
 	//
 	//Check for the msg milestone
 	//
-
-	return common.ErrMilestoneInvalid(k.Codespace()).Result()
 
 	if msg.StartBlock+milestoneLength-1 != msg.EndBlock {
 		logger.Error("Milestone's length doesn't match the  milestone length set in configuration",

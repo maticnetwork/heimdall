@@ -66,7 +66,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 	keeper := app.MilestoneKeeper
 
 	start := uint64(0)
-	milestoneLength := helper.GetConfig().MilestoneLength
+	milestoneLength := helper.MilestoneLength
 
 	milestone, err := chSim.GenRandMilestone(start, milestoneLength)
 	require.NoError(t, err)
@@ -186,7 +186,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 	keeper := app.MilestoneKeeper
 	stakingKeeper := app.StakingKeeper
 	start := uint64(0)
-	milestoneLength := helper.GetConfig().MilestoneLength
+	milestoneLength := helper.MilestoneLength
 
 	// check valid milestone
 	// generate proposer for validator set

@@ -36,9 +36,9 @@ func (mp *MilestoneProcessor) Start() error {
 	mp.cancelMilestoneService = cancelMilestoneService
 
 	// start polling for milestone
-	mp.Logger.Info("Start polling for milestone", "milestoneLength", helper.GetConfig().MilestoneLength, "pollInterval", helper.GetConfig().MilestonePollInterval)
+	mp.Logger.Info("Start polling for milestone", "milestoneLength", helper.MilestoneLength, "pollInterval", helper.GetConfig().MilestonePollInterval)
 
-	go mp.startPolling(milestoneCtx, helper.GetConfig().MilestoneLength, helper.GetConfig().MilestonePollInterval)
+	go mp.startPolling(milestoneCtx, helper.MilestoneLength, helper.GetConfig().MilestonePollInterval)
 
 	return nil
 }
@@ -103,7 +103,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 
 // sendMilestoneToHeimdall - creates milestone msg and broadcasts to heimdall
 func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64, milestoneLength uint64) error {
-	mp.Logger.Error("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
+	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
 
 	// Get root hash
 	root, err := mp.contractConnector.GetRootHash(start, end, milestoneLength)
