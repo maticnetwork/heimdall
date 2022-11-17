@@ -17,7 +17,7 @@ import (
 )
 
 var (
-	DefaultValue          = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
+	DefaultValue          = []byte{0x01} // Value to store in CacheMilestone
 	MilestoneKey          = []byte{0x20} // Key to store milestone
 	CountKey              = []byte{0x30} //Key to store the count
 	MilestoneNoAckKey     = []byte{0x40} //Key to store the NoAckMilestone

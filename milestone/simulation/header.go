@@ -12,7 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
-// GenRandCheckpoint return headers
+// GenRandMilestone return headers
 func GenRandMilestone(start uint64, sprintLength uint64) (milestone types.Milestone, err error) {
 	end := start + sprintLength - 1
 	borChainID := "1234"
