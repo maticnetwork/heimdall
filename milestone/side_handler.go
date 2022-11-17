@@ -41,6 +41,11 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 	count := k.GetCount(ctx)
 	lastMilestone, err := k.GetLastMilestone(ctx)
 
+	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
+		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
+		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
+	}
+
 	if count != uint64(0) && err != nil {
 		logger.Error("Error while receiving the last milestone in the side handler")
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)

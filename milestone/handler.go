@@ -34,6 +34,11 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contr
 	//Check for the msg milestone
 	//
 
+	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
+		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
+		return common.ErrInvalidMsg(k.Codespace(), "Network hasn't reached the milestone hard forked height").Result()
+	}
+
 	if msg.StartBlock+milestoneLength-1 != msg.EndBlock {
 		logger.Error("Milestone's length doesn't match the  milestone length set in configuration",
 			"StartBlock", msg.StartBlock,
