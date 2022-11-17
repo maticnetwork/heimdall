@@ -60,6 +60,12 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 		return err
 	}
 
+	//Milestone proposing mechanism will work only after specific block height
+	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
+		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
+		return nil
+	}
+
 	isProposer, err := util.IsProposer(mp.cliCtx)
 	if err != nil {
 		mp.Logger.Error("Error checking isProposer in HeaderBlock handler", "error", err)
@@ -73,7 +79,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 			return err
 		}
 
-		var start uint64
+		start := helper.GetMilestoneBorBlockHeight()
 
 		if result.Count != 0 {
 			// fetch latest milestone
