@@ -109,7 +109,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 
 // sendMilestoneToHeimdall - creates milestone msg and broadcasts to heimdall
 func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64, milestoneLength uint64) error {
-	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
+	mp.Logger.Error("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
 
 	// Get root hash
 	root, err := mp.contractConnector.GetRootHash(start, end, milestoneLength)
