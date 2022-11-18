@@ -30,7 +30,6 @@ import (
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/milestone"
-	milestoneTypes "github.com/maticnetwork/heimdall/milestone/types"
 	"github.com/maticnetwork/heimdall/params"
 	paramsClient "github.com/maticnetwork/heimdall/params/client"
 	"github.com/maticnetwork/heimdall/params/subspace"
@@ -217,7 +216,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		clerkTypes.StoreKey,
 		topupTypes.StoreKey,
 		paramsTypes.StoreKey,
-		milestoneTypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
 
@@ -244,7 +242,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
 	app.subspaces[topupTypes.ModuleName] = app.ParamsKeeper.Subspace(topupTypes.DefaultParamspace)
-	app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
+
 	//
 	// Contract caller
 	//
@@ -355,16 +353,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		moduleCommunicator,
 	)
 
-	app.MilestoneKeeper = milestone.NewKeeper(
-		app.cdc,
-		keys[milestoneTypes.StoreKey], // target store
-		app.subspaces[milestoneTypes.ModuleName],
-		common.DefaultCodespace,
-		app.StakingKeeper,
-		app.ChainKeeper,
-		moduleCommunicator,
-	)
-
 	app.BorKeeper = bor.NewKeeper(
 		app.cdc,
 		keys[borTypes.StoreKey], // target store
@@ -411,7 +399,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
-		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -429,7 +416,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
 		topupTypes.ModuleName,
-		milestoneTypes.ModuleName,
 	)
 
 	// register message routes and query routes
@@ -465,7 +451,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
-		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -568,6 +553,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
+
 	app.AccountKeeper.SetBlockProposer(
 		ctx,
 		types.BytesToHeimdallAddress(req.Header.GetProposerAddress()),
