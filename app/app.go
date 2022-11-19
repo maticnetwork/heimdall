@@ -30,6 +30,7 @@ import (
 	govTypes "github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/milestone"
+	milestoneTypes "github.com/maticnetwork/heimdall/milestone/types"
 	"github.com/maticnetwork/heimdall/params"
 	paramsClient "github.com/maticnetwork/heimdall/params/client"
 	"github.com/maticnetwork/heimdall/params/subspace"
@@ -554,6 +555,8 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
+	HardFork(ctx, app)
+
 	app.AccountKeeper.SetBlockProposer(
 		ctx,
 		types.BytesToHeimdallAddress(req.Header.GetProposerAddress()),
@@ -716,4 +719,120 @@ func GetMaccPerms() map[string][]string {
 	}
 
 	return dupMaccPerms
+}
+
+// NewHeimdallApp creates heimdall app
+func HardFork(ctx sdk.Context, app *HeimdallApp) {
+
+	// keys
+	keys := sdk.NewKVStoreKeys(
+		bam.MainStoreKey,
+		sidechannelTypes.StoreKey,
+		authTypes.StoreKey,
+		bankTypes.StoreKey,
+		supplyTypes.StoreKey,
+		govTypes.StoreKey,
+		chainmanagerTypes.StoreKey,
+		stakingTypes.StoreKey,
+		slashingTypes.StoreKey,
+		checkpointTypes.StoreKey,
+		borTypes.StoreKey,
+		clerkTypes.StoreKey,
+		topupTypes.StoreKey,
+		paramsTypes.StoreKey,
+		milestoneTypes.StoreKey,
+	)
+
+	app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
+
+	moduleCommunicator := ModuleCommunicator{App: app}
+
+	app.MilestoneKeeper = milestone.NewKeeper(
+		app.cdc,
+		keys[milestoneTypes.StoreKey], // target store
+		app.subspaces[milestoneTypes.ModuleName],
+		common.DefaultCodespace,
+		app.StakingKeeper,
+		app.ChainKeeper,
+		moduleCommunicator,
+	)
+
+	// NOTE: Any module instantiated in the module manager that is later modified
+	// must be passed by reference here.
+	app.mm = module.NewManager(
+		sidechannel.NewAppModule(app.SidechannelKeeper),
+		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
+			supplyTypes.AccountProcessor,
+		}),
+		bank.NewAppModule(app.BankKeeper, &app.caller),
+		supply.NewAppModule(app.SupplyKeeper, &app.caller),
+		gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
+		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
+		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
+		bor.NewAppModule(app.BorKeeper, &app.caller),
+		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
+		topup.NewAppModule(app.TopupKeeper, &app.caller),
+		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
+	)
+
+	// NOTE: The genutils module must occur after staking so that pools are
+	// properly initialized with tokens from genesis accounts.
+	app.mm.SetOrderInitGenesis(
+		sidechannelTypes.ModuleName,
+		authTypes.ModuleName,
+		bankTypes.ModuleName,
+		govTypes.ModuleName,
+		chainmanagerTypes.ModuleName,
+		supplyTypes.ModuleName,
+		stakingTypes.ModuleName,
+		slashingTypes.ModuleName,
+		checkpointTypes.ModuleName,
+		borTypes.ModuleName,
+		clerkTypes.ModuleName,
+		topupTypes.ModuleName,
+		milestoneTypes.ModuleName,
+	)
+
+	// register message routes and query routes
+	app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
+
+	// side router
+	app.sideRouter = types.NewSideRouter()
+	for _, m := range app.mm.Modules {
+		if m.Route() != "" {
+			if sm, ok := m.(hmModule.SideModule); ok {
+				app.sideRouter.AddRoute(m.Route(), &types.SideHandlers{
+					SideTxHandler: sm.NewSideTxHandler(),
+					PostTxHandler: sm.NewPostTxHandler(),
+				})
+			}
+		}
+	}
+
+	app.sideRouter.Seal()
+
+	// create the simulation manager and define the order of the modules for deterministic simulations
+	//
+	// NOTE: this is not required apps that don't use the simulator for fuzz testing
+	// transactions
+	app.sm = hmModule.NewSimulationManager(
+		auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
+			supplyTypes.AccountProcessor,
+		}),
+
+		slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
+		chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
+		topup.NewAppModule(app.TopupKeeper, &app.caller),
+		staking.NewAppModule(app.StakingKeeper, &app.caller),
+		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
+		bank.NewAppModule(app.BankKeeper, &app.caller),
+		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
+	)
+	app.sm.RegisterStoreDecoders()
+
+	// mount the multistore and load the latest state
+	app.MountKVStores(keys)
+
 }
