@@ -555,7 +555,9 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
-	HardFork(ctx, app)
+	if ctx.BlockHeight() == helper.GetMilestoneHardForkHeight() {
+		HardFork(ctx, app)
+	}
 
 	app.AccountKeeper.SetBlockProposer(
 		ctx,
