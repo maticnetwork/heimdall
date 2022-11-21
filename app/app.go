@@ -435,7 +435,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		}
 	}
 
-	app.sideRouter.Seal()
+	//app.sideRouter.Seal()
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -483,7 +483,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		cmn.Exit(err.Error())
 	}
 
-	app.Seal()
+	//app.Seal()
 
 	return app
 }
