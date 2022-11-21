@@ -217,7 +217,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		clerkTypes.StoreKey,
 		topupTypes.StoreKey,
 		paramsTypes.StoreKey,
-		milestoneTypes.StoreKey,
 	)
 	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
 
@@ -355,15 +354,14 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		moduleCommunicator,
 	)
 
-	app.MilestoneKeeper = milestone.NewKeeper(
-		app.cdc,
-		keys[milestoneTypes.StoreKey], // target store
-		app.subspaces[milestoneTypes.ModuleName],
-		common.DefaultCodespace,
-		app.StakingKeeper,
-		app.ChainKeeper,
-		moduleCommunicator,
-	)
+	// app.MilestoneKeeper = milestone.NewKeeper(
+	// 	app.cdc,
+	// 	keys[milestoneTypes.StoreKey], // target store
+	// 	app.subspaces[milestoneTypes.ModuleName],
+	// 	common.DefaultCodespace,
+	// 	app.StakingKeeper,
+	// 	app.ChainKeeper,
+	// )
 
 	app.BorKeeper = bor.NewKeeper(
 		app.cdc,
@@ -411,7 +409,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		bor.NewAppModule(app.BorKeeper, &app.caller),
 		clerk.NewAppModule(app.ClerkKeeper, &app.caller),
 		topup.NewAppModule(app.TopupKeeper, &app.caller),
-		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
+		//milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
 	)
 
 	// NOTE: The genutils module must occur after staking so that pools are
@@ -429,7 +427,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		borTypes.ModuleName,
 		clerkTypes.ModuleName,
 		topupTypes.ModuleName,
-		milestoneTypes.ModuleName,
+		//milestoneTypes.ModuleName,
 	)
 
 	// register message routes and query routes
@@ -448,7 +446,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		}
 	}
 
-	app.sideRouter.Seal()
+	//app.sideRouter.Seal()
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
 	//
@@ -465,7 +463,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		staking.NewAppModule(app.StakingKeeper, &app.caller),
 		checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
 		bank.NewAppModule(app.BankKeeper, &app.caller),
-		milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
+		//milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
 	)
 	app.sm.RegisterStoreDecoders()
 
@@ -497,7 +495,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		cmn.Exit(err.Error())
 	}
 
-	app.Seal()
+	//app.Seal()
 
 	return app
 }
@@ -570,7 +568,39 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
 	if ctx.BlockHeight() == helper.GetMilestoneHardForkHeight() {
+		app.keys[milestoneTypes.StoreKey] = sdk.NewKVStoreKey(milestoneTypes.StoreKey)
 		app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
+
+		app.MilestoneKeeper = milestone.NewKeeper(
+			app.cdc,
+			app.keys[milestoneTypes.StoreKey], // target store
+			app.subspaces[milestoneTypes.ModuleName],
+			common.DefaultCodespace,
+			app.StakingKeeper,
+			app.ChainKeeper,
+		)
+
+		module := milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller)
+
+		app.mm.Modules[module.Name()] = module
+		app.mm.OrderInitGenesis = append(app.mm.OrderInitGenesis, module.Name())
+		app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers, module.Name())
+		app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers, module.Name())
+		app.mm.OrderExportGenesis = append(app.mm.OrderExportGenesis, module.Name())
+
+		moduleTemp := app.mm.Modules[module.Name()]
+
+		if moduleTemp.Route() != "" {
+			if sm, ok := moduleTemp.(hmModule.SideModule); ok {
+				app.sideRouter.AddRoute(module.Route(), &types.SideHandlers{
+					SideTxHandler: sm.NewSideTxHandler(),
+					PostTxHandler: sm.NewPostTxHandler(),
+				})
+			}
+		}
+
+		app.MountStore(app.keys[milestoneTypes.StoreKey], sdk.StoreTypeDB)
+
 	}
 
 	app.AccountKeeper.SetBlockProposer(

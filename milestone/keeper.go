@@ -24,11 +24,6 @@ var (
 	MilestoneLastNoAckKey = []byte{0x50} //Key to store the Latest NoAckMilestone
 )
 
-// ModuleCommunicator manages different module interaction
-type ModuleCommunicator interface {
-	GetAllDividendAccounts(ctx sdk.Context) []hmTypes.DividendAccount
-}
-
 // Keeper stores all related data
 type Keeper struct {
 	cdc *codec.Codec
@@ -41,9 +36,6 @@ type Keeper struct {
 	codespace sdk.CodespaceType
 	// param space
 	paramSpace subspace.Subspace
-
-	// module communicator
-	moduleCommunicator ModuleCommunicator
 }
 
 // NewKeeper create new keeper
@@ -54,16 +46,14 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	stakingKeeper staking.Keeper,
 	chainKeeper chainmanager.Keeper,
-	moduleCommunicator ModuleCommunicator,
 ) Keeper {
 	keeper := Keeper{
-		cdc:                cdc,
-		storeKey:           storeKey,
-		paramSpace:         paramSpace.WithKeyTable(types.ParamKeyTable()),
-		codespace:          codespace,
-		sk:                 stakingKeeper,
-		ck:                 chainKeeper,
-		moduleCommunicator: moduleCommunicator,
+		cdc:        cdc,
+		storeKey:   storeKey,
+		paramSpace: paramSpace.WithKeyTable(types.ParamKeyTable()),
+		codespace:  codespace,
+		sk:         stakingKeeper,
+		ck:         chainKeeper,
 	}
 
 	return keeper
