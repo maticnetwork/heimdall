@@ -85,6 +85,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	g.Go(func() error {
 		// wait for os interrupt, then close Listener
 		<-gCtx.Done()
+		logger.Info("Shutting down heimdall rest server...")
 		return listener.Close()
 	})
 	// wait here
