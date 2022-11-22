@@ -96,6 +96,8 @@ const (
 
 var ZeroIntString = big.NewInt(0).String()
 
+var hApp *app.HeimdallApp
+
 // ValidatorAccountFormatter helps to print local validator account information
 type ValidatorAccountFormatter struct {
 	Address string `json:"address,omitempty" yaml:"address"`
@@ -116,11 +118,37 @@ func GetSignerInfo(pub crypto.PubKey, priv []byte, cdc *codec.Codec) ValidatorAc
 	}
 }
 
-func NewHeimdallService() {
+func GetHeimdallApp() *app.HeimdallApp {
+	tickCount := 0
+
+	tick := time.NewTicker(1 * time.Second)
+	defer tick.Stop()
+
+	for hApp == nil {
+		select {
+		case <-tick.C:
+			logger.Info("Waiting for heimdall app to be initialized")
+
+			if hApp != nil {
+				logger.Info("Heimdall app initialized")
+				return hApp
+			}
+
+			tickCount++
+			if tickCount > 10 {
+				panic("Heimdall app not initialized")
+			}
+		}
+	}
+
+	return hApp
+}
+
+func NewHeimdallService(pCtx context.Context, args []string) {
 	cdc := app.MakeCodec()
 	ctx := server.NewDefaultContext()
 
-	shutdownCtx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	shutdownCtx, stop := signal.NotifyContext(pCtx, os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
 	rootCmd := &cobra.Command{
@@ -166,6 +194,10 @@ func NewHeimdallService() {
 	// rollback cmd
 	rootCmd.AddCommand(rollbackCmd(ctx))
 
+	if args != nil && len(args) > 0 {
+		rootCmd.SetArgs(args)
+	}
+
 	// prepare and add flags
 	executor := cli.PrepareBaseCmd(rootCmd, "HD", os.ExpandEnv("/var/lib/heimdall"))
 	if err := executor.Execute(); err != nil {
@@ -180,7 +212,9 @@ func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, sto
 		helper.InitHeimdallConfig("")
 		helper.UpdateTendermintConfig(serverCtx.Config, viper.GetViper())
 		// create new heimdall app
-		return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+		hApp = app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+
+		return hApp
 	}
 }
 
