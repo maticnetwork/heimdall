@@ -1,0 +1,201 @@
+name: packager
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '**'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@master
+        with:
+          go-version: 1.19
+      - name: Generate release tag
+        id: tag
+        run: echo "::set-output name=release_tag::heimdalld_$(date +"%Y.%m.%d_%H-%M")"
+
+      - name: getting ubuntu version
+        run: lsb_release -a && uname -a
+
+      - name: Making heimdalld amd64
+        run: make build
+
+      - name: Making directory structure
+        run: mkdir -p packaging/deb/heimdalld/usr/bin
+
+      - name: Copying over the postinst for use
+        run: cp -rp packaging/templates/package_scripts/postinst packaging/deb/heimdalld/DEBIAN/postinst
+
+      - name: Copying  heimdalld binary for amd64
+        run: cp -rp build/heimdalld packaging/deb/heimdalld/usr/bin/
+      - name: Copying heimdallcli for amd64
+        run: cp -rp build/heimdallcli packaging/deb/heimdalld/usr/bin/
+
+      - name: copying files over to create  package for binary only heimdalld and heimdallci
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-v0.3.0-beta-amd64
+      - name: Building package for heimdalld and heimdallcli standalone
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-v0.3.0-beta-amd64
+
+      - name: Removing heimdalld binary from builds for profile purposes
+        run: rm -rf packaging/deb/heimdalld/usr/bin/heimdalld
+      - name: Removing heimdallcli binary from builds for profile purposes
+        run: rm -rf packaging/deb/heimdalld/usr/bin/heimdallcli
+
+      - name: making directory structure for systemd
+        run: mkdir -p packaging/deb/heimdalld/lib/systemd/system
+      - name: Making directory structure for toml
+        run: mkdir -p packaging/deb/heimdalld/var/lib/heimdall
+
+      - name: Adding a postrm for the profiles so not to remove heimdall
+        run: cp -rp packaging/templates/package_scripts/postrm packaging/deb/heimdalld/DEBIAN/postrm
+
+      - name: Setting up mumbai sentry profile  for amd64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64
+      - name: Copying over the postinst file
+        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64/DEBIAN/postinst
+      - name: Copying systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
+      - name: Copying profile control file
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64/DEBIAN/control
+      - name: Building mumbai sentry profile for amd64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64
+
+      - name: Setting up mainnet sentry profile for amd64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64
+      - name: Copying over the postinst file
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64/DEBIAN/postinst
+      - name: Copying over mainnet systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
+      - name: Copying profile control file
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64/DEBIAN/control
+      - name: Building mainnet sentry profile for amd64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64
+
+      - name: Setting up mumbai validator profile for amd64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64
+      - name: Prepping control file
+        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/DEBIAN/control
+      - name: Prepping postinst file
+        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/DEBIAN/postinst
+      - name: Copying systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
+      - name: Copying profile control file
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/DEBIAN/control
+      - name: Building mumbai validator profile for amd64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64
+
+      - name: Setting up mainnet validator profile for amd64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64
+      - name: Prepping control file
+        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/DEBIAN/control
+      - name: Prepping postinst file
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/DEBIAN/postinst
+      - name: Copying systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
+      - name: Copying profile control file
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/DEBIAN/control
+      - name: Building mainnet validator validator profile package  for amd64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64
+
+      - name: Installing deps
+        run: sudo apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
+
+      - name: Build for arm
+        run: make build-arm
+
+      - name: Setting up heimdallcli for arm64
+        run: cp -rp build/heimdallcli packaging/deb/heimdalld/usr/bin/
+      - name: Remove config toml directory
+        run: rm -rf packaging/deb/heimdalld/var/lib/heimdall
+      - name: Copying over heimdalld
+        run: cp -rp build/heimdalld packaging/deb/heimdalld/usr/bin/
+      - name: Setting up the heimdallcli control file for use with arm64
+        run: cp -rp packaging/templates/package_scripts/control.heimdallcli.arm64 packaging/deb/heimdallcli/DEBIAN/control
+      - name: Adding a postrm for the profiles so not to remove heimdall
+        run: cp -rp packaging/templates/package_scripts/postrm.binary packaging/deb/heimdalld/DEBIAN/postrm
+
+      - name: Setting up required heimdalld files for arm64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-v0.3.0-beta-arm64
+      - name: Copying control file for arm64
+        run: cp -rp packaging/templates/package_scripts/control.arm64 packaging/deb/heimdalld-v0.3.0-beta-arm64/DEBIAN/control
+      - name: Copying binary post inst
+        run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-v0.3.0-beta-arm64/DEBIAN/postinst
+      - name: Building package for heimdalld and heimdallcli standalone
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-v0.3.0-beta-arm64
+
+      - name: Removing heimdall binary from builds for profile purposes
+        run: rm -rf packaging/deb/heimdalld/usr/bin/heimdalld
+      - name: Removing heimdallcli binary from builds for profile purposes
+        run: rm -rf packaging/deb/heimdalld/usr/bin/heimdallcli
+
+      - name: Making directory structure for toml
+        run: mkdir -p packaging/deb/heimdalld/var/lib/heimdall
+      - name: Adding a postrm for the profiles so not to remove heimdall
+        run: cp -rp packaging/templates/package_scripts/postrm packaging/deb/heimdalld/DEBIAN/postrm
+
+      - name: Setting up mumbai validator profile  for arm64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64
+      - name: Copying over the postinst file
+        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64/DEBIAN//postinst
+      - name: Copying arm64 control file
+        run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64/DEBIAN/control
+      - name: Copying systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
+      - name: Building mumbai validator profile for arm64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64
+
+      - name: Setting up mainnet validator profile for arm64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64
+      - name: Prepping control file
+        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/DEBIAN/control
+      - name: Prepping postinst file
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/DEBIAN/postinst
+      - name: Copying systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
+      - name: Copying arm64 control file
+        run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/DEBIAN/control
+      - name: Building mainnet validator validator profile package  for arm64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64
+
+      - name: Setting up arm 64 sentry
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64
+      - name: Copying control
+        run: cp -rp packaging/templates/package_scripts/control.arm64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/DEBIAN/control
+      - name: Copying postinst
+        run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/DEBIAN/postinst
+      - name: Copying systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
+      - name: Copying arm64 control file
+        run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/DEBIAN/control
+      - name: Building mumbai sentry profile on arm64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64
+
+      - name: Setting up mainnet sentry profile for arm64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64
+      - name: Copying over the postinst file
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64/DEBIAN/postinst
+      - name: Copying over mainnet systemd file
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
+      - name: Copying arm64 control file
+        run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64/DEBIAN/control
+      - name: Building mainnet sentry profile on arm64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64
+
+      - name: Confirming package built
+        run: ls -ltr packaging/deb/ | grep heimdall
+      - name: Release heimdalld.deb
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ steps.tag.outputs.release_tag }}
+          files: |
+             packaging/deb/heimdalld**.deb
+             binary/heimdall*

@@ -5,8 +5,8 @@
 [Service]
   Restart=on-failure
   RestartSec=5s
-  WorkingDirectory=/usr/local/bin
-  ExecStart=/usr/local/bin/heimdalld start --home /var/lib/heimdall \
+  WorkingDirectory=/usr/bin
+  ExecStart=/usr/bin/heimdalld start --home "/var/lib/heimdall" \
 		--bridge --all \
     --chain=mainnet \
     --rest-server
