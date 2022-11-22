@@ -121,6 +121,9 @@ const (
 
 	// New max state sync size after hardfork
 	MaxStateSyncSize = 30000
+
+	// Default Open Collector Endpoint
+	DefaultOpenCollectorEndpoint = "localhost:4317"
 )
 
 var (
