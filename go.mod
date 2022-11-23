@@ -19,7 +19,7 @@ require (
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.12.1
 	github.com/rakyll/statik v0.1.7
-	github.com/spf13/cobra v0.0.5
+	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.13.0
 	github.com/streadway/amqp v0.0.0-20200108173154-1c71cc93ed71
 	github.com/stretchr/testify v1.8.0
@@ -85,7 +85,7 @@ require (
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
 	github.com/holiman/uint256 v1.2.0 // indirect
 	github.com/huin/goupnp v1.0.3 // indirect
-	github.com/inconshreveable/mousetrap v1.0.0 // indirect
+	github.com/inconshreveable/mousetrap v1.0.1 // indirect
 	github.com/jackpal/go-nat-pmp v1.0.2 // indirect
 	github.com/jmespath/go-jmespath v0.4.0 // indirect
 	github.com/jmhodges/levigo v1.0.0 // indirect
@@ -93,9 +93,9 @@ require (
 	github.com/klauspost/compress v1.13.6 // indirect
 	github.com/libp2p/go-buffer-pool v0.0.2 // indirect
 	github.com/magiconair/properties v1.8.6 // indirect
-	github.com/mattn/go-colorable v0.1.12 // indirect
-	github.com/mattn/go-isatty v0.0.14 // indirect
-	github.com/mattn/go-runewidth v0.0.9 // indirect
+	github.com/mattn/go-colorable v0.1.13 // indirect
+	github.com/mattn/go-isatty v0.0.16 // indirect
+	github.com/mattn/go-runewidth v0.0.14 // indirect
 	github.com/matttproud/golang_protobuf_extensions v1.0.1 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
 	github.com/mitchellh/pointerstructure v1.2.0 // indirect
@@ -112,6 +112,7 @@ require (
 	github.com/prometheus/procfs v0.7.3 // indirect
 	github.com/prometheus/tsdb v0.7.1 // indirect
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
+	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/rjeczalik/notify v0.9.2 // indirect
 	github.com/rs/cors v1.7.0 // indirect
 	github.com/shirou/gopsutil v3.21.4-0.20210419000835-c7a38de76ee5+incompatible // indirect
@@ -139,7 +140,7 @@ require (
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
-	golang.org/x/sys v0.0.0-20220818161305-2296e01440c6 // indirect
+	golang.org/x/sys v0.2.0 // indirect
 	golang.org/x/text v0.3.7 // indirect
 	golang.org/x/time v0.0.0-20210723032227-1f47c861a9ac // indirect
 	google.golang.org/api v0.97.0 // indirect
@@ -153,6 +154,6 @@ require (
 
 replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220923185258-3e7c7f86ce9f
 
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20220311095845-81690c6a53e7
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20221123060821-1a673da0f24f
 
 replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v0.2.17-0.20221013091855-b70723d70e8f

@@ -1,17 +1,11 @@
 package main
 
 import (
-	"fmt"
-
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/server"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-	"github.com/tendermint/tendermint/cmd/tendermint/commands"
 	"github.com/tendermint/tendermint/libs/cli"
 )
 
@@ -29,23 +23,23 @@ application.
 `,
 		Args: cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			config := ctx.Config
-			config.SetRoot(viper.GetString(cli.HomeFlag))
+			// config := ctx.Config
+			// config.SetRoot(viper.GetString(cli.HomeFlag))
 
-			db, err := sdk.NewLevelDB("application", config.DBDir())
-			if err != nil {
-				return err
-			}
+			// db, err := sdk.NewLevelDB("application", config.DBDir())
+			// if err != nil {
+			// 	return err
+			// }
 
-			height, hash, err := commands.RollbackState(config)
+			// height, hash, err := commands.RollbackState(config)
 
-			if err != nil {
-				return fmt.Errorf("failed to rollback tendermint state: %w", err)
-			}
-			// rollback the multistore
-			cms := rootmulti.NewStore(db)
-			cms.RollbackToVersion(height)
-			fmt.Printf("Rolled back state to height %d and hash %X", height, hash)
+			// if err != nil {
+			// 	return fmt.Errorf("failed to rollback tendermint state: %w", err)
+			// }
+			// // rollback the multistore
+			// cms := rootmulti.NewStore(db)
+			// cms.RollbackToVersion(height)
+			// fmt.Printf("Rolled back state to height %d and hash %X", height, hash)
 			return nil
 		},
 	}

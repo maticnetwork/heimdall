@@ -495,7 +495,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		cmn.Exit(err.Error())
 	}
 
-	//app.Seal()
+	app.Seal()
 
 	return app
 }
@@ -567,7 +567,14 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
+	//Cases-
+	//Connecting to the network when already enabled
+	//At the time of transaction
+	//At the time of hardfork and after it
+
 	if ctx.BlockHeight() == helper.GetMilestoneHardForkHeight() {
+
+		app.Unseal()
 		app.keys[milestoneTypes.StoreKey] = sdk.NewKVStoreKey(milestoneTypes.StoreKey)
 		app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
 
@@ -590,6 +597,12 @@ func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock
 
 		moduleTemp := app.mm.Modules[module.Name()]
 
+		router := app.Router()
+		queryRouter := app.QueryRouter()
+
+		router.AddRoute(moduleTemp.Route(), moduleTemp.NewHandler())
+		queryRouter.AddRoute(moduleTemp.QuerierRoute(), moduleTemp.NewQuerierHandler())
+
 		if moduleTemp.Route() != "" {
 			if sm, ok := moduleTemp.(hmModule.SideModule); ok {
 				app.sideRouter.AddRoute(module.Route(), &types.SideHandlers{
@@ -599,8 +612,10 @@ func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock
 			}
 		}
 
-		app.MountStore(app.keys[milestoneTypes.StoreKey], sdk.StoreTypeDB)
+		//	app.mm.RegisterInvariants()
 
+		app.MountStore(app.keys[milestoneTypes.StoreKey], sdk.StoreTypeDB)
+		app.Seal()
 	}
 
 	app.AccountKeeper.SetBlockProposer(

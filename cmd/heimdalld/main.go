@@ -164,6 +164,7 @@ func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, sto
 		// init heimdall config
 		helper.InitHeimdallConfig("")
 		helper.UpdateTendermintConfig(serverCtx.Config, viper.GetViper())
+
 		// create new heimdall app
 		return app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
 	}
