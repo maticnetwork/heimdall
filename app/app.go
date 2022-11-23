@@ -615,6 +615,12 @@ func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock
 		//	app.mm.RegisterInvariants()
 
 		app.MountStore(app.keys[milestoneTypes.StoreKey], sdk.StoreTypeDB)
+
+		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
+		if err != nil {
+			cmn.Exit(err.Error())
+		}
+
 		app.Seal()
 	}
 
