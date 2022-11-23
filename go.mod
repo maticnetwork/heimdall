@@ -11,7 +11,7 @@ require (
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/go-kit/kit v0.10.0
-	github.com/gogo/protobuf v1.3.1
+	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/google/go-cmp v0.5.7 // indirect
 	github.com/google/uuid v1.2.0
@@ -52,8 +52,8 @@ require (
 	gopkg.in/yaml.v2 v2.4.0
 )
 
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220803122020-9c20f6000900
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220923185258-3e7c7f86ce9f
 
 replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20220311095845-81690c6a53e7
 
-replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v0.2.16
+replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v0.2.18-0.20220922050621-c91d4ca1fa4f

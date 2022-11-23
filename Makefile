@@ -26,7 +26,6 @@ tests:
 
 # make build
 build: clean
-	go run helper/heimdall-params.template.go $(network)
 	mkdir -p build
 	go build -o build/heimdalld ./cmd/heimdalld
 	go build -o build/heimdallcli ./cmd/heimdallcli
@@ -34,7 +33,6 @@ build: clean
 	
 # make install
 install:
-	go run helper/heimdall-params.template.go $(network)
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
 

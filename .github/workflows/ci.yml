@@ -37,9 +37,6 @@ jobs:
         with:
           go-version: 1.18.x
 
-      - name: "Generate Heimdall Params"
-        run: go run helper/heimdall-params.template.go $(network)
-
       - name: "Run linter"
         run: make lint
 
@@ -53,9 +50,6 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: 1.18.x
-
-      - name: "Generate Heimdall Params"
-        run: go run helper/heimdall-params.template.go $(network)
 
       - name: "Run tests"
         run: make tests
@@ -149,7 +143,7 @@ jobs:
           if: always()
           run: |
             cd matic-cli/devnet
-            docker compose down
+            docker compose down --remove-orphans
             cd -
             mkdir -p ${{ github.run_id }}/matic-cli
             sudo mv heimdall ${{ github.run_id }}

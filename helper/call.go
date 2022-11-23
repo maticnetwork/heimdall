@@ -370,6 +370,20 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.
 	return latestBlock, nil
 }
 
+// GetMainChainFinalizedBlock returns finalized main chain block header (post-merge)
+func (c *ContractCaller) GetMainChainFinalizedBlock() (header *ethTypes.Header, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
+	defer cancel()
+
+	latestFinalizedBlock, err := c.MainChainClient.HeaderByNumber(ctx, big.NewInt(int64(rpc.FinalizedBlockNumber)))
+	if err != nil {
+		Logger.Error("Unable to connect to main chain", "error", err)
+		return
+	}
+
+	return latestFinalizedBlock, nil
+}
+
 // GetMainChainBlockTime returns main chain block time
 func (c *ContractCaller) GetMainChainBlockTime(ctx context.Context, blockNum uint64) (time.Time, error) {
 	ctx, cancel := context.WithTimeout(ctx, c.MainChainTimeout)
@@ -450,20 +464,38 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		receipt, _ = receiptCache.(*ethTypes.Receipt)
 	}
 
-	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
+	receiptBlockNumber := receipt.BlockNumber.Uint64()
 
-	// get main chain block
-	latestBlk, err := c.GetMainChainBlock(nil)
+	Logger.Debug("Tx included in block", "block", receiptBlockNumber, "tx", tx)
+
+	// fetch the last finalized main chain block (available post-merge)
+	latestFinalizedBlock, err := c.GetMainChainFinalizedBlock()
 	if err != nil {
-		Logger.Error("error getting latest block from main chain", "error", err)
-		return nil, err
+		Logger.Error("error getting latest finalized block from main chain", "error", err)
 	}
 
-	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
+	// If latest finalized block is available, use it to check if receipt is finalized or not.
+	// Else, fallback to the `requiredConfirmations` value
+	if latestFinalizedBlock != nil {
+		Logger.Debug("Latest finalized block on main chain obtained", "Block", latestFinalizedBlock.Number.Uint64(), "receipt block", receiptBlockNumber)
 
-	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
-	if diff < requiredConfirmations {
-		return nil, errors.New("not enough confirmations")
+		if receiptBlockNumber > latestFinalizedBlock.Number.Uint64() {
+			return nil, errors.New("not enough confirmations")
+		}
+	} else {
+		// get current/latest main chain block
+		latestBlk, err := c.GetMainChainBlock(nil)
+		if err != nil {
+			Logger.Error("error getting latest block from main chain", "error", err)
+			return nil, err
+		}
+
+		Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64(), "receipt block", receiptBlockNumber)
+
+		diff := latestBlk.Number.Uint64() - receiptBlockNumber
+		if diff < requiredConfirmations {
+			return nil, errors.New("not enough confirmations")
+		}
 	}
 
 	return receipt, nil

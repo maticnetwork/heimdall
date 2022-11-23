@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package rest
 
 import (
@@ -86,7 +86,9 @@ type clerkEventID struct {
 // swagger:route GET /clerk/event-record/{recordID} clerk clerkEventById
 // It returns the clerk event based on ID
 // responses:
-//   200: clerkEventByIdResponse
+//
+//	200: clerkEventByIdResponse
+//
 // recordHandlerFn returns record by record id
 func recordHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -136,7 +138,8 @@ type clerkEventListParams struct {
 // swagger:route GET /clerk/event-record/list clerk clerkEventList
 // It returns the clerk events list
 // responses:
-//   200: clerkEventListResponse
+//
+//	200: clerkEventListResponse
 func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := r.URL.Query()
@@ -243,7 +246,9 @@ type clerkTxParams struct {
 // swagger:route GET /clerk/isoldtx clerk clerkIsOldTx
 // It checks for whether the transaction is old or new.
 // responses:
-//   200: clerkIsOldTxResponse
+//
+//	200: clerkIsOldTxResponse
+//
 // DepositTxStatusHandlerFn returns deposit tx status information
 func DepositTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

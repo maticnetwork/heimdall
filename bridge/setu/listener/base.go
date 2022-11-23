@@ -2,6 +2,7 @@ package listener
 
 import (
 	"context"
+	"math/big"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -28,11 +29,11 @@ type Listener interface {
 
 	StartHeaderProcess(context.Context)
 
-	StartPolling(context.Context, time.Duration)
+	StartPolling(context.Context, time.Duration, *big.Int)
 
 	StartSubscription(context.Context, ethereum.Subscription)
 
-	ProcessHeader(*types.Header)
+	ProcessHeader(*blockHeader)
 
 	Stop()
 
@@ -53,7 +54,7 @@ type BaseListener struct {
 	chainClient *ethclient.Client
 
 	// header channel
-	HeaderChannel chan *types.Header
+	HeaderChannel chan *blockHeader
 
 	// cancel function for poll/subscription
 	cancelSubscription context.CancelFunc
@@ -72,6 +73,11 @@ type BaseListener struct {
 
 	// storage client
 	storageClient *leveldb.DB
+}
+
+type blockHeader struct {
+	header      *types.Header // block header
+	isFinalized bool          // if the block is a finalized block or not
 }
 
 // NewBaseListener creates a new BaseListener.
@@ -102,7 +108,7 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, htt
 		contractConnector: contractCaller,
 		chainClient:       chainClient,
 
-		HeaderChannel: make(chan *types.Header),
+		HeaderChannel: make(chan *blockHeader),
 	}
 }
 
@@ -157,7 +163,7 @@ func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 }
 
 // StartPolling starts polling
-func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
+func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration, number *big.Int) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
 
@@ -169,10 +175,34 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 	for {
 		select {
 		case <-ticker.C:
-			header, err := bl.chainClient.HeaderByNumber(ctx, nil)
+			var bHeader *blockHeader
+
+			header, err := bl.chainClient.HeaderByNumber(ctx, number)
 			if err == nil && header != nil {
-				// send data to channel
-				bl.HeaderChannel <- header
+				if number != nil {
+					// finalized was requested
+					bHeader = &blockHeader{header: header, isFinalized: true}
+				} else {
+					// latest was requested
+					bHeader = &blockHeader{header: header, isFinalized: false}
+				}
+			}
+
+			// if error occurred and finalized was requested, fall back to latest block
+			if err != nil && number != nil {
+				header, err = bl.chainClient.HeaderByNumber(ctx, nil)
+				if err == nil && header != nil {
+					bHeader = &blockHeader{header: header, isFinalized: false}
+				}
+			}
+
+			if err != nil {
+				bl.Logger.Error("Error in fetching block header while polling", "err", err)
+			}
+
+			// push data to the channel
+			if bHeader != nil {
+				bl.HeaderChannel <- bHeader
 			}
 		case <-ctx.Done():
 			bl.Logger.Info("Polling stopped")

@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package rest
 
 import (
@@ -26,7 +26,8 @@ type isOldTx struct {
 	Result bool   `json:"result"`
 }
 
-//It represents the dividend account information
+// It represents the dividend account information
+//
 //swagger:response topupDividendAccountResponse
 type topupDividendAccountResponse struct {
 	//in:body
@@ -121,7 +122,9 @@ type topupTxParams struct {
 // swagger:route GET /topup/isoldtx topup topupIsOldTx
 // It returns whether the transaction is old
 // responses:
-//   200: topupIsOldTxResponse
+//
+//	200: topupIsOldTxResponse
+//
 // Returns topup tx status information
 func TopupTxStatusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -180,7 +183,9 @@ type topupAddress struct {
 // swagger:route GET /topup/dividend-account/{address} topup topupDividendAccountByAddress
 // It returns the Dividend Account information by User Address
 // responses:
-//   200: topupDividendAccountResponse
+//
+//	200: topupDividendAccountResponse
+//
 // Returns Dividend Account information by User Address
 func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -223,7 +228,9 @@ func dividendAccountByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFu
 // swagger:route GET /topup/dividend-account-root topup topupDividendAccountRoot
 // It returns the genesis account roothash
 // responses:
-//   200: topupDividendAccountRootResponse
+//
+//	200: topupDividendAccountRootResponse
+//
 // dividendAccountRootHandlerFn returns genesis accountroothash
 func dividendAccountRootHandlerFn(
 	cliCtx context.CLIContext,
@@ -270,7 +277,9 @@ func dividendAccountRootHandlerFn(
 // swagger:route GET /topup/account-proof/{address} topup topupDividendAccountProofByAddress
 // It returns the account proof by User Address
 // responses:
-//   200: topupDividendAccountProofResponse
+//
+//	200: topupDividendAccountProofResponse
+//
 // Returns Merkle path for dividendAccountID using dividend Account Tree
 func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -313,7 +322,9 @@ func dividendAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /topup/account-proof/{address}/verify topup topupDividendAccountProofVerify
 // It returns true if given Merkle path for dividendAccountID is valid
 // responses:
-//   200: topupDividendAccountProofVerifyResponse
+//
+//	200: topupDividendAccountProofVerifyResponse
+//
 // VerifyAccountProofHandlerFn - Returns true if given Merkle path for dividendAccountID is valid
 func VerifyAccountProofHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {

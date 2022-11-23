@@ -19,14 +19,14 @@ import (
 var (
 	stateSyncedCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "self_healing",
-		Subsystem: helper.NetworkName,
+		Subsystem: helper.GetConfig().Chain,
 		Name:      "StateSynced",
 		Help:      "The total number of missing StateSynced events",
 	}, []string{"id", "contract_address", "block_number", "tx_hash"})
 
 	stakeUpdateCounter = promauto.NewCounterVec(prometheus.CounterOpts{
 		Namespace: "self_healing",
-		Subsystem: helper.NetworkName,
+		Subsystem: helper.GetConfig().Chain,
 		Name:      "StakeUpdate",
 		Help:      "The total number of missing StakeUpdate events",
 	}, []string{"id", "nonce", "contract_address", "block_number", "tx_hash"})
@@ -193,6 +193,12 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 }
 
 func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) (bool, error) {
+	// Check existence of topics beforehand and ignore if no topic exists
+	// (TODO): Identify issue of empty events: See Jira POS-818
+	if len(event.Topics) == 0 {
+		return true, nil
+	}
+
 	blockTime, err := rl.contractConnector.GetMainChainBlockTime(ctx, event.BlockNumber)
 	if err != nil {
 		rl.Logger.Error("Unable to get block time", "error", err)

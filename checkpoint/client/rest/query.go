@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package rest
 
 import (
@@ -22,7 +22,8 @@ import (
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
-//It represents the checkpoint parameters
+// It represents the checkpoint parameters
+//
 //swagger:response checkpointParamsResponse
 type checkpointParamsResponse struct {
 	//in:body
@@ -41,7 +42,8 @@ type params struct {
 	ChildChainBlockInterval int `json:"child_chain_block_interval"`
 }
 
-//It represents the checkpoint
+// It represents the checkpoint
+//
 //swagger:response checkpointResponse
 type checkpointResponse struct {
 	//in:body
@@ -61,7 +63,8 @@ type checkpoint struct {
 	Timestamp  int64  `json:"timestamp"`
 }
 
-//It represents the checkpoint prepare
+// It represents the checkpoint prepare
+//
 //swagger:response checkpointPrepareResponse
 type checkpointPrepareResponse struct {
 	//in:body
@@ -80,7 +83,8 @@ type prepareCheckpoint struct {
 	RootHash   string `json:"root_hash"`
 }
 
-//It represents the checkpoint list
+// It represents the checkpoint list
+//
 //swagger:response checkpointListResponse
 type checkpointListResponse struct {
 	//in:body
@@ -92,7 +96,8 @@ type checkpointListStructure struct {
 	Result []checkpoint `json:"result"`
 }
 
-//It represents the last-no-ack
+// It represents the last-no-ack
+//
 //swagger:response lastNoAckResponse
 type lastNoAckResponse struct {
 	//in:body
@@ -108,7 +113,8 @@ type lastNoAck struct {
 	Result int64 `json:"result"`
 }
 
-//It represents the checkpoint count
+// It represents the checkpoint count
+//
 //swagger:response checkpointCountResponse
 type checkpointCountResponse struct {
 	//in:body
@@ -124,7 +130,8 @@ type checkpointCount struct {
 	Result int64 `json:"result"`
 }
 
-//It represents the overview
+// It represents the overview
+//
 //swagger:response overviewResponse
 type overviewResponse struct {
 	//in:body
@@ -185,7 +192,9 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 // swagger:route GET /checkpoints/params checkpoint checkpointParams
 // It returns the checkpoint parameters
 // responses:
-//   200: checkpointParamsResponse
+//
+//	200: checkpointParamsResponse
+//
 // HTTP request handler to query the auth params values
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -210,7 +219,8 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /checkpoints/buffer checkpoint checkpointBuffer
 // It returns the checkpoint buffer
 // responses:
-//   200: checkpointResponse
+//
+//	200: checkpointResponse
 func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -233,7 +243,8 @@ func checkpointBufferHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /checkpoints/count checkpoint checkpointCount
 // It returns the checkpoint counts
 // responses:
-//   200: checkpointCountResponse
+//
+//	200: checkpointCountResponse
 func checkpointCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -290,7 +301,8 @@ type checkpointPrepareParams struct {
 // swagger:route GET /checkpoints/prepare checkpoint checkpointPrepare
 // It returns the prepared checkpoint
 // responses:
-//   200: checkpointPrepareResponse
+//
+//	200: checkpointPrepareResponse
 func prepareCheckpointHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -406,7 +418,8 @@ type HeaderBlockResult struct {
 // swagger:route GET /checkpoints/last-no-ack checkpoint checkpointLastNoAck
 // It returns the last no ack
 // responses:
-//   200: lastNoAckResponse
+//
+//	200: lastNoAckResponse
 func noackHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -455,7 +468,9 @@ type stateDump struct {
 // swagger:route GET /overview checkpoint overview
 // It returns the complete overview
 // responses:
-//   200: overviewResponse
+//
+//	200: overviewResponse
+//
 // get all state-dump of heimdall
 func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -560,7 +575,9 @@ func overviewHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // swagger:route GET /checkpoints/latest checkpoint checkpointLatest
 // It returns the last checkpoint from the store
 // responses:
-//   200: checkpointResponse
+//
+//	200: checkpointResponse
+//
 // get last checkpoint from store
 func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -645,7 +662,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-//Temporary Checkpoint struct to store the Checkpoint ID
+// Temporary Checkpoint struct to store the Checkpoint ID
 type CheckpointWithID struct {
 	ID         uint64                  `json:"id"`
 	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
@@ -668,7 +685,9 @@ type checkpointID struct {
 // swagger:route GET /checkpoints/{id} checkpoint checkpointById
 // It returns the checkpoint by ID
 // responses:
-//   200: checkpointResponse
+//
+//	200: checkpointResponse
+//
 // get checkpoint by checkppint number from store
 func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -747,7 +766,8 @@ type checkpointListParams struct {
 // swagger:route GET /checkpoints/list checkpoint checkpointList
 // It returns the checkpoints list
 // responses:
-//   200: checkpointListResponse
+//
+//	200: checkpointListResponse
 func checkpointListhandlerFn(
 	cliCtx context.CLIContext,
 ) http.HandlerFunc {
