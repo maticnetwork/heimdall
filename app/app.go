@@ -201,6 +201,9 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
+	if bApp.IsPresent("milestone") {
+
+	}
 	// keys
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey,
@@ -498,6 +501,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.Seal()
 
 	return app
+
 }
 
 // MakeCodec create codec

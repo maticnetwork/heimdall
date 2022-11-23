@@ -20,12 +20,12 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 	}
 
 	// Compare RootHash
-	vote, err := contractCaller.GetVoteOnRootHash(start, end, milestoneLength, rootHash.String(), milestoneID)
-	if err != nil {
-		return false, err
-	}
+	// vote, err := contractCaller.GetVoteOnRootHash(start, end, milestoneLength, rootHash.String(), milestoneID)
+	// if err != nil {
+	// 	return false, err
+	// }
 
-	return vote, nil
+	return true, nil
 }
 
 func convertTo32(input []byte) (output [32]byte, err error) {
