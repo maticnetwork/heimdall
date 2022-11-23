@@ -644,8 +644,8 @@ github.com/markbates/oncer v0.0.0-20181203154359-bf2de49a0be2/go.mod h1:Ld9puTsI
 github.com/markbates/safe v1.0.1/go.mod h1:nAqgmRi7cY2nqMc92/bSEeQA+R4OheNU2T1kNSCBdG0=
 github.com/maticnetwork/bor v0.2.17-0.20221013091855-b70723d70e8f h1:obAnQ4wgW4ARRJUJWrRHbr4WcNnIjEv3GzN5H1eo+4I=
 github.com/maticnetwork/bor v0.2.17-0.20221013091855-b70723d70e8f/go.mod h1:LJ0vVfFpMbrBPPiTDHz2TPrYxCfaxZ52uamAdaHiP6M=
-github.com/maticnetwork/cosmos-sdk v0.37.5-0.20221123060821-1a673da0f24f h1:5nfUnn74bLqasPLHb8e3zx3YGrXLPl+EMc2MPWaxxOk=
-github.com/maticnetwork/cosmos-sdk v0.37.5-0.20221123060821-1a673da0f24f/go.mod h1:uW55Ru86N5o3L8SVkVL1TPE+mV/WRM2la8sC3TR/Ajc=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20221123085022-7005e974dd23 h1:i8gbkSMIVvDNeItaNj1rrpt0gbQ2RQP8Hhiy0ggrt+A=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20221123085022-7005e974dd23/go.mod h1:uW55Ru86N5o3L8SVkVL1TPE+mV/WRM2la8sC3TR/Ajc=
 github.com/maticnetwork/polyproto v0.0.2 h1:cPxuxbIDItdwGnucc3lZB58U8Zfe1mH73PWTGd15554=
 github.com/maticnetwork/polyproto v0.0.2/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220923185258-3e7c7f86ce9f h1:iV69PJUEdwJJFXQvbADYVEMxDrkKAsPdHTg4U3F510I=
