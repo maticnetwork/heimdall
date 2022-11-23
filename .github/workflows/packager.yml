@@ -2,10 +2,9 @@ name: packager
 
 on:
   push:
-    branches:
-      - 'main'
-    paths:
-      - '**'
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
 
 jobs:
   build:
@@ -19,9 +18,8 @@ jobs:
         uses: actions/setup-go@master
         with:
           go-version: 1.19
-      - name: Generate release tag
-        id: tag
-        run: echo "::set-output name=release_tag::heimdalld_$(date +"%Y.%m.%d_%H-%M")"
+      - name: Adding TAG to ENV
+        run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
 
       - name: getting ubuntu version
         run: lsb_release -a && uname -a
@@ -195,7 +193,8 @@ jobs:
       - name: Release heimdalld.deb
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ steps.tag.outputs.release_tag }}
+          tag_name: ${{ env.GIT_TAG  }}
+          prerelease: true
           files: |
              packaging/deb/heimdalld**.deb
              binary/heimdall*
