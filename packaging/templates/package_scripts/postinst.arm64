@@ -1,0 +1,6 @@
+#!/bin/bash
+# This is a postinstallation script so the service can be configured and started when requested
+#
+sudo adduser --disabled-password --disabled-login --shell /usr/sbin/nologin --quiet --system --no-create-home --home /nonexistent heimdall
+sudo mkdir -p /var/lib/heimdall
+sudo chown -R heimdall /var/lib/heimdall

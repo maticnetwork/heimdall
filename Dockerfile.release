@@ -13,13 +13,8 @@ COPY heimdalld /usr/bin/
 COPY heimdallcli /usr/bin/
 COPY builder/files/genesis-mainnet-v1.json ${HEIMDALL_DIR}/
 COPY builder/files/genesis-testnet-v4.json ${HEIMDALL_DIR}/
-RUN groupadd -g 20137 heimdall \
-    && useradd -u 20137 --no-log-init --create-home -r -g heimdall heimdall \
-    && chown -R heimdall:heimdall ${HEIMDALL_DIR}
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
-
-USER heimdall
 
 EXPOSE 1317 26656 26657
 
