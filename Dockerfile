@@ -11,13 +11,9 @@ WORKDIR ${HEIMDALL_DIR}
 COPY . .
 
 RUN make install
-RUN groupadd -g 20137 heimdall \
-    && useradd -u 20137 --no-log-init --create-home -r -g heimdall heimdall \
-    && chown -R heimdall:heimdall ${HEIMDALL_DIR}
 
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
 
-USER heimdall
 ENV SHELL /bin/bash
 EXPOSE 1317 26656 26657
 
