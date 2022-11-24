@@ -201,308 +201,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
-	if bApp.IsPresent("milestone") {
-
-		// keys
-		keys := sdk.NewKVStoreKeys(
-			bam.MainStoreKey,
-			sidechannelTypes.StoreKey,
-			authTypes.StoreKey,
-			bankTypes.StoreKey,
-			supplyTypes.StoreKey,
-			govTypes.StoreKey,
-			chainmanagerTypes.StoreKey,
-			stakingTypes.StoreKey,
-			slashingTypes.StoreKey,
-			checkpointTypes.StoreKey,
-			borTypes.StoreKey,
-			clerkTypes.StoreKey,
-			topupTypes.StoreKey,
-			paramsTypes.StoreKey,
-			milestoneTypes.StoreKey,
-		)
-		tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
-
-		// create heimdall app
-		var app = &HeimdallApp{
-			cdc:       cdc,
-			BaseApp:   bApp,
-			keys:      keys,
-			tkeys:     tkeys,
-			subspaces: make(map[string]subspace.Subspace),
-		}
-
-		// init params keeper and subspaces
-		app.ParamsKeeper = params.NewKeeper(app.cdc, keys[paramsTypes.StoreKey], tkeys[paramsTypes.TStoreKey], paramsTypes.DefaultCodespace)
-		app.subspaces[sidechannelTypes.ModuleName] = app.ParamsKeeper.Subspace(sidechannelTypes.DefaultParamspace)
-		app.subspaces[authTypes.ModuleName] = app.ParamsKeeper.Subspace(authTypes.DefaultParamspace)
-		app.subspaces[bankTypes.ModuleName] = app.ParamsKeeper.Subspace(bankTypes.DefaultParamspace)
-		app.subspaces[supplyTypes.ModuleName] = app.ParamsKeeper.Subspace(supplyTypes.DefaultParamspace)
-		app.subspaces[govTypes.ModuleName] = app.ParamsKeeper.Subspace(govTypes.DefaultParamspace).WithKeyTable(govTypes.ParamKeyTable())
-		app.subspaces[chainmanagerTypes.ModuleName] = app.ParamsKeeper.Subspace(chainmanagerTypes.DefaultParamspace)
-		app.subspaces[stakingTypes.ModuleName] = app.ParamsKeeper.Subspace(stakingTypes.DefaultParamspace)
-		app.subspaces[slashingTypes.ModuleName] = app.ParamsKeeper.Subspace(slashingTypes.DefaultParamspace)
-		app.subspaces[checkpointTypes.ModuleName] = app.ParamsKeeper.Subspace(checkpointTypes.DefaultParamspace)
-		app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
-		app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
-		app.subspaces[topupTypes.ModuleName] = app.ParamsKeeper.Subspace(topupTypes.DefaultParamspace)
-		app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
-		//
-		// Contract caller
-		//
-
-		contractCallerObj, err := helper.NewContractCaller()
-		if err != nil {
-			cmn.Exit(err.Error())
-		}
-
-		app.caller = contractCallerObj
-
-		//
-		// module communicator
-		//
-
-		moduleCommunicator := ModuleCommunicator{App: app}
-
-		//
-		// keepers
-		//
-
-		// create side channel keeper
-		app.SidechannelKeeper = sidechannel.NewKeeper(
-			app.cdc,
-			keys[sidechannelTypes.StoreKey], // target store
-			app.subspaces[sidechannelTypes.ModuleName],
-			common.DefaultCodespace,
-		)
-
-		// create chain keeper
-		app.ChainKeeper = chainmanager.NewKeeper(
-			app.cdc,
-			keys[chainmanagerTypes.StoreKey], // target store
-			app.subspaces[chainmanagerTypes.ModuleName],
-			common.DefaultCodespace,
-			app.caller,
-		)
-
-		// account keeper
-		app.AccountKeeper = auth.NewAccountKeeper(
-			app.cdc,
-			keys[authTypes.StoreKey], // target store
-			app.subspaces[authTypes.ModuleName],
-			authTypes.ProtoBaseAccount, // prototype
-		)
-
-		app.StakingKeeper = staking.NewKeeper(
-			app.cdc,
-			keys[stakingTypes.StoreKey], // target store
-			app.subspaces[stakingTypes.ModuleName],
-			common.DefaultCodespace,
-			app.ChainKeeper,
-			moduleCommunicator,
-		)
-
-		app.SlashingKeeper = slashing.NewKeeper(
-			app.cdc,
-			keys[slashingTypes.StoreKey], // target store
-			app.StakingKeeper,
-			app.subspaces[slashingTypes.ModuleName],
-			common.DefaultCodespace,
-			app.ChainKeeper,
-		)
-
-		// bank keeper
-		app.BankKeeper = bank.NewKeeper(
-			app.cdc,
-			keys[bankTypes.StoreKey], // target store
-			app.subspaces[bankTypes.ModuleName],
-			bankTypes.DefaultCodespace,
-			app.AccountKeeper,
-			moduleCommunicator,
-		)
-
-		// bank keeper
-		app.SupplyKeeper = supply.NewKeeper(
-			app.cdc,
-			keys[supplyTypes.StoreKey], // target store
-			app.subspaces[supplyTypes.ModuleName],
-			maccPerms,
-			app.AccountKeeper,
-			app.BankKeeper,
-		)
-
-		// register the proposal types
-		govRouter := gov.NewRouter()
-		govRouter.
-			AddRoute(govTypes.RouterKey, govTypes.ProposalHandler).
-			AddRoute(paramsTypes.RouterKey, params.NewParamChangeProposalHandler(app.ParamsKeeper))
-
-		app.GovKeeper = gov.NewKeeper(
-			app.cdc,
-			keys[govTypes.StoreKey],
-			app.subspaces[govTypes.ModuleName],
-			app.SupplyKeeper,
-			app.StakingKeeper,
-			govTypes.DefaultCodespace,
-			govRouter,
-		)
-
-		app.CheckpointKeeper = checkpoint.NewKeeper(
-			app.cdc,
-			keys[checkpointTypes.StoreKey], // target store
-			app.subspaces[checkpointTypes.ModuleName],
-			common.DefaultCodespace,
-			app.StakingKeeper,
-			app.ChainKeeper,
-			moduleCommunicator,
-		)
-
-		app.MilestoneKeeper = milestone.NewKeeper(
-			app.cdc,
-			keys[milestoneTypes.StoreKey], // target store
-			app.subspaces[milestoneTypes.ModuleName],
-			common.DefaultCodespace,
-			app.StakingKeeper,
-			app.ChainKeeper,
-		)
-
-		app.BorKeeper = bor.NewKeeper(
-			app.cdc,
-			keys[borTypes.StoreKey], // target store
-			app.subspaces[borTypes.ModuleName],
-			common.DefaultCodespace,
-			app.ChainKeeper,
-			app.StakingKeeper,
-			app.caller,
-		)
-
-		app.ClerkKeeper = clerk.NewKeeper(
-			app.cdc,
-			keys[clerkTypes.StoreKey], // target store
-			app.subspaces[clerkTypes.ModuleName],
-			common.DefaultCodespace,
-			app.ChainKeeper,
-		)
-
-		// may be need signer
-		app.TopupKeeper = topup.NewKeeper(
-			app.cdc,
-			keys[topupTypes.StoreKey],
-			app.subspaces[topupTypes.ModuleName],
-			topupTypes.DefaultCodespace,
-			app.ChainKeeper,
-			app.BankKeeper,
-			app.StakingKeeper,
-		)
-
-		// NOTE: Any module instantiated in the module manager that is later modified
-		// must be passed by reference here.
-		app.mm = module.NewManager(
-			sidechannel.NewAppModule(app.SidechannelKeeper),
-			auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
-				supplyTypes.AccountProcessor,
-			}),
-			bank.NewAppModule(app.BankKeeper, &app.caller),
-			supply.NewAppModule(app.SupplyKeeper, &app.caller),
-			gov.NewAppModule(app.GovKeeper, app.SupplyKeeper),
-			chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
-			staking.NewAppModule(app.StakingKeeper, &app.caller),
-			slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
-			checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
-			bor.NewAppModule(app.BorKeeper, &app.caller),
-			clerk.NewAppModule(app.ClerkKeeper, &app.caller),
-			topup.NewAppModule(app.TopupKeeper, &app.caller),
-			milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
-		)
-
-		// NOTE: The genutils module must occur after staking so that pools are
-		// properly initialized with tokens from genesis accounts.
-		app.mm.SetOrderInitGenesis(
-			sidechannelTypes.ModuleName,
-			authTypes.ModuleName,
-			bankTypes.ModuleName,
-			govTypes.ModuleName,
-			chainmanagerTypes.ModuleName,
-			supplyTypes.ModuleName,
-			stakingTypes.ModuleName,
-			slashingTypes.ModuleName,
-			checkpointTypes.ModuleName,
-			borTypes.ModuleName,
-			clerkTypes.ModuleName,
-			topupTypes.ModuleName,
-			milestoneTypes.ModuleName,
-		)
-
-		// register message routes and query routes
-		app.mm.RegisterRoutes(app.Router(), app.QueryRouter())
-
-		// side router
-		app.sideRouter = types.NewSideRouter()
-		for _, m := range app.mm.Modules {
-			if m.Route() != "" {
-				if sm, ok := m.(hmModule.SideModule); ok {
-					app.sideRouter.AddRoute(m.Route(), &types.SideHandlers{
-						SideTxHandler: sm.NewSideTxHandler(),
-						PostTxHandler: sm.NewPostTxHandler(),
-					})
-				}
-			}
-		}
-
-		app.sideRouter.Seal()
-
-		// create the simulation manager and define the order of the modules for deterministic simulations
-		//
-		// NOTE: this is not required apps that don't use the simulator for fuzz testing
-		// transactions
-		app.sm = hmModule.NewSimulationManager(
-			auth.NewAppModule(app.AccountKeeper, &app.caller, []authTypes.AccountProcessor{
-				supplyTypes.AccountProcessor,
-			}),
-
-			slashing.NewAppModule(app.SlashingKeeper, app.StakingKeeper, &app.caller),
-			chainmanager.NewAppModule(app.ChainKeeper, &app.caller),
-			topup.NewAppModule(app.TopupKeeper, &app.caller),
-			staking.NewAppModule(app.StakingKeeper, &app.caller),
-			checkpoint.NewAppModule(app.CheckpointKeeper, app.StakingKeeper, app.TopupKeeper, &app.caller),
-			bank.NewAppModule(app.BankKeeper, &app.caller),
-			milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller),
-		)
-		app.sm.RegisterStoreDecoders()
-
-		// mount the multistore and load the latest state
-		app.MountKVStores(keys)
-		app.MountTransientStores(tkeys)
-
-		// perform initialization logic
-		app.SetInitChainer(app.InitChainer)
-		app.SetBeginBlocker(app.BeginBlocker)
-		app.SetEndBlocker(app.EndBlocker)
-		app.SetAnteHandler(
-			auth.NewAnteHandler(
-				app.AccountKeeper,
-				app.ChainKeeper,
-				app.SupplyKeeper,
-				&app.caller,
-				auth.DefaultSigVerificationGasConsumer,
-			),
-		)
-		// side-tx processor
-		app.SetPostDeliverTxHandler(app.PostDeliverTxHandler)
-		app.SetBeginSideBlocker(app.BeginSideBlocker)
-		app.SetDeliverSideTxHandler(app.DeliverSideTxHandler)
-
-		// load latest version
-		err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-		if err != nil {
-			cmn.Exit(err.Error())
-		}
-
-		app.Seal()
-
-		return app
-
-	}
 	// keys
 	keys := sdk.NewKVStoreKeys(
 		bam.MainStoreKey,
@@ -798,6 +496,58 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	app.Seal()
+
+	if bApp.IsPresent("milestone") {
+
+		app.Unseal()
+		app.keys[milestoneTypes.StoreKey] = sdk.NewKVStoreKey(milestoneTypes.StoreKey)
+		app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
+
+		app.MilestoneKeeper = milestone.NewKeeper(
+			app.cdc,
+			app.keys[milestoneTypes.StoreKey], // target store
+			app.subspaces[milestoneTypes.ModuleName],
+			common.DefaultCodespace,
+			app.StakingKeeper,
+			app.ChainKeeper,
+		)
+
+		module := milestone.NewAppModule(app.MilestoneKeeper, app.StakingKeeper, &app.caller)
+
+		app.mm.Modules[module.Name()] = module
+		app.mm.OrderInitGenesis = append(app.mm.OrderInitGenesis, module.Name())
+		app.mm.OrderBeginBlockers = append(app.mm.OrderBeginBlockers, module.Name())
+		app.mm.OrderEndBlockers = append(app.mm.OrderEndBlockers, module.Name())
+		app.mm.OrderExportGenesis = append(app.mm.OrderExportGenesis, module.Name())
+
+		moduleTemp := app.mm.Modules[module.Name()]
+
+		router := app.Router()
+		queryRouter := app.QueryRouter()
+
+		router.AddRoute(moduleTemp.Route(), moduleTemp.NewHandler())
+		queryRouter.AddRoute(moduleTemp.QuerierRoute(), moduleTemp.NewQuerierHandler())
+
+		if moduleTemp.Route() != "" {
+			if sm, ok := moduleTemp.(hmModule.SideModule); ok {
+				app.sideRouter.AddRoute(module.Route(), &types.SideHandlers{
+					SideTxHandler: sm.NewSideTxHandler(),
+					PostTxHandler: sm.NewPostTxHandler(),
+				})
+			}
+		}
+
+		//	app.mm.RegisterInvariants()
+
+		app.MountStore(app.keys[milestoneTypes.StoreKey], sdk.StoreTypeDB)
+
+		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
+		if err != nil {
+			cmn.Exit(err.Error())
+		}
+
+		app.Seal()
+	}
 
 	return app
 
