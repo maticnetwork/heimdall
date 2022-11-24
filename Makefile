@@ -27,8 +27,8 @@ tests:
 # make build
 build: clean
 	mkdir -p build
-	go build -o build/heimdalld ./cmd/heimdalld
-	go build -o build/heimdallcli ./cmd/heimdallcli
+	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
+	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
 	
 # make install
