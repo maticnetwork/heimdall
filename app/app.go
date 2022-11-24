@@ -491,6 +491,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	app.Seal()
 
+	//Checking if the milestone store exist in the db
 	if bApp.IsPresent("milestone") {
 
 		app.UnSeal()
@@ -616,11 +617,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
 
-	//Cases-
-	//Connecting to the network when already enabled
-	//At the time of transaction
-	//At the time of hardfork and after it
-
+	//Registering the milestone module at particular height.
 	if ctx.BlockHeight() == helper.GetMilestoneHardForkHeight() {
 
 		app.UnSeal()

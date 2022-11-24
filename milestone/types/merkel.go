@@ -19,13 +19,13 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 		return false, errors.New("blocks not found locally")
 	}
 
-	// Compare RootHash
-	// vote, err := contractCaller.GetVoteOnRootHash(start, end, milestoneLength, rootHash.String(), milestoneID)
-	// if err != nil {
-	// 	return false, err
-	// }
+	//Compare RootHash
+	vote, err := contractCaller.GetVoteOnRootHash(start, end, milestoneLength, rootHash.String(), milestoneID)
+	if err != nil {
+		return false, err
+	}
 
-	return true, nil
+	return vote, nil
 }
 
 func convertTo32(input []byte) (output [32]byte, err error) {
