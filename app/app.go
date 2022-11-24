@@ -493,7 +493,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 	if bApp.IsPresent("milestone") {
 
-		app.Unseal()
+		app.UnSeal()
 		app.keys[milestoneTypes.StoreKey] = sdk.NewKVStoreKey(milestoneTypes.StoreKey)
 		app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
 
@@ -623,7 +623,7 @@ func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock
 
 	if ctx.BlockHeight() == helper.GetMilestoneHardForkHeight() {
 
-		app.Unseal()
+		app.UnSeal()
 		app.keys[milestoneTypes.StoreKey] = sdk.NewKVStoreKey(milestoneTypes.StoreKey)
 		app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
 

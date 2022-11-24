@@ -154,6 +154,6 @@ require (
 
 replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220923185258-3e7c7f86ce9f
 
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20221123154347-5a9f8b5bfe84
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20221124122228-d771e9da46dc
 
 replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v0.2.17-0.20221013091855-b70723d70e8f
