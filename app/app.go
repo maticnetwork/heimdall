@@ -489,17 +489,10 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.SetBeginSideBlocker(app.BeginSideBlocker)
 	app.SetDeliverSideTxHandler(app.DeliverSideTxHandler)
 
-	// load latest version
-	err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-	if err != nil {
-		cmn.Exit(err.Error())
-	}
-
 	app.Seal()
 
 	if bApp.IsPresent("milestone") {
 
-		app.Unseal()
 		app.keys[milestoneTypes.StoreKey] = sdk.NewKVStoreKey(milestoneTypes.StoreKey)
 		app.subspaces[milestoneTypes.ModuleName] = app.ParamsKeeper.Subspace(milestoneTypes.DefaultParamspace)
 
@@ -541,13 +534,15 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 
 		app.MountStore(app.keys[milestoneTypes.StoreKey], sdk.StoreTypeDB)
 
-		err := app.LoadLatestVersion(app.keys[bam.MainStoreKey])
-		if err != nil {
-			cmn.Exit(err.Error())
-		}
-
-		app.Seal()
 	}
+
+	// load latest version
+	err = app.LoadLatestVersion(app.keys[bam.MainStoreKey])
+	if err != nil {
+		cmn.Exit(err.Error())
+	}
+
+	app.Seal()
 
 	return app
 
