@@ -6,8 +6,8 @@ import (
 
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
+	milestoneTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
-	milestoneTypes "github.com/maticnetwork/heimdall/milestone/types"
 	"github.com/pborman/uuid"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -53,6 +53,12 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 // 2. check if milestone has to be proposed
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error) {
+
+	//Milestone proposing mechanism will work only after specific block height
+	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
+		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
+		return nil
+	}
 
 	// fetch milestone context
 	milestoneContext, err := mp.getMilestoneContext()

@@ -313,7 +313,15 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 // handleMsgMilestone Validates milestone transaction
 func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+
 	logger := k.Logger(ctx)
+
+	//Check for the hard fork value
+	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
+		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
+		return common.ErrInvalidMsg(k.Codespace(), "Network hasn't reached the milestone hard forked height").Result()
+	}
+
 	milestoneLength := helper.MilestoneLength
 
 	//

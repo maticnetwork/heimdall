@@ -207,6 +207,10 @@ var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
 
+var milestoneHardForkHeight int64 = 0
+
+var milestoneBorBlockHeight uint64 = 0
+
 // Contracts
 // var RootChain types.Contract
 // var DepositManager types.Contract
@@ -355,12 +359,18 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
+		milestoneHardForkHeight = 50
+		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
+		milestoneHardForkHeight = 50
+		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
+		milestoneHardForkHeight = 130
+		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	}
 }
 
@@ -482,6 +492,16 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
+}
+
+// GetMilestoneHardForkHeight returns milestoneHardForkHeight
+func GetMilestoneHardForkHeight() int64 {
+	return milestoneHardForkHeight
+}
+
+// GetMilestoneBorBlockHeight returns milestoneBorBlockHeight
+func GetMilestoneBorBlockHeight() uint64 {
+	return milestoneBorBlockHeight
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command
