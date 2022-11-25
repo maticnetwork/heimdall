@@ -2,7 +2,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -16,6 +15,7 @@ import (
 
 	"github.com/ethereum/go-ethereum/common"
 	ethcmn "github.com/ethereum/go-ethereum/common"
+
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
@@ -189,12 +189,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 
 	r.HandleFunc("/checkpoints/{number}", checkpointByNumberHandlerFunc(cliCtx)).Methods("GET")
 
-	r.HandleFunc("/milestone/params", paramsHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/latest", milestoneLatestHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/count", milestoneCountHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/lastNoAck", latestNoAckMilestoneHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/noAck/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
+	registerQueryMilestoneRoutes(cliCtx, r)
 }
 
 // swagger:route GET /checkpoints/params checkpoint checkpointParams
@@ -814,186 +809,6 @@ func checkpointListhandlerFn(
 
 		// check content
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No checkpoints found"); !ok {
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-
-		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-//################ Milestone ######################
-
-func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		// fetch checkpoint
-		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, result)
-	}
-}
-
-// swagger:route GET /checkpoints/count checkpoint checkpointCount
-// It returns the checkpoint counts
-// responses:
-//
-//	200: checkpointCountResponse
-func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		countBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCount), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, countBytes, "No milestone count found"); !ok {
-			return
-		}
-
-		var count uint64
-		if err := json.Unmarshal(countBytes, &count); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		result, err := json.Marshal(map[string]interface{}{"count": count})
-		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, result)
-	}
-}
-
-func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		// get milestone number
-		number, ok := rest.ParseUint64OrReturnBadRequest(w, vars["number"])
-		if !ok {
-			return
-		}
-
-		// get query params
-		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryMilestoneParams(number))
-		if err != nil {
-			return
-		}
-
-		// query checkpoint
-		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByNumber), queryParams)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-
-		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		// fetch checkpoint
-		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone), nil)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		// check content
-		if ok := hmRest.ReturnNotFoundIfNoContent(w, result, "No last ack milestone found"); !ok {
-			return
-		}
-
-		var milestoneID string
-		if err := json.Unmarshal(result, &milestoneID); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		res, err := json.Marshal(map[string]interface{}{"result": milestoneID})
-		if err != nil {
-			RestLogger.Error("Error while marshalling response to Json", "error", err)
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
-
-	}
-}
-
-func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		vars := mux.Vars(r)
-
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		// get milestone number
-		id := vars["id"]
-
-		// get query params
-		queryID, err := cliCtx.Codec.MarshalJSON(types.NewQueryMilestoneID(id))
-		if err != nil {
-			return
-		}
-
-		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID), queryID)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		var val bool
-		if err := json.Unmarshal(result, &val); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		res, err := json.Marshal(map[string]interface{}{"result": val})
-		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-
 			return
 		}
 

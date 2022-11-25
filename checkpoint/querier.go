@@ -1,7 +1,6 @@
 package checkpoint
 
 import (
-	"encoding/json"
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -34,20 +33,18 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, topupKeeper topup.K
 			return handleQueryCheckpointList(ctx, req, keeper)
 		case types.QueryNextCheckpoint:
 			return handleQueryNextCheckpoint(ctx, req, keeper, stakingKeeper, topupKeeper, contractCaller)
-		case types.QueryLatestMilestone:
-			return handleQueryLatestMilestone(ctx, req, keeper)
+		case types.QueryCount:
+			return handleQueryCount(ctx, keeper)
 
+		case types.QueryLatestMilestone:
+			return handleQueryLatestMilestone(ctx, keeper)
 		case types.QueryMilestoneByNumber:
 			return handleQueryMilestoneByNumber(ctx, req, keeper)
-
-		case types.QueryCount:
-			return handleQueryCount(ctx, req, keeper)
-
 		case types.QueryLatestNoAckMilestone:
-			return handleQueryLatestNoAckMilestone(ctx, req, keeper)
-
+			return handleQueryLatestNoAckMilestone(ctx, keeper)
 		case types.QueryNoAckMilestoneByID:
 			return handleQueryNoAckMilestoneByID(ctx, req, keeper)
+
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
 		}
@@ -192,84 +189,6 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	bz, err := jsoniter.ConfigFastest.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))
-	}
-
-	return bz, nil
-}
-
-//############ Milestone #####################
-
-func handleQueryLatestMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	res, err := keeper.GetLastMilestone(ctx)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch milestone", err.Error()))
-	}
-
-	if res == nil {
-		return nil, common.ErrNoMilestoneFound(keeper.Codespace())
-	}
-
-	bz, err := json.Marshal(res)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-
-	return bz, nil
-}
-
-func handleQueryMilestoneByNumber(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var params types.QueryMilestoneParams
-	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
-	}
-
-	res, err := keeper.GetMilestoneByNumber(ctx, params.Number)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not fetch milestone", err.Error()))
-	}
-
-	if res == nil {
-		return nil, common.ErrNoMilestoneFound(keeper.Codespace())
-	}
-
-	bz, err := json.Marshal(res)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-
-	return bz, nil
-}
-
-func handleQueryCount(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	bz, err := json.Marshal(keeper.GetMilestoneCount(ctx))
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-
-	return bz, nil
-}
-
-func handleQueryLatestNoAckMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	res := keeper.GetLastNoAckMilestone(ctx)
-
-	bz, err := json.Marshal(res)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-	}
-
-	return bz, nil
-}
-
-func handleQueryNoAckMilestoneByID(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var ID types.QueryMilestoneID
-	if err := keeper.cdc.UnmarshalJSON(req.Data, &ID); err != nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse milestoneID: %s", err))
-	}
-	res := keeper.GetNoAckMilestone(ctx, ID.MilestoneID)
-
-	bz, err := json.Marshal(res)
-	if err != nil {
-		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
 	return bz, nil

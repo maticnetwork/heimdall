@@ -5,9 +5,10 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/maticnetwork/heimdall/staking"
 	stakingSim "github.com/maticnetwork/heimdall/staking/simulation"
-	"github.com/stretchr/testify/require"
 
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -52,25 +53,4 @@ func LoadValidatorSet(t *testing.T, count int, keeper staking.Keeper, ctx sdk.Co
 	require.NotNil(t, vals)
 
 	return valSet
-}
-
-///////////Milestone Module//////////////////////
-
-// GenRandMilestone return headers
-func GenRandMilestone(start uint64, sprintLength uint64) (milestone types.Milestone, err error) {
-	end := start + sprintLength - 1
-	borChainID := "1234"
-	rootHash := types.HexToHeimdallHash("123")
-	proposer := types.HeimdallAddress{}
-	milestoneID := "00000"
-	milestone = types.CreateMilestone(
-		start,
-		end,
-		rootHash,
-		proposer,
-		borChainID,
-		milestoneID,
-		uint64(time.Now().UTC().Unix()))
-
-	return milestone, nil
 }
