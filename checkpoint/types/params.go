@@ -114,3 +114,7 @@ func (p Params) Validate() error {
 
 	return nil
 }
+
+type Count struct {
+	Count uint64 `json:"count" yaml:"count"`
+}

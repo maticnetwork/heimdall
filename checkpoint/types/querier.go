@@ -12,6 +12,14 @@ const (
 	QueryProposer         = "is-proposer"
 	QueryCurrentProposer  = "current-proposer"
 	StakingQuerierRoute   = "staking"
+
+	////####Milestone Module #####
+
+	QueryLatestMilestone      = "milestone-latest"
+	QueryMilestoneByNumber    = "milestone-by-number"
+	QueryCount                = "count"
+	QueryLatestNoAckMilestone = "latest-no-ack-milestone"
+	QueryNoAckMilestoneByID   = "no-ack-milestone-by-id"
 )
 
 // QueryCheckpointParams defines the params for querying accounts.
@@ -32,4 +40,25 @@ type QueryBorChainID struct {
 // NewQueryBorChainID creates a new instance of QueryBorChainID with give chain id
 func NewQueryBorChainID(chainID string) QueryBorChainID {
 	return QueryBorChainID{BorChainID: chainID}
+}
+
+/////////######Milestone###############
+
+// QueryMilestoneParams defines the params for querying accounts.
+type QueryMilestoneParams struct {
+	Number uint64
+}
+
+// NewQueryMilestoneParams creates a new instance of QueryMilestoneHeaderIndex.
+func NewQueryMilestoneParams(number uint64) QueryMilestoneParams {
+	return QueryMilestoneParams{Number: number}
+}
+
+type QueryMilestoneID struct {
+	MilestoneID string
+}
+
+// NewQueryMilestoneParams creates a new instance of QueryMilestoneHeaderIndex.
+func NewQueryMilestoneID(id string) QueryMilestoneID {
+	return QueryMilestoneID{MilestoneID: id}
 }

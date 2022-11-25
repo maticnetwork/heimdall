@@ -15,5 +15,9 @@ var (
 	AttributeKeyRootHash    = "root-hash"
 	AttributeKeyAccountHash = "account-hash"
 
+	EventTypeMilestone = "milestone"
+
+	AttributeKeyMilestoneID = "milestone-id"
+
 	AttributeValueCategory = ModuleName
 )

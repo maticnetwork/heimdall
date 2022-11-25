@@ -26,6 +26,9 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgCheckpointAck(ctx, msg, k, contractCaller)
 		case types.MsgCheckpointNoAck:
 			return handleMsgCheckpointNoAck(ctx, msg, k)
+
+		case types.MsgMilestone:
+			return handleMsgMilestone(ctx, msg, k, contractCaller)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -298,6 +301,83 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 			types.EventTypeCheckpointNoAck,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
 			sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer.String()),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+/////////######Milestone Module################
+
+// handleMsgMilestone Validates milestone transaction
+func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+	logger := k.Logger(ctx)
+	milestoneLength := helper.MilestoneLength
+
+	//
+	//Check for the msg milestone
+	//
+
+	if msg.StartBlock+milestoneLength-1 != msg.EndBlock {
+		logger.Error("Milestone's length doesn't match the  milestone length set in configuration",
+			"StartBlock", msg.StartBlock,
+			"EndBlock", msg.EndBlock,
+			"Milestone Length", milestoneLength,
+		)
+
+		return common.ErrMilestoneInvalid(k.Codespace()).Result()
+	}
+
+	// fetch last milestone from store
+	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil {
+		// make sure new milestone is in continuity
+		if lastMilestone.EndBlock+1 != msg.StartBlock {
+			logger.Error("Milestone not in continuity ",
+				"lastMilestoneEndBlock", lastMilestone.EndBlock,
+				"receivedMsgStartBlock", msg.StartBlock,
+			)
+
+			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
+		}
+
+	} else if err != nil && msg.StartBlock != 0 {
+		logger.Error("First milestone to start from block 0", "milestone start block", msg.StartBlock, "error", err)
+		return common.ErrNoMilestoneFound(k.Codespace()).Result()
+
+	}
+
+	//
+	// Validate proposer
+	//
+
+	// Check proposer in message
+	validatorSet := k.sk.GetValidatorSet(ctx)
+	if validatorSet.Proposer == nil {
+		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer.String())
+		return common.ErrInvalidMsg(k.Codespace(), "No proposer in stored validator set").Result()
+	}
+
+	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
+		logger.Error(
+			"Invalid proposer in msg",
+			"proposer", validatorSet.Proposer.Signer.String(),
+			"msgProposer", msg.Proposer.String(),
+		)
+
+		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
+	}
+
+	// Emit event for milestone
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeMilestone,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
+			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
 		),
 	})
 
