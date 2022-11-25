@@ -336,6 +336,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 }
 
 // ///////////Milestone Functions////////////////////
+
 // AddMilestone adds milestone into final blocks
 func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
 

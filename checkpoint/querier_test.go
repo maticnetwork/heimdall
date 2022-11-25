@@ -319,6 +319,8 @@ func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 	require.Equal(t, checkpointBlock.BorChainID, actualRes.BorChainID)
 }
 
+//############## Milestone ########################
+
 func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
@@ -436,7 +438,7 @@ func (suite *QuerierTestSuite) TestQueryNoAckMilestoneByID() {
 	require.Equal(t, val, true)
 
 	milestoneID = "00001"
-	app.MilestoneKeeper.SetNoAckMilestone(ctx, milestoneID)
+	app.CheckpointKeeper.SetNoAckMilestone(ctx, milestoneID)
 
 	res, err1 = querier(ctx, path, req)
 	require.NoError(t, err1)

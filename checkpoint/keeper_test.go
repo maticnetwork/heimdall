@@ -125,7 +125,7 @@ func (suite *KeeperTestSuite) TestFlushCheckpointBuffer() {
 
 func (suite *KeeperTestSuite) TestAddMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
-	keeper := app.MilestoneKeeper
+	keeper := app.CheckpointKeeper
 
 	startBlock := uint64(0)
 	endBlock := uint64(63)

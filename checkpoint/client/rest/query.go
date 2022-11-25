@@ -823,6 +823,8 @@ func checkpointListhandlerFn(
 	}
 }
 
+//################ Milestone ######################
+
 func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)

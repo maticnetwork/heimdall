@@ -197,6 +197,8 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	return bz, nil
 }
 
+//############ Milestone #####################
+
 func handleQueryLatestMilestone(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	res, err := keeper.GetLastMilestone(ctx)
 	if err != nil {

@@ -10,6 +10,7 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCheckpointNoAck{}, "checkpoint/MsgCheckpointNoACK", nil)
 	cdc.RegisterConcrete(MsgCheckpointAdjust{}, "checkpoint/MsgCheckpointAdjust", nil)
 
+	//################ Milestone ######################
 	cdc.RegisterConcrete(MsgMilestone{}, "checkpoint/MsgMilestone", nil)
 }
 

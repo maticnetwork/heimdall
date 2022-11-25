@@ -640,6 +640,8 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	})
 }
 
+//########### Milestone ###################
+
 func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper

@@ -179,6 +179,8 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 	return
 }
 
+//############ Milestone #####################
+
 // SideHandleMsgMilestone handles MsgMilestone message for external call
 func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 

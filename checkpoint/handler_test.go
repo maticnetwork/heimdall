@@ -521,6 +521,8 @@ func (suite *HandlerTestSuite) SendNoAck() (res sdk.Result) {
 	return result
 }
 
+//########### Milestone ###################
+
 func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper
