@@ -1,8 +1,11 @@
 package checkpoint_test
 
 import (
+	"testing"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
@@ -11,6 +14,11 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 )
+
+func TestMilestoneSideHandlerTestSuite(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, new(SideHandlerTestSuite))
+}
 
 func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx

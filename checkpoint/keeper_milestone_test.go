@@ -1,12 +1,19 @@
 package checkpoint_test
 
 import (
+	"testing"
 	"time"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
+
+func TestKeeperTestSuiteMilestone(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, new(KeeperTestSuite))
+}
 
 func (suite *KeeperTestSuite) TestAddMilestone() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
