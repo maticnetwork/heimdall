@@ -15,6 +15,7 @@ const (
 	QueryCurrentProposer      = "current-proposer"
 	QueryProposerBonusPercent = "proposer-bonus-percent"
 	QueryStakingSequence      = "staking-sequence"
+	QueryMilestoneProposer    = "milestone-proposer"
 )
 
 // QuerySignerParams defines the params for querying by address

@@ -392,3 +392,19 @@ func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 	validators := keeper.GetSpanEligibleValidators(ctx)
 	require.LessOrEqual(t, len(validators), 4)
 }
+
+func (suite *KeeperTestSuite) TestGetMilestoneProposer() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
+	currentValSet1 := keeper.GetMilestoneValidatorSet(ctx)
+	currentMilestoneProposer := keeper.GetMilestoneCurrentProposer(ctx)
+	require.Equal(t, currentValSet1.GetProposer(), currentMilestoneProposer)
+
+	keeper.MilestoneIncrementAccum(ctx, 1)
+
+	currentValSet2 := keeper.GetMilestoneValidatorSet(ctx)
+	currentMilestoneProposer = keeper.GetMilestoneCurrentProposer(ctx)
+	require.NotEqual(t, currentValSet1.GetProposer(), currentMilestoneProposer)
+	require.Equal(t, currentValSet2.GetProposer(), currentMilestoneProposer)
+}

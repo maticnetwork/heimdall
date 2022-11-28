@@ -44,6 +44,7 @@ const (
 	MilestoneCountURL       = "/milestone/count"
 	ChainManagerParamsURL   = "/chainmanager/params"
 	ProposersURL            = "/staking/proposer/%v"
+	MilestoneProposersURL   = "/staking/milestoneProposer/%v"
 	BufferedCheckpointURL   = "/checkpoints/buffer"
 	LatestCheckpointURL     = "/checkpoints/latest"
 	LatestMilestoneURL      = "/milestone/latest"
@@ -128,6 +129,34 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	)
 	if err != nil {
 		logger.Error("Error fetching proposers", "url", ProposersURL, "error", err)
+		return false, err
+	}
+
+	err = jsoniter.ConfigFastest.Unmarshal(result.Result, &proposers)
+	if err != nil {
+		logger.Error("error unmarshalling proposer slice", "error", err)
+		return false, err
+	}
+
+	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
+// IsProposer  checks if we are proposer
+func IsMilestoneProposer(cliCtx cliContext.CLIContext) (bool, error) {
+	var (
+		proposers []hmtypes.Validator
+		count     = uint64(1)
+	)
+
+	result, err := helper.FetchFromAPI(cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(MilestoneProposersURL, strconv.FormatUint(count, 10))),
+	)
+	if err != nil {
+		logger.Error("Error fetching milstone proposers", "url", MilestoneProposersURL, "error", err)
 		return false, err
 	}
 
