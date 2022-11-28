@@ -28,6 +28,10 @@ require (
 	github.com/tendermint/go-amino v0.15.0
 	github.com/tendermint/tendermint v0.32.7
 	github.com/tendermint/tm-db v0.2.0
+	go.opentelemetry.io/otel v1.2.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.2.0
+	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.2.0
+	go.opentelemetry.io/otel/sdk v1.2.0
 	golang.org/x/sync v0.0.0-20220722155255-886fb9371eb4
 	google.golang.org/grpc v1.49.0
 	google.golang.org/protobuf v1.28.1
@@ -54,6 +58,7 @@ require (
 	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/btcsuite/btcd/btcec/v2 v2.1.2 // indirect
 	github.com/btcsuite/btcutil v1.0.3-0.20201208143702-a53e38424cce // indirect
+	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/cespare/cp v1.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/cosmos/go-bip39 v0.0.0-20180618194314-52158e4697b8 // indirect
@@ -80,6 +85,7 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.1.0 // indirect
 	github.com/googleapis/gax-go/v2 v2.5.1 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
+	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/hashicorp/go-bexpr v0.1.10 // indirect
 	github.com/hashicorp/hcl v1.0.0 // indirect
 	github.com/holiman/bloomfilter/v2 v2.0.3 // indirect
@@ -134,8 +140,8 @@ require (
 	github.com/zondax/hid v0.9.0 // indirect
 	go.mongodb.org/mongo-driver v1.3.0 // indirect
 	go.opencensus.io v0.23.0 // indirect
-	go.opentelemetry.io/otel v1.2.0 // indirect
 	go.opentelemetry.io/otel/trace v1.2.0 // indirect
+	go.opentelemetry.io/proto/otlp v0.10.0 // indirect
 	golang.org/x/crypto v0.0.0-20220507011949-2cf3adece122 // indirect
 	golang.org/x/net v0.0.0-20220909164309-bea034e7d591 // indirect
 	golang.org/x/oauth2 v0.0.0-20220909003341-f21342109be1 // indirect
