@@ -26,7 +26,6 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgCheckpointAck(ctx, msg, k, contractCaller)
 		case types.MsgCheckpointNoAck:
 			return handleMsgCheckpointNoAck(ctx, msg, k)
-
 		case types.MsgMilestone:
 			return handleMsgMilestone(ctx, msg, k)
 		case types.MsgMilestoneTimeout:

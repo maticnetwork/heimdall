@@ -12,7 +12,7 @@ func RegisterCodec(cdc *codec.Codec) {
 
 	//################ Milestone ######################
 	cdc.RegisterConcrete(MsgMilestone{}, "checkpoint/MsgMilestone", nil)
-	cdc.RegisterConcrete(MsgMilestoneTimeout{}, "checkpoint/MsgMilestoneTimout", nil)
+	cdc.RegisterConcrete(MsgMilestoneTimeout{}, "checkpoint/MsgMilestoneTimeout", nil)
 
 }
 
