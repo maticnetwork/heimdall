@@ -145,7 +145,6 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	return false, nil
 }
 
-// IsProposer  checks if we are proposer
 func IsMilestoneProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	var (
 		proposers []hmtypes.Validator
@@ -156,13 +155,13 @@ func IsMilestoneProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		helper.GetHeimdallServerEndpoint(fmt.Sprintf(MilestoneProposersURL, strconv.FormatUint(count, 10))),
 	)
 	if err != nil {
-		logger.Error("Error fetching milstone proposers", "url", MilestoneProposersURL, "error", err)
+		logger.Error("Error fetching milestone proposers", "url", MilestoneProposersURL, "error", err)
 		return false, err
 	}
 
 	err = jsoniter.ConfigFastest.Unmarshal(result.Result, &proposers)
 	if err != nil {
-		logger.Error("error unmarshalling proposer slice", "error", err)
+		logger.Error("error unmarshalling milestone proposer slice", "error", err)
 		return false, err
 	}
 
@@ -183,6 +182,37 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	)
 	if err != nil {
 		logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
+		return false, err
+	}
+
+	// unmarshall data from buffer
+	var proposers []hmtypes.Validator
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &proposers); err != nil {
+		logger.Error("Error unmarshalling validator data ", "error", err)
+		return false, err
+	}
+
+	logger.Debug("Fetched proposers list", "numberOfProposers", count)
+
+	for _, proposer := range proposers {
+		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// IsInProposerList checks if we are in current proposer
+func IsInMilestoneProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
+	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(MilestoneProposersURL, strconv.FormatUint(count, 10))),
+	)
+	if err != nil {
+		logger.Error("Unable to send request for next proposers", "url", MilestoneProposersURL, "error", err)
 		return false, err
 	}
 

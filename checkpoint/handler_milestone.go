@@ -2,7 +2,9 @@ package checkpoint
 
 import (
 	"bytes"
+	"fmt"
 	"strconv"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -88,6 +90,92 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+// Handles milestone timeout transaction
+func handleMsgMilestoneTimeout(ctx sdk.Context, msg types.MsgMilestoneTimeout, k Keeper) sdk.Result {
+	logger := k.Logger(ctx)
+
+	// Get current block time
+	currentTime := ctx.BlockTime()
+	fmt.Print("sudesh", currentTime.Second())
+
+	// Get buffer time from params
+	bufferTime := helper.MilestoneBufferTime
+
+	// Fetch last checkpoint from store
+	// TODO figure out how to handle this error
+	lastMilestone, err := k.GetLastMilestone(ctx)
+
+	if err != nil {
+		logger.Error("Didn't find the last milestone")
+		return common.ErrNoMilestoneFound(k.Codespace()).Result()
+	}
+
+	lastMilestoneTime := time.Unix(int64(lastMilestone.TimeStamp), 0)
+
+	// If last milestone happens before milestone buffer time -- thrown an error
+	if lastMilestoneTime.After(currentTime) || (currentTime.Sub(lastMilestoneTime) < bufferTime) {
+
+		fmt.Print("last Milestone Time", lastMilestoneTime.Second())
+		fmt.Print("Current Time", currentTime.Second())
+
+		logger.Debug("Invalid Milestone Timeout msg", "lastMilestoneTime", lastMilestoneTime, "current time", currentTime,
+			"buffer Time", bufferTime.String(),
+		)
+
+		logger.Error("Invalid Milestone Timeout msg", "lastMilestoneTime", lastMilestoneTime, "current time", currentTime,
+			"buffer Time", bufferTime.String(),
+		)
+
+		return common.ErrInvalidMilestoneTimeout(k.Codespace()).Result()
+	}
+
+	// Check last no ack - prevents repetitive no-ack
+	lastMilestoneTimeout := k.GetLastMilestoneTimeout(ctx)
+	lastMilestoneTimeoutTime := time.Unix(int64(lastMilestoneTimeout), 0)
+
+	if lastMilestoneTimeoutTime.After(currentTime) || (currentTime.Sub(lastMilestoneTimeoutTime) < bufferTime) {
+		logger.Debug("Too many milestone timeout messages", "lastMilestoneTimeoutTime", lastMilestoneTimeoutTime, "current time", currentTime,
+			"buffer Time", bufferTime.String())
+
+		return common.ErrTooManyNoACK(k.Codespace()).Result()
+	}
+
+	// Set new last milestone-timeout
+	newLastMilestoneTimeout := uint64(currentTime.Unix())
+	k.SetLastMilestoneTimeout(ctx, newLastMilestoneTimeout)
+	logger.Debug("Last milestone-timeout set", "lastMilestoneTimeout", newLastMilestoneTimeout)
+
+	//
+	// Update to new proposer
+	//
+
+	// Increment accum (selects new proposer)
+	k.sk.MilestoneIncrementAccum(ctx, 1)
+
+	// Get new proposer
+	vs := k.sk.GetMilestoneValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+	logger.Debug(
+		"New milestone proposer selected",
+		"validator", newProposer.Signer.String(),
+		"signer", newProposer.Signer.String(),
+		"power", newProposer.VotingPower,
+	)
+
+	// add events
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointNoAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer.String()),
 		),
 	})
 

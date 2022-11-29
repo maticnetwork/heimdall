@@ -29,6 +29,8 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 
 		case types.MsgMilestone:
 			return handleMsgMilestone(ctx, msg, k)
+		case types.MsgMilestoneTimeout:
+			return handleMsgMilestoneTimeout(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}

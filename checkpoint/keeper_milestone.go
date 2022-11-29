@@ -15,6 +15,7 @@ var (
 	CountKey              = []byte{0x30} //Key to store the count
 	MilestoneNoAckKey     = []byte{0x40} //Key to store the NoAckMilestone
 	MilestoneLastNoAckKey = []byte{0x50} //Key to store the Latest NoAckMilestone
+	LastMilestoneTimeout  = []byte{0x60} //Key to store the Last Milestone Timeout
 )
 
 // AddMilestone adds milestone into final blocks
@@ -173,6 +174,30 @@ func (k *Keeper) GetNoAckMilestone(ctx sdk.Context, milestoneId string) bool {
 		return true
 	}
 	return false
+}
+
+// SetLastMilestoneTimeout set lastMilestone timeout time
+func (k *Keeper) SetLastMilestoneTimeout(ctx sdk.Context, timestamp uint64) {
+	store := ctx.KVStore(k.storeKey)
+	// convert timestamp to bytes
+	value := []byte(strconv.FormatUint(timestamp, 10))
+	// set no-ack
+	store.Set(LastMilestoneTimeout, value)
+}
+
+// GetLastMilestoneTimeout returns lastMilestone timout time
+func (k *Keeper) GetLastMilestoneTimeout(ctx sdk.Context) uint64 {
+	store := ctx.KVStore(k.storeKey)
+	// check if ack count is there
+	if store.Has(LastMilestoneTimeout) {
+		// get last milestone timeout
+		result, err := strconv.ParseUint(string(store.Get(LastMilestoneTimeout)), 10, 64)
+		if err == nil {
+			return result
+		}
+	}
+
+	return 0
 }
 
 // GetMilestoneKey appends prefix to milestoneNumber

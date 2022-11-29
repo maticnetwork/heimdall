@@ -96,3 +96,44 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 		[]byte(msg.MilestoneID),
 	)
 }
+
+var _ sdk.Msg = &MsgMilestoneTimeout{}
+
+type MsgMilestoneTimeout struct {
+	From types.HeimdallAddress `json:"from"`
+}
+
+func NewMsgMilestoneTimeout(from types.HeimdallAddress) MsgMilestoneTimeout {
+	return MsgMilestoneTimeout{
+		From: from,
+	}
+}
+
+func (msg MsgMilestoneTimeout) Type() string {
+	return "milestone-timeout"
+}
+
+func (msg MsgMilestoneTimeout) Route() string {
+	return RouterKey
+}
+
+func (msg MsgMilestoneTimeout) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{types.HeimdallAddressToAccAddress(msg.From)}
+}
+
+func (msg MsgMilestoneTimeout) GetSignBytes() []byte {
+	b, err := ModuleCdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgMilestoneTimeout) ValidateBasic() sdk.Error {
+	if msg.From.Empty() {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid from %v", msg.From.String())
+	}
+
+	return nil
+}

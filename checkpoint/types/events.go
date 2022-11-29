@@ -15,7 +15,8 @@ var (
 	AttributeKeyRootHash    = "root-hash"
 	AttributeKeyAccountHash = "account-hash"
 
-	EventTypeMilestone = "milestone"
+	EventTypeMilestone        = "milestone"
+	EventTypeMilestoneTimeout = "milestone-timeout"
 
 	AttributeKeyMilestoneID = "milestone-id"
 

@@ -2,6 +2,7 @@ package checkpoint_test
 
 import (
 	"testing"
+	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -216,4 +217,65 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 	suite.postHandler(ctx, msgMilestone, sideResult.Result)
 
 	return result
+}
+
+func (suite *HandlerTestSuite) TestHandleMsgMilestoneTimeout() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	startBlock := uint64(0)
+	endBlock := uint64(63)
+	rootHash := hmTypes.HexToHeimdallHash("123")
+	proposerAddress := hmTypes.HexToHeimdallAddress("123")
+	timestamp := uint64(0)
+	borChainId := "1234"
+	milestoneID := "0000"
+
+	proposer := hmTypes.HeimdallAddress{}
+
+	suite.Run("Last milestone not found", func() {
+		msgMilestoneTimeout := types.NewMsgMilestoneTimeout(
+			proposer,
+		)
+
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestoneTimeout)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		require.Equal(t, errs.CodeNoMilestone, got.Code)
+	})
+
+	milestone := hmTypes.CreateMilestone(
+		startBlock,
+		endBlock,
+		rootHash,
+		proposerAddress,
+		borChainId,
+		milestoneID,
+		timestamp,
+	)
+	_ = keeper.AddMilestone(ctx, milestone)
+
+	newTime := milestone.TimeStamp + uint64(helper.MilestoneBufferTime) - 1
+	suite.ctx = ctx.WithBlockTime(time.Unix(int64(newTime), 0))
+
+	msgMilestoneTimeout := types.NewMsgMilestoneTimeout(
+		proposer,
+	)
+
+	// send milestone to handler
+	got := suite.handler(ctx, msgMilestoneTimeout)
+	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+	require.Equal(t, errs.CodeInvalidMilestoneTimeout, got.Code)
+
+	newTime = milestone.TimeStamp + 2*uint64(helper.MilestoneBufferTime) + 10000000
+	suite.ctx = ctx.WithBlockTime(time.Unix(int64(newTime), 0))
+
+	msgMilestoneTimeout = types.NewMsgMilestoneTimeout(
+		proposer,
+	)
+
+	// send milestone to handler
+	got = suite.handler(ctx, msgMilestoneTimeout)
+	require.True(t, got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+
 }

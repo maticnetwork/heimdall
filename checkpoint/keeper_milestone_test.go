@@ -136,3 +136,17 @@ func (suite *KeeperTestSuite) TestLastNoAckMilestone() {
 	val = keeper.GetLastNoAckMilestone(ctx)
 	require.Equal(t, val, milestoneID)
 }
+
+func (suite *KeeperTestSuite) TestGetMilestoneTimout() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	val := keeper.GetLastMilestoneTimeout(ctx)
+	require.Zero(t, val)
+
+	keeper.SetLastMilestoneTimeout(ctx, uint64(21))
+
+	val = keeper.GetLastMilestoneTimeout(ctx)
+	require.Equal(t, uint64(21), val)
+
+}
