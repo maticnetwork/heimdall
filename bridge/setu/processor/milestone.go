@@ -49,83 +49,6 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 
 }
 
-// startPolling - polls heimdall and checks if new milestoneTimeout needs to be proposed
-func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	// stop ticker when everything done
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			mp.checkAndProposeMilestoneTimeout()
-		case <-ctx.Done():
-			mp.Logger.Info("Polling stopped")
-			ticker.Stop()
-
-			return
-		}
-	}
-}
-
-// sendMilestoneToHeimdall - handles headerblock from maticchain
-// 1. check if i am the proposer for next milestone
-// 2. check if milestone has to be proposed
-// 3. if so, propose milestone to heimdall.
-func (mp *MilestoneProcessor) checkAndProposeMilestoneTimeout() (err error) {
-
-	//Milestone proposing mechanism will work only after specific block height
-	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
-		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
-		return nil
-	}
-
-	isMilestoneTimeoutRequired, err := mp.checkIfMilestoneTimeoutIsRequired()
-	if err != nil {
-		mp.Logger.Debug("Error checking sMilestoneTimeoutRequired while proposing Milestone Timeout ", "error", err)
-		return
-	}
-
-	if isMilestoneTimeoutRequired {
-		var isProposer bool
-
-		if isProposer, err = util.IsInMilestoneProposerList(mp.cliCtx, 10); err != nil {
-			mp.Logger.Error("Error checking IsInMilestoneProposerList while proposing Milestone Timeout ", "error", err)
-			return
-		}
-
-		// if i am the proposer and NoAck is required, then propose No-Ack
-		if isProposer {
-			// send Checkpoint No-Ack to heimdall
-			if err = mp.createAndSendMilestoneTimeoutToHeimdall(); err != nil {
-				mp.Logger.Error("Error proposing Milestone-Timeout ", "error", err)
-				return
-			}
-		}
-	}
-	return nil
-}
-
-// sendMilestoneTimoutToHeimdall - creates milestone-timeout msg and broadcasts to heimdall
-func (mp *MilestoneProcessor) createAndSendMilestoneTimeoutToHeimdall() error {
-	mp.Logger.Debug("Initiating milestone timeout to Heimdall")
-
-	mp.Logger.Info("✅ Creating and broadcasting milestone-timeout")
-
-	// create and send milestone message
-	msg := milestoneTypes.NewMsgMilestoneTimeout(
-		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-	)
-
-	// return broadcast to heimdall
-	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
-		mp.Logger.Error("Error while broadcasting milestone timeout to heimdall", "error", err)
-		return err
-	}
-
-	return nil
-}
-
 // startPolling - polls heimdall and checks if new span needs to be proposed
 func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength uint64, interval time.Duration) {
 	ticker := time.NewTicker(interval)
@@ -241,6 +164,83 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	// return broadcast to heimdall
 	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
+		return err
+	}
+
+	return nil
+}
+
+// startPolling - polls heimdall and checks if new milestoneTimeout needs to be proposed
+func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	// stop ticker when everything done
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			mp.checkAndProposeMilestoneTimeout()
+		case <-ctx.Done():
+			mp.Logger.Info("Polling stopped")
+			ticker.Stop()
+
+			return
+		}
+	}
+}
+
+// sendMilestoneToHeimdall - handles headerblock from maticchain
+// 1. check if i am the proposer for next milestone
+// 2. check if milestone has to be proposed
+// 3. if so, propose milestone to heimdall.
+func (mp *MilestoneProcessor) checkAndProposeMilestoneTimeout() (err error) {
+
+	//Milestone proposing mechanism will work only after specific block height
+	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
+		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
+		return nil
+	}
+
+	isMilestoneTimeoutRequired, err := mp.checkIfMilestoneTimeoutIsRequired()
+	if err != nil {
+		mp.Logger.Debug("Error checking sMilestoneTimeoutRequired while proposing Milestone Timeout ", "error", err)
+		return
+	}
+
+	if isMilestoneTimeoutRequired {
+		var isProposer bool
+
+		if isProposer, err = util.IsInMilestoneProposerList(mp.cliCtx, 10); err != nil {
+			mp.Logger.Error("Error checking IsInMilestoneProposerList while proposing Milestone Timeout ", "error", err)
+			return
+		}
+
+		// if i am the proposer and NoAck is required, then propose No-Ack
+		if isProposer {
+			// send Checkpoint No-Ack to heimdall
+			if err = mp.createAndSendMilestoneTimeoutToHeimdall(); err != nil {
+				mp.Logger.Error("Error proposing Milestone-Timeout ", "error", err)
+				return
+			}
+		}
+	}
+	return nil
+}
+
+// sendMilestoneTimoutToHeimdall - creates milestone-timeout msg and broadcasts to heimdall
+func (mp *MilestoneProcessor) createAndSendMilestoneTimeoutToHeimdall() error {
+	mp.Logger.Debug("Initiating milestone timeout to Heimdall")
+
+	mp.Logger.Info("✅ Creating and broadcasting milestone-timeout")
+
+	// create and send milestone message
+	msg := milestoneTypes.NewMsgMilestoneTimeout(
+		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+	)
+
+	// return broadcast to heimdall
+	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+		mp.Logger.Error("Error while broadcasting milestone timeout to heimdall", "error", err)
 		return err
 	}
 
