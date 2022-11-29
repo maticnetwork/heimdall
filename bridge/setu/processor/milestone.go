@@ -39,6 +39,7 @@ func (mp *MilestoneProcessor) Start() error {
 	mp.Logger.Info("Start polling for milestone", "milestoneLength", helper.MilestoneLength, "pollInterval", helper.GetConfig().MilestonePollInterval)
 
 	go mp.startPolling(milestoneCtx, helper.MilestoneLength, helper.GetConfig().MilestonePollInterval)
+	go mp.startPollingMilestoneTimeout(milestoneCtx, helper.GetConfig().MilestonePollInterval)
 
 	return nil
 }
@@ -49,7 +50,7 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 }
 
 // startPolling - polls heimdall and checks if new milestoneTimeout needs to be proposed
-func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, milestoneLength uint64, interval time.Duration) {
+func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	// stop ticker when everything done
 	defer ticker.Stop()
