@@ -104,7 +104,6 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, msg types.MsgMilestoneTimeout, k
 
 	// Get current block time
 	currentTime := ctx.BlockTime()
-	fmt.Print("sudesh", currentTime.Second())
 
 	// Get buffer time from params
 	bufferTime := helper.MilestoneBufferTime
