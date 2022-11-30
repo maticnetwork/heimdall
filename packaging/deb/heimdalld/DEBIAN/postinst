@@ -3,5 +3,10 @@
 #
 #sudo systemctl daemon-reload
 sudo adduser --disabled-password --disabled-login --shell /usr/sbin/nologin --quiet --system --no-create-home --home /nonexistent heimdall
-sudo mkdir -p /var/lib/heimdall
-sudo chown -R heimdall /var/lib/heimdall
+if [ -d "/var/lib/heimdall" ]
+then
+    echo "Directory /var/lib/heimdall exists."
+else
+    mkdir -p /var/lib/heimdall
+    sudo chown -R heimdall /var/lib/heimdall
+fi

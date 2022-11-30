@@ -2,9 +2,10 @@ name: packager
 
 on:
   push:
-    tags:
-      - 'v*.*.*'
-      - 'v*.*.*-*'
+    branches:
+      - 'main'
+    paths:
+      - '**'
 
 jobs:
   build:
@@ -21,11 +22,10 @@ jobs:
       - name: Adding TAG to ENV
         run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
 
-      - name: getting ubuntu version
-        run: lsb_release -a && uname -a
-
-      - name: Making heimdalld amd64
+      - name: Making heimdalld / heimdallcli for ${{ env.ARCH }}
         run: make build
+        env:
+          ARCH: amd64
 
       - name: Making directory structure
         run: mkdir -p packaging/deb/heimdalld/usr/bin
@@ -39,9 +39,13 @@ jobs:
         run: cp -rp build/heimdallcli packaging/deb/heimdalld/usr/bin/
 
       - name: copying files over to create  package for binary only heimdalld and heimdallci
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-v0.3.0-beta-amd64
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
       - name: Building package for heimdalld and heimdallcli standalone
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-v0.3.0-beta-amd64
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
 
       - name: Removing heimdalld binary from builds for profile purposes
         run: rm -rf packaging/deb/heimdalld/usr/bin/heimdalld
@@ -56,79 +60,180 @@ jobs:
       - name: Adding a postrm for the profiles so not to remove heimdall
         run: cp -rp packaging/templates/package_scripts/postrm packaging/deb/heimdalld/DEBIAN/postrm
 
-      - name: Setting up mumbai sentry profile  for amd64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64
-      - name: Copying over the postinst file
-        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64/DEBIAN/postinst
-      - name: Copying systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
-      - name: Copying profile control file
-        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64/DEBIAN/control
-      - name: Building mumbai sentry profile for amd64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-amd64
+      - name: Setting up heimdalld for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying over the postinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying profile control file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
 
-      - name: Setting up mainnet sentry profile for amd64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64
-      - name: Copying over the postinst file
-        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64/DEBIAN/postinst
-      - name: Copying over mainnet systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
-      - name: Copying profile control file
-        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64/DEBIAN/control
-      - name: Building mainnet sentry profile for amd64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-amd64
+      - name: Setting up heimdalld for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying over the postinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying over mainnet systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying profile control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
 
-      - name: Setting up mumbai validator profile for amd64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64
-      - name: Prepping control file
-        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/DEBIAN/control
-      - name: Prepping postinst file
-        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/DEBIAN/postinst
-      - name: Copying systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
-      - name: Copying profile control file
-        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64/DEBIAN/control
-      - name: Building mumbai validator profile for amd64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-amd64
+      - name: Setting heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Prepping control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Prepping postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying profile control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
 
-      - name: Setting up mainnet validator profile for amd64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64
-      - name: Prepping control file
-        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/DEBIAN/control
-      - name: Prepping postinst file
-        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/DEBIAN/postinst
-      - name: Copying systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/lib/systemd/system/heimdalld.service
-      - name: Copying profile control file
-        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64/DEBIAN/control
-      - name: Building mainnet validator validator profile package  for amd64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-amd64
+      - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Prepping control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Prepping postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying profile control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
 
       - name: Installing deps
         run: sudo apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
 
-      - name: Build for arm
+      - name: Build heimdalld / heimdallcli for ${{ env.ARCH }}
         run: make build-arm
+        env:
+          ARCH: arm64
 
-      - name: Setting up heimdallcli for arm64
+      - name: Setting up heimdallcli for ${{ env.ARCH }}
         run: cp -rp build/heimdallcli packaging/deb/heimdalld/usr/bin/
+        env:
+          ARCH: arm64
       - name: Remove config toml directory
         run: rm -rf packaging/deb/heimdalld/var/lib/heimdall
       - name: Copying over heimdalld
         run: cp -rp build/heimdalld packaging/deb/heimdalld/usr/bin/
-      - name: Setting up the heimdallcli control file for use with arm64
+      - name: Setting up the heimdallcli control file for use with ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.heimdallcli.arm64 packaging/deb/heimdallcli/DEBIAN/control
+        env:
+          ARCH: arm64
       - name: Adding a postrm for the profiles so not to remove heimdall
         run: cp -rp packaging/templates/package_scripts/postrm.binary packaging/deb/heimdalld/DEBIAN/postrm
-
-      - name: Setting up required heimdalld files for arm64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-v0.3.0-beta-arm64
-      - name: Copying control file for arm64
-        run: cp -rp packaging/templates/package_scripts/control.arm64 packaging/deb/heimdalld-v0.3.0-beta-arm64/DEBIAN/control
+      - name: Setting up required heimdalld files for  ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+      - name: Copying control file for ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.arm64 packaging/deb/heimdalld-${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
       - name: Copying binary post inst
-        run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-v0.3.0-beta-arm64/DEBIAN/postinst
-      - name: Building package for heimdalld and heimdallcli standalone
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-v0.3.0-beta-arm64
+        run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: arm64
+      - name: Building package for heimdalld and heimdallcli standalone for ${{ env.ARCH }}
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
 
       - name: Removing heimdall binary from builds for profile purposes
         run: rm -rf packaging/deb/heimdalld/usr/bin/heimdalld
@@ -140,60 +245,148 @@ jobs:
       - name: Adding a postrm for the profiles so not to remove heimdall
         run: cp -rp packaging/templates/package_scripts/postrm packaging/deb/heimdalld/DEBIAN/postrm
 
-      - name: Setting up mumbai validator profile  for arm64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64
-      - name: Copying over the postinst file
-        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64/DEBIAN//postinst
-      - name: Copying arm64 control file
-        run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64/DEBIAN/control
-      - name: Copying systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
-      - name: Building mumbai validator profile for arm64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-validator-config_v0.3.0-beta-arm64
+      - name: Setting heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying over the postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN//postinst
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
 
-      - name: Setting up mainnet validator profile for arm64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64
-      - name: Prepping control file
-        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/DEBIAN/control
-      - name: Prepping postinst file
-        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/DEBIAN/postinst
-      - name: Copying systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
-      - name: Copying arm64 control file
-        run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64/DEBIAN/control
-      - name: Building mainnet validator validator profile package  for arm64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-validator-config_v0.3.0-beta-arm64
+      - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Prepping control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Prepping postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
 
-      - name: Setting up arm 64 sentry
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64
-      - name: Copying control
-        run: cp -rp packaging/templates/package_scripts/control.arm64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/DEBIAN/control
-      - name: Copying postinst
-        run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/DEBIAN/postinst
-      - name: Copying systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
-      - name: Copying arm64 control file
-        run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64/DEBIAN/control
-      - name: Building mumbai sentry profile on arm64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mumbai-sentry-config_v0.3.0-beta-arm64
+      - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying control for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying postinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
 
-      - name: Setting up mainnet sentry profile for arm64
-        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64
-      - name: Copying over the postinst file
-        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64/DEBIAN/postinst
-      - name: Copying over mainnet systemd file
-        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64/lib/systemd/system/heimdalld.service
-      - name: Copying arm64 control file
-        run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64/DEBIAN/control
-      - name: Building mainnet sentry profile on arm64
-        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-mainnet-sentry-config_v0.3.0-beta-arm64
+      - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying over the postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying over mainnet systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
 
       - name: Confirming package built
         run: ls -ltr packaging/deb/ | grep heimdall
       - name: Release heimdalld.deb
         uses: softprops/action-gh-release@v1
         with:
-          tag_name: ${{ env.GIT_TAG  }}
+          tag_name: ${{ env.GIT_TAG }}
           prerelease: true
           files: |
              packaging/deb/heimdalld**.deb
