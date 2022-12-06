@@ -45,10 +45,9 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 }
 
 func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-
 	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -86,17 +85,19 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 			"EventContractAddress", eventLog.ContractAddress.String(),
 			"MsgContractAddress", msg.ContractAddress.String(),
 		)
+
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
 	if !bytes.Equal(eventLog.Data, msg.Data) {
-		if ctx.BlockHeight() > helper.SpanOverrideBlockHeight {
+		if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
 			if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
 				k.Logger(ctx).Error(
 					"Data from event does not match with Msg Data",
 					"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
 					"MsgData", hmTypes.BytesToHexBytes(msg.Data),
 				)
+
 				return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 			}
 		} else {
@@ -106,17 +107,18 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 					"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
 					"MsgData", hmTypes.BytesToHexBytes(msg.Data),
 				)
+
 				return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 			}
 		}
 	}
 
 	result.Result = abci.SideTxResultType_Yes
+
 	return
 }
 
 func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, sideTxResult abci.SideTxResultType) sdk.Result {
-
 	// Skip handler if clerk is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new clerk since side-tx didn't get yes votes")
@@ -149,7 +151,7 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 	// save event into state
 	if err := k.SetEventRecord(ctx, record); err != nil {
-		k.Logger(ctx).Error("Unable to update event record", "error", err, "id", msg.ID)
+		k.Logger(ctx).Error("Unable to update event record", "id", msg.ID, "error", err)
 		return types.ErrEventUpdate(k.Codespace()).Result()
 	}
 

@@ -13,7 +13,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-// NewHandler creates new handler for handling messages for checkpoint module
+// NewHandler creates new handler for handling messages for clerk module
 func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
@@ -28,13 +28,12 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 }
 
 func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-
 	k.Logger(ctx).Debug("✅ Validating clerk msg",
 		"id", msg.ID,
 		"contract", msg.ContractAddress,
 		"data", hex.EncodeToString(msg.Data),
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -49,7 +48,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 
 	// check chain id
 	if chainParams.BorChainID != msg.ChainID {
-		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID)
+		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID, "borChainId", chainParams.BorChainID)
 		return common.ErrInvalidBorChainID(k.Codespace()).Result()
 	}
 
@@ -60,7 +59,7 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 
 	// check if incoming tx is older
 	if k.HasRecordSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
+		k.Logger(ctx).Error("Older invalid tx found", "Sequence", sequence.String())
 		return common.ErrOldTx(k.Codespace()).Result()
 	}
 

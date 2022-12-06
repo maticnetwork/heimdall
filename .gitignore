@@ -1,8 +1,10 @@
 .DS_Store
 
+helper/heimdall-params.go
+
 # ignore vendor
 vendor/
-vendor/github.com/maticnetwork/bor
+vendor/github.com/ethereum/go-ethereum
 vendor/github.com/tendermint/iavl
 
 # ignore build
@@ -12,8 +14,6 @@ logs
 
 .idea
 .vscode
-
-helper/heimdall-params.go
 
 data/
 dist/

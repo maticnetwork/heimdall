@@ -6,7 +6,12 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+var (
+	NQuerier NodeQuerier
+)
+
 // NodeQuerier is an interface that is satisfied by types that provide the QueryWithData method
+//go:generate mockgen -destination=./mocks/node_querier_mock.go -package=mocks . NodeQuerier
 type NodeQuerier interface {
 	// QueryWithData performs a query to a Tendermint node with the provided path
 	// and a data payload. It returns the result and height of the query upon success
@@ -22,6 +27,7 @@ type AccountRetriever struct {
 
 // NewAccountRetriever initialises a new AccountRetriever instance.
 func NewAccountRetriever(querier NodeQuerier) AccountRetriever {
+	NQuerier = querier
 	return AccountRetriever{querier: querier}
 }
 
@@ -41,7 +47,7 @@ func (ar AccountRetriever) GetAccountWithHeight(addr types.HeimdallAddress) (Acc
 		return nil, 0, err
 	}
 
-	res, height, err := ar.querier.QueryWithData(fmt.Sprintf("custom/%s/%s", QuerierRoute, QueryAccount), bs)
+	res, height, err := NQuerier.QueryWithData(fmt.Sprintf("custom/%s/%s", QuerierRoute, QueryAccount), bs)
 	if err != nil {
 		return nil, height, err
 	}
@@ -59,6 +65,7 @@ func (ar AccountRetriever) EnsureExists(addr types.HeimdallAddress) error {
 	if _, err := ar.GetAccount(addr); err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -69,5 +76,6 @@ func (ar AccountRetriever) GetAccountNumberSequence(addr types.HeimdallAddress) 
 	if err != nil {
 		return 0, 0, err
 	}
+
 	return acc.GetAccountNumber(), acc.GetSequence(), nil
 }

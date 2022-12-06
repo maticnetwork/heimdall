@@ -62,10 +62,9 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // SideHandleMsgValidatorJoin side msg validator join
 func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-
 	k.Logger(ctx).Debug("✅ Validating External call for validator join msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -96,6 +95,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 			"msgValidator", pubkey.String(),
 			"mainchainValidator", hmTypes.BytesToHexBytes(eventLog.SignerPubkey),
 		)
+
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
@@ -106,6 +106,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 			"Validator", signer.String(),
 			"mainchainValidator", eventLog.Signer.Hex(),
 		)
+
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
@@ -139,8 +140,10 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator join msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for validator join msg")
+
 	result.Result = abci.SideTxResultType_Yes
+
 	return
 }
 
@@ -148,7 +151,7 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for stake update msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -190,8 +193,10 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for stake update msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for stake update msg")
+
 	result.Result = abci.SideTxResultType_Yes
+
 	return
 }
 
@@ -199,7 +204,7 @@ func SideHandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keepe
 func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for signer update msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -232,7 +237,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if bytes.Compare(eventLog.SignerPubkey, newPubKey.Bytes()[1:]) != 0 {
+	if !bytes.Equal(eventLog.SignerPubkey, newPubKey.Bytes()[1:]) {
 		k.Logger(ctx).Error("Newsigner pubkey in txhash and msg dont match", "msgPubKey", newPubKey.String(), "pubkeyTx", hmTypes.NewPubKey(eventLog.SignerPubkey[:]).String())
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
@@ -249,8 +254,10 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for signer update msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for signer update msg")
+
 	result.Result = abci.SideTxResultType_Yes
+
 	return
 }
 
@@ -258,7 +265,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for validator exit msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
-		"logIndex", uint64(msg.LogIndex),
+		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
@@ -300,8 +307,10 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for validator exit msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for validator exit msg")
+
 	result.Result = abci.SideTxResultType_Yes
+
 	return
 }
 
@@ -311,7 +320,6 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 
 // PostHandleMsgValidatorJoin msg validator join
 func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidatorJoin, sideTxResult abci.SideTxResultType) sdk.Result {
-
 	// Skip handler if validator join is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		k.Logger(ctx).Debug("Skipping new validator-join since side-tx didn't get yes votes")
@@ -358,18 +366,18 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 
 	// add validator to store
 	k.Logger(ctx).Debug("Adding new validator to state", "validator", newValidator.String())
-	err = k.AddValidator(ctx, newValidator)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to add validator to state", "error", err, "validator", newValidator.String())
+
+	if err = k.AddValidator(ctx, newValidator); err != nil {
+		k.Logger(ctx).Error("Unable to add validator to state", "validator", newValidator.String(), "error", err)
 		return hmCommon.ErrValidatorSave(k.Codespace()).Result()
 	}
 
 	// Add Validator signing info. It is required for slashing module
 	k.Logger(ctx).Debug("Adding signing info for new validator")
+
 	valSigningInfo := hmTypes.NewValidatorSigningInfo(newValidator.ID, ctx.BlockHeight(), int64(0), int64(0))
-	err = k.AddValidatorSigningInfo(ctx, newValidator.ID, valSigningInfo)
-	if err != nil {
-		k.Logger(ctx).Error("Unable to add validator signing info to state", "error", err, "valSigningInfo", valSigningInfo.String())
+	if err = k.AddValidatorSigningInfo(ctx, newValidator.ID, valSigningInfo); err != nil {
+		k.Logger(ctx).Error("Unable to add validator signing info to state", "valSigningInfo", valSigningInfo.String(), "error", err)
 		return hmCommon.ErrValidatorSigningInfoSave(k.Codespace()).Result()
 	}
 
@@ -439,12 +447,13 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", msg.NewAmount, msg.ID)).Result()
 	}
+
 	validator.VotingPower = p.Int64()
 
 	// save validator
 	err = k.AddValidator(ctx, validator)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+		k.Logger(ctx).Error("Unable to update signer", "ValidatorID", validator.ID, "error", err)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
@@ -501,9 +510,10 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
+
 	oldValidator := validator.Copy()
 
-	// update last udpated
+	// update last updated
 	validator.LastUpdated = sequence.String()
 
 	// update nonce
@@ -514,6 +524,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		// Update signer in prev Validator
 		validator.Signer = hmTypes.HeimdallAddress(newSigner)
 		validator.PubKey = newPubKey
+
 		k.Logger(ctx).Debug("Updating new signer", "newSigner", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
 	} else {
 		k.Logger(ctx).Error("No signer change", "newSigner", newSigner.String(), "oldSigner", oldValidator.Signer.String(), "validatorID", msg.ID)
@@ -535,7 +546,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 
 	// save old validator
 	if err := k.AddValidator(ctx, *oldValidator); err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "validatorId", validator.ID)
+		k.Logger(ctx).Error("Unable to update signer", "validatorId", validator.ID, "error", err)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
@@ -545,7 +556,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 	// save validator
 	err := k.AddValidator(ctx, validator)
 	if err != nil {
-		k.Logger(ctx).Error("Unable to update signer", "error", err, "ValidatorID", validator.ID)
+		k.Logger(ctx).Error("Unable to update signer", "ValidatorID", validator.ID, "error", err)
 		return hmCommon.ErrSignerUpdateError(k.Codespace()).Result()
 	}
 
@@ -562,9 +573,11 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 
 	// check if fee is already withdrawn
 	coins := k.moduleCommunicator.GetCoins(ctx, oldValidator.Signer)
+
 	maticBalance := coins.AmountOf(authTypes.FeeToken)
 	if !maticBalance.IsZero() {
 		k.Logger(ctx).Info("Transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())
+
 		maticCoins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: maticBalance}}
 		if err := k.moduleCommunicator.SendCoins(ctx, oldValidator.Signer, validator.Signer, maticCoins); err != nil {
 			k.Logger(ctx).Info("Error while transferring fee", "from", oldValidator.Signer.String(), "to", validator.Signer.String(), "balance", maticBalance.String())

@@ -53,6 +53,7 @@ func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 			return err
 		}
 	}
+
 	return types.ValidateGenesis(data)
 }
 
@@ -125,8 +126,11 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
+
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+
 	InitGenesis(ctx, am.keeper, genesisState)
+
 	return []abci.ValidatorUpdate{}
 }
 
@@ -143,12 +147,15 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 	if len(req.LastCommitInfo.Votes) > 0 {
 		height := ctx.BlockHeader().Height
 		validators := make([]abci.Validator, len(req.LastCommitInfo.Votes))
+
 		for i, v := range req.LastCommitInfo.Votes {
 			validators[i] = v.Validator
 		}
 
 		// set validators for height
-		am.keeper.SetValidators(ctx, height, validators)
+		if err := am.keeper.SetValidators(ctx, height, validators); err != nil {
+			am.keeper.Logger(ctx).Error("Failed to set validators", "Error", err)
+		}
 	}
 }
 
@@ -156,7 +163,9 @@ func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 // Side channel module's end block will remove all validators for `height` block
 func (am AppModule) EndBlock(ctx sdk.Context, req abci.RequestEndBlock) []abci.ValidatorUpdate {
 	height := ctx.BlockHeader().Height
+
 	am.keeper.RemoveValidators(ctx, height)
+
 	return []abci.ValidatorUpdate{}
 }
 

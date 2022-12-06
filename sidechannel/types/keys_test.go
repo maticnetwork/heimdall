@@ -9,6 +9,8 @@ import (
 )
 
 func TestTxStoreKey(t *testing.T) {
+	t.Parallel()
+
 	hash := []byte("test-bytes")
 	txStoreKey := types.TxStoreKey(120, hash)
 
@@ -22,6 +24,8 @@ func TestTxStoreKey(t *testing.T) {
 }
 
 func TestTxsStoreKey(t *testing.T) {
+	t.Parallel()
+
 	txsStoreKey := types.TxsStoreKey(120)
 
 	require.Equal(t, 9, len(txsStoreKey), "TxsStoreKey should be enough length")
@@ -32,6 +36,8 @@ func TestTxsStoreKey(t *testing.T) {
 }
 
 func TestValidatorsKey(t *testing.T) {
+	t.Parallel()
+
 	validatorsKey := types.ValidatorsKey(120)
 
 	require.Equal(t, 9, len(validatorsKey), "ValidatorsKey should be enough length")

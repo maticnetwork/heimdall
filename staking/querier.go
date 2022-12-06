@@ -1,12 +1,12 @@
 package staking
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/helper"
@@ -42,13 +42,12 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 }
 
 func handleQueryTotalValidatorPower(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-
-	bz, err := json.Marshal(keeper.GetTotalPower(ctx))
+	bz, err := jsoniter.ConfigFastest.Marshal(keeper.GetTotalPower(ctx))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
-	return bz, nil
 
+	return bz, nil
 }
 
 func handleQueryCurrentValidatorSet(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
@@ -56,10 +55,11 @@ func handleQueryCurrentValidatorSet(ctx sdk.Context, req abci.RequestQuery, keep
 	validatorSet := keeper.GetValidatorSet(ctx)
 
 	// json record
-	bz, err := json.Marshal(validatorSet)
+	bz, err := jsoniter.ConfigFastest.Marshal(validatorSet)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -76,10 +76,11 @@ func handleQuerySigner(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([
 	}
 
 	// json record
-	bz, err := json.Marshal(validator)
+	bz, err := jsoniter.ConfigFastest.Marshal(validator)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -96,10 +97,11 @@ func handleQueryValidator(ctx sdk.Context, req abci.RequestQuery, keeper Keeper)
 	}
 
 	// json record
-	bz, err := json.Marshal(validator)
+	bz, err := jsoniter.ConfigFastest.Marshal(validator)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -113,10 +115,11 @@ func handleQueryValidatorStatus(ctx sdk.Context, req abci.RequestQuery, keeper K
 	status := keeper.IsCurrentValidatorByAddress(ctx, params.SignerAddress)
 
 	// json record
-	bz, err := json.Marshal(status)
+	bz, err := jsoniter.ConfigFastest.Marshal(status)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -135,28 +138,31 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	}
 
 	// init proposers
-	var proposers []hmTypes.Validator
+	proposers := make([]hmTypes.Validator, times)
 
 	// get proposers
 	for index := 0; index < times; index++ {
-		proposers = append(proposers, *(validatorSet.GetProposer()))
+		proposers[index] = *(validatorSet.GetProposer())
 		validatorSet.IncrementProposerPriority(1)
 	}
 
 	// json record
-	bz, err := json.Marshal(proposers)
+	bz, err := jsoniter.ConfigFastest.Marshal(proposers)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
 func handleQueryCurrentProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	proposer := keeper.GetCurrentProposer(ctx)
-	bz, err := json.Marshal(proposer)
+
+	bz, err := jsoniter.ConfigFastest.Marshal(proposer)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
+
 	return bz, nil
 }
 
@@ -172,7 +178,7 @@ func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper K
 	// get main tx receipt
 	receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(params.TxHash).EthHash(), chainParams.MainchainTxConfirmations)
 	if err != nil || receipt == nil {
-		return nil, sdk.ErrInternal(fmt.Sprintf("Transaction is not confirmed yet. Please wait for sometime and try again"))
+		return nil, sdk.ErrInternal("Transaction is not confirmed yet. Please wait for sometime and try again")
 	}
 
 	// sequence id

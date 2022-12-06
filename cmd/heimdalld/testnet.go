@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -9,6 +8,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/tendermint/crypto"
@@ -181,7 +181,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				return err
 			}
 
-			appStateJSON, err := json.Marshal(appStateBytes)
+			appStateJSON, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appStateBytes)
 			if err != nil {
 				return err
 			}
@@ -196,7 +196,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			// TODO move to const string flag
 			dump := viper.GetBool("signer-dump")
 			if dump {
-				signerJSON, err := json.MarshalIndent(signers, "", "  ")
+				signerJSON, err := jsoniter.ConfigFastest.MarshalIndent(signers, "", "  ")
 				if err != nil {
 					return err
 				}
@@ -241,5 +241,6 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Bool("signer-dump", true, "dumps all signer information in a json file")
+
 	return cmd
 }

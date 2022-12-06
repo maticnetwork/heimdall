@@ -1,15 +1,16 @@
 package main
 
 import (
-	"encoding/json"
 	"errors"
 	"math/big"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
+
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
@@ -80,6 +81,7 @@ func StakeCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 	cmd.Flags().String(stakingcli.FlagAmount, "10000000000000000000", "--staked-amount=<stake amount>, if left blank it will be assigned as 10 matic tokens")
 	cmd.Flags().String(stakingcli.FlagFeeAmount, "5000000000000000000", "--fee-amount=<heimdall fee amount>, if left blank will be assigned as 5 matic tokens")
 	cmd.Flags().Bool(stakingcli.FlagAcceptDelegation, true, "--accept-delegation=<accept delegation>, if left blank will be assigned as true")
+
 	return cmd
 }
 
@@ -131,6 +133,7 @@ func ApproveCmd(cliCtx cliContext.CLIContext) *cobra.Command {
 
 	cmd.Flags().String(stakingcli.FlagAmount, "10000000000000000000", "--staked-amount=<stake amount>, if left blank will be assigned as 10 matic tokens")
 	cmd.Flags().String(stakingcli.FlagFeeAmount, "5000000000000000000", "--fee-amount=<heimdall fee amount>, if left blank will be assigned as 5 matic tokens")
+
 	return cmd
 }
 
@@ -146,7 +149,7 @@ func GetChainmanagerParams(cliCtx cliContext.CLIContext) (*chainmanagerTypes.Par
 	}
 
 	var params chainmanagerTypes.Params
-	if err := json.Unmarshal(response.Result, &params); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &params); err != nil {
 		return nil, err
 	}
 

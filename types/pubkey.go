@@ -2,16 +2,16 @@ package types
 
 import (
 	"encoding/hex"
-	"encoding/json"
 
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	tmTypes "github.com/tendermint/tendermint/types"
 	"gopkg.in/yaml.v2"
 
-	"github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/common/hexutil"
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // PubKey pubkey
@@ -23,7 +23,9 @@ var ZeroPubKey = PubKey{}
 // NewPubKey from byte array
 func NewPubKey(data []byte) PubKey {
 	var key PubKey
+
 	copy(key[:], data[:])
+
 	return key
 }
 
@@ -37,7 +39,7 @@ func (a *PubKey) UnmarshalText(input []byte) error {
 	return hexutil.UnmarshalFixedText("PubKey", input, a[:])
 }
 
-// String returns string representatin of key
+// String returns string representation of key
 func (a PubKey) String() string {
 	return "0x" + hex.EncodeToString(a[:])
 }
@@ -55,7 +57,9 @@ func (a PubKey) Address() common.Address {
 // CryptoPubKey returns crypto pub key for tendermint
 func (a PubKey) CryptoPubKey() crypto.PubKey {
 	var pubkeyBytes secp256k1.PubKeySecp256k1
+
 	copy(pubkeyBytes[:], a[:])
+
 	return pubkeyBytes
 }
 
@@ -78,7 +82,7 @@ func (a *PubKey) Unmarshal(data []byte) error {
 
 // MarshalJSON marshals to JSON using Bech32.
 func (a PubKey) MarshalJSON() ([]byte, error) {
-	return json.Marshal(a.String())
+	return jsoniter.ConfigFastest.Marshal(a.String())
 }
 
 // MarshalYAML marshals to YAML using Bech32.
@@ -89,23 +93,23 @@ func (a PubKey) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (a *PubKey) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
-	if err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	copy(a[:], common.FromHex(s))
+
 	return nil
 }
 
 // UnmarshalYAML unmarshals from JSON assuming Bech32 encoding.
 func (a *PubKey) UnmarshalYAML(data []byte) error {
 	var s string
-	err := yaml.Unmarshal(data, &s)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	copy(a[:], common.FromHex(s))
+
 	return nil
 }

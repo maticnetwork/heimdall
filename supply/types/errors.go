@@ -6,8 +6,8 @@ import (
 
 // supply errors reserve 2000 ~ 2100.
 const (
-	CodeNoAccountCreated        sdk.CodeType = 2000
-	CodeNoPermission        sdk.CodeType = 2001
+	CodeNoAccountCreated sdk.CodeType = 2000
+	CodeNoPermission     sdk.CodeType = 2001
 )
 
 // ErrNoAccountCreated is an error

@@ -8,8 +8,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
-	ethCommon "github.com/maticnetwork/bor/common"
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	ethCommon "github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -54,6 +54,7 @@ func (suite *SideHandlerTestSuite) SetupTest() {
 }
 
 func TestSideHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(SideHandlerTestSuite))
 }
 

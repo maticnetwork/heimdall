@@ -2,7 +2,6 @@ package processor
 
 import (
 	"encoding/base64"
-	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -11,16 +10,17 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/types"
-	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/viper"
 	"github.com/syndtr/goleveldb/leveldb"
+	"github.com/tendermint/tendermint/libs/log"
+	httpClient "github.com/tendermint/tendermint/rpc/client"
 
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/tendermint/tendermint/libs/log"
-	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
 // Processor defines a block header listerner for Rootchain, Maticchain, Heimdall
@@ -117,6 +117,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 
 	// define the endpoint based on the type of event
 	var endpoint string
+
 	switch eventType {
 	case util.StakingEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.StakingTxStatusURL)
@@ -127,6 +128,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 	case util.SlashingEvent:
 		endpoint = helper.GetHeimdallServerEndpoint(util.SlashingTxStatusURL)
 	}
+
 	url, err := util.CreateURLWithQuery(endpoint, queryParam)
 	if err != nil {
 		bp.Logger.Error("Error in creating url", "endpoint", endpoint, "error", err)
@@ -140,7 +142,7 @@ func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, lo
 	}
 
 	var status bool
-	if err := json.Unmarshal(res.Result, &status); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(res.Result, &status); err != nil {
 		bp.Logger.Error("Error unmarshalling tx status received from Heimdall Server", "error", err)
 		return false, err
 	}
@@ -154,12 +156,16 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "checkTxAgainstMempool", time.Now())
 
 	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
-	resp, err := http.Get(endpoint)
+
+	resp, err := helper.Client.Get(endpoint)
 	if err != nil || resp.StatusCode != http.StatusOK {
 		bp.Logger.Error("Error fetching mempool tx", "url", endpoint, "error", err)
 		return false, err
 	}
+
 	body, err := ioutil.ReadAll(resp.Body)
+	defer resp.Body.Close()
+
 	if err != nil {
 		bp.Logger.Error("Error fetching mempool tx", "error", err)
 		return false, err
@@ -168,7 +174,7 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 	// a minimal response of the unconfirmed txs
 	var response util.TendermintUnconfirmedTxs
 
-	err = json.Unmarshal(body, &response)
+	err = jsoniter.ConfigFastest.Unmarshal(body, &response)
 	if err != nil {
 		bp.Logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
 		return false, err

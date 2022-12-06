@@ -2,6 +2,7 @@ package listener
 
 import (
 	"context"
+	"math/big"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -11,9 +12,10 @@ import (
 	"github.com/syndtr/goleveldb/leveldb"
 	"github.com/tendermint/tendermint/libs/log"
 
-	ethereum "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/bor/ethclient"
+	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
+	"github.com/ethereum/go-ethereum/ethclient"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
@@ -27,11 +29,11 @@ type Listener interface {
 
 	StartHeaderProcess(context.Context)
 
-	StartPolling(context.Context, time.Duration)
+	StartPolling(context.Context, time.Duration, *big.Int)
 
 	StartSubscription(context.Context, ethereum.Subscription)
 
-	ProcessHeader(*types.Header)
+	ProcessHeader(*blockHeader)
 
 	Stop()
 
@@ -52,7 +54,7 @@ type BaseListener struct {
 	chainClient *ethclient.Client
 
 	// header channel
-	HeaderChannel chan *types.Header
+	HeaderChannel chan *blockHeader
 
 	// cancel function for poll/subscription
 	cancelSubscription context.CancelFunc
@@ -73,10 +75,15 @@ type BaseListener struct {
 	storageClient *leveldb.DB
 }
 
+type blockHeader struct {
+	header      *types.Header // block header
+	isFinalized bool          // if the block is a finalized block or not
+}
+
 // NewBaseListener creates a new BaseListener.
 func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, httpClient *httpClient.HTTP, chainClient *ethclient.Client, name string, impl Listener) *BaseListener {
-
 	logger := util.Logger().With("service", "listener", "module", name)
+
 	contractCaller, err := helper.NewContractCaller()
 	if err != nil {
 		logger.Error("Error while getting root chain instance", "error", err)
@@ -101,7 +108,7 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, htt
 		contractConnector: contractCaller,
 		chainClient:       chainClient,
 
-		HeaderChannel: make(chan *types.Header),
+		HeaderChannel: make(chan *blockHeader),
 	}
 }
 
@@ -140,9 +147,10 @@ func (bl *BaseListener) String() string {
 	return bl.name
 }
 
-// startHeaderProcess starts header process when they get new header
+// StartHeaderProcess starts header process when they get new header
 func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	bl.Logger.Info("Starting header process")
+
 	for {
 		select {
 		case newHeader := <-bl.HeaderChannel:
@@ -154,8 +162,8 @@ func (bl *BaseListener) StartHeaderProcess(ctx context.Context) {
 	}
 }
 
-// startPolling starts polling
-func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
+// StartPolling starts polling
+func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Duration, number *big.Int) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
 
@@ -167,14 +175,39 @@ func (bl *BaseListener) StartPolling(ctx context.Context, pollInterval time.Dura
 	for {
 		select {
 		case <-ticker.C:
-			header, err := bl.chainClient.HeaderByNumber(ctx, nil)
+			var bHeader *blockHeader
+
+			header, err := bl.chainClient.HeaderByNumber(ctx, number)
 			if err == nil && header != nil {
-				// send data to channel
-				bl.HeaderChannel <- header
+				if number != nil {
+					// finalized was requested
+					bHeader = &blockHeader{header: header, isFinalized: true}
+				} else {
+					// latest was requested
+					bHeader = &blockHeader{header: header, isFinalized: false}
+				}
+			}
+
+			// if error occurred and finalized was requested, fall back to latest block
+			if err != nil && number != nil {
+				header, err = bl.chainClient.HeaderByNumber(ctx, nil)
+				if err == nil && header != nil {
+					bHeader = &blockHeader{header: header, isFinalized: false}
+				}
+			}
+
+			if err != nil {
+				bl.Logger.Error("Error in fetching block header while polling", "err", err)
+			}
+
+			// push data to the channel
+			if bHeader != nil {
+				bl.HeaderChannel <- bHeader
 			}
 		case <-ctx.Done():
 			bl.Logger.Info("Polling stopped")
 			ticker.Stop()
+
 			return
 		}
 	}
@@ -190,8 +223,10 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 
 			// cancel subscription
 			if bl.cancelSubscription != nil {
+				bl.Logger.Debug("Cancelling the subscription of listner")
 				bl.cancelSubscription()
 			}
+
 			return
 		case <-ctx.Done():
 			bl.Logger.Info("Subscription stopped")
@@ -200,14 +235,15 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 	}
 }
 
-// OnStop stops all necessary go routines
+// Stop stops all necessary go routines
 func (bl *BaseListener) Stop() {
-
 	// cancel subscription if any
 	if bl.cancelSubscription != nil {
 		bl.cancelSubscription()
 	}
 
 	// cancel header process
-	bl.cancelHeaderProcess()
+	if bl.cancelHeaderProcess != nil {
+		bl.cancelHeaderProcess()
+	}
 }

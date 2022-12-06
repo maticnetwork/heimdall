@@ -1,13 +1,13 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 	cmn "github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
@@ -51,11 +51,6 @@ import (
 const (
 	// AppName denotes app name
 	AppName = "Heimdall"
-	// ABCIPubKeyTypeSecp256k1 denotes pub key type
-	ABCIPubKeyTypeSecp256k1 = "secp256k1"
-	// internals
-	maxGasPerBlock   int64 = 10000000 // 10 Million
-	maxBytesPerBlock int64 = 22020096 // 21 MB
 )
 
 // Assertion for Heimdall app
@@ -179,10 +174,9 @@ func (d ModuleCommunicator) SendCoins(ctx sdk.Context, fromAddr types.HeimdallAd
 	return d.App.BankKeeper.SendCoins(ctx, fromAddr, toAddr, amt)
 }
 
-// Create ValidatorSigningInfo used by slashing module
-func (d ModuleCommunicator) CreateValiatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
+// CreateValidatorSigningInfo used by slashing module
+func (d ModuleCommunicator) CreateValidatorSigningInfo(ctx sdk.Context, valID types.ValidatorID, valSigningInfo types.ValidatorSigningInfo) {
 	d.App.SlashingKeeper.SetValidatorSigningInfo(ctx, valID, valSigningInfo)
-	return
 }
 
 //
@@ -435,6 +429,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 			}
 		}
 	}
+
 	app.sideRouter.Seal()
 
 	// create the simulation manager and define the order of the modules for deterministic simulations
@@ -484,6 +479,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	app.Seal()
+
 	return app
 }
 
@@ -496,6 +492,7 @@ func MakeCodec() *codec.Codec {
 	ModuleBasics.RegisterCodec(cdc)
 
 	cdc.Seal()
+
 	return cdc
 }
 
@@ -505,8 +502,8 @@ func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 // InitChainer initializes chain
 func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	var genesisState GenesisState
-	err := json.Unmarshal(req.AppStateBytes, &genesisState)
-	if err != nil {
+
+	if err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(req.AppStateBytes, &genesisState); err != nil {
 		panic(err)
 	}
 
@@ -529,11 +526,12 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	// check if validator is current validator
 	// add to val updates else skip
 	var valUpdates []abci.ValidatorUpdate
+
 	for _, validator := range stakingState.Validators {
 		if validator.IsCurrentValidator(checkpointState.AckCount) {
 			// convert to Validator Update
 			updateVal := abci.ValidatorUpdate{
-				Power:  int64(validator.VotingPower),
+				Power:  validator.VotingPower,
 				PubKey: validator.PubKey.ABCIPubKey(),
 			}
 			// Add validator to validator updated to be processed below
@@ -555,6 +553,7 @@ func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock
 		ctx,
 		types.BytesToHeimdallAddress(req.Header.GetProposerAddress()),
 	)
+
 	return app.mm.BeginBlock(ctx, req)
 }
 
@@ -563,6 +562,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 	// transfer fees to current proposer
 	if proposer, ok := app.AccountKeeper.GetBlockProposer(ctx); ok {
 		moduleAccount := app.SupplyKeeper.GetModuleAccount(ctx, authTypes.FeeCollectorName)
+
 		amount := moduleAccount.GetCoins().AmountOf(authTypes.FeeToken)
 		if !amount.IsZero() {
 			coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}}
@@ -613,7 +613,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		// convert updates from map to array
 		for _, v := range setUpdates {
 			tmValUpdates = append(tmValUpdates, abci.ValidatorUpdate{
-				Power:  int64(v.VotingPower),
+				Power:  v.VotingPower,
 				PubKey: v.PubKey.ABCIPubKey(),
 			})
 		}
@@ -709,5 +709,6 @@ func GetMaccPerms() map[string][]string {
 	for k, v := range maccPerms {
 		dupMaccPerms[k] = v
 	}
+
 	return dupMaccPerms
 }

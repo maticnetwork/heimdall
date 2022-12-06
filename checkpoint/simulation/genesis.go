@@ -44,5 +44,4 @@ func RandomizedGenState(simState *module.SimulationState) {
 		Checkpoints,
 	)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(genesisState)
-
 }

@@ -20,5 +20,6 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	txCmd.AddCommand(
 		GetSignCommand(cdc),
 	)
+
 	return txCmd
 }

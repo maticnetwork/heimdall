@@ -2,17 +2,20 @@ package processor
 
 import (
 	"encoding/hex"
-	"encoding/json"
+	"time"
+
 	"github.com/RichardKnop/machinery/v1/tasks"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/core/types"
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"time"
 )
 
 // ClerkContext for bridge
@@ -28,10 +31,9 @@ type ClerkProcessor struct {
 
 // NewClerkProcessor - add statesender abi to clerk processor
 func NewClerkProcessor(stateSenderAbi *abi.ABI) *ClerkProcessor {
-	clerkProcessor := &ClerkProcessor{
+	return &ClerkProcessor{
 		stateSenderAbi: stateSenderAbi,
 	}
-	return clerkProcessor
 }
 
 // Start starts new block subscription
@@ -43,6 +45,7 @@ func (cp *ClerkProcessor) Start() error {
 // RegisterTasks - Registers clerk related tasks with machinery
 func (cp *ClerkProcessor) RegisterTasks() {
 	cp.Logger.Info("Registering clerk tasks")
+
 	if err := cp.queueConnector.Server.RegisterTask("sendStateSyncedToHeimdall", cp.sendStateSyncedToHeimdall); err != nil {
 		cp.Logger.Error("RegisterTasks | sendStateSyncedToHeimdall", "error", err)
 	}
@@ -55,7 +58,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	start := time.Now()
 
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		cp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -68,7 +71,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 	chainParams := clerkContext.ChainmanagerParams.ChainParams
 
 	event := new(statesender.StatesenderStateSynced)
-	if err := helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
+	if err = helper.UnpackLog(cp.stateSenderAbi, event, eventName, &vLog); err != nil {
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		defer util.LogElapsedTimeForStateSyncedEvent(event, "sendStateSyncedToHeimdall", start)
@@ -98,7 +101,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"blockNumber", vLog.BlockNumber,
 		)
 
-		if util.GetBlockHeight(cp.cliCtx) > helper.SpanOverrideBlockHeight && len(event.Data) > helper.MaxStateSyncSize {
+		if util.GetBlockHeight(cp.cliCtx) > helper.GetSpanOverrideHeight() && len(event.Data) > helper.MaxStateSyncSize {
 			cp.Logger.Info(`Data is too large to process, Resetting to ""`, "data", hex.EncodeToString(event.Data))
 			event.Data = hmTypes.HexToHexBytes("")
 		} else if len(event.Data) > helper.LegacyMaxStateSyncSize {
@@ -126,7 +129,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		}
 
 		// return broadcast to heimdall
-		if err := cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		if err = cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
 			cp.Logger.Error("Error while broadcasting clerk Record to heimdall", "error", err)
 			return err
 		}

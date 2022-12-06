@@ -95,6 +95,7 @@ func NewAnteHandler(
 		if !ok {
 			return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
 		}
+
 		feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
 
 		// new gas meter
@@ -169,6 +170,7 @@ func NewAnteHandler(
 
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
+
 		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
 		if !res.IsOK() {
 			return newCtx, res, true
@@ -191,6 +193,7 @@ func GetSignerAcc(
 	if acc := ak.GetAccount(ctx, addr); acc != nil {
 		return acc, sdk.Result{}
 	}
+
 	return nil, sdk.ErrUnknownAddress(fmt.Sprintf("account %s does not exist", addr)).Result()
 }
 
@@ -220,23 +223,27 @@ func processSig(
 	params authTypes.Params,
 	sigGasConsumer SignatureVerificationGasConsumer,
 ) (updatedAcc authTypes.Account, res sdk.Result) {
-
 	if res := sigGasConsumer(ctx.GasMeter(), sig, params); !res.IsOK() {
 		return nil, res
 	}
 
 	if !simulate {
 		var pk secp256k1.PubKeySecp256k1
+
 		p, err := authTypes.RecoverPubkey(signBytes, sig.Bytes())
+		if err != nil {
+			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
+		}
+
 		copy(pk[:], p[:])
 
-		if err != nil || !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
+		if !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
 		if acc.GetPubKey() == nil {
 			var cryptoPk crypto.PubKey = pk
-			if err := acc.SetPubKey(cryptoPk); err != nil {
+			if err = acc.SetPubKey(cryptoPk); err != nil {
 				return nil, sdk.ErrUnauthorized("error while updating account pubkey").Result()
 			}
 		}

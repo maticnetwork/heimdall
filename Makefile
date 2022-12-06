@@ -18,37 +18,23 @@ BUILD_FLAGS := -ldflags '$(ldflags)'
 
 clean:
 	rm -rf build
-	rm -f helper/heimdall-params.go
 
 tests:
 	# go test  -v ./...
 
 	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out
 
-# make build						Will generate for mainnet by default
-# make build network=mainnet		Will generate for mainnet
-# make build network=mumbai			Will generate for mumbai
-# make build network=local			Will generate for local with NewSelectionAlgoHeight = 0
-# make build network=anythingElse	Will generate for mainnet by default
+# make build
 build: clean
-	go run helper/heimdall-params.template.go $(network)
 	mkdir -p build
 	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
 	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
-	go build $(BUILD_FLAGS) -o build/bridge bridge/bridge.go
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
-
-# make install							Will generate for mainnet by default
-# make install network=mainnet			Will generate for mainnet
-# make install network=mumbai			Will generate for mumbai
-# make install network=local			Will generate for local with NewSelectionAlgoHeight = 0
-# make install network=anythingElse		Will generate for mainnet by default
+	
+# make install
 install:
-	go run helper/heimdall-params.template.go $(network)
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
-	go install $(BUILD_FLAGS) bridge/bridge.go
-	@echo "====================================================\n==================Build Successful==================\n===================================================="
 
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
@@ -60,49 +46,11 @@ contracts:
 	abigen --abi=contracts/validatorset/validatorset.abi --pkg=validatorset --out=contracts/validatorset/validatorset.go
 	abigen --abi=contracts/erc20/erc20.abi --pkg=erc20 --out=contracts/erc20/erc20.go
 
-
-init-heimdall:
-	./build/heimdalld init
-
-show-account-heimdall:
-	./build/heimdalld show-account
-
-show-node-id:
-	./build/heimdalld tendermint show-node-id
-
-run-heimdall:
-	./build/heimdalld start
-
-start-heimdall:
-	mkdir -p ./logs &
-	./build/heimdalld start > ./logs/heimdalld.log &
-
-reset-heimdall:
-	./build/heimdalld unsafe-reset-all
-	./build/bridge purge-queue
-	rm -rf ~/.heimdalld/bridge
-
-run-server:
-	./build/heimdalld rest-server
-
-start-server:
-	mkdir -p ./logs &
-	./build/heimdalld rest-server > ./logs/heimdalld-rest-server.log &
-
-start:
-	mkdir -p ./logs
-	bash docker/start.sh
-
-run-bridge:
-	./build/bridge start --all
-
-start-bridge:
-	mkdir -p logs &
-	./build/bridge start --all > ./logs/bridge.log &
-
-start-all:
-	mkdir -p ./logs
-	bash docker/start-heimdall.sh
+build-arm: clean
+	mkdir -p build
+	env CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
+	env CGO_ENABLED=1 GOOS=linux GOARCH=arm64 CC=aarch64-linux-gnu-gcc CXX=aarch64-linux-gnu-g++ go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
+	@echo "====================================================\n==================Build Successful==================\n===================================================="
 
 #
 # Code quality
@@ -111,9 +59,9 @@ start-all:
 LINT_COMMAND := $(shell command -v golangci-lint 2> /dev/null)
 lint:
 ifndef LINT_COMMAND
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(GOPATH)/bin v1.23.8
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.45.2
 endif
-	golangci-lint run
+	golangci-lint run --config ./.golangci.yml
 
 #
 # docker commands
@@ -138,7 +86,6 @@ GOLANG_CROSS_VERSION  ?= v1.18.1
 
 .PHONY: release-dry-run
 release-dry-run:
-	go run helper/heimdall-params.template.go $(network)
 	@docker run \
 		--platform linux/amd64 \
 		--rm \
@@ -156,7 +103,6 @@ release-dry-run:
 
 .PHONY: release
 release:
-	go run helper/heimdall-params.template.go $(network)
 	@docker run \
 		--rm \
 		--privileged \

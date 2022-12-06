@@ -34,6 +34,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			CreateNewStateRecord(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 
@@ -102,7 +103,7 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("data should be hex string")
 			}
 
-			if util.GetBlockHeight(cliCtx) > helper.SpanOverrideBlockHeight && len(data) > helper.MaxStateSyncSize {
+			if util.GetBlockHeight(cliCtx) > helper.GetSpanOverrideHeight() && len(data) > helper.MaxStateSyncSize {
 				logger.Info(`Data is too large to process, Resetting to ""`, "id", recordIDStr)
 				data = hmTypes.HexToHexBytes("")
 			} else if len(data) > helper.LegacyMaxStateSyncSize {
@@ -137,21 +138,27 @@ func CreateNewStateRecord(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagRecordID); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagRecordID", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagBorChainId); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagBorChainId", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagContractAddress); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagContractAddress", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagData); err != nil {
 		logger.Error("CreateNewStateRecord | MarkFlagRequired | FlagData", "Error", err)
 	}

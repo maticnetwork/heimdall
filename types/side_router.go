@@ -43,6 +43,7 @@ func (rtr *router) Seal() {
 	if rtr.sealed {
 		panic("router already sealed")
 	}
+
 	rtr.sealed = true
 }
 
@@ -56,11 +57,13 @@ func (rtr *router) AddRoute(path string, h *SideHandlers) SideRouter {
 	if !isAlphaNumeric(path) {
 		panic("route expressions can only contain alphanumeric characters")
 	}
+
 	if rtr.HasRoute(path) {
 		panic(fmt.Sprintf("route %s has already been initialized", path))
 	}
 
 	rtr.routes[path] = h
+
 	return rtr
 }
 

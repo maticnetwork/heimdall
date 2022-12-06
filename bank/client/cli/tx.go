@@ -32,6 +32,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			SendTxCmd(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 
@@ -73,7 +74,7 @@ func SendTxCmd(cdc *codec.Codec) *cobra.Command {
 
 			// ensure account has enough coins
 			if !account.GetCoins().IsAllGTE(coins) {
-				return fmt.Errorf("address %s doesn't have enough coins to pay for this transaction", from)
+				return fmt.Errorf("address %s doesn't have enough coins to pay for this transaction,Required coin= %s Available Coins=%s", from, coins, account.GetCoins())
 			}
 
 			// build and sign the transaction, then broadcast to Tendermint

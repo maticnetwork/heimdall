@@ -1,3 +1,4 @@
+//nolint
 package rest
 
 import (
@@ -14,6 +15,40 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
+
+//It represents New checkpoint msg.
+//swagger:response clerkNewEventResponse
+type clerkNewEventResponse struct {
+	//in:body
+	Output clerkNewEvent `json:"output"`
+}
+
+type clerkNewEvent struct {
+	Type  string             `json:"type"`
+	Value clerkNewEventValue `json:"value"`
+}
+
+type clerkNewEventValue struct {
+	Msg       clerkNewEventMsg `json:"msg"`
+	Signature string           `json:"signature"`
+	Memo      string           `json:"memo"`
+}
+
+type clerkNewEventMsg struct {
+	Type  string           `json:"type"`
+	Value clerkNewEventVal `json:"value"`
+}
+
+type clerkNewEventVal struct {
+	From            string `json:"from"`
+	TxHash          string `json:"tx_hash"`
+	LogIndex        string `json:"log_index"`
+	BlockNumber     string `json:"block_number" yaml:"block_number"`
+	ID              string `json:"id"`
+	ContractAddress string `json:"contract_address" yaml:"contract_address"`
+	BorChainID      string `json:"bor_chain_id"`
+	Data            string `json:"data"`
+}
 
 func registerTxRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc(
@@ -35,6 +70,41 @@ type AddRecordReq struct {
 	Data            string             `json:"data"`
 }
 
+//swagger:parameters clerkNewEvent
+type clerkNewEventParam struct {
+
+	//Body
+	//required:true
+	//in:body
+	Input clerkNewEventInput `json:"input"`
+}
+
+type clerkNewEventInput struct {
+	BaseReq BaseReq `json:"base_req"`
+
+	TxHash          string `json:"tx_hash"`
+	LogIndex        string `json:"log_index"`
+	BlockNumber     string `json:"block_number"`
+	ID              string `json:"id"`
+	ContractAddress string `json:"contract_address"`
+	BorChainID      string `json:"bor_chain_id"`
+	Data            string `json:"data"`
+}
+
+type BaseReq struct {
+
+	//Address of the sender
+	From string `json:"address"`
+
+	//Chain ID of Heimdall
+	ChainID string `json:"chain_id"`
+}
+
+// swagger:route POST /clerk/records  clerk clerkNewEvent
+// It returns the prepared msg for new clerk event
+// responses:
+//   200: clerkNewEventResponse
+
 func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		// read req from request
@@ -51,7 +121,7 @@ func newEventRecordHandler(cliCtx context.CLIContext) http.HandlerFunc {
 		// get ContractAddress
 		contractAddress := types.HexToHeimdallAddress(req.ContractAddress)
 
-		if util.GetBlockHeight(cliCtx) > helper.SpanOverrideBlockHeight && len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
+		if util.GetBlockHeight(cliCtx) > helper.GetSpanOverrideHeight() && len(types.HexToHexBytes(req.Data)) > helper.MaxStateSyncSize {
 			RestLogger.Info(`Data is too large to process, Resetting to ""`, "id", req.ID)
 			req.Data = ""
 		} else if len(types.HexToHexBytes(req.Data)) > helper.LegacyMaxStateSyncSize {

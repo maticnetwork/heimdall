@@ -1,10 +1,11 @@
 package simulation
 
 import (
-	"encoding/json"
 	"fmt"
 	"io"
 	"io/ioutil"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 // EventStats defines an object that keeps a tally of each event that has occurred
@@ -33,7 +34,7 @@ func (es EventStats) Tally(route, op, evResult string) {
 
 // Print the event stats in JSON format.
 func (es EventStats) Print(w io.Writer) {
-	obj, err := json.MarshalIndent(es, "", " ")
+	obj, err := jsoniter.ConfigFastest.MarshalIndent(es, "", " ")
 	if err != nil {
 		panic(err)
 	}
@@ -43,13 +44,12 @@ func (es EventStats) Print(w io.Writer) {
 
 // ExportJSON saves the event stats as a JSON file on a given path
 func (es EventStats) ExportJSON(path string) {
-	bz, err := json.MarshalIndent(es, "", " ")
+	bz, err := jsoniter.ConfigFastest.MarshalIndent(es, "", " ")
 	if err != nil {
 		panic(err)
 	}
 
-	err = ioutil.WriteFile(path, bz, 0644)
-	if err != nil {
+	if err = ioutil.WriteFile(path, bz, 0644); err != nil { //nolint
 		panic(err)
 	}
 }

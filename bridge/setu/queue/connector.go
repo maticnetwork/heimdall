@@ -40,7 +40,7 @@ func NewQueueConnector(dialer string) *QueueConnector {
 
 	server, err := machinery.NewServer(cnf)
 	if err != nil {
-		// do something with the error
+		panic(err)
 	}
 
 	// queue connector
@@ -56,7 +56,10 @@ func NewQueueConnector(dialer string) *QueueConnector {
 // StartWorker - starts worker to process registered tasks
 func (qc *QueueConnector) StartWorker() {
 	worker := qc.Server.NewWorker("invoke-processor", 10)
+
 	qc.logger.Info("Starting machinery worker")
+
 	errors := make(chan error)
+
 	worker.LaunchAsync(errors)
 }

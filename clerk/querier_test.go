@@ -8,7 +8,8 @@ import (
 	"testing"
 	"time"
 
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/clerk"
 	"github.com/maticnetwork/heimdall/clerk/types"
@@ -41,6 +42,7 @@ func (suite *QuerierTestSuite) SetupTest() {
 
 // TestQuerierTestSuite
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -72,15 +74,15 @@ func (suite *QuerierTestSuite) TestHandleQueryRecord() {
 		Path: route,
 		Data: []byte{},
 	}
-	_, err := querier(ctx, path, req)
-	require.Error(t, err, "failed to parse params")
+	_, sdkErr := querier(ctx, path, req)
+	require.Error(t, sdkErr, "failed to parse params")
 
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordParams(2)),
 	}
-	_, err = querier(ctx, path, req)
-	require.Error(t, err, "could not get state record")
+	_, sdkErr = querier(ctx, path, req)
+	require.Error(t, sdkErr, "could not get state record")
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
@@ -88,7 +90,8 @@ func (suite *QuerierTestSuite) TestHandleQueryRecord() {
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
-	ck.SetEventRecord(ctx, testRecord1)
+	err := ck.SetEventRecord(ctx, testRecord1)
+	require.NoError(t, err)
 
 	req = abci.RequestQuery{
 		Path: route,
@@ -109,8 +112,8 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordList() {
 		Path: route,
 		Data: []byte{},
 	}
-	_, err := querier(ctx, path, req)
-	require.Error(t, err, "failed to parse params")
+	_, sdkErr := querier(ctx, path, req)
+	require.Error(t, sdkErr, "failed to parse params")
 
 	hAddr := hmTypes.BytesToHeimdallAddress([]byte("some-address"))
 	hHash := hmTypes.BytesToHeimdallHash([]byte("some-address"))
@@ -118,7 +121,8 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordList() {
 
 	// SetEventRecord
 	ck := app.ClerkKeeper
-	ck.SetEventRecord(ctx, testRecord1)
+	err := ck.SetEventRecord(ctx, testRecord1)
+	require.NoError(t, err)
 
 	req = abci.RequestQuery{
 		Path: route,
@@ -151,6 +155,7 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	txreceipt := &ethTypes.Receipt{
 		BlockNumber: big.NewInt(10),
 	}
+
 	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(nil, errors.New("err confirmed txn receipt"))
 
 	req = abci.RequestQuery{
@@ -163,7 +168,9 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 	index = simulation.RandIntBetween(r1, 0, 100)
 	logIndex = uint64(index)
 	txHash = hmTypes.HexToHeimdallHash("1234")
+
 	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordSequenceParams("1234", logIndex)),
@@ -174,10 +181,14 @@ func (suite *QuerierTestSuite) TestHandleQueryRecordSequence() {
 
 	testSeq := "1000010"
 	ck := app.ClerkKeeper
+
 	ck.SetRecordSequence(ctx, testSeq)
+
 	logIndex = uint64(10)
 	txHash = hmTypes.HexToHeimdallHash("12345")
+
 	suite.contractCaller.On("GetConfirmedTxReceipt", txHash.EthHash(), chainParams.MainchainTxConfirmations).Return(txreceipt, nil)
+
 	req = abci.RequestQuery{
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryRecordSequenceParams("12345", logIndex)),

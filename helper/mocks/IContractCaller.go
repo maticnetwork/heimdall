@@ -5,7 +5,7 @@ package mocks
 import (
 	big "math/big"
 
-	common "github.com/maticnetwork/bor/common"
+	common "github.com/ethereum/go-ethereum/common"
 	erc20 "github.com/maticnetwork/heimdall/contracts/erc20"
 
 	heimdalltypes "github.com/maticnetwork/heimdall/types"
@@ -24,7 +24,7 @@ import (
 
 	statesender "github.com/maticnetwork/heimdall/contracts/statesender"
 
-	types "github.com/maticnetwork/bor/core/types"
+	types "github.com/ethereum/go-ethereum/core/types"
 
 	validatorset "github.com/maticnetwork/heimdall/contracts/validatorset"
 )

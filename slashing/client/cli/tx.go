@@ -16,7 +16,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var logger = helper.Logger.With("module", "staking/client/cli")
+var logger = helper.Logger.With("module", "slashing/client/cli")
 
 func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 	slashingTxCmd := &cobra.Command{
@@ -79,7 +79,9 @@ $ <appcli> tx slashing unjail --from mykey
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.MarkFlagRequired(FlagTxHash)
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
@@ -87,7 +89,6 @@ $ <appcli> tx slashing unjail --from mykey
 }
 
 func GetCmdTick(cdc *codec.Codec) *cobra.Command {
-
 	cmd := &cobra.Command{
 		Use:   "tick",
 		Short: "send slash tick when total slashedamount exceeds limit",
@@ -122,8 +123,12 @@ func GetCmdTick(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagSlashInfoBytes, "", "--slashinfo-bytes=<slashinfo-bytes>")
 	cmd.Flags().Uint64(FlagTickID, 1, "--tick-id=<tick-id>")
 
-	cmd.MarkFlagRequired(FlagSlashInfoBytes)
-	cmd.MarkFlagRequired(FlagTickID)
+	if err := cmd.MarkFlagRequired(FlagSlashInfoBytes); err != nil {
+		logger.Error("GetCmdTick | MarkFlagRequired | FlagSlashInfoBytes", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTickID); err != nil {
+		logger.Error("GetCmdTick | MarkFlagRequired | FlagTickID", "Error", err)
+	}
 
 	return cmd
 }
@@ -171,10 +176,18 @@ func GetCmdTickAck(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendTickAckTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
-	cmd.MarkFlagRequired(FlagTxHash)
-	cmd.MarkFlagRequired(FlagLogIndex)
-	cmd.MarkFlagRequired(FlagAmount)
-	cmd.MarkFlagRequired(FlagTickID)
+	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagTxHash", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagLogIndex", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagAmount", "Error", err)
+	}
+	if err := cmd.MarkFlagRequired(FlagTickID); err != nil {
+		logger.Error("SendTickAckTx | MarkFlagRequired | FlagTickID", "Error", err)
+	}
 
 	return cmd
 }

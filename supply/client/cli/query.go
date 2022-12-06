@@ -53,6 +53,7 @@ func GetCmdQueryTotalSupply(cdc *codec.Codec) *cobra.Command {
 
 func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
 	params := supplyTypes.NewQueryTotalSupplyParams(1, 0) // no pagination
+
 	bz, err := cdc.MarshalJSON(params)
 	if err != nil {
 		return err
@@ -64,8 +65,7 @@ func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
 	}
 
 	var totalSupply sdk.Coins
-	err = cdc.UnmarshalJSON(res, &totalSupply)
-	if err != nil {
+	if err = cdc.UnmarshalJSON(res, &totalSupply); err != nil {
 		return err
 	}
 
@@ -74,6 +74,7 @@ func queryTotalSupply(cliCtx context.CLIContext, cdc *codec.Codec) error {
 
 func querySupplyOf(cliCtx context.CLIContext, cdc *codec.Codec, denom string) error {
 	params := supplyTypes.NewQuerySupplyOfParams(denom)
+
 	bz, err := cdc.MarshalJSON(params)
 	if err != nil {
 		return err
@@ -85,8 +86,7 @@ func querySupplyOf(cliCtx context.CLIContext, cdc *codec.Codec, denom string) er
 	}
 
 	var supply sdk.Int
-	err = cdc.UnmarshalJSON(res, &supply)
-	if err != nil {
+	if err = cdc.UnmarshalJSON(res, &supply); err != nil {
 		return err
 	}
 

@@ -7,7 +7,12 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	borCommon "github.com/maticnetwork/bor/common"
+	borCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	"github.com/maticnetwork/heimdall/checkpoint"
@@ -18,11 +23,6 @@ import (
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	abci "github.com/tendermint/tendermint/abci/types"
-
-	"github.com/stretchr/testify/mock"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
 )
 
 // SideHandlerTestSuite integrate test suite context object
@@ -49,6 +49,7 @@ func (suite *SideHandlerTestSuite) SetupTest() {
 }
 
 func TestSideHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(SideHandlerTestSuite))
 }
 
@@ -78,7 +79,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSuccess() {
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.AddCheckpoint(ctx, 1, checkpoint)
+	err := keeper.AddCheckpoint(ctx, 1, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,
@@ -113,7 +115,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustSameCheckpointAsRoot
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.AddCheckpoint(ctx, 1, checkpoint)
+	err := keeper.AddCheckpoint(ctx, 1, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,
@@ -143,7 +146,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAdjustNotSameCheckpointAsR
 		BorChainID: "testchainid",
 		TimeStamp:  1,
 	}
-	keeper.AddCheckpoint(ctx, 1, checkpoint)
+	err := keeper.AddCheckpoint(ctx, 1, checkpoint)
+	require.NoError(t, err)
 
 	checkpointAdjust := types.MsgCheckpointAdjust{
 		HeaderIndex: 1,
@@ -171,7 +175,9 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpoint() {
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	require.NoError(t, err)
+
 	borChainId := "1234"
+
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 
@@ -252,6 +258,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgCheckpointAck() {
 
 	header, _ := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	headerId := uint64(1)
+
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 
@@ -322,11 +329,12 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 		User:      hmTypes.HexToHeimdallAddress("123"),
 		FeeAmount: big.NewInt(0).String(),
 	}
-	topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
+	require.NoError(t, err)
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(2, t, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -335,11 +343,13 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 	}
 
 	header, err := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
+	require.NoError(t, err)
 
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
 
 	borChainId := "1234"
+
 	suite.Run("Failure", func() {
 		// create checkpoint msg
 		msgCheckpoint := types.NewMsgCheckpointBlock(
@@ -408,7 +418,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	params := keeper.GetParams(ctx)
 	header, _ := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(2, t, app.StakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10)
 	app.StakingKeeper.IncrementAccum(ctx, 1)
 
 	// send ack

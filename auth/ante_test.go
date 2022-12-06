@@ -48,6 +48,7 @@ func (suite *AnteTestSuite) SetupTest() {
 }
 
 func TestAnteTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(AnteTestSuite))
 }
 
@@ -86,7 +87,8 @@ func (suite *AnteTestSuite) TestGasLimit() {
 
 	// set default amount for one tx
 	amt, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	err := acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 
 	// get stored account
@@ -94,6 +96,7 @@ func (suite *AnteTestSuite) TestGasLimit() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// get params
@@ -117,18 +120,21 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
 	amt1, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	err := acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress()) // get stored account
 
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
 	amt2, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc2.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt2)))
+	err = acc2.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt2)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 	acc2 = happ.AccountKeeper.GetAccount(ctx, acc2.GetAddress()) // get stored account
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// test good tx from one signer
@@ -145,8 +151,6 @@ func (suite *AnteTestSuite) TestCheckpointGasLimit() {
 	// test good tx from one signer
 	tx = types.NewTestTx(ctx, sdk.Msg(&cmsg), priv2, acc2.GetAccountNumber(), uint64(0))
 	_, result, _ = checkValidTx(t, anteHandler, ctx, tx, false)
-	// check gas wanted for checkpoint msg
-	// require.Equal(t, uint64(10000000), uint64(result.GasWanted))
 }
 
 func (suite *AnteTestSuite) TestStdTx() {
@@ -227,16 +231,19 @@ func (suite *AnteTestSuite) TestAccountNumbers() {
 
 	// set the accounts
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc1.SetCoins(simulation.RandomFeeCoins())
+	err := acc1.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc1.SetAccountNumber(0))
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	acc2.SetCoins(simulation.RandomFeeCoins())
+	err = acc2.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc2.SetAccountNumber(1))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg := sdkAuth.NewTestMsg(addr1)
 
 	// test good tx from one signer
@@ -262,20 +269,23 @@ func (suite *AnteTestSuite) TestAccountNumbersAtBlockHeightZero() {
 
 	// set the accounts, we don't need the acc numbers as it is in the genesis block
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc1.SetCoins(simulation.RandomFeeCoins())
+	err := acc1.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	acc2.SetCoins(simulation.RandomFeeCoins())
+	err = acc2.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc2.SetAccountNumber(100))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	msg2 := sdkAuth.NewTestMsg(addr2)
 
-	acc1 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc2 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
+	// acc1 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
+	// acc2 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
 	// accNumber1 := acc1.GetAccountNumber()
 	// accNumber2 := acc2.GetAccountNumber()
 
@@ -310,15 +320,18 @@ func (suite *AnteTestSuite) TestSequences() {
 
 	// set the accounts, we don't need the acc numbers as it is in the genesis block
 	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
-	acc1.SetCoins(simulation.RandomFeeCoins())
+	err := acc1.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	acc2 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr2))
-	acc2.SetCoins(simulation.RandomFeeCoins())
+	err = acc2.SetCoins(simulation.RandomFeeCoins())
+	require.NoError(t, err)
 	require.NoError(t, acc2.SetAccountNumber(100))
 	happ.AccountKeeper.SetAccount(ctx, acc2)
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	msg2 := sdkAuth.NewTestMsg(addr2)
 
@@ -361,13 +374,15 @@ func (suite *AnteTestSuite) TestFees() {
 
 	// msg and signatures
 	var tx sdk.Tx
+
 	msg1 := sdkAuth.NewTestMsg(addr1)
 	acc1 = happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
 	tx = types.NewTestTx(ctx, msg1, priv1, uint64(0), uint64(0))
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 
 	// set some coins
-	acc1.SetCoins(sdk.NewCoins(sdk.NewInt64Coin(authTypes.FeeToken, 149)))
+	err := acc1.SetCoins(sdk.NewCoins(sdk.NewInt64Coin(authTypes.FeeToken, 149)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 
@@ -375,7 +390,8 @@ func (suite *AnteTestSuite) TestFees() {
 	require.True(sdk.IntEq(t, happ.AccountKeeper.GetAccount(ctx, hmTypes.AccAddressToHeimdallAddress(addr1)).GetCoins().AmountOf(authTypes.FeeToken), sdk.NewInt(149)))
 
 	amt, _ := sdk.NewIntFromString(authTypes.DefaultTxFees)
-	acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	err = acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt)))
+	require.NoError(t, err)
 	happ.AccountKeeper.SetAccount(ctx, acc1)
 	checkValidTx(t, anteHandler, ctx, tx, false)
 
@@ -392,16 +408,21 @@ func (suite *AnteTestSuite) TestFees() {
 
 // run the tx through the anteHandler and ensure its valid
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, sdk.Result, bool) {
+	t.Helper()
+
 	newCtx, result, abort := anteHandler(ctx, tx, simulate)
 	require.Equal(t, "", result.Log)
 	require.False(t, abort)
 	require.Equal(t, sdk.CodeOK, result.Code)
 	require.True(t, result.IsOK())
+
 	return newCtx, result, abort
 }
 
 // run the tx through the anteHandler and ensure it fails with the given code
 func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool, code sdk.CodeType) (sdk.Context, sdk.Result, bool) {
+	t.Helper()
+
 	newCtx, result, abort := anteHandler(ctx, tx, simulate)
 	require.True(t, abort)
 
@@ -424,6 +445,8 @@ func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, 
 // Test checkpoint
 //
 
+const testCheckpointMsgVal = "checkpoint"
+
 var _ sdk.Msg = (*TestCheckpointMsg)(nil)
 
 // msg type for testing
@@ -431,5 +454,5 @@ type TestCheckpointMsg struct {
 	sdk.TestMsg
 }
 
-func (msg *TestCheckpointMsg) Route() string { return "checkpoint" }
-func (msg *TestCheckpointMsg) Type() string  { return "checkpoint" }
+func (msg *TestCheckpointMsg) Route() string { return testCheckpointMsgVal }
+func (msg *TestCheckpointMsg) Type() string  { return testCheckpointMsgVal }

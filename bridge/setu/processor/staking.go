@@ -1,15 +1,17 @@
 package processor
 
 import (
-	"encoding/json"
 	"fmt"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/accounts/abi"
-	"github.com/maticnetwork/bor/core/types"
+	jsoniter "github.com/json-iterator/go"
+
+	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
 	"github.com/maticnetwork/heimdall/helper"
@@ -29,10 +31,9 @@ type StakingProcessor struct {
 
 // NewStakingProcessor - add  abi to staking processor
 func NewStakingProcessor(stakingInfoAbi *abi.ABI) *StakingProcessor {
-	stakingProcessor := &StakingProcessor{
+	return &StakingProcessor{
 		stakingInfoAbi: stakingInfoAbi,
 	}
-	return stakingProcessor
 }
 
 // Start starts new block subscription
@@ -44,15 +45,19 @@ func (sp *StakingProcessor) Start() error {
 // RegisterTasks - Registers staking tasks with machinery
 func (sp *StakingProcessor) RegisterTasks() {
 	sp.Logger.Info("Registering staking related tasks")
+
 	if err := sp.queueConnector.Server.RegisterTask("sendValidatorJoinToHeimdall", sp.sendValidatorJoinToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendValidatorJoinToHeimdall", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendUnstakeInitToHeimdall", sp.sendUnstakeInitToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendUnstakeInitToHeimdall", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendStakeUpdateToHeimdall", sp.sendStakeUpdateToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendStakeUpdateToHeimdall", "error", err)
 	}
+
 	if err := sp.queueConnector.Server.RegisterTask("sendSignerChangeToHeimdall", sp.sendSignerChangeToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendSignerChangeToHeimdall", "error", err)
 	}
@@ -60,7 +65,7 @@ func (sp *StakingProcessor) RegisterTasks() {
 
 func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -132,12 +137,13 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -202,12 +208,13 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -268,12 +275,13 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			return err
 		}
 	}
+
 	return nil
 }
 
 func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logBytes string) error {
 	var vLog = types.Log{}
-	if err := json.Unmarshal([]byte(logBytes), &vLog); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal([]byte(logBytes), &vLog); err != nil {
 		sp.Logger.Error("Error while unmarshalling event from rootchain", "error", err)
 		return err
 	}
@@ -339,10 +347,11 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
-			sp.Logger.Error("Error while broadcasting signerChainge to heimdall", "validatorId", event.ValidatorId.Uint64(), "error", err)
+			sp.Logger.Error("Error while broadcasting signerChainge to heimdall", "msg", msg, "validatorId", event.ValidatorId.Uint64(), "error", err)
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -358,7 +367,9 @@ func (sp *StakingProcessor) checkValidNonce(validatorId uint64, txnNonce uint64)
 		if diff > 10 {
 			diff = 10
 		}
+
 		sp.Logger.Error("Nonce for the given event not in order", "validatorId", validatorId, "currentNonce", currentNonce, "txnNonce", txnNonce, "delay", diff*uint64(defaultDelayDuration))
+
 		return false, diff, nil
 	}
 
@@ -405,5 +416,6 @@ func queryTxCount(cliCtx cliContext.CLIContext, validatorId uint64, currentHeigh
 			return searchResult.TotalCount, nil
 		}
 	}
+
 	return 0, nil
 }

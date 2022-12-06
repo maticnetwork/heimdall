@@ -6,7 +6,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkAuth "github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/stretchr/testify/require"
@@ -30,7 +29,6 @@ type HandlerTestSuite struct {
 
 	app            *app.HeimdallApp
 	ctx            sdk.Context
-	cliCtx         context.CLIContext
 	chainID        string
 	handler        sdk.Handler
 	contractCaller mocks.IContractCaller
@@ -51,6 +49,7 @@ func (suite *HandlerTestSuite) SetupTest() {
 }
 
 func TestHandlerTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(HandlerTestSuite))
 }
 
@@ -92,7 +91,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 
 	t.Run("ExistingRecord", func(t *testing.T) {
 		// store event record in keeper
-		app.ClerkKeeper.SetEventRecord(ctx,
+		err := app.ClerkKeeper.SetEventRecord(ctx,
 			types.NewEventRecord(
 				msg.TxHash,
 				msg.LogIndex,
@@ -103,6 +102,7 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 				time.Now(),
 			),
 		)
+		require.NoError(t, err)
 
 		result := suite.handler(ctx, msg)
 		require.False(t, result.IsOK(), "should fail due to existent event record but succeeded")
@@ -123,7 +123,6 @@ func (suite *HandlerTestSuite) TestHandleMsgEventRecord() {
 		err := msg.ValidateBasic()
 		require.Error(t, err)
 	})
-
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgEventRecordSequence() {

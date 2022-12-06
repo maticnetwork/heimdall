@@ -13,11 +13,9 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/topup/simulation"
-
 	topupCli "github.com/maticnetwork/heimdall/topup/client/cli"
 	topupRest "github.com/maticnetwork/heimdall/topup/client/rest"
-
+	"github.com/maticnetwork/heimdall/topup/simulation"
 	"github.com/maticnetwork/heimdall/topup/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmModule "github.com/maticnetwork/heimdall/types/module"
@@ -52,10 +50,10 @@ func (AppModuleBasic) DefaultGenesis() json.RawMessage {
 // ValidateGenesis performs genesis state validation for the auth module.
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
 	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz, &data)
-	if err != nil {
+	if err := types.ModuleCdc.UnmarshalJSON(bz, &data); err != nil {
 		return err
 	}
+
 	return types.ValidateGenesis(data)
 }
 
@@ -130,8 +128,11 @@ func (am AppModule) NewQuerierHandler() sdk.Querier {
 // no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
 	var genesisState types.GenesisState
+
 	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+
 	InitGenesis(ctx, am.keeper, genesisState)
+
 	return []abci.ValidatorUpdate{}
 }
 

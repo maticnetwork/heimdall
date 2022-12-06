@@ -31,15 +31,13 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	caller helper.ContractCaller,
 ) Keeper {
-	// create keeper
-	keeper := Keeper{
+	return Keeper{
 		cdc:            cdc,
 		storeKey:       storeKey,
 		paramSpace:     paramSpace.WithKeyTable(types.ParamKeyTable()),
 		codespace:      codespace,
 		contractCaller: caller,
 	}
-	return keeper
 }
 
 // Logger returns a module-specific logger.

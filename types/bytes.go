@@ -2,11 +2,13 @@ package types
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 
-	"github.com/maticnetwork/bor/common"
+	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v2"
+
+	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // HexBytes the main purpose of HexBytes is to enable HEX-encoding for json/encoding.
@@ -39,7 +41,7 @@ func (bz *HexBytes) Unmarshal(data []byte) error {
 
 // MarshalJSON this is the point of Bytes.
 func (bz HexBytes) MarshalJSON() ([]byte, error) {
-	return json.Marshal(bz.String())
+	return jsoniter.ConfigFastest.Marshal(bz.String())
 }
 
 // MarshalYAML marshals to YAML using Bech32.
@@ -50,24 +52,24 @@ func (bz HexBytes) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON this is the point of Bytes.
 func (bz *HexBytes) UnmarshalJSON(data []byte) error {
 	var s string
-	err := json.Unmarshal(data, &s)
-	if err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*bz = common.FromHex(s)
+
 	return nil
 }
 
 // UnmarshalYAML unmarshals from YAML assuming Bech32 encoding.
 func (bz *HexBytes) UnmarshalYAML(data []byte) error {
 	var s string
-	err := yaml.Unmarshal(data, &s)
-	if err != nil {
+	if err := yaml.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
 	*bz = common.FromHex(s)
+
 	return nil
 }
 
@@ -77,7 +79,7 @@ func (bz HexBytes) Bytes() []byte {
 }
 
 func (bz HexBytes) String() string {
-	return common.ToHex(bz)
+	return hexutil.Encode(bz)
 }
 
 // Format format bytes

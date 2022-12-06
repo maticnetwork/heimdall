@@ -1,20 +1,25 @@
 package simulation
 
 import (
-	"encoding/json"
 	"fmt"
 	"math/rand"
 	"testing"
+
+	jsoniter "github.com/json-iterator/go"
 )
 
 func getTestingMode(tb testing.TB) (testingMode bool, t *testing.T, b *testing.B) {
+	tb.Helper()
+
 	testingMode = false
+
 	if _t, ok := tb.(*testing.T); ok {
 		t = _t
 		testingMode = true
 	} else {
 		b = tb.(*testing.B)
 	}
+
 	return testingMode, t, b
 }
 
@@ -44,7 +49,7 @@ func getBlockSize(r *rand.Rand, params Params, lastBlockSizeState, avgBlockSize 
 }
 
 func mustMarshalJSONIndent(o interface{}) []byte {
-	bz, err := json.MarshalIndent(o, "", "  ")
+	bz, err := jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(o, "", "  ")
 	if err != nil {
 		panic(fmt.Sprintf("failed to JSON encode: %s", err))
 	}

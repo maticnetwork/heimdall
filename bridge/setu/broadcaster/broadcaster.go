@@ -10,21 +10,23 @@ import (
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	bor "github.com/maticnetwork/bor"
-	"github.com/maticnetwork/bor/core/types"
+	bor "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum/core/types"
+
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 
-	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/tendermint/tendermint/libs/log"
+
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // TxBroadcaster uses to broadcast transaction to each chain
 type TxBroadcaster struct {
 	logger log.Logger
 
-	cliCtx cliContext.CLIContext
+	CliCtx cliContext.CLIContext
 
 	heimdallMutex sync.Mutex
 	maticMutex    sync.Mutex
@@ -41,20 +43,18 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 
 	// current address
 	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
+
 	account, err := util.GetAccount(cliCtx, address)
 	if err != nil {
 		panic("Error connecting to rest-server, please start server before bridge.")
-
 	}
 
-	txBroadcaster := TxBroadcaster{
+	return &TxBroadcaster{
 		logger:    util.Logger().With("module", "txBroadcaster"),
-		cliCtx:    cliCtx,
+		CliCtx:    cliCtx,
 		lastSeqNo: account.GetSequence(),
 		accNum:    account.GetAccountNumber(),
 	}
-
-	return &txBroadcaster
 }
 
 // BroadcastToHeimdall broadcast to heimdall
@@ -64,7 +64,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "BroadcastToHeimdall", time.Now())
 
 	// tx encoder
-	txEncoder := helper.GetTxEncoder(tb.cliCtx.Codec)
+	txEncoder := helper.GetTxEncoder(tb.CliCtx.Codec)
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
 
@@ -75,7 +75,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID)
 
-	txResponse, err := helper.BuildAndBroadcastMsgs(tb.cliCtx, txBldr, []sdk.Msg{msg})
+	txResponse, err := helper.BuildAndBroadcastMsgs(tb.CliCtx, txBldr, []sdk.Msg{msg})
 	if err != nil {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 
@@ -83,7 +83,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 		address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
 
 		// fetch from APIs
-		account, errAcc := util.GetAccount(tb.cliCtx, address)
+		account, errAcc := util.GetAccount(tb.CliCtx, address)
 		if errAcc != nil {
 			tb.logger.Error("Error fetching account from rest-api", "url", helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
 			return errAcc
@@ -125,7 +125,7 @@ func (tb *TxBroadcaster) BroadcastToMatic(msg bor.CallMsg) error {
 	rawTx := types.NewTransaction(auth.Nonce.Uint64(), *msg.To, msg.Value, auth.GasLimit, auth.GasPrice, msg.Data)
 
 	// signer
-	signedTx, err := auth.Signer(types.HomesteadSigner{}, auth.From, rawTx)
+	signedTx, err := auth.Signer(auth.From, rawTx)
 	if err != nil {
 		tb.logger.Error("Error signing the transaction", "error", err)
 		return err

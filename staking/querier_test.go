@@ -9,7 +9,11 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/helper/mocks"
@@ -17,9 +21,6 @@ import (
 	"github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // QuerierTestSuite integrate test suite context object
@@ -42,6 +43,8 @@ func (suite *QuerierTestSuite) SetupTest() {
 
 // TestQuerierTestSuite
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -66,7 +69,7 @@ func (suite *QuerierTestSuite) TestInvalidQuery() {
 func (suite *QuerierTestSuite) TestHandleQueryCurrentValidatorSet() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	path := []string{types.QueryCurrentValidatorSet}
 
@@ -87,7 +90,7 @@ func (suite *QuerierTestSuite) TestHandleQueryCurrentValidatorSet() {
 func (suite *QuerierTestSuite) TesthandleQuerySigner() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	validators := keeper.GetAllValidators(ctx)
 	path := []string{types.QuerySigner}
@@ -109,7 +112,7 @@ func (suite *QuerierTestSuite) TesthandleQuerySigner() {
 func (suite *QuerierTestSuite) TesthandleQueryValidator() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	validators := keeper.GetAllValidators(ctx)
 
 	path := []string{types.QueryValidator}
@@ -131,7 +134,7 @@ func (suite *QuerierTestSuite) TesthandleQueryValidator() {
 func (suite *QuerierTestSuite) TestHandleQueryValidatorStatus() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 	validators := keeper.GetAllValidators(ctx)
 
 	path := []string{types.QueryValidatorStatus}
@@ -153,7 +156,7 @@ func (suite *QuerierTestSuite) TestHandleQueryValidatorStatus() {
 func (suite *QuerierTestSuite) TestHandleQueryProposer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	path := []string{types.QueryProposer}
 
@@ -174,7 +177,7 @@ func (suite *QuerierTestSuite) TestHandleQueryProposer() {
 func (suite *QuerierTestSuite) TestHandleQueryCurrentProposer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
 
 	path := []string{types.QueryCurrentProposer}
 

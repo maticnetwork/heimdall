@@ -2,17 +2,16 @@ package listener
 
 import (
 	"context"
-	"encoding/json"
+	"math/big"
 	"strconv"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	"github.com/maticnetwork/bor/core/types"
-	"github.com/maticnetwork/heimdall/helper"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	slashingTypes "github.com/maticnetwork/heimdall/slashing/types"
 )
 
@@ -45,17 +44,18 @@ func (hl *HeimdallListener) Start() error {
 	}
 
 	hl.Logger.Info("Start polling for events", "pollInterval", pollInterval)
-	hl.StartPolling(headerCtx, pollInterval)
+	hl.StartPolling(headerCtx, pollInterval, nil)
+
 	return nil
 }
 
 // ProcessHeader -
-func (hl *HeimdallListener) ProcessHeader(*types.Header) {
+func (hl *HeimdallListener) ProcessHeader(_ *blockHeader) {
 
 }
 
 // StartPolling - starts polling for heimdall events
-func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.Duration) {
+func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.Duration, _ *big.Int) {
 	// How often to fire the passed in function in second
 	interval := pollInterval
 
@@ -75,7 +75,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 		case <-ticker.C:
 			fromBlock, toBlock, err := hl.fetchFromAndToBlock()
 			if err != nil {
-				hl.Logger.Error("Error fetching fromBlock and toBlock...skipping events query", "error", err)
+				hl.Logger.Error("Error fetching from and toBlock, skipping events query", "fromBlock", fromBlock, "toBlock", toBlock, "error", err)
 			} else if fromBlock < toBlock {
 
 				hl.Logger.Info("Fetching new events between", "fromBlock", fromBlock, "toBlock", toBlock)
@@ -135,6 +135,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 		case <-ctx.Done():
 			hl.Logger.Info("Polling stopped")
 			ticker.Stop()
+
 			return
 		}
 	}
@@ -150,6 +151,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		hl.Logger.Error("Error while fetching heimdall node status", "error", err)
 		return fromBlock, toBlock, err
 	}
+
 	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
 
 	// fromBlock - get last block from storage
@@ -163,22 +165,25 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
 			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", result)
-			fromBlock = uint64(result) + 1
+			fromBlock = result + 1
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
 			toBlock = 0
+
 			return fromBlock, toBlock, err
 		}
 	}
+
 	return fromBlock, toBlock, err
 }
 
 // ProcessBlockEvent - process Blockevents (BeginBlock, EndBlock events) from heimdall.
 func (hl *HeimdallListener) ProcessBlockEvent(event sdk.StringEvent, blockHeight int64) {
 	hl.Logger.Info("Received block event from Heimdall", "eventType", event.Type)
-	eventBytes, err := json.Marshal(event)
+
+	eventBytes, err := jsoniter.ConfigFastest.Marshal(event)
 	if err != nil {
-		hl.Logger.Error("Error while parsing block event", "error", err, "eventType", event.Type)
+		hl.Logger.Error("Error while parsing block event", "eventType", event.Type, "error", err)
 		return
 	}
 
@@ -210,7 +215,9 @@ func (hl *HeimdallListener) sendBlockTask(taskName string, eventBytes []byte, bl
 		},
 	}
 	signature.RetryCount = 3
+
 	hl.Logger.Info("Sending block level task", "taskName", taskName, "currentTime", time.Now(), "blockHeight", blockHeight)
+
 	// send task
 	_, err := hl.queueConnector.Server.SendTask(signature)
 	if err != nil {

@@ -8,28 +8,26 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethTypes "github.com/maticnetwork/bor/core/types"
-	errs "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/staking/types"
-	topupTypes "github.com/maticnetwork/heimdall/topup/types"
-
-	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
-	stakingSim "github.com/maticnetwork/heimdall/staking/simulation"
-
-	"github.com/maticnetwork/heimdall/topup"
-
-	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/helper/mocks"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/tendermint/tendermint/crypto/secp256k1"
-
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/tendermint/tendermint/crypto/secp256k1"
+
+	"github.com/maticnetwork/heimdall/app"
+	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
+	errs "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
+	"github.com/maticnetwork/heimdall/helper"
+	"github.com/maticnetwork/heimdall/helper/mocks"
+	"github.com/maticnetwork/heimdall/staking"
+	stakingSim "github.com/maticnetwork/heimdall/staking/simulation"
+	"github.com/maticnetwork/heimdall/staking/types"
+	"github.com/maticnetwork/heimdall/topup"
+	topupTypes "github.com/maticnetwork/heimdall/topup/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
 type HandlerTestSuite struct {
@@ -52,6 +50,8 @@ func (suite *HandlerTestSuite) SetupTest() {
 }
 
 func TestHandlerTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(HandlerTestSuite))
 }
 
@@ -112,7 +112,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := suite.app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	// vals := oldValSet.(*Validators)
@@ -120,7 +120,9 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
 	newSigner[0].ID = oldSigner.ID
 	newSigner[0].VotingPower = oldSigner.VotingPower
+
 	t.Log("To be Updated ===>", "Validator", newSigner[0].String())
+
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
 	// gen msg
@@ -141,11 +143,15 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	result := suite.handler(ctx, msg)
 
 	require.True(t, result.IsOK(), "expected validator update to be ok, got %v", result)
+
 	newValidators := keeper.GetCurrentValidators(ctx)
 	require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 
 	setUpdates := helper.GetUpdatedValidators(&oldValSet, keeper.GetAllValidators(ctx), 5)
-	oldValSet.UpdateWithChangeSet(setUpdates)
+
+	err := oldValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
+
 	_ = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
 
 	ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)
@@ -162,7 +168,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	chainParams := app.ChainKeeper.GetParams(ctx)
@@ -208,11 +214,12 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	keeper := app.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 
 	t.Log("To be Updated ===>", "Validator", oldVal.String())
+
 	chainParams := app.ChainKeeper.GetParams(ctx)
 
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
@@ -230,6 +237,7 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 
 	got := suite.handler(ctx, msg)
 	require.True(t, got.IsOK(), "expected validator stake update to be ok, got %v", got)
+
 	updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 	require.Empty(t, err, "unable to fetch validator info %v-", err)
 	require.NotEqual(t, stakinginfoStakeUpdate.NewAmount.Int64(), updatedVal.VotingPower, "Validator VotingPower should not be updated to %v", stakinginfoStakeUpdate.NewAmount.Uint64())
@@ -365,5 +373,4 @@ func (suite *HandlerTestSuite) TestTopupSuccessBeforeValidatorJoin() {
 
 	result := suite.handler(ctx, msgValJoin)
 	require.True(t, result.IsOK(), "expected validator stake update to be ok, got %v", result)
-
 }

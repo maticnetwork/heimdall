@@ -13,7 +13,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/maticnetwork/bor/common"
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
@@ -42,6 +42,7 @@ func GetTxCmd(cdc *codec.Codec) *cobra.Command {
 			SendValidatorStakeUpdateTx(cdc),
 		)...,
 	)
+
 	return txCmd
 }
 
@@ -106,7 +107,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				topic := vLog.Topics[0].Bytes()
 				selectedEvent := helper.EventByID(abiObject, topic)
 				if selectedEvent != nil && selectedEvent.Name == eventName {
-					if err := helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
+					if err = helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
 						return err
 					}
 
@@ -152,18 +153,23 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagActivationEpoch); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagActivationEpoch", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagAmount", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagSignerPubkey); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagSignerPubkey", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
+
 	return cmd
 }
 
@@ -220,15 +226,19 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
 		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
@@ -297,18 +307,23 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagNewSignerPubkey); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNewSignerPubkey", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
 		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}
@@ -372,18 +387,23 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagAmount", "Error", err)
 	}
+
 	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
 		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
 	}

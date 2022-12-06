@@ -18,13 +18,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/bor/accounts/keystore"
-	ethCommon "github.com/maticnetwork/bor/common"
-	"github.com/maticnetwork/bor/console"
-	"github.com/maticnetwork/bor/crypto"
-	"github.com/maticnetwork/heimdall/file"
-	"github.com/maticnetwork/heimdall/version"
-	"github.com/pborman/uuid"
+	"github.com/ethereum/go-ethereum/accounts/keystore"
+	ethCommon "github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/console/prompt"
+	"github.com/ethereum/go-ethereum/crypto"
+	"github.com/google/uuid"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
@@ -34,6 +32,9 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
+
+	"github.com/maticnetwork/heimdall/file"
+	"github.com/maticnetwork/heimdall/version"
 
 	"github.com/maticnetwork/heimdall/app"
 	authCli "github.com/maticnetwork/heimdall/auth/client/cli"
@@ -59,14 +60,12 @@ var (
 )
 
 func initTendermintViperConfig(cmd *cobra.Command) {
-	tendermintNode, _ := cmd.Flags().GetString(helper.NodeFlag)
+	tendermintNode, _ := cmd.Flags().GetString(helper.TendermintNodeFlag)
 	homeValue, _ := cmd.Flags().GetString(helper.HomeFlag)
-	withHeimdallConfigValue, _ := cmd.Flags().GetString(helper.WithHeimdallConfigFlag)
 
 	// set to viper
-	viper.Set(helper.NodeFlag, tendermintNode)
+	viper.Set(helper.TendermintNodeFlag, tendermintNode)
 	viper.Set(helper.HomeFlag, homeValue)
-	viper.Set(helper.WithHeimdallConfigFlag, withHeimdallConfigValue)
 
 	// start heimdall config
 	helper.InitHeimdallConfig("")
@@ -91,6 +90,8 @@ func main() {
 	// chain id
 	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
 
+	helper.DecorateWithHeimdallFlags(rootCmd, viper.GetViper(), logger, "main")
+
 	// add query/post commands (custom to binary)
 	rootCmd.AddCommand(
 		rpc.StatusCommand(),
@@ -113,15 +114,9 @@ func main() {
 		ApproveCmd(cliCtx),
 	)
 
-	// bind with-heimdall-config config with root cmd
-	if err := viper.BindPFlag(helper.WithHeimdallConfigFlag, rootCmd.Flags().Lookup(helper.WithHeimdallConfigFlag)); err != nil {
-		logger.Error("main | BindPFlag | helper.WithHeimdallConfigFlag", "Error", err)
-	}
-
 	// prepare and add flags
-	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("$HOME/.heimdalld"))
-	err := executor.Execute()
-	if err != nil {
+	executor := cli.PrepareMainCmd(rootCmd, "HD", os.ExpandEnv("/var/lib/heimdall"))
+	if err := executor.Execute(); err != nil {
 		// Note: Handle with #870
 		panic(err)
 	}
@@ -181,6 +176,7 @@ func convertAddressToHexCmd(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -195,6 +191,7 @@ func convertHexToAddressCmd(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -239,6 +236,7 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+
 	return cmd
 }
 
@@ -255,7 +253,7 @@ func generateKeystore(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			id := uuid.NewRandom()
+			id, err := uuid.NewRandom()
 			if err != nil {
 				return err
 			}
@@ -282,6 +280,7 @@ func generateKeystore(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -322,6 +321,7 @@ func generateValidatorKey(cdc *codec.Codec) *cobra.Command {
 			return nil
 		},
 	}
+
 	return client.GetCommands(cmd)[0]
 }
 
@@ -351,12 +351,14 @@ func keyFileName(keyAddr ethCommon.Address) string {
 
 func toISO8601(t time.Time) string {
 	var tz string
+
 	name, offset := t.Zone()
 	if name == "UTC" {
 		tz = "Z"
 	} else {
 		tz = fmt.Sprintf("%03d00", offset/3600)
 	}
+
 	return fmt.Sprintf("%04d-%02d-%02dT%02d-%02d-%02d.%09d%s",
 		t.Year(), t.Month(), t.Day(), t.Hour(), t.Minute(), t.Second(), t.Nanosecond(), tz)
 }
@@ -364,13 +366,13 @@ func toISO8601(t time.Time) string {
 // promptPassphrase prompts the user for a passphrase.  Set confirmation to true
 // to require the user to confirm the passphrase.
 func promptPassphrase(confirmation bool) (string, error) {
-	passphrase, err := console.Stdin.PromptPassword("Passphrase: ")
+	passphrase, err := prompt.Stdin.PromptPassword("Passphrase: ")
 	if err != nil {
 		return "", err
 	}
 
 	if confirmation {
-		confirm, err := console.Stdin.PromptPassword("Repeat passphrase: ")
+		confirm, err := prompt.Stdin.PromptPassword("Repeat passphrase: ")
 		if err != nil {
 			return "", err
 		}

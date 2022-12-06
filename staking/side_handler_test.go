@@ -7,7 +7,8 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	ethTypes "github.com/maticnetwork/bor/core/types"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/common"
@@ -56,6 +57,8 @@ func (suite *SideHandlerTestSuite) SetupTest() {
 }
 
 func TestSideHandlerTestSuite(t *testing.T) {
+	t.Parallel()
+
 	suite.Run(t, new(SideHandlerTestSuite))
 }
 
@@ -464,7 +467,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := suite.app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	oldSigner := oldValSet.Validators[0]
@@ -643,7 +646,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	chainParams := app.ChainKeeper.GetParams(ctx)
@@ -894,7 +897,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 	keeper := app.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 
@@ -1198,7 +1201,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	oldSigner := oldValSet.Validators[0]
@@ -1227,8 +1230,10 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 		require.Equal(t, len(oldValSet.Validators), len(newValidators), "Number of current validators should be equal")
 
 		setUpdates := helper.GetUpdatedValidators(&oldValSet, keeper.GetAllValidators(ctx), 5)
-		oldValSet.UpdateWithChangeSet(setUpdates)
-		_ = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
+		err := oldValSet.UpdateWithChangeSet(setUpdates)
+		require.NoError(t, err)
+		err = keeper.UpdateValidatorSetInStore(ctx, oldValSet)
+		require.NoError(t, err)
 
 		ValFrmID, ok := keeper.GetValidatorFromValID(ctx, oldSigner.ID)
 		require.True(t, ok, "new signer should be found, got %v", ok)
@@ -1245,7 +1250,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	blockNumber := big.NewInt(10)
@@ -1298,7 +1303,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 	keeper := app.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(4, t, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 

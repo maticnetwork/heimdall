@@ -13,6 +13,8 @@ import (
 )
 
 func TestUnpackSigAndVotes(t *testing.T) {
+	t.Parallel()
+
 	// Signer Address List for below SubmitHeaderBlock Transaction Payload
 	signerAddresses := []string{"a03d8f5af7413e4fd5a37fde9286e390ef8f3c07", "b1bf4473c6b1918a6e37408e1c14df81281411a8", "ba754e3893adb3cabc0afe7932b4b5a3cee3f3ab"}
 	signatureLen := 65
@@ -21,7 +23,7 @@ func TestUnpackSigAndVotes(t *testing.T) {
 	decodedPayload, err := hex.DecodeString(payload)
 	require.Empty(t, err, "Error while decoding payload")
 
-	abi, err := getABI(string(rootchain.RootchainABI))
+	abi, err := getABI(rootchain.RootchainABI)
 	require.Empty(t, err, "Error while getting RootChainABI")
 
 	// Unpacking the Payload
@@ -36,15 +38,20 @@ func TestUnpackSigAndVotes(t *testing.T) {
 	for i, j := 0, 0; i < len(signerAddresses); i, j = i+1, j+signatureLen {
 		pubKey, err := authTypes.RecoverPubkey(voteSignBytes, inputSigs[j:j+signatureLen])
 		require.Empty(t, err, "Error while recovering pubkey from signature. voteSignBytes = %v, Signature=%v ", voteSignBytes, hex.EncodeToString(inputSigs[i:i+signatureLen]))
+
 		pKey := types.NewPubKey(pubKey)
 		signerAddress := pKey.Address().Bytes()
+
 		t.Log("Pubkey Recovered", hex.EncodeToString(pubKey))
 		t.Log("Signer Address", hex.EncodeToString(signerAddress))
+
 		require.Equal(t, signerAddresses[i], hex.EncodeToString(signerAddress), "Signer Address Doesn't match")
 	}
 }
 
 func TestGetPowerFromAmount(t *testing.T) {
+	t.Parallel()
+
 	scenarios1 := map[string]string{
 		"48000000000000000000000": "48000",
 		"10000000000000000000000": "10000",

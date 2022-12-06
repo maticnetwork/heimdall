@@ -1,18 +1,18 @@
 package chainmanager_test
 
 import (
-	"encoding/json"
 	"fmt"
 	"testing"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
+	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/chainmanager/types"
-	"github.com/stretchr/testify/require"
-
-	"github.com/stretchr/testify/suite"
-	abci "github.com/tendermint/tendermint/abci/types"
 )
 
 // QuerierTestSuite integrate test suite context object
@@ -32,6 +32,7 @@ func (suite *QuerierTestSuite) SetupTest() {
 
 // TestQuerierTestSuite
 func TestQuerierTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(QuerierTestSuite))
 }
 
@@ -58,6 +59,7 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
 	var params types.Params
+
 	defaultParams := types.DefaultParams()
 
 	path := []string{types.QueryParams}
@@ -67,16 +69,14 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		Path: route,
 		Data: []byte{},
 	}
-	res, err := querier(ctx, path, req)
-	// check no error found
-	require.NoError(t, err)
-
-	// check response is not nil
+	res, sdkErr := querier(ctx, path, req)
+	require.NoError(t, sdkErr)
 	require.NotNil(t, res)
 
-	json.Unmarshal(res, &params)
+	err := jsoniter.ConfigFastest.Unmarshal(res, &params)
+	require.NoError(t, err)
 
-	// match reponse params
+	// match response params
 	require.Equal(t, defaultParams.MainchainTxConfirmations, params.MainchainTxConfirmations)
 	require.Equal(t, defaultParams.MaticchainTxConfirmations, params.MaticchainTxConfirmations)
 	require.Equal(t, defaultParams.ChainParams, params.ChainParams)
@@ -86,7 +86,8 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		ctx := rapp.BaseApp.NewContext(true, abci.Header{})
 		querier := chainmanager.NewQuerier(rapp.ChainKeeper)
 		require.Panics(t, func() {
-			querier(ctx, path, req)
+			_, err = querier(ctx, path, req)
+			require.NoError(t, err)
 		})
 	}
 }

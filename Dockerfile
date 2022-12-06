@@ -1,11 +1,11 @@
 FROM golang:latest
 
-ARG HEIMDALL_DIR=/heimdall
+ARG HEIMDALL_DIR=/var/lib/heimdall
 ENV HEIMDALL_DIR=$HEIMDALL_DIR
 
 RUN apt-get update -y && apt-get upgrade -y \
     && apt install build-essential git -y \
-    && mkdir -p /heimdall
+    && mkdir -p $HEIMDALL_DIR
 
 WORKDIR ${HEIMDALL_DIR}
 COPY . .

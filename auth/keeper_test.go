@@ -32,6 +32,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 }
 
 func TestKeeperTestSuite(t *testing.T) {
+	t.Parallel()
 	suite.Run(t, new(KeeperTestSuite))
 }
 
@@ -170,7 +171,8 @@ func (suite *KeeperTestSuite) TestGetPubKey() {
 
 	addr1 := hmTypes.AccAddressToHeimdallAddress(addr)
 	acc1 := app.AccountKeeper.NewAccountWithAddress(ctx, addr1)
-	acc1.SetPubKey(pubkey)
+	err := acc1.SetPubKey(pubkey)
+	require.NoError(t, err)
 	app.AccountKeeper.SetAccount(ctx, acc1)
 	pubkey1, err := app.AccountKeeper.GetPubKey(ctx, addr1)
 	require.Nil(t, err)
@@ -191,26 +193,27 @@ func (suite *KeeperTestSuite) TestGetAllAccounts() {
 func (suite *KeeperTestSuite) TestIterateAccounts() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 
-	newAccounts := 10
 	beforeAccounts := app.AccountKeeper.GetAllAccounts(ctx) // current accounts
+
+	newAccounts := 10
 	for i := 0; i < newAccounts; i++ {
 		addr := hmTypes.BytesToHeimdallAddress([]byte(fmt.Sprintf("address-%v", i)))
 		acc := app.AccountKeeper.NewAccountWithAddress(ctx, addr)
-		acc.SetCoins(simulation.RandomFeeCoins())
+		err := acc.SetCoins(simulation.RandomFeeCoins())
+		require.NoError(t, err)
 		app.AccountKeeper.SetAccount(ctx, acc)
 	}
+
 	afterAccounts := app.AccountKeeper.GetAllAccounts(ctx) // current accounts
 	require.Equal(t, newAccounts, len(afterAccounts)-len(beforeAccounts))
 
 	var filteredAccounts []types.Account
+
 	app.AccountKeeper.IterateAccounts(ctx, func(acc types.Account) bool {
 		filteredAccounts = append(filteredAccounts, acc)
-
-		if acc.GetAccountNumber() > 5 {
-			return true
-		}
-		return false
+		return acc.GetAccountNumber() > 5
 	})
+
 	require.Equal(t, 5, len(filteredAccounts))
 }
 

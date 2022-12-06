@@ -17,7 +17,6 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 			panic((err))
 		}
 	}
-
 }
 
 // ExportGenesis returns a GenesisState for a given context and keeper.

@@ -1,3 +1,4 @@
+//nolint
 package tx
 
 import (
@@ -94,21 +95,27 @@ $ gaiacli query txs --tags '<tag1>:<value1>&<tag2>:<value2>' --page 1 --limit 30
 			}
 
 			fmt.Println(string(output))
+
 			return nil
 		},
 	}
 
 	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
+
 	if err := viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode)); err != nil {
 		logger.Error("QueryTxsByEventsCmd | BindPFlag | client.FlagNode", "Error", err)
 	}
+
 	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
+
 	if err := viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode)); err != nil {
 		logger.Error("QueryTxsByEventsCmd | BindPFlag | client.FlagTrustNode", "Error", err)
 	}
+
 	cmd.Flags().String(flagTags, "", "tag:value list of tags that must match")
 	cmd.Flags().Uint32(flagPage, rest.DefaultPage, "Query a specific page of paginated results")
 	cmd.Flags().Uint32(flagLimit, rest.DefaultLimit, "Query number of transactions results per page returned")
+
 	if err := cmd.MarkFlagRequired(flagTags); err != nil {
 		logger.Error("QueryTxsByEventsCmd | MarkFlagRequired | flagTags", "Error", err)
 	}
@@ -139,13 +146,17 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 	}
 
 	cmd.Flags().StringP(client.FlagNode, "n", "tcp://localhost:26657", "Node to connect to")
+
 	if err := viper.BindPFlag(client.FlagNode, cmd.Flags().Lookup(client.FlagNode)); err != nil {
 		logger.Error("QueryTxCmd | BindPFlag | client.FlagNode", "Error", err)
 	}
+
 	cmd.Flags().Bool(client.FlagTrustNode, false, "Trust connected full node (don't verify proofs for responses)")
+
 	if err := viper.BindPFlag(client.FlagTrustNode, cmd.Flags().Lookup(client.FlagTrustNode)); err != nil {
 		logger.Error("QueryTxCmd | BindPFlag | client.FlagTrustNode", "Error", err)
 	}
+
 	return cmd
 }
 
@@ -153,6 +164,21 @@ func QueryTxCmd(cdc *codec.Codec) *cobra.Command {
 // REST
 // ----------------------------------------------------------------------------
 
+//swagger:parameters txsGET
+type txsGET struct {
+
+	//in:query
+	Height int64 `json:"height"`
+
+	//in:query
+	Page int64 `json:"page"`
+
+	//in:query
+	Limit int64 `json:"limit"`
+}
+
+// swagger:route GET /txs  txs txsGET
+//It returns the list of transaction based on page,limit and events specified.
 // QueryTxsRequestHandlerFn implements a REST handler that searches for transactions.
 // Genesis transactions are returned if the height parameter is set to zero,
 // otherwise the transactions are searched for by events.
@@ -205,6 +231,21 @@ func QueryTxsRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters txsByHash
+type txsByHash struct {
+
+	//Hash
+	//required:true
+	//in:path
+	Hash string `json:"hash"`
+
+	//Height
+	//in:query
+	Height int64 `json:"height"`
+}
+
+// swagger:route GET /txs/{hash}  txs txsByHash
+// It returns the transaction by hash.
 // QueryTxRequestHandlerFn implements a REST handler that queries a transaction
 // by hash in a committed block.
 func QueryTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -223,7 +264,9 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 				return
 			}
+
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+
 			return
 		}
 
@@ -235,6 +278,19 @@ func QueryTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters txsHashCommitProof
+type txsHashCommitProof struct {
+
+	//in:path
+	//required:true
+	Hash string `json:"hash"`
+
+	//in:query
+	Height int64 `json:"height"`
+}
+
+// swagger:route GET /txs/{hash}/commit-proof  txs txsHashCommitProof
+//It returns the commit-proof for the transaction.
 // QueryCommitTxRequestHandlerFn implements a REST handler that queries vote, sigs and tx bytes committed block.
 func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -257,7 +313,9 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 				return
 			}
+
 			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+
 			return
 		}
 
@@ -287,6 +345,19 @@ func QueryCommitTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+//swagger:parameters txsSideTx
+type txsSideTx struct {
+
+	//in:path
+	//required:true
+	Hash string `json:"hash"`
+
+	//in:query
+	Height int64 `json:"height"`
+}
+
+// swagger:route GET /txs/{hash}/side-tx  txs txsSideTx
+//It returns the side-tx bytes
 // QuerySideTxRequestHandlerFn implements a REST handler that queries sigs, side-tx bytes committed block
 func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -309,12 +380,15 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				rest.WriteErrorResponse(w, http.StatusNotFound, err.Error())
 				return
 			}
+
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
 			return
 		}
 
 		// fetch side txs sigs
 		decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
+
 		stdTx, err := decoder(tx.Tx)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -322,6 +396,7 @@ func QuerySideTxRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cmsg := stdTx.GetMsgs()[0] // get first message
+
 		sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
 		if !ok {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, "Invalid side-tx msg")
@@ -366,5 +441,6 @@ func formattedSigs(sigs [][3]*big.Int) (result [][3]string) {
 	for _, s := range sigs {
 		result = append(result, [3]string{s[0].String(), s[1].String(), s[2].String()})
 	}
+
 	return result
 }

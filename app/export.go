@@ -3,6 +3,7 @@ package app
 import (
 	"encoding/json"
 
+	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
 	tmTypes "github.com/tendermint/tendermint/types"
 )
@@ -18,7 +19,7 @@ func (app *HeimdallApp) ExportAppStateAndValidators() (
 	result := app.mm.ExportGenesis(ctx)
 
 	// create app state
-	// appState, err = codec.MarshalJSONIndent(app.cdc, genState)
-	appState, err = json.Marshal(result)
+	appState, err = jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(result)
+
 	return appState, validators, err
 }

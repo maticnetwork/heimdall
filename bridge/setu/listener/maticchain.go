@@ -5,7 +5,7 @@ import (
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
-	"github.com/maticnetwork/bor/core/types"
+
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -34,28 +34,20 @@ func (ml *MaticChainListener) Start() error {
 	// start header process
 	go ml.StartHeaderProcess(headerCtx)
 
-	// subscribe to new head
-	subscription, err := ml.contractConnector.MaticChainClient.SubscribeNewHead(ctx, ml.HeaderChannel)
-	if err != nil {
-		// start go routine to poll for new header using client object
-		ml.Logger.Info("Start polling for header blocks", "pollInterval", helper.GetConfig().CheckpointerPollInterval)
-		go ml.StartPolling(ctx, helper.GetConfig().CheckpointerPollInterval)
-	} else {
-		// start go routine to listen new header using subscription
-		go ml.StartSubscription(ctx, subscription)
-	}
+	// start go routine to poll for new header using client object
+	ml.Logger.Info("Start polling for header blocks", "pollInterval", helper.GetConfig().CheckpointerPollInterval)
 
-	// subscribed to new head
-	ml.Logger.Info("Subscribed to new head")
+	// start polling for the latest block in child chain (replace with finalized block once we have it implemented)
+	go ml.StartPolling(ctx, helper.GetConfig().CheckpointerPollInterval, nil)
 
 	return nil
 }
 
 // ProcessHeader - process headerblock from maticchain
-func (ml *MaticChainListener) ProcessHeader(newHeader *types.Header) {
-	ml.Logger.Debug("New block detected", "blockNumber", newHeader.Number)
+func (ml *MaticChainListener) ProcessHeader(newHeader *blockHeader) {
+	ml.Logger.Debug("New block detected", "blockNumber", newHeader.header.Number)
 	// Marshall header block and publish to queue
-	headerBytes, err := newHeader.MarshalJSON()
+	headerBytes, err := newHeader.header.MarshalJSON()
 	if err != nil {
 		ml.Logger.Error("Error marshalling header block", "error", err)
 		return
@@ -80,7 +72,9 @@ func (ml *MaticChainListener) sendTaskWithDelay(taskName string, headerBytes []b
 	// add delay for task so that multiple validators won't send same transaction at same time
 	eta := time.Now().Add(delay)
 	signature.ETA = &eta
+
 	ml.Logger.Debug("Sending task", "taskname", taskName, "currentTime", time.Now(), "delayTime", eta)
+
 	_, err := ml.queueConnector.Server.SendTask(signature)
 	if err != nil {
 		ml.Logger.Error("Error sending task", "taskName", taskName, "error", err)

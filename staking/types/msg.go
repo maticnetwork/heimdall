@@ -44,7 +44,6 @@ func NewMsgValidatorJoin(
 	blockNumber uint64,
 	nonce uint64,
 ) MsgValidatorJoin {
-
 	return MsgValidatorJoin{
 		From:            from,
 		ID:              hmTypes.NewValidatorID(id),
@@ -75,6 +74,7 @@ func (msg MsgValidatorJoin) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 
@@ -165,6 +165,7 @@ func (msg MsgStakeUpdate) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 
@@ -254,6 +255,7 @@ func (msg MsgSignerUpdate) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 
@@ -338,6 +340,7 @@ func (msg MsgValidatorExit) GetSignBytes() []byte {
 	if err != nil {
 		panic(err)
 	}
+
 	return sdk.MustSortJSON(b)
 }
 

@@ -1,36 +1,36 @@
 package app
 
 import (
-	"encoding/json"
 	"fmt"
 	"io/ioutil"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 	"github.com/tendermint/tendermint/libs/log"
 	dbm "github.com/tendermint/tm-db"
 
-	"github.com/maticnetwork/heimdall/app/helpers"
 	"github.com/maticnetwork/heimdall/types/module"
 	simTypes "github.com/maticnetwork/heimdall/types/simulation"
+)
+
+// SimAppChainID hardcoded chainID for simulation
+const (
+	SimAppChainID = "simulation-app"
 )
 
 // SetupSimulation creates the config, db (levelDB), temporary directory and logger for
 // the simulation tests. If `FlagEnabledValue` is false it skips the current test.
 // Returns error on an invalid db intantiation or temp dir creation.
 func SetupSimulation(dirPrefix, dbName string) (simTypes.Config, dbm.DB, string, log.Logger, bool, error) {
-	// if !FlagEnabledValue {
-	// 	return simTypes.Config{}, nil, "", nil, true, nil
-	// }
-
 	config := NewConfigFromFlags()
-	config.ChainID = helpers.SimAppChainID
+	config.ChainID = SimAppChainID
 
-	var logger log.Logger
+	var lggr log.Logger
 	if FlagVerboseValue {
-		logger = log.TestingLogger()
+		lggr = log.TestingLogger()
 	} else {
-		logger = log.NewNopLogger()
+		lggr = log.NewNopLogger()
 	}
 
 	dir, err := ioutil.TempDir("", dirPrefix)
@@ -43,7 +43,7 @@ func SetupSimulation(dirPrefix, dbName string) (simTypes.Config, dbm.DB, string,
 		return simTypes.Config{}, nil, "", nil, false, err
 	}
 
-	return config, db, dir, logger, false, nil
+	return config, db, dir, lggr, false, nil
 }
 
 // SimulationOperations retrieves the simulation params from the provided file path
@@ -65,37 +65,39 @@ func SimulationOperations(app App, cdc *codec.Codec, config simTypes.Config) []s
 
 	simState.ParamChanges = app.SimulationManager().GenerateParamChanges(config.Seed)
 	simState.Contents = app.SimulationManager().GetProposalContents(simState)
+
 	return app.SimulationManager().WeightedOperations(simState)
 }
 
 // CheckExportSimulation exports the app state and simulation parameters to JSON
 // if the export paths are defined.
-func CheckExportSimulation(
-	app App, config simTypes.Config, params simTypes.Params,
-) error {
+func CheckExportSimulation(app App, config simTypes.Config, params simTypes.Params) error {
 	if config.ExportStatePath != "" {
 		fmt.Println("exporting app state...")
+
 		appState, _, err := app.ExportAppStateAndValidators()
 		if err != nil {
 			return err
 		}
 
-		if err := ioutil.WriteFile(config.ExportStatePath, []byte(appState), 0644); err != nil {
+		if err = ioutil.WriteFile(config.ExportStatePath, appState, 0644); err != nil { //nolint
 			return err
 		}
 	}
 
 	if config.ExportParamsPath != "" {
 		fmt.Println("exporting simulation params...")
-		paramsBz, err := json.MarshalIndent(params, "", " ")
+
+		paramsBz, err := jsoniter.ConfigCompatibleWithStandardLibrary.MarshalIndent(params, "", " ")
 		if err != nil {
 			return err
 		}
 
-		if err := ioutil.WriteFile(config.ExportParamsPath, paramsBz, 0644); err != nil {
+		if err = ioutil.WriteFile(config.ExportParamsPath, paramsBz, 0644); err != nil { //nolint
 			return err
 		}
 	}
+
 	return nil
 }
 
@@ -110,7 +112,6 @@ func PrintStats(db dbm.DB) {
 // each's module store key and the prefix bytes of the KVPair's key.
 func GetSimulationLog(storeName string, sdr module.StoreDecoderRegistry, cdc *codec.Codec, kvAs, kvBs []sdk.KVPair) (log string) {
 	for i := 0; i < len(kvAs); i++ {
-
 		if len(kvAs[i].Value) == 0 && len(kvBs[i].Value) == 0 {
 			// skip if the value doesn't have any bytes
 			continue
