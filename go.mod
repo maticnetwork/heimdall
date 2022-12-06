@@ -54,7 +54,7 @@ require (
 	google.golang.org/genproto v0.0.0-20210921142501-181ce0d877f6 // indirect
 	google.golang.org/grpc v1.48.0
 	google.golang.org/protobuf v1.28.1
-	gopkg.in/yaml.v2 v2.4.0
+	gopkg.in/yaml.v3 v3.0.1
 )
 
 replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20220923185258-3e7c7f86ce9f
@@ -62,3 +62,7 @@ replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v
 replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20220311095845-81690c6a53e7
 
 replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v0.2.18-0.20220922050621-c91d4ca1fa4f
+
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.5.1
+
+replace github.com/libp2p/go-buffer-pool => github.com/libp2p/go-buffer-pool v0.1.0
