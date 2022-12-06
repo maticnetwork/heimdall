@@ -286,31 +286,31 @@ jobs:
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Prepping postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
         run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
 
       - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
