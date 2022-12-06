@@ -2,10 +2,9 @@ name: packager
 
 on:
   push:
-    branches:
-      - 'main'
-    paths:
-      - '**'
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
 
 jobs:
   build:
