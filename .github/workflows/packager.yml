@@ -360,25 +360,25 @@ jobs:
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Copying over mainnet systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
         run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
 
       - name: Confirming package built
         run: ls -ltr packaging/deb/ | grep heimdall
