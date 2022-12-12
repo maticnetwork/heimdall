@@ -26,11 +26,11 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	}
 
 	//
-	// Validate proposer
+	//Get Validator
 	//
 
 	// Check proposer in message
-	validatorSet := k.sk.GetValidatorSet(ctx)
+	validatorSet := k.sk.GetMilestoneValidatorSet(ctx)
 	if validatorSet.Proposer == nil {
 		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer.String())
 		return common.ErrInvalidMsg(k.Codespace(), "No proposer in stored validator set").Result()
@@ -38,16 +38,6 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 
 	//Increment the priority in the milestone validator set
 	k.sk.MilestoneIncrementAccum(ctx, 1)
-
-	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
-		logger.Error(
-			"Invalid proposer in msg",
-			"proposer", validatorSet.Proposer.Signer.String(),
-			"msgProposer", msg.Proposer.String(),
-		)
-
-		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
-	}
 
 	//
 	//Check for the msg milestone
@@ -79,6 +69,20 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		logger.Error("First milestone to start from block 0", "milestone start block", msg.StartBlock, "error", err)
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 
+	}
+
+	//
+	// Validate proposer
+	//
+
+	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
+		logger.Error(
+			"Invalid proposer in msg",
+			"proposer", validatorSet.Proposer.Signer.String(),
+			"msgProposer", msg.Proposer.String(),
+		)
+
+		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
 	// Emit event for milestone
