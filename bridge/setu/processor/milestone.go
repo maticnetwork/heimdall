@@ -99,7 +99,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 			return err
 		}
 
-		var start uint64
+		var start = helper.GetMilestoneBorBlockHeight()
 
 		if result.Count != 0 {
 			// fetch latest milestone
