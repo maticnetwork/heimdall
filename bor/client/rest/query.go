@@ -26,8 +26,6 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 
-	spanFromBor "github.com/ethereum/go-ethereum/consensus/bor/heimdall/span"
-
 	"github.com/maticnetwork/heimdall/bor/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -543,13 +541,13 @@ func loadSpanOverrides() {
 		return
 	}
 
-	var spans []*ResponseWithHeight
+	var spans []*types.ResponseWithHeight
 	if err := jsoniter.ConfigFastest.Unmarshal(j, &spans); err != nil {
 		return
 	}
 
 	for _, span := range spans {
-		var heimdallSpan spanFromBor.HeimdallSpan
+		var heimdallSpan types.HeimdallSpan
 		if err := jsoniter.ConfigFastest.Unmarshal(span.Result, &heimdallSpan); err != nil {
 			continue
 		}

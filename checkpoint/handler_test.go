@@ -126,7 +126,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 	})
 
-	suite.Run("Checkpoint not in countinuity", func() {
+	suite.Run("Checkpoint not in continuity", func() {
 		headerId := uint64(10000)
 
 		err = keeper.AddCheckpoint(ctx, headerId, header)

@@ -1,11 +1,14 @@
 package processor
 
 import (
+	"context"
 	"encoding/hex"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
 	jsoniter "github.com/json-iterator/go"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -13,6 +16,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/maticnetwork/heimdall/common/tracing"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -55,6 +59,11 @@ func (cp *ClerkProcessor) RegisterTasks() {
 // 1. check if this deposit event has to be broadcasted to heimdall
 // 2. create and broadcast  record transaction to heimdall
 func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes string) error {
+	otelCtx := tracing.WithTracer(context.Background(), otel.Tracer("State-Sync"))
+	// work begins
+	sendStateSyncedToHeimdallCtx, sendStateSyncedToHeimdallSpan := tracing.StartSpan(otelCtx, "sendStateSyncedToHeimdall")
+	defer tracing.EndSpan(sendStateSyncedToHeimdallSpan)
+
 	start := time.Now()
 
 	var vLog = types.Log{}
@@ -75,7 +84,18 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 		cp.Logger.Error("Error while parsing event", "name", eventName, "error", err)
 	} else {
 		defer util.LogElapsedTimeForStateSyncedEvent(event, "sendStateSyncedToHeimdall", start)
-		if isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.ClerkEvent, event); isOld {
+
+		tracing.SetAttributes(sendStateSyncedToHeimdallSpan, []attribute.KeyValue{
+			attribute.String("event", eventName),
+			attribute.Int64("id", event.Id.Int64()),
+			attribute.String("contract", event.ContractAddress.String()),
+		}...)
+
+		_, isOldTxSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "isOldTx")
+		isOld, _ := cp.isOldTx(cp.cliCtx, vLog.TxHash.String(), uint64(vLog.Index), util.ClerkEvent, event)
+		tracing.EndSpan(isOldTxSpan)
+
+		if isOld {
 			cp.Logger.Info("Ignoring task to send deposit to heimdall as already processed",
 				"event", eventName,
 				"id", event.Id,
@@ -86,6 +106,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 				"logIndex", uint64(vLog.Index),
 				"blockNumber", vLog.BlockNumber,
 			)
+
 			return nil
 		}
 
@@ -101,6 +122,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			"blockNumber", vLog.BlockNumber,
 		)
 
+		_, maxStateSyncSizeCheckSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "maxStateSyncSizeCheck")
 		if util.GetBlockHeight(cp.cliCtx) > helper.GetSpanOverrideHeight() && len(event.Data) > helper.MaxStateSyncSize {
 			cp.Logger.Info(`Data is too large to process, Resetting to ""`, "data", hex.EncodeToString(event.Data))
 			event.Data = hmTypes.HexToHexBytes("")
@@ -108,6 +130,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			cp.Logger.Info(`Data is too large to process, Resetting to ""`, "data", hex.EncodeToString(event.Data))
 			event.Data = hmTypes.HexToHexBytes("")
 		}
+		tracing.EndSpan(maxStateSyncSizeCheckSpan)
 
 		msg := clerkTypes.NewMsgEventRecord(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
@@ -120,16 +143,24 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			chainParams.BorChainID,
 		)
 
+		_, checkTxAgainstMempoolSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "checkTxAgainstMempool")
 		// Check if we have the same transaction in mempool or not
 		// Don't drop the transaction. Keep retrying after `util.RetryStateSyncTaskDelay = 24 seconds`,
 		// until the transaction in mempool is processed or cancelled.
-		if inMempool, _ := cp.checkTxAgainstMempool(msg, event); inMempool {
+		inMempool, _ := cp.checkTxAgainstMempool(msg, event)
+		tracing.EndSpan(checkTxAgainstMempoolSpan)
+
+		if inMempool {
 			cp.Logger.Info("Similar transaction already in mempool, retrying in sometime", "event", eventName, "retry delay", util.RetryStateSyncTaskDelay)
 			return tasks.NewErrRetryTaskLater("transaction already in mempool", util.RetryStateSyncTaskDelay)
 		}
 
+		_, BroadcastToHeimdallSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "BroadcastToHeimdall")
 		// return broadcast to heimdall
-		if err = cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		err = cp.txBroadcaster.BroadcastToHeimdall(msg, event)
+		tracing.EndSpan(BroadcastToHeimdallSpan)
+
+		if err != nil {
 			cp.Logger.Error("Error while broadcasting clerk Record to heimdall", "error", err)
 			return err
 		}

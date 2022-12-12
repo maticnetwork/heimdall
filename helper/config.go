@@ -131,6 +131,8 @@ const (
 	//Milestone buffer Length
 	MilestoneBufferLength = MilestoneLength * 2
 	MilestoneBufferTime   = 256 * time.Second
+	// Default Open Collector Endpoint
+	DefaultOpenCollectorEndpoint = "localhost:4317"
 )
 
 var (

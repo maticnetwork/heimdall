@@ -8,6 +8,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/bor/client/rest"
+	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -30,7 +31,7 @@ func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 			return
 		}
 
-		var spans []*ResponseWithHeight
+		var spans []*types.ResponseWithHeight
 
 		if err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(j, &spans); err != nil {
 			k.Logger(ctx).Error("Error Unmarshal spans", "error", err)
