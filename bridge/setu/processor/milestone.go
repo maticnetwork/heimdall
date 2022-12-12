@@ -49,6 +49,129 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 
 }
 
+// startPolling - polls heimdall and checks if new span needs to be proposed
+func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength uint64, interval time.Duration) {
+	ticker := time.NewTicker(interval)
+	// stop ticker when everything done
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			mp.checkAndPropose(milestoneLength)
+		case <-ctx.Done():
+			mp.Logger.Info("Polling stopped")
+			ticker.Stop()
+
+			return
+		}
+	}
+}
+
+// sendMilestoneToHeimdall - handles headerblock from maticchain
+// 1. check if i am the proposer for next milestone
+// 2. check if milestone has to be proposed
+// 3. if so, propose milestone to heimdall.
+func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error) {
+
+	//Milestone proposing mechanism will work only after specific block height
+	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
+		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
+		return nil
+	}
+
+	// fetch milestone context
+	milestoneContext, err := mp.getMilestoneContext()
+	if err != nil {
+		return err
+	}
+
+	isProposer, err := util.IsProposer(mp.cliCtx)
+	if err != nil {
+		mp.Logger.Error("Error checking isProposer in HeaderBlock handler", "error", err)
+		return err
+	}
+
+	if isProposer {
+
+		result, err := util.GetMilestoneCount(mp.cliCtx)
+		if err != nil || result == nil {
+			return err
+		}
+
+		var start = helper.GetMilestoneBorBlockHeight()
+
+		if result.Count != 0 {
+			// fetch latest milestone
+			latestMilestone, err := util.GetLatestMilestone(mp.cliCtx)
+			if err != nil || latestMilestone == nil {
+				return err
+			}
+
+			start = latestMilestone.EndBlock + 1
+
+		}
+
+		end := start + milestoneLength - 1
+
+		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, end, milestoneLength); err != nil {
+			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
+			return err
+		}
+
+	} else {
+		mp.Logger.Info("I am not the current milestone proposer")
+		return
+	}
+
+	return nil
+}
+
+// sendMilestoneToHeimdall - creates milestone msg and broadcasts to heimdall
+func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64, milestoneLength uint64) error {
+	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
+
+	// Get root hash
+	root, err := mp.contractConnector.GetRootHash(start, end, milestoneLength)
+	if err != nil {
+		return err
+	}
+
+	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
+
+	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(root))
+
+	mp.Logger.Info("✅ Creating and broadcasting new milestone",
+		"start", start,
+		"end", end,
+		"root", hmTypes.BytesToHeimdallHash(root),
+		"milestoneId", milestoneId,
+		"milestoneLength", milestoneLength,
+	)
+
+	chainParams := milestoneContext.ChainmanagerParams.ChainParams
+
+	// create and send milestone message
+	_ = milestoneTypes.NewMsgMilestoneBlock(
+		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+		start,
+		end,
+		hmTypes.BytesToHeimdallHash(root),
+		chainParams.BorChainID,
+		milestoneId,
+	)
+
+	mp.Logger.Error("My Turn")
+
+	// // return broadcast to heimdall
+	// if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+	// 	mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
+	// 	return err
+	// }
+
+	return nil
+}
+
 // startPolling - polls heimdall and checks if new milestoneTimeout needs to be proposed
 func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, interval time.Duration) {
 	ticker := time.NewTicker(interval)
@@ -122,129 +245,6 @@ func (mp *MilestoneProcessor) createAndSendMilestoneTimeoutToHeimdall() error {
 		mp.Logger.Error("Error while broadcasting milestone timeout to heimdall", "error", err)
 		return err
 	}
-
-	return nil
-}
-
-// startPolling - polls heimdall and checks if new span needs to be proposed
-func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength uint64, interval time.Duration) {
-	ticker := time.NewTicker(interval)
-	// stop ticker when everything done
-	defer ticker.Stop()
-
-	for {
-		select {
-		case <-ticker.C:
-			mp.checkAndPropose(milestoneLength)
-		case <-ctx.Done():
-			mp.Logger.Info("Polling stopped")
-			ticker.Stop()
-
-			return
-		}
-	}
-}
-
-// sendMilestoneToHeimdall - handles headerblock from maticchain
-// 1. check if i am the proposer for next milestone
-// 2. check if milestone has to be proposed
-// 3. if so, propose milestone to heimdall.
-func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error) {
-
-	//Milestone proposing mechanism will work only after specific block height
-	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
-		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
-		return nil
-	}
-
-	// fetch milestone context
-	milestoneContext, err := mp.getMilestoneContext()
-	if err != nil {
-		return err
-	}
-
-	isProposer, err := util.IsProposer(mp.cliCtx)
-	if err != nil {
-		mp.Logger.Error("Error checking isProposer in HeaderBlock handler", "error", err)
-		return err
-	}
-
-	if isProposer {
-
-		result, err := util.GetMilestoneCount(mp.cliCtx)
-		if err != nil || result == nil {
-			return err
-		}
-
-		var start uint64
-
-		if result.Count != 0 {
-			// fetch latest milestone
-			latestMilestone, err := util.GetLatestMilestone(mp.cliCtx)
-			if err != nil || latestMilestone == nil {
-				return err
-			}
-
-			start = latestMilestone.EndBlock + 1
-
-		}
-
-		end := start + milestoneLength - 1
-
-		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, end, milestoneLength); err != nil {
-			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
-			return err
-		}
-
-	} else {
-		mp.Logger.Info("I am not the current milestone proposer")
-		return
-	}
-
-	return nil
-}
-
-// sendMilestoneToHeimdall - creates milestone msg and broadcasts to heimdall
-func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64, milestoneLength uint64) error {
-	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
-
-	// Get root hash
-	root, err := mp.contractConnector.GetRootHash(start, end, milestoneLength)
-	if err != nil {
-		return err
-	}
-
-	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
-
-	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(root))
-
-	mp.Logger.Info("✅ Creating and broadcasting new milestone",
-		"start", start,
-		"end", end,
-		"root", hmTypes.BytesToHeimdallHash(root),
-		"milestoneId", milestoneId,
-		"milestoneLength", milestoneLength,
-	)
-
-	chainParams := milestoneContext.ChainmanagerParams.ChainParams
-
-	// create and send milestone message
-	_ = milestoneTypes.NewMsgMilestoneBlock(
-		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		start,
-		end,
-		hmTypes.BytesToHeimdallHash(root),
-		chainParams.BorChainID,
-		milestoneId,
-	)
-
-	mp.Logger.Error("My Turn")
-
-	// // return broadcast to heimdall
-	// if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
-	// 	mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
-	// 	return err
-	// }
 
 	return nil
 }
