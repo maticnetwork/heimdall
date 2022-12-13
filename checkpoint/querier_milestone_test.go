@@ -50,7 +50,9 @@ func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 
 	require.NoError(t, err)
 	require.NotNil(t, res)
+
 	var milestone hmTypes.Milestone
+
 	err = json.Unmarshal(res, &milestone)
 	require.NoError(t, err)
 	require.Equal(t, milestone, milestoneBlock)

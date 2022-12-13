@@ -20,7 +20,6 @@ var (
 
 // AddMilestone adds milestone into final blocks
 func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
-
 	milestoneNumber := k.GetMilestoneCount(ctx) + 1 //GetCount gives the number of previous milestone
 
 	key := GetMilestoneKey(milestoneNumber)

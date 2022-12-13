@@ -15,7 +15,6 @@ import (
 
 // handleMsgMilestone Validates milestone transaction
 func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.Result {
-
 	logger := k.Logger(ctx)
 	milestoneLength := helper.MilestoneLength
 

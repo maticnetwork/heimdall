@@ -44,6 +44,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 			"milestoneId", msg.MilestoneID,
 			"error", err,
 		)
+
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
