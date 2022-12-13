@@ -35,7 +35,7 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 		case types.QueryTotalValidatorPower:
 			return handleQueryTotalValidatorPower(ctx, req, keeper)
 		case types.QueryMilestoneProposer:
-			return handleQueryProposer(ctx, req, keeper)
+			return handleQueryMilestoneProposer(ctx, req, keeper)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
