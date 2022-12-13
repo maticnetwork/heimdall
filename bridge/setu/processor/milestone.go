@@ -58,7 +58,10 @@ func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength 
 	for {
 		select {
 		case <-ticker.C:
-			mp.checkAndPropose(milestoneLength)
+			err := mp.checkAndPropose(milestoneLength)
+			if err != nil {
+				mp.Logger.Error("Error in proposing the milestone", "error", err)
+			}
 		case <-ctx.Done():
 			mp.Logger.Info("Polling stopped")
 			ticker.Stop()
@@ -175,7 +178,10 @@ func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, 
 	for {
 		select {
 		case <-ticker.C:
-			mp.checkAndProposeMilestoneTimeout()
+			err := mp.checkAndProposeMilestoneTimeout()
+			if err != nil {
+				mp.Logger.Error("Error in proposing the MilestoneTimeout msg", "error", err)
+			}
 		case <-ctx.Done():
 			mp.Logger.Info("Polling stopped")
 			ticker.Stop()
