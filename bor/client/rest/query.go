@@ -15,7 +15,6 @@
 package rest
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
@@ -529,8 +528,8 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // response with a height.
 // TODO:Link it with bor
 type ResponseWithHeight struct {
-	Height string          `json:"height"`
-	Result json.RawMessage `json:"result"`
+	Height string              `json:"height"`
+	Result jsoniter.RawMessage `json:"result"`
 }
 
 func loadSpanOverrides() {

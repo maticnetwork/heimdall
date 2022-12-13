@@ -120,7 +120,6 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 		}
 	} else {
 		mp.Logger.Info("I am not the current milestone proposer")
-		return
 	}
 
 	return nil

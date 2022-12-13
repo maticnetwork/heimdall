@@ -1,8 +1,6 @@
 package bor
 
 import (
-	"encoding/json"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -17,8 +15,8 @@ import (
 // response with a height.
 // TODO:Link it with bor
 type ResponseWithHeight struct {
-	Height string          `json:"height"`
-	Result json.RawMessage `json:"result"`
+	Height string              `json:"height"`
+	Result jsoniter.RawMessage `json:"result"`
 }
 
 func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
