@@ -78,7 +78,6 @@ func (suite *KeeperTestSuite) TestGetCount() {
 
 	result = keeper.GetMilestoneCount(ctx)
 	require.Equal(t, uint64(1), result)
-
 }
 
 func (suite *KeeperTestSuite) TestGetNoAckMilestone() {
@@ -109,7 +108,6 @@ func (suite *KeeperTestSuite) TestGetNoAckMilestone() {
 
 	val = keeper.GetNoAckMilestone(ctx, "0000")
 	require.True(t, val)
-
 }
 
 func (suite *KeeperTestSuite) TestLastNoAckMilestone() {
@@ -148,5 +146,4 @@ func (suite *KeeperTestSuite) TestGetMilestoneTimout() {
 
 	val = keeper.GetLastMilestoneTimeout(ctx)
 	require.Equal(t, uint64(21), val)
-
 }

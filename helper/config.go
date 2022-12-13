@@ -412,7 +412,6 @@ func GetDefaultHeimdallConfig() Configuration {
 		LogsType: DefaultLogsType,
 		Chain:    DefaultChain,
 	}
-
 }
 
 // GetConfig returns cached configuration object

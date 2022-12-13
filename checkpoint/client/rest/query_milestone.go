@@ -153,7 +153,6 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, res)
-
 	}
 }
 

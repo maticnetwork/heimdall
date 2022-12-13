@@ -127,8 +127,8 @@ func (k *Keeper) GetMilestoneCount(ctx sdk.Context) uint64 {
 
 // FlushCheckpointBuffer flushes Checkpoint Buffer
 func (k *Keeper) PruneMilestone(ctx sdk.Context, number uint64) {
-
 	store := ctx.KVStore(k.storeKey)
+
 	if number <= 0 {
 		return
 	}
@@ -163,6 +163,7 @@ func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) string {
 		result := string(store.Get(MilestoneLastNoAckKey))
 		return result
 	}
+
 	return ""
 }
 
@@ -173,6 +174,7 @@ func (k *Keeper) GetNoAckMilestone(ctx sdk.Context, milestoneId string) bool {
 	if store.Has(GetMilestoneNoAckKey(milestoneId)) {
 		return true
 	}
+
 	return false
 }
 

@@ -64,7 +64,6 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 
 			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
 		}
-
 	} else if err != nil && msg.StartBlock != 0 {
 		logger.Error("First milestone to start from block 0", "milestone start block", msg.StartBlock, "error", err)
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
@@ -125,7 +124,6 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, msg types.MsgMilestoneTimeout, k
 
 	// If last milestone happens before milestone buffer time -- thrown an error
 	if lastMilestoneTime.After(currentTime) || (currentTime.Sub(lastMilestoneTime) < bufferTime) {
-
 		fmt.Print("last Milestone Time", lastMilestoneTime.Second())
 		fmt.Print("Current Time", currentTime.Second())
 

@@ -41,11 +41,13 @@ func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 	)
 	err := app.CheckpointKeeper.AddMilestone(ctx, milestoneBlock)
 	require.NoError(t, err)
+
 	req := abci.RequestQuery{
 		Path: route,
 		Data: []byte{},
 	}
 	res, err := querier(ctx, path, req)
+
 	require.NoError(t, err)
 	require.NotNil(t, res)
 	var milestone hmTypes.Milestone
@@ -58,15 +60,20 @@ func (suite *QuerierTestSuite) TestQueryLastNoAckMilestone() {
 	path := []string{types.QueryLatestNoAckMilestone}
 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone)
 	milestoneID := "00000"
+
 	app.CheckpointKeeper.SetNoAckMilestone(ctx, milestoneID)
+
 	req := abci.RequestQuery{
 		Path: route,
 		Data: []byte{},
 	}
+
 	res, err1 := querier(ctx, path, req)
 	require.NoError(t, err1)
 	require.NotNil(t, res)
+
 	var _milestoneID string
+
 	err2 := json.Unmarshal(res, &_milestoneID)
 	require.NoError(t, err2)
 	require.Equal(t, _milestoneID, milestoneID)
@@ -88,28 +95,36 @@ func (suite *QuerierTestSuite) TestQueryNoAckMilestoneByID() {
 		Path: route,
 		Data: app.Codec().MustMarshalJSON(types.NewQueryMilestoneID(milestoneID)),
 	}
+
 	res, err1 := querier(ctx, path, req)
 	require.NoError(t, err1)
 	require.NotNil(t, res)
+
 	var val bool
+
 	err2 := json.Unmarshal(res, &val)
 	require.NoError(t, err2)
 	require.Equal(t, val, false)
+
 	app.CheckpointKeeper.SetNoAckMilestone(ctx, milestoneID)
+
 	res, err1 = querier(ctx, path, req)
 	require.NoError(t, err1)
 	require.NotNil(t, res)
+
 	err2 = json.Unmarshal(res, &val)
 	require.NoError(t, err2)
 	require.Equal(t, val, true)
 
 	milestoneID = "00001"
+
 	app.CheckpointKeeper.SetNoAckMilestone(ctx, milestoneID)
 	app.CheckpointKeeper.SetNoAckMilestone(ctx, milestoneID)
 
 	res, err1 = querier(ctx, path, req)
 	require.NoError(t, err1)
 	require.NotNil(t, res)
+
 	err2 = json.Unmarshal(res, &val)
 	require.NoError(t, err2)
 	require.Equal(t, val, true)

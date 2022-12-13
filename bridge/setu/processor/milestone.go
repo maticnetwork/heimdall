@@ -73,7 +73,6 @@ func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength 
 // 2. check if milestone has to be proposed
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error) {
-
 	//Milestone proposing mechanism will work only after specific block height
 	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
 		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
@@ -93,7 +92,6 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 	}
 
 	if isProposer {
-
 		result, err := util.GetMilestoneCount(mp.cliCtx)
 		if err != nil || result == nil {
 			return err
@@ -109,7 +107,6 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 			}
 
 			start = latestMilestone.EndBlock + 1
-
 		}
 
 		end := start + milestoneLength - 1
@@ -118,7 +115,6 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
 			return err
 		}
-
 	} else {
 		mp.Logger.Info("I am not the current milestone proposer")
 		return
@@ -194,7 +190,6 @@ func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, 
 // 2. check if milestone has to be proposed
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndProposeMilestoneTimeout() (err error) {
-
 	//Milestone proposing mechanism will work only after specific block height
 	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
 		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
@@ -224,6 +219,7 @@ func (mp *MilestoneProcessor) checkAndProposeMilestoneTimeout() (err error) {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -248,15 +244,14 @@ func (mp *MilestoneProcessor) createAndSendMilestoneTimeoutToHeimdall() error {
 }
 
 func (mp *MilestoneProcessor) checkIfMilestoneTimeoutIsRequired() (bool, error) {
-
 	latestMilestone, err := util.GetLatestMilestone(mp.cliCtx)
 	if err != nil || latestMilestone == nil {
 		return false, err
 	}
 
 	lastMilestoneEndBlock := latestMilestone.EndBlock
-
 	currentChildBlockNumber, _ := mp.getCurrentChildBlock()
+
 	if err != nil {
 		return false, err
 	}

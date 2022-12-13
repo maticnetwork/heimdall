@@ -154,7 +154,6 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeMilestoneNotInContinuity, got.Code)
 
 	})
-
 }
 
 func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
@@ -280,5 +279,4 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneTimeout() {
 	// send milestone to handler
 	got = suite.handler(suite.ctx, msgMilestoneTimeout)
 	require.True(t, got.IsOK(), errs.CodeToDefaultMsg(got.Code))
-
 }

@@ -77,6 +77,7 @@ func handleQueryNoAckMilestoneByID(ctx sdk.Context, req abci.RequestQuery, keepe
 	if err := keeper.cdc.UnmarshalJSON(req.Data, &ID); err != nil {
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse milestoneID: %s", err))
 	}
+
 	res := keeper.GetNoAckMilestone(ctx, ID.MilestoneID)
 
 	bz, err := json.Marshal(res)

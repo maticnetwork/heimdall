@@ -15,7 +15,6 @@ import (
 
 // SideHandleMsgMilestone handles MsgMilestone message for external call
 func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-
 	// get params
 	milestoneLength := helper.MilestoneLength
 
@@ -35,7 +34,6 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 	if count != uint64(0) && err != nil {
 		logger.Error("Error while receiving the last milestone in the side handler")
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
-
 	}
 
 	if count != uint64(0) && msg.StartBlock != lastMilestone.EndBlock+1 {
@@ -58,7 +56,6 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 			"milestoneId", msg.MilestoneID,
 			"error", err,
 		)
-
 	} else if validMilestone {
 		// vote `yes` if milestone is valid
 		result.Result = abci.SideTxResultType_Yes
@@ -109,7 +106,6 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		return sdk.Result{
 			Events: ctx.EventManager().Events(),
 		}
-
 	}
 
 	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil { // fetch last milestone from store
@@ -139,7 +135,6 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				Events: ctx.EventManager().Events(),
 			}
 		}
-
 	} else if err != nil && msg.StartBlock != 0 {
 		logger.Error("First milestone to start from", "block", 0, "Error", err)
 
