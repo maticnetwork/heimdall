@@ -11,6 +11,7 @@ var (
 )
 
 // NodeQuerier is an interface that is satisfied by types that provide the QueryWithData method
+//
 //go:generate mockgen -destination=./mocks/node_querier_mock.go -package=mocks . NodeQuerier
 type NodeQuerier interface {
 	// QueryWithData performs a query to a Tendermint node with the provided path

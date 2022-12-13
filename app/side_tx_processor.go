@@ -235,7 +235,7 @@ func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci
 	return
 }
 
-/// runMsgs iterates through all the messages and executes them.
+// / runMsgs iterates through all the messages and executes them.
 func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult abci.SideTxResultType) sdk.Result {
 	data := make([]byte, 0, len(msgs))
 

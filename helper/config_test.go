@@ -10,7 +10,7 @@ import (
 	cfg "github.com/tendermint/tendermint/config"
 )
 
-//  Test - to check heimdall config
+// Test - to check heimdall config
 func TestHeimdallConfig(t *testing.T) {
 	t.Parallel()
 

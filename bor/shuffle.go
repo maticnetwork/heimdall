@@ -24,20 +24,21 @@ var (
 	}}
 )
 
-// ShuffleList returns list of shuffled indexes in a pseudorandom permutation `p` of `0...list_size - 1` with ``seed`` as entropy.
+// ShuffleList returns list of shuffled indexes in a pseudorandom permutation `p` of `0...list_size - 1` with “seed“ as entropy.
 // We utilize 'swap or not' shuffling in this implementation; we are allocating the memory with the seed that stays
 // constant between iterations instead of reallocating it each iteration as in the spec. This implementation is based
 // on the original implementation from protolambda, https://github.com/protolambda/eth2-shuffle
-//  improvements:
-//   - seed is always the first 32 bytes of the hash input, we just copy it into the buffer one time.
-//   - add round byte to seed and hash that part of the buffer.
-//   - split up the for-loop in two:
-//    1. Handle the part from 0 (incl) to pivot (incl). This is mirrored around (pivot / 2).
-//    2. Handle the part from pivot (excl) to N (excl). This is mirrored around ((pivot / 2) + (size/2)).
-//   - hash source every 256 iterations.
-//   - change byteV every 8 iterations.
-//   - we start at the edges, and work back to the mirror point.
-//     this makes us process each pear exactly once (instead of unnecessarily twice, like in the spec).
+//
+//	improvements:
+//	 - seed is always the first 32 bytes of the hash input, we just copy it into the buffer one time.
+//	 - add round byte to seed and hash that part of the buffer.
+//	 - split up the for-loop in two:
+//	  1. Handle the part from 0 (incl) to pivot (incl). This is mirrored around (pivot / 2).
+//	  2. Handle the part from pivot (excl) to N (excl). This is mirrored around ((pivot / 2) + (size/2)).
+//	 - hash source every 256 iterations.
+//	 - change byteV every 8 iterations.
+//	 - we start at the edges, and work back to the mirror point.
+//	   this makes us process each pear exactly once (instead of unnecessarily twice, like in the spec).
 func ShuffleList(input []uint64, seed [32]byte) ([]uint64, error) {
 	return innerShuffleList(input, seed, true /* shuffle */)
 }
