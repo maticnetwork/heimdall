@@ -64,14 +64,14 @@ func (k *Keeper) GetMilestoneByNumber(ctx sdk.Context, number uint64) (*hmTypes.
 	store := ctx.KVStore(k.storeKey)
 	milestoneKey := GetMilestoneKey(number)
 
-	var _milestone hmTypes.Milestone
+	var milestone hmTypes.Milestone
 
 	if store.Has(milestoneKey) {
-		if err := k.cdc.UnmarshalBinaryBare(store.Get(milestoneKey), &_milestone); err != nil {
+		if err := k.cdc.UnmarshalBinaryBare(store.Get(milestoneKey), &milestone); err != nil {
 			return nil, err
 		}
 
-		return &_milestone, nil
+		return &milestone, nil
 	}
 
 	return nil, errors.New("Invalid milestone Index")
