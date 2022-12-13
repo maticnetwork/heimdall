@@ -165,6 +165,11 @@ func IsMilestoneProposer(cliCtx cliContext.CLIContext) (bool, error) {
 		return false, err
 	}
 
+	if len(proposers) == 0 {
+		logger.Error("length of proposer list is 0")
+		return false, errors.Errorf("Length of proposer list is 0")
+	}
+
 	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
 		return true, nil
 	}
