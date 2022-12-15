@@ -63,8 +63,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 
 			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
 		}
-	} else if msg.StartBlock != 0 {
-		logger.Error("First milestone to start from block 0", "milestone start block", msg.StartBlock, "error", err)
+	} else if msg.StartBlock != helper.GetMilestoneBorBlockHeight() {
+		logger.Error("First milestone to start from", "block", helper.GetMilestoneBorBlockHeight(), "milestone start block", msg.StartBlock, "error", err)
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 	}
 
