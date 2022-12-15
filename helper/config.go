@@ -128,6 +128,8 @@ const (
 	//Milestone Length
 	MilestoneLength = uint64(64)
 
+	MilestonePruneNumber = uint64(100)
+
 	//Milestone buffer Length
 	MilestoneBufferLength = MilestoneLength * 2
 	MilestoneBufferTime   = 256 * time.Second

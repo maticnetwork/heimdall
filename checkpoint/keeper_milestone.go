@@ -7,6 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	cmn "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -27,7 +28,7 @@ func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) erro
 		return err
 	}
 
-	pruningNumber := milestoneNumber - 100
+	pruningNumber := milestoneNumber - helper.MilestonePruneNumber
 
 	k.PruneMilestone(ctx, pruningNumber) //Prune the old milestone to reduce the memory consumption
 	k.SetMilestoneCount(ctx, milestoneNumber)
