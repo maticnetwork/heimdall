@@ -136,7 +136,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 				Events: ctx.EventManager().Events(),
 			}
 		}
-	} else if err != nil && msg.StartBlock != 0 {
+	} else if msg.StartBlock != 0 {
 		logger.Error("First milestone to start from", "block", 0, "Error", err)
 
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
