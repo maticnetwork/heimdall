@@ -377,7 +377,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		milestoneHardForkHeight = 300
+		milestoneHardForkHeight = 450
 		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	}
 }
