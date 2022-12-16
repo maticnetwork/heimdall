@@ -18,6 +18,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	logger := k.Logger(ctx)
 	milestoneLength := helper.MilestoneLength
 
+	logger.Error("NAE    Enter the handlerMsgMilestone", "StartBlock", msg.StartBlock, "Roothash", msg.RootHash)
+
 	//Check for the hard fork value
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
 		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
@@ -81,6 +83,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
+
+	logger.Error("NAE  Passed the handler")
 
 	// Emit event for milestone
 	ctx.EventManager().EmitEvents(sdk.Events{

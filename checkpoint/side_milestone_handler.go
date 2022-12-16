@@ -27,6 +27,8 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
+	logger.Error("NAE    Enter the sideHandlerMsgMilestone")
+
 	// validate milestone
 	count := k.GetMilestoneCount(ctx)
 	lastMilestone, err := k.GetLastMilestone(ctx)
@@ -98,6 +100,8 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			sdk.NewAttribute(types.AttributeKeyMilestoneID, msg.MilestoneID),
 		),
 	})
+
+	logger.Error("NAE    Enter the PostHandlerMsgMilestone")
 
 	// Skip handler if milestone is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
