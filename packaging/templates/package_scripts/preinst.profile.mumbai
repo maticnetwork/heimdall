@@ -1,0 +1,8 @@
+#!/bin/bash
+#
+#
+##################
+# Stops existing for upgrade
+#################
+#sudo systemctl stop heimdalld.service
+sudo -u heimdall heimdalld init --chain=mumbai --home /var/lib/heimdall

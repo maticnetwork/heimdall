@@ -5,3 +5,4 @@
 # Stops existing for upgrade
 #################
 #sudo systemctl stop heimdalld.service
+sudo -u heimdall heimdalld init --chain=mainnet --home /var/lib/heimdall

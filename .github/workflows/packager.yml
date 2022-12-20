@@ -73,7 +73,7 @@ jobs:
           NODE: sentry
           NETWORK: mumbai
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mumbai packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: amd64
           NODE: sentry
@@ -122,7 +122,7 @@ jobs:
           NODE: sentry
           NETWORK: mainnet
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: amd64
           NODE: sentry
@@ -177,7 +177,7 @@ jobs:
           NODE: validator
           NETWORK: mumbai
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mumbai packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: amd64
           NODE: validator
@@ -226,7 +226,7 @@ jobs:
           NODE: validator
           NETWORK: mainnet
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: amd64
           NODE: validator
@@ -327,7 +327,7 @@ jobs:
           NODE: validator
           NETWORK: mumbai
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mumbai packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: arm64
           NODE: validator
@@ -382,7 +382,7 @@ jobs:
           NODE: validator
           NETWORK: mainnet
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: arm64
           NODE: validator
@@ -437,7 +437,7 @@ jobs:
           NODE: sentry
           NETWORK: mumbai
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mumbai packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: arm64
           NODE: sentry
@@ -486,7 +486,7 @@ jobs:
           NODE: sentry
           NETWORK: mainnet
       - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
-        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        run: cp -rp packaging/templates/package_scripts/preinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: arm64
           NODE: sentry
