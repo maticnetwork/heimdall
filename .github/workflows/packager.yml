@@ -72,6 +72,12 @@ jobs:
           ARCH: amd64
           NODE: sentry
           NETWORK: mumbai
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
       - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
         env:
@@ -111,6 +117,12 @@ jobs:
           NETWORK: mainnet
       - name: Copying over the postinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: amd64
           NODE: sentry
@@ -164,6 +176,12 @@ jobs:
           ARCH: amd64
           NODE: validator
           NETWORK: mumbai
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
       - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/config/mumbai/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
         env:
@@ -203,6 +221,12 @@ jobs:
           NETWORK: mainnet
       - name: Prepping control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: amd64
           NODE: validator
@@ -302,6 +326,12 @@ jobs:
           ARCH: arm64
           NODE: validator
           NETWORK: mumbai
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
       - name: Copying over the postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN//postinst
         env:
@@ -347,6 +377,12 @@ jobs:
           NETWORK: mainnet
       - name: Prepping control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: arm64
           NODE: validator
@@ -400,6 +436,12 @@ jobs:
           ARCH: arm64
           NODE: sentry
           NETWORK: mumbai
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
       - name: Copying postinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
         env:
@@ -439,6 +481,12 @@ jobs:
 
       - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying over the preinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.profile packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
         env:
           ARCH: arm64
           NODE: sentry
