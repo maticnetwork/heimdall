@@ -1,0 +1,43 @@
+# This is a TOML config file.
+# For more information, see https://github.com/toml-lang/toml
+
+##### RPC and REST configs #####
+
+# RPC endpoint for ethereum chain
+eth_rpc_url = "http://localhost:9545"
+
+# RPC endpoint for bor chain
+bor_rpc_url = "http://localhost:8545"
+
+# RPC endpoint for tendermint
+tendermint_rpc_url = "http://0.0.0.0:26657"
+
+# Heimdall REST server endpoint
+heimdall_rest_server = "http://0.0.0.0:1317"
+
+#### Bridge configs ####
+
+# AMQP endpoint
+amqp_url = "amqp://guest:guest@localhost:5672/"
+
+## Poll intervals
+checkpoint_poll_interval = "5m0s"
+syncer_poll_interval = "1m0s"
+noack_poll_interval = "16m50s"
+clerk_poll_interval = "10s"
+span_poll_interval = "1m0s"
+sh_state_synced_interval = "24h0m0s"
+sh_stake_update_interval = "24h0m0s"
+sh_max_depth_duration = "1h0m0s"
+
+#### gas limits ####
+main_chain_gas_limit = "5000000"
+
+#### gas price ####
+main_chain_max_gas_price = "400000000000"
+
+##### Timeout Config #####
+no_ack_wait_time = "30m0s"
+
+##### chain - newSelectionAlgoHeight depends on this #####
+chain = "mainnet"

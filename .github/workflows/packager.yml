@@ -78,6 +78,18 @@ jobs:
           ARCH: amd64
           NODE: sentry
           NETWORK: mumbai
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/sentry/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mumbai
       - name: Copying profile control file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
         env:
@@ -99,6 +111,18 @@ jobs:
           NETWORK: mainnet
       - name: Copying over the postinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/sentry/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
         env:
           ARCH: amd64
           NODE: sentry
@@ -140,6 +164,18 @@ jobs:
           ARCH: amd64
           NODE: validator
           NETWORK: mumbai
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/validator/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mumbai
       - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
         env:
@@ -173,6 +209,18 @@ jobs:
           NETWORK: mainnet
       - name: Prepping postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/validator/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
         env:
           ARCH: amd64
           NODE: validator
@@ -266,6 +314,18 @@ jobs:
           ARCH: arm64
           NODE: validator
           NETWORK: mumbai
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/validator/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mumbai
       - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
         env:
@@ -290,31 +350,43 @@ jobs:
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Prepping postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/validator/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mainnet
       - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
         run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
         env:
           ARCH: arm64
           NODE: validator
-          NETWORK: mumbai
+          NETWORK: mainnet
 
       - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
@@ -336,6 +408,18 @@ jobs:
           NETWORK: mumbai
       - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mumbai
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mumbai/sentry/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
         env:
           ARCH: arm64
           NODE: sentry
@@ -364,25 +448,37 @@ jobs:
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Copying over mainnet systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
+      - name: Copying the config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/heimdall-config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying the ${{ env.NODE }} config.toml for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/mainnet/sentry/config.toml packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: mainnet
       - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
       - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
         run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
         env:
           ARCH: arm64
           NODE: sentry
-          NETWORK: mumbai
+          NETWORK: mainnet
 
       - name: Confirming package built
         run: ls -ltr packaging/deb/ | grep heimdall
