@@ -29,6 +29,8 @@ jobs:
 
       - name: Making directory structure
         run: mkdir -p packaging/deb/heimdalld/usr/bin
+      - name: Making var lib directory structure
+        run: mkdir -p packaging/deb/heimdalld/var/lib/heimdall/config
 
       - name: Copying over the postinst for use
         run: cp -rp packaging/templates/package_scripts/postinst packaging/deb/heimdalld/DEBIAN/postinst
