@@ -286,7 +286,7 @@ jobs:
         env:
           ARCH: arm64
       - name: Remove config toml directory
-        run: rm -rf packaging/deb/heimdalld/var/lib/heimdall
+        run: rm -rf packaging/deb/heimdalld/var/lib/heimdall/config
       - name: Copying over heimdalld
         run: cp -rp build/heimdalld packaging/deb/heimdalld/usr/bin/
       - name: Setting up the heimdallcli control file for use with ${{ env.ARCH }}
