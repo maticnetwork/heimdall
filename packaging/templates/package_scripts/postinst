@@ -6,6 +6,6 @@ if [ -d "/var/lib/heimdall" ]
 then
     echo "Directory /var/lib/heimdall exists."
 else
-    mkdir -p /var/lib/heimdall
+    sudo mkdir -p /var/lib/heimdall
     sudo chown -R heimdall /var/lib/heimdall
 fi
