@@ -40,4 +40,4 @@ main_chain_max_gas_price = "400000000000"
 no_ack_wait_time = "30m0s"
 
 ##### chain - newSelectionAlgoHeight depends on this #####
-chain = "mumbai"
+chain = "mainnet"
