@@ -94,8 +94,9 @@ const (
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
-	DefaultSHStateSyncedInterval    = 1 * time.Minute
-	DefaultSHStakeUpdateInterval    = 5 * time.Minute
+	DefaultEnableSH                 = false
+	DefaultSHStateSyncedInterval    = 15 * time.Minute
+	DefaultSHStakeUpdateInterval    = 3 * time.Hour
 	DefaultSHMaxDepthDuration       = time.Hour
 
 	DefaultMainchainGasLimit = uint64(5000000)
@@ -163,6 +164,7 @@ type Configuration struct {
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
 	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
+	EnableSH                 bool          `mapstructure:"enable_self_heal"`         // Enable self healing
 	SHStateSyncedInterval    time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
 	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
 	SHMaxDepthDuration       time.Duration `mapstructure:"sh_max_depth_duration"`    // Max duration that allows to suggest self-healing is not needed
@@ -382,6 +384,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		NoACKPollInterval:        DefaultNoACKPollInterval,
 		ClerkPollInterval:        DefaultClerkPollInterval,
 		SpanPollInterval:         DefaultSpanPollInterval,
+		EnableSH:                 DefaultEnableSH,
 		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
 		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
 		SHMaxDepthDuration:       DefaultSHMaxDepthDuration,
