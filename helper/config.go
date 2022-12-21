@@ -32,6 +32,7 @@ const (
 	WithHeimdallConfigFlag = "heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+	OverwriteGenesisFlag   = "overwrite-genesis"
 	RestServerFlag         = "rest-server"
 	BridgeFlag             = "bridge"
 	LogLevel               = "log_level"
