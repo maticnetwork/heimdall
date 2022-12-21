@@ -12,6 +12,8 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
+	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -38,14 +40,9 @@ type subGraphClient struct {
 
 // startSelfHealing starts self-healing processes for all required events
 func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
-	if !helper.GetConfig().EnableSH || helper.GetConfig().SubGraphUrl == "" {
+	if !helper.GetConfig().EnableSH {
 		rl.Logger.Info("Self-healing disabled")
 		return
-	}
-
-	rl.subGraphClient = &subGraphClient{
-		graphUrl:   helper.GetConfig().SubGraphUrl,
-		httpClient: &http.Client{Timeout: 5 * time.Second},
 	}
 
 	stakeUpdateTicker := time.NewTicker(helper.GetConfig().SHStakeUpdateInterval)
@@ -112,7 +109,7 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 
 			rl.Logger.Info("Processing stake update for validator", "id", id, "ethereumNonce", ethereumNonce, "nonce", nonce)
 
-			var stakeUpdate *types.Log
+			var stakeUpdate *stakinginfo.StakinginfoStakeUpdate
 
 			if err = helper.ExponentialBackoff(func() error {
 				stakeUpdate, err = rl.getStakeUpdate(ctx, id, nonce)
@@ -123,14 +120,14 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 			}
 
 			stakeUpdateCounter.WithLabelValues(
-				fmt.Sprintf("%d", id),
-				fmt.Sprintf("%d", nonce),
-				stakeUpdate.Address.Hex(),
-				fmt.Sprintf("%d", stakeUpdate.BlockNumber),
-				stakeUpdate.TxHash.Hex(),
+				stakeUpdate.ValidatorId.String(),
+				stakeUpdate.Nonce.String(),
+				stakeUpdate.Raw.Address.String(),
+				fmt.Sprintf("%d", stakeUpdate.Raw.BlockNumber),
+				stakeUpdate.Raw.TxHash.String(),
 			).Add(1)
 
-			if _, err = rl.processEvent(ctx, stakeUpdate); err != nil {
+			if _, err = rl.processEvent(ctx, &stakeUpdate.Raw); err != nil {
 				rl.Logger.Error("Error processing stake update for validator", "error", err, "id", id)
 			} else {
 				rl.Logger.Info("Processed stake update for validator", "id", id, "nonce", nonce)
@@ -167,7 +164,7 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 
 		rl.Logger.Info("Processing state sync", "id", i)
 
-		var stateSynced *types.Log
+		var stateSynced *statesender.StatesenderStateSynced
 
 		if err = helper.ExponentialBackoff(func() error {
 			stateSynced, err = rl.getStateSync(ctx, i)
@@ -178,13 +175,13 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 		}
 
 		stateSyncedCounter.WithLabelValues(
-			fmt.Sprintf("%d", i),
-			stateSynced.Address.Hex(),
-			fmt.Sprintf("%d", stateSynced.BlockNumber),
-			stateSynced.TxHash.Hex(),
+			stateSynced.Id.String(),
+			stateSynced.Raw.Address.String(),
+			fmt.Sprintf("%d", stateSynced.Raw.BlockNumber),
+			stateSynced.Raw.TxHash.String(),
 		).Add(1)
 
-		ignore, err := rl.processEvent(ctx, stateSynced)
+		ignore, err := rl.processEvent(ctx, &stateSynced.Raw)
 		if err != nil {
 			rl.Logger.Error("Unable to update state id on heimdall", "error", err)
 			i--

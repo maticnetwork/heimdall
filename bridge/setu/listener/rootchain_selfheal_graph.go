@@ -60,7 +60,7 @@ func (rl *RootChainListener) querySubGraph(query []byte, ctx context.Context) (d
 }
 
 // getLatestStateID returns state ID from the latest StateSynced event
-func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, error) {
+func (rl *RootChainListener) xxxgetLatestStateID(ctx context.Context) (*big.Int, error) {
 	query := map[string]string{
 		"query": `
 		{
@@ -97,7 +97,7 @@ func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, er
 }
 
 // getCurrentStateID returns the current state ID handled by the polygon chain
-func (rl *RootChainListener) getCurrentStateID(ctx context.Context) (*big.Int, error) {
+func (rl *RootChainListener) xxxgetCurrentStateID(ctx context.Context) (*big.Int, error) {
 	rootchainContext, err := rl.getRootChainContext()
 	if err != nil {
 		return nil, err
@@ -119,7 +119,7 @@ func (rl *RootChainListener) getCurrentStateID(ctx context.Context) (*big.Int, e
 }
 
 // getStateSync returns the StateSynced event based on the given state ID
-func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*types.Log, error) {
+func (rl *RootChainListener) xxxgetStateSync(ctx context.Context, stateId int64) (*types.Log, error) {
 	query := map[string]string{
 		"query": `
 		{
@@ -165,7 +165,7 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 }
 
 // getLatestNonce returns the nonce from the latest StakeUpdate event
-func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uint64) (uint64, error) {
+func (rl *RootChainListener) xxxgetLatestNonce(ctx context.Context, validatorId uint64) (uint64, error) {
 	query := map[string]string{
 		"query": `
 		{
@@ -204,7 +204,7 @@ func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uin
 }
 
 // getStakeUpdate returns StakeUpdate event based on the given validator ID and nonce
-func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, nonce uint64) (*types.Log, error) {
+func (rl *RootChainListener) xxxgetStakeUpdate(ctx context.Context, validatorId, nonce uint64) (*types.Log, error) {
 	query := map[string]string{
 		"query": `
 		{

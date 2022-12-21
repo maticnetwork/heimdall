@@ -188,10 +188,11 @@ type Configuration struct {
 	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
 	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
 	MilestonePollInterval    time.Duration `mapstructure:"milestone_poll_interval"`
-	EnableSH                 bool          `mapstructure:"enable_self_heal"`         // Enable self healing
-	SHStateSyncedInterval    time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
-	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
-	SHMaxDepthDuration       time.Duration `mapstructure:"sh_max_depth_duration"`    // Max duration that allows to suggest self-healing is not needed
+	EnableSH                 bool          `mapstructure:"enable_self_heal"` // Enable self healing
+	// EnableSH                 bool          `mapstructure:"enable_self_heal"`         // Enable self healing
+	SHStateSyncedInterval time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
+	SHStakeUpdateInterval time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
+	SHMaxDepthDuration    time.Duration `mapstructure:"sh_max_depth_duration"`    // Max duration that allows to suggest self-healing is not needed
 
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
@@ -442,10 +443,11 @@ func GetDefaultHeimdallConfig() Configuration {
 		ClerkPollInterval:        DefaultClerkPollInterval,
 		SpanPollInterval:         DefaultSpanPollInterval,
 		MilestonePollInterval:    DefaultMilestonePollInterval,
-		EnableSH:                 DefaultEnableSH,
-		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
-		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
-		SHMaxDepthDuration:       DefaultSHMaxDepthDuration,
+		// EnableSH:                 DefaultEnableSH,
+		EnableSH:              DefaultEnableSH,
+		SHStateSyncedInterval: DefaultSHStateSyncedInterval,
+		SHStakeUpdateInterval: DefaultSHStakeUpdateInterval,
+		SHMaxDepthDuration:    DefaultSHMaxDepthDuration,
 
 		NoACKWaitTime: NoACKWaitTime,
 
