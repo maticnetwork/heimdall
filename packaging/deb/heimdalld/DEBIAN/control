@@ -1,0 +1,15 @@
+Source: heimdalld
+Section: develop
+Priority: Testing
+Maintainer: Polygon <team@polygon.technology>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: v0.3.0-beta
+Homepage: https://polygon.technology
+Rules-Requires-Root: no
+Package: heimdalld
+Version: 0.3.0-beta
+Architecture: amd64
+Multi-Arch: foreign
+Depends:
+Description: This is the control file for the Polygon project known as heimdall. This project can have multiple iterations and more details can be found in the official Github Page: https://github.com/maticnetwork/heimdall
+

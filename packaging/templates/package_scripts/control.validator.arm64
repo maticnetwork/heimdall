@@ -1,0 +1,14 @@
+Source: heimdalld-profile
+Section: develop
+Priority: Testing
+Maintainer: Polygon <team@polygon.technology>
+Build-Depends: debhelper-compat (= 13)
+Standards-Version: v0.3.0
+Homepage: https://polygon.technology
+Rules-Requires-Root: no
+Package: heimdalld-profile
+Version: 0.3.0
+Architecture: arm64
+Multi-Arch: foreign
+Depends: rabbitmq-server
+Description: This is the control file for the Polygon project known as heimdall. This project can have multiple iterations and more details can be found in the official Github Page: https://github.com/maticnetwork/heimdall
