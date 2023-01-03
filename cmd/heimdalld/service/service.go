@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"math/big"
@@ -739,7 +740,14 @@ func InitializeNodeValidatorFiles(
 
 // WriteDefaultHeimdallConfig writes default heimdall config to the given path
 func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
-	helper.WriteConfigFile(path, &conf)
+	// Don't write if config file in path already exists
+	if _, err := os.Stat(path); err == nil {
+		logger.Info(fmt.Sprintf("Config file %s already exists. Skip writing default heimdall config.", path))
+	} else if errors.Is(err, os.ErrNotExist) {
+		helper.WriteConfigFile(path, &conf)
+	} else {
+		logger.Error("Error while checking for config file", "Error", err)
+	}
 }
 
 func CryptoKeyToPubkey(key crypto.PubKey) hmTypes.PubKey {
