@@ -34,6 +34,11 @@ var (
 
 // startSelfHealing starts self-healing processes for all required events
 func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
+	if !helper.GetConfig().EnableSH {
+		rl.Logger.Info("Self-healing disabled")
+		return
+	}
+
 	stakeUpdateTicker := time.NewTicker(helper.GetConfig().SHStakeUpdateInterval)
 	stateSyncedTicker := time.NewTicker(helper.GetConfig().SHStateSyncedInterval)
 
@@ -112,6 +117,8 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 
 			if _, err = rl.processEvent(ctx, stakeUpdate.Raw); err != nil {
 				rl.Logger.Error("Error processing stake update for validator", "error", err, "id", id)
+			} else {
+				rl.Logger.Info("Processed stake update for validator", "id", id, "nonce", nonce)
 			}
 		}(validator.ID.Uint64(), validator.Nonce)
 	}
