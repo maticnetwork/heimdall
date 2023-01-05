@@ -11,7 +11,6 @@ import (
 	"time"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/cobra"
@@ -188,8 +187,6 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
-
-var maticEthClient *eth.EthAPIBackend
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -434,11 +431,6 @@ func GetMaticClient() *ethclient.Client {
 // GetMaticRPCClient returns matic's RPC client
 func GetMaticRPCClient() *rpc.Client {
 	return maticRPCClient
-}
-
-// GetMaticEthClient returns matic's Eth client
-func GetMaticEthClient() *eth.EthAPIBackend {
-	return maticEthClient
 }
 
 // GetPrivKey returns priv key object
