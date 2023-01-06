@@ -288,6 +288,7 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	defer cancel()
 
 	rootHash, err := c.MaticChainClient.GetRootHash(ctx, start, end)
+
 	if err != nil {
 		return nil, errors.New("could not fetch rootHash from matic chain")
 	}
@@ -392,6 +393,20 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.
 	}
 
 	return latestBlock, nil
+}
+
+// GetMainChainFinalizedBlock returns finalized main chain block header (post-merge)
+func (c *ContractCaller) GetMainChainFinalizedBlock() (header *ethTypes.Header, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
+	defer cancel()
+
+	latestFinalizedBlock, err := c.MainChainClient.HeaderByNumber(ctx, big.NewInt(int64(rpc.FinalizedBlockNumber)))
+	if err != nil {
+		Logger.Error("Unable to connect to main chain", "error", err)
+		return
+	}
+
+	return latestFinalizedBlock, nil
 }
 
 // GetMainChainBlockTime returns main chain block time
