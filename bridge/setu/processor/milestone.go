@@ -64,8 +64,6 @@ func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength 
 			}
 		case <-ctx.Done():
 			mp.Logger.Info("Polling stopped")
-			ticker.Stop()
-
 			return
 		}
 	}
@@ -88,7 +86,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 		return err
 	}
 
-	isProposer, err := util.IsProposer(mp.cliCtx)
+	isProposer, err := util.IsMilestoneProposer(mp.cliCtx)
 	if err != nil {
 		mp.Logger.Error("Error checking isProposer in HeaderBlock handler", "error", err)
 		return err
