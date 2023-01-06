@@ -346,12 +346,6 @@
         "veto": "0.334000000000000000"
       }
     },
-    "milestone": {
-      "params": {
-        "sprint_length": "64"
-      },
-      "milestone": null
-    },
     "params": null,
     "sidechannel": {
       "past_commits": []
