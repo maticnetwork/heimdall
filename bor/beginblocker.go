@@ -13,7 +13,6 @@ import (
 
 // ResponseWithHeight defines a response object type that wraps an original
 // response with a height.
-// TODO:Link it with bor
 type ResponseWithHeight struct {
 	Height string              `json:"height"`
 	Result jsoniter.RawMessage `json:"result"`
