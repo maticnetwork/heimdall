@@ -40,13 +40,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			milestone.MilestoneID,
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
+		suite.contractCaller.On("GetVoteOnHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.Hash.String(), milestone.MilestoneID).Return(true, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.Equal(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should be success")
@@ -56,7 +56,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 
 	})
 
-	suite.Run("No Roothash", func() {
+	suite.Run("No Hash", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 
 		// create milestone msg
@@ -64,13 +64,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			milestone.MilestoneID,
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(false, nil)
+		suite.contractCaller.On("GetVoteOnHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.Hash.String(), milestone.MilestoneID).Return(false, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
@@ -90,13 +90,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock+1,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			milestone.MilestoneID,
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
+		suite.contractCaller.On("GetVoteOnHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.Hash.String(), milestone.MilestoneID).Return(true, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
@@ -116,13 +116,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			milestone.MilestoneID,
 		)
 
 		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
-		suite.contractCaller.On("GetVoteOnRootHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.RootHash.String(), milestone.MilestoneID).Return(true, nil)
+		suite.contractCaller.On("GetVoteOnHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.Hash.String(), milestone.MilestoneID).Return(true, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)
 		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail as milestone is not in continuity to latest stored milestone ")
@@ -161,7 +161,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			"00000",
 		)
@@ -189,7 +189,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			"00001",
 		)
@@ -198,7 +198,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 		bufferedHeader, err := keeper.GetLastMilestone(ctx)
 		require.Equal(t, bufferedHeader.StartBlock, milestone.StartBlock)
 		require.Equal(t, bufferedHeader.EndBlock, milestone.EndBlock)
-		require.Equal(t, bufferedHeader.RootHash, milestone.RootHash)
+		require.Equal(t, bufferedHeader.Hash, milestone.Hash)
 		require.Equal(t, bufferedHeader.Proposer, milestone.Proposer)
 		require.Equal(t, bufferedHeader.BorChainID, milestone.BorChainID)
 		require.Empty(t, err, "Unable to set milestone, Error: %v", err)
@@ -220,7 +220,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			"00002",
 		)
@@ -240,7 +240,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock+64+1,
 			milestone.EndBlock+64+1,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			"00003",
 		)
@@ -260,7 +260,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 			milestone.Proposer,
 			milestone.StartBlock,
 			milestone.EndBlock,
-			milestone.RootHash,
+			milestone.Hash,
 			borChainId,
 			"00004",
 		)

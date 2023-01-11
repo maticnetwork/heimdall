@@ -20,7 +20,7 @@ type Milestone struct {
 	Proposer    HeimdallAddress `json:"proposer"`
 	StartBlock  uint64          `json:"start_block"`
 	EndBlock    uint64          `json:"end_block"`
-	RootHash    HeimdallHash    `json:"root_hash"`
+	Hash        HeimdallHash    `json:"hash"`
 	BorChainID  string          `json:"bor_chain_id"`
 	MilestoneID string          `json:"milestone_id"`
 	TimeStamp   uint64          `json:"timestamp"`
@@ -49,7 +49,7 @@ func CreateBlock(
 func CreateMilestone(
 	start uint64,
 	end uint64,
-	rootHash HeimdallHash,
+	hash HeimdallHash,
 	proposer HeimdallAddress,
 	borChainID string,
 	milestoneID string,
@@ -58,7 +58,7 @@ func CreateMilestone(
 	return Milestone{
 		StartBlock:  start,
 		EndBlock:    end,
-		RootHash:    rootHash,
+		Hash:        hash,
 		Proposer:    proposer,
 		BorChainID:  borChainID,
 		MilestoneID: milestoneID,
@@ -95,7 +95,7 @@ func (m Milestone) String() string {
 		m.Proposer.String(),
 		m.StartBlock,
 		m.EndBlock,
-		m.RootHash.Hex(),
+		m.Hash.Hex(),
 		m.BorChainID,
 		m.MilestoneID,
 		m.TimeStamp,

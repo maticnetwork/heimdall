@@ -21,7 +21,7 @@ func (suite *KeeperTestSuite) TestAddMilestone() {
 
 	startBlock := uint64(0)
 	endBlock := uint64(63)
-	rootHash := hmTypes.HexToHeimdallHash("123")
+	hash := hmTypes.HexToHeimdallHash("123")
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
 	borChainId := "1234"
@@ -30,7 +30,7 @@ func (suite *KeeperTestSuite) TestAddMilestone() {
 	milestone := hmTypes.CreateMilestone(
 		startBlock,
 		endBlock,
-		rootHash,
+		hash,
 		proposerAddress,
 		borChainId,
 		milestoneID,
@@ -43,7 +43,7 @@ func (suite *KeeperTestSuite) TestAddMilestone() {
 	require.NoError(t, err)
 	require.Equal(t, startBlock, result.StartBlock)
 	require.Equal(t, endBlock, result.EndBlock)
-	require.Equal(t, rootHash, result.RootHash)
+	require.Equal(t, hash, result.Hash)
 	require.Equal(t, borChainId, result.BorChainID)
 	require.Equal(t, proposerAddress, result.Proposer)
 	require.Equal(t, timestamp, result.TimeStamp)
@@ -58,7 +58,7 @@ func (suite *KeeperTestSuite) TestGetCount() {
 
 	startBlock := uint64(0)
 	endBlock := uint64(63)
-	rootHash := hmTypes.HexToHeimdallHash("123")
+	hash := hmTypes.HexToHeimdallHash("123")
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
 	borChainId := "1234"
@@ -67,7 +67,7 @@ func (suite *KeeperTestSuite) TestGetCount() {
 	milestone := hmTypes.CreateMilestone(
 		startBlock,
 		endBlock,
-		rootHash,
+		hash,
 		proposerAddress,
 		borChainId,
 		milestoneID,

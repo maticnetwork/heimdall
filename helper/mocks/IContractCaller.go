@@ -690,8 +690,8 @@ func (_m *IContractCaller) GetRootHash(start uint64, end uint64, checkpointLengt
 	return r0, r1
 }
 
-// GetVoteOnRootHash provides a mock function with given fields: start, end, milestoneLength,rootHash, milestoneID
-func (_m *IContractCaller) GetVoteOnRootHash(start uint64, end uint64, milestoneLength uint64, rootHash string, milestoneID string) (bool, error) {
+// GetVoteOnsHash provides a mock function with given fields: start, end, milestoneLength,Hash, milestoneID
+func (_m *IContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, rootHash string, milestoneID string) (bool, error) {
 	ret := _m.Called(start, end, milestoneLength,rootHash,milestoneID)
 
 	var r0 bool

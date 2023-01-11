@@ -25,7 +25,7 @@ func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone)
 	startBlock := uint64(0)
 	endBlock := uint64(255)
-	rootHash := hmTypes.HexToHeimdallHash("123")
+	hash := hmTypes.HexToHeimdallHash("123")
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(time.Now().Unix())
 	borChainId := "1234"
@@ -33,7 +33,7 @@ func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 	milestoneBlock := hmTypes.CreateMilestone(
 		startBlock,
 		endBlock,
-		rootHash,
+		hash,
 		proposerAddress,
 		borChainId,
 		milestoneID,

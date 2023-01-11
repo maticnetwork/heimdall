@@ -52,7 +52,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
-			header.RootHash,
+			header.Hash,
 			borChainId,
 			milestoneID,
 		)
@@ -70,7 +70,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
-			header.RootHash,
+			header.Hash,
 			borChainId,
 			milestoneID,
 		)
@@ -87,7 +87,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.Proposer,
 			header.StartBlock,
 			header.EndBlock,
-			header.RootHash,
+			header.Hash,
 			borChainId,
 			milestoneID,
 		)
@@ -116,7 +116,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.Proposer,
 			start,
 			start+milestoneLength-1,
-			header.RootHash,
+			header.Hash,
 			borChainId,
 			milestoneID,
 		)
@@ -143,7 +143,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			header.Proposer,
 			start,
 			start+milestoneLength-1,
-			header.RootHash,
+			header.Hash,
 			borChainId,
 			milestoneID,
 		)
@@ -201,14 +201,14 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 		header.Proposer,
 		header.StartBlock,
 		header.EndBlock,
-		header.RootHash,
+		header.Hash,
 		borChainId,
 		milestoneID,
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
-	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, milestoneLength).Return(header.RootHash.Bytes(), nil)
-	suite.contractCaller.On("GetVoteOnRootHash", header.StartBlock, header.EndBlock, milestoneLength, header.RootHash.String(), header.MilestoneID).Return(true, nil)
+	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, milestoneLength).Return(header.Hash.Bytes(), nil)
+	suite.contractCaller.On("GetVoteOnHash", header.StartBlock, header.EndBlock, milestoneLength, header.Hash.String(), header.MilestoneID).Return(true, nil)
 
 	// send milestone to handler
 	result := suite.handler(ctx, msgMilestone)
@@ -225,7 +225,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneTimeout() {
 
 	startBlock := uint64(0)
 	endBlock := uint64(63)
-	rootHash := hmTypes.HexToHeimdallHash("123")
+	hash := hmTypes.HexToHeimdallHash("123")
 	proposerAddress := hmTypes.HexToHeimdallAddress("123")
 	timestamp := uint64(0)
 	borChainId := "1234"
@@ -249,7 +249,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneTimeout() {
 	milestone := hmTypes.CreateMilestone(
 		startBlock,
 		endBlock,
-		rootHash,
+		hash,
 		proposerAddress,
 		borChainId,
 		milestoneID,

@@ -40,7 +40,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 		logger.Error("Milestone is not in continuity to last stored milestone",
 			"startBlock", msg.StartBlock,
 			"endBlock", msg.EndBlock,
-			"rootHash", msg.RootHash,
+			"hash", msg.Hash,
 			"milestoneId", msg.MilestoneID,
 			"error", err,
 		)
@@ -48,12 +48,12 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
-	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.RootHash, msg.MilestoneID, contractCaller, milestoneLength)
+	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.Hash, msg.MilestoneID, contractCaller, milestoneLength)
 	if err != nil {
 		logger.Error("Error validating milestone",
 			"startBlock", msg.StartBlock,
 			"endBlock", msg.EndBlock,
-			"rootHash", msg.RootHash,
+			"hash", msg.Hash,
 			"milestoneId", msg.MilestoneID,
 			"error", err,
 		)
@@ -64,10 +64,10 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 	}
 
 	logger.Error(
-		"RootHash is not valid",
+		"Hash is not valid",
 		"startBlock", msg.StartBlock,
 		"endBlock", msg.EndBlock,
-		"rootHash", msg.RootHash,
+		"hash", msg.Hash,
 		"milestoneId", msg.MilestoneID,
 	)
 
@@ -94,14 +94,14 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			sdk.NewAttribute(types.AttributeKeyProposer, msg.Proposer.String()),
 			sdk.NewAttribute(types.AttributeKeyStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
 			sdk.NewAttribute(types.AttributeKeyEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
-			sdk.NewAttribute(types.AttributeKeyRootHash, msg.RootHash.String()),
+			sdk.NewAttribute(types.AttributeKeyHash, msg.Hash.String()),
 			sdk.NewAttribute(types.AttributeKeyMilestoneID, msg.MilestoneID),
 		),
 	})
 
 	// Skip handler if milestone is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
-		logger.Debug("Skipping new milestone since side-tx didn't get yes votes", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "rootHash", msg.RootHash, "milestoneId", msg.MilestoneID)
+		logger.Debug("Skipping new milestone since side-tx didn't get yes votes", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "hash", msg.Hash, "milestoneId", msg.MilestoneID)
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
 		return sdk.Result{
@@ -150,7 +150,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	if err := k.AddMilestone(ctx, hmTypes.Milestone{ // Save milestone to buffer store
 		StartBlock:  msg.StartBlock, //Add milestone to store with root hash
 		EndBlock:    msg.EndBlock,
-		RootHash:    msg.RootHash,
+		Hash:        msg.Hash,
 		Proposer:    msg.Proposer,
 		BorChainID:  msg.BorChainID,
 		MilestoneID: msg.MilestoneID,

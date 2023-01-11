@@ -14,6 +14,7 @@ var (
 	AttributeKeyNewProposer = "new-proposer"
 	AttributeKeyRootHash    = "root-hash"
 	AttributeKeyAccountHash = "account-hash"
+	AttributeKeyHash        = "hash"
 
 	EventTypeMilestone        = "milestone"
 	EventTypeMilestoneTimeout = "milestone-timeout"

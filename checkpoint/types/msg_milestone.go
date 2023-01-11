@@ -19,7 +19,7 @@ type MsgMilestone struct {
 	Proposer    types.HeimdallAddress `json:"proposer"`
 	StartBlock  uint64                `json:"start_block"`
 	EndBlock    uint64                `json:"end_block"`
-	RootHash    types.HeimdallHash    `json:"root_hash"`
+	Hash        types.HeimdallHash    `json:"hash"`
 	BorChainID  string                `json:"bor_chain_id"`
 	MilestoneID string                `json:"milestone_id"`
 }
@@ -29,7 +29,7 @@ func NewMsgMilestoneBlock(
 	proposer types.HeimdallAddress,
 	startBlock uint64,
 	endBlock uint64,
-	roothash types.HeimdallHash,
+	hash types.HeimdallHash,
 	borChainID string,
 	milestoneID string,
 ) MsgMilestone {
@@ -37,7 +37,7 @@ func NewMsgMilestoneBlock(
 		Proposer:    proposer,
 		StartBlock:  startBlock,
 		EndBlock:    endBlock,
-		RootHash:    roothash,
+		Hash:        hash,
 		BorChainID:  borChainID,
 		MilestoneID: milestoneID,
 	}
@@ -67,8 +67,8 @@ func (msg MsgMilestone) GetSignBytes() []byte {
 }
 
 func (msg MsgMilestone) ValidateBasic() sdk.Error {
-	if bytes.Equal(msg.RootHash.Bytes(), helper.ZeroHash.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.RootHash.String())
+	if bytes.Equal(msg.Hash.Bytes(), helper.ZeroHash.Bytes()) {
+		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid rootHash %v", msg.Hash.String())
 	}
 
 	if msg.Proposer.Empty() {
@@ -91,7 +91,7 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 		msg.Proposer.Bytes(),
 		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
-		msg.RootHash.Bytes(),
+		msg.Hash.Bytes(),
 		new(big.Int).SetUint64(borChainID).Bytes(),
 		[]byte(msg.MilestoneID),
 	)

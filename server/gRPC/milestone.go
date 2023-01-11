@@ -20,7 +20,7 @@ type Milestone struct {
 	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
 	StartBlock uint64                  `json:"start_block"`
 	EndBlock   uint64                  `json:"end_block"`
-	RootHash   hmTypes.HeimdallHash    `json:"root_hash"`
+	Hash       hmTypes.HeimdallHash    `json:"hash"`
 	BorChainID string                  `json:"bor_chain_id"`
 	TimeStamp  uint64                  `json:"timestamp"`
 }
@@ -63,7 +63,7 @@ func (h *HeimdallGRPCServer) FetchMilestone(ctx context.Context, in *emptypb.Emp
 
 	var hash [32]byte
 
-	copy(hash[:], milestone.RootHash.Bytes())
+	copy(hash[:], milestone.Hash.Bytes())
 
 	var address [20]byte
 
