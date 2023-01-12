@@ -135,6 +135,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	}
 
 	blockHash := endBlock.Hash()
+	num := endBlock.Number().Uint64()
 
 	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
 
@@ -143,6 +144,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", start,
 		"end", end,
+		"endNew", num,
 		"root", blockHash,
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
