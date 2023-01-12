@@ -312,6 +312,13 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
+	chainId, err := c.MainChainClient.ChainID(ctx)
+	if err != nil {
+		Logger.Error("Error while calculating chain id", "err", err)
+	}
+
+	Logger.Info("MaticChai in VoteHash", "-->", chainId)
+
 	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	if err != nil {
 		return false, errors.New("could not fetch vote from matic chain")
@@ -443,8 +450,11 @@ func (c *ContractCaller) GetMaticChainBlockByNumber(blockNum *big.Int) (header *
 	defer cancel()
 
 	maticChainID, err := c.MaticChainClient.ChainID(ctx)
+	if err != nil {
+		Logger.Error("MaticChainClient", "Err", err)
+	}
 
-	Logger.Info("MaticChainClient", "", maticChainID)
+	Logger.Info("MaticChainClient", "->>>", maticChainID)
 
 	latestBlock, err := c.MaticChainClient.BlockByNumber(ctx, blockNum)
 	if err != nil {
