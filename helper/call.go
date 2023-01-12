@@ -44,6 +44,7 @@ type IContractCaller interface {
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
+	GetMaticChainBlockByNumber(*big.Int) (*ethTypes.Block, error)
 	IsTxConfirmed(common.Hash, uint64) bool
 	GetConfirmedTxReceipt(common.Hash, uint64) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
@@ -428,6 +429,20 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	defer cancel()
 
 	latestBlock, err := c.MaticChainClient.HeaderByNumber(ctx, blockNum)
+	if err != nil {
+		Logger.Error("Unable to connect to matic chain", "error", err)
+		return
+	}
+
+	return latestBlock, nil
+}
+
+// GetMaticChainBlock returns child chain block header
+func (c *ContractCaller) GetMaticChainBlockByNumber(blockNum *big.Int) (header *ethTypes.Block, err error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
+	defer cancel()
+
+	latestBlock, err := c.MaticChainClient.BlockByNumber(ctx, blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "error", err)
 		return

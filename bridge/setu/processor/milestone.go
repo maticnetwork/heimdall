@@ -129,7 +129,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
 
 	// Get root hash
-	endBlock, err := mp.contractConnector.GetMaticChainBlock(big.NewInt(0).SetUint64(end))
+	endBlock, err := mp.contractConnector.GetMaticChainBlockByNumber(big.NewInt(0).SetUint64(end))
 	if err != nil {
 		return err
 	}
