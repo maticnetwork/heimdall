@@ -166,7 +166,7 @@ replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v
 
 replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20220311095845-81690c6a53e7
 
-replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v0.3.0-beta4.0.20230111110706-fe8604026794
+replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v0.3.0-beta4.0.20230112110759-3d15384baa94
 
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.5.1
 
