@@ -143,7 +143,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", start,
 		"end", end,
-		"root", hmTypes.BytesToHeimdallHash(blockHash[:]),
+		"root", blockHash,
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
 	)
