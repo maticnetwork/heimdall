@@ -399,7 +399,6 @@ func (c *ContractCaller) GetMainChainBlock(blockNum *big.Int) (header *ethTypes.
 func (c *ContractCaller) GetMainChainFinalizedBlock() (header *ethTypes.Header, err error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
-
 	latestFinalizedBlock, err := c.MainChainClient.HeaderByNumber(ctx, big.NewInt(int64(rpc.FinalizedBlockNumber)))
 	if err != nil {
 		Logger.Error("Unable to connect to main chain", "error", err)
