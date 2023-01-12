@@ -442,6 +442,10 @@ func (c *ContractCaller) GetMaticChainBlockByNumber(blockNum *big.Int) (header *
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
+	maticChainID, err := c.MaticChainClient.ChainID(ctx)
+
+	Logger.Info("MaticChainClient", "", maticChainID)
+
 	latestBlock, err := c.MaticChainClient.BlockByNumber(ctx, blockNum)
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "error", err)
