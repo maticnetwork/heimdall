@@ -34,7 +34,7 @@ var ContractsABIsMap = make(map[string]*abi.ABI)
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
-	GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, rootHash string, milestoneID string) (bool, error)
+	GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
@@ -297,7 +297,7 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 }
 
 // GetRootHash get root hash from bor chain
-func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, rootHash string, milestoneID string) (bool, error) {
+func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error) {
 	noOfBlock := end - start + 1
 
 	if start > end {
@@ -311,7 +311,7 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, rootHash, milestoneID)
+	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	if err != nil {
 		return false, errors.New("could not fetch vote from matic chain")
 	}
