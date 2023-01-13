@@ -133,7 +133,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	if err != nil {
 		return err
 	}
-
+	blockHash := endBlock.Hash()
 	blockHeader := endBlock.Header()
 	a := blockHeader.BaseFee
 	b := blockHeader.Difficulty
