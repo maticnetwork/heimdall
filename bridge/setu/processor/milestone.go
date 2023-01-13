@@ -134,7 +134,26 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		return err
 	}
 
-	blockHash := endBlock.Hash()
+	blockHeader := endBlock.Header()
+	a := blockHeader.BaseFee
+	b := blockHeader.Difficulty
+	c := blockHeader.Nonce
+	d := blockHeader.ParentHash
+	e := blockHeader.ReceiptHash
+	f := blockHeader.Bloom
+	g := blockHeader.Coinbase
+	h := blockHeader.GasUsed
+
+	mp.Logger.Info("✅ Block Parameter",
+		"BaseFee", a,
+		"Difficulty", b,
+		"Nonce", c,
+		"ParentHash", d,
+		"ReceiptHash", e,
+		"Bloom", f,
+		"CoinBase", g,
+		"GasUsed", h,
+	)
 
 	num := endBlock.Number().Uint64()
 
@@ -146,7 +165,6 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		"start", start,
 		"end", end,
 		"endNew", num,
-		"root", blockHash,
 		"block", endBlock,
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
