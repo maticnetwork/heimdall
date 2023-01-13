@@ -134,10 +134,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		return err
 	}
 
-	mainEndBlock, err := mp.contractConnector.GetMainChainBlock(big.NewInt(0).SetUint64(end))
-
-	blockHash := endBlock.Header().Hash()
-	mainHash := mainEndBlock.Hash()
+	blockHash := endBlock.Hash()
 
 	num := endBlock.Number().Uint64()
 
@@ -150,7 +147,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		"end", end,
 		"endNew", num,
 		"root", blockHash,
-		"main", mainHash,
+		"block", endBlock,
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
 	)
