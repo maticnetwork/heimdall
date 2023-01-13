@@ -129,33 +129,11 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
 
 	// Get root hash
-	endBlock, err := mp.contractConnector.GetMaticChainBlockByNumber(big.NewInt(0).SetUint64(end))
+	endBlock, err := mp.contractConnector.GetMaticChainBlock(big.NewInt(0).SetUint64(end + 1))
 	if err != nil {
 		return err
 	}
-	blockHash := endBlock.Hash()
-	blockHeader := endBlock.Header()
-	a := blockHeader.BaseFee
-	b := blockHeader.Difficulty
-	c := blockHeader.Nonce
-	d := blockHeader.ParentHash
-	e := blockHeader.ReceiptHash
-	f := blockHeader.Bloom
-	g := blockHeader.Coinbase
-	h := blockHeader.GasUsed
-
-	mp.Logger.Info("✅ Block Parameter",
-		"BaseFee", a,
-		"Difficulty", b,
-		"Nonce", c,
-		"ParentHash", d,
-		"ReceiptHash", e,
-		"Bloom", f,
-		"CoinBase", g,
-		"GasUsed", h,
-	)
-
-	num := endBlock.Number().Uint64()
+	blockHash := endBlock.ParentHash
 
 	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
 
@@ -164,8 +142,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", start,
 		"end", end,
-		"endNew", num,
-		"block", endBlock,
+		"hash", blockHash,
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
 	)
