@@ -7,7 +7,7 @@ RUN apt-get update -y && apt-get upgrade -y \
     && apt install build-essential git -y \
     && mkdir -p $HEIMDALL_DIR
 
-WORKDIR /heimdall
+WORKDIR ${HEIMDALL_DIR}
 COPY . .
 
 RUN make install

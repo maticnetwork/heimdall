@@ -11,7 +11,6 @@ import (
 	"time"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/cobra"
@@ -32,6 +31,7 @@ const (
 	WithHeimdallConfigFlag = "heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+	OverwriteGenesisFlag   = "overwrite-genesis"
 	RestServerFlag         = "rest-server"
 	BridgeFlag             = "bridge"
 	LogLevel               = "log_level"
@@ -96,10 +96,14 @@ const (
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
-	DefaultMilestonePollInterval    = 10 * time.Second
-	DefaultSHStateSyncedInterval    = 1 * time.Minute
-	DefaultSHStakeUpdateInterval    = 5 * time.Minute
-	DefaultSHMaxDepthDuration       = time.Hour
+
+	DefaultMilestonePollInterval = 10 * time.Second
+
+	DefaultEnableSH              = false
+	DefaultSHStateSyncedInterval = 15 * time.Minute
+	DefaultSHStakeUpdateInterval = 3 * time.Hour
+
+	DefaultSHMaxDepthDuration = time.Hour
 
 	DefaultMainchainGasLimit = uint64(5000000)
 
@@ -175,6 +179,7 @@ type Configuration struct {
 	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
 	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
 	MilestonePollInterval    time.Duration `mapstructure:"milestone_poll_interval"`
+	EnableSH                 bool          `mapstructure:"enable_self_heal"`         // Enable self healing
 	SHStateSyncedInterval    time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
 	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
 	SHMaxDepthDuration       time.Duration `mapstructure:"sh_max_depth_duration"`    // Max duration that allows to suggest self-healing is not needed
@@ -197,8 +202,6 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
-
-var maticEthClient *eth.EthAPIBackend
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -405,6 +408,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		ClerkPollInterval:        DefaultClerkPollInterval,
 		SpanPollInterval:         DefaultSpanPollInterval,
 		MilestonePollInterval:    DefaultMilestonePollInterval,
+		EnableSH:                 DefaultEnableSH,
 		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
 		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
 		SHMaxDepthDuration:       DefaultSHMaxDepthDuration,
@@ -453,11 +457,6 @@ func GetMaticClient() *ethclient.Client {
 // GetMaticRPCClient returns matic's RPC client
 func GetMaticRPCClient() *rpc.Client {
 	return maticRPCClient
-}
-
-// GetMaticEthClient returns matic's Eth client
-func GetMaticEthClient() *eth.EthAPIBackend {
-	return maticEthClient
 }
 
 // GetPrivKey returns priv key object
