@@ -637,7 +637,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	// add MilestonePollIntervalFlag flag
 	cmd.PersistentFlags().String(
 		MilestonePollIntervalFlag,
-		"",
+		DefaultMilestonePollInterval.String(),
 		"Set milestone interval",
 	)
 
