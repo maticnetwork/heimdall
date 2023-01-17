@@ -64,12 +64,12 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Empty(t, bufferedHeader, "Should not store state")
 	})
 
-	suite.Run("Invalid msg based on sprint length", func() {
+	suite.Run("Invalid msg based on milestone length", func() {
 		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			header.StartBlock,
-			header.EndBlock,
+			header.EndBlock-1,
 			header.Hash,
 			borChainId,
 			milestoneID,
@@ -78,7 +78,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		// send milestone to handler
 		got := suite.handler(ctx, msgMilestone)
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
-		require.Equal(t, errs.CodeInvalidMsg, got.Code)
+		require.Equal(t, errs.CodeMilestoneInvalid, got.Code)
 	})
 
 	suite.Run("Invalid Proposer", func() {
