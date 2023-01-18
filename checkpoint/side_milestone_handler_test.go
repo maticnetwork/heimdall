@@ -89,13 +89,13 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			milestone.Proposer,
 			milestone.StartBlock,
-			milestone.EndBlock+1,
+			milestone.EndBlock-1,
 			milestone.Hash,
 			borChainId,
 			milestone.MilestoneID,
 		)
 
-		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock).Return(true)
+		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock+1).Return(true)
 		suite.contractCaller.On("GetVoteOnHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.Hash.String(), milestone.MilestoneID).Return(true, nil)
 
 		result := suite.sideHandler(ctx, msgMilestone)

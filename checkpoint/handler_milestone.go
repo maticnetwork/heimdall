@@ -42,13 +42,14 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	//Check for the msg milestone
 	//
 
-	if msg.StartBlock+milestoneLength-1 != msg.EndBlock {
-		logger.Error("Milestone's length doesn't match the  milestone length set in configuration",
+	msgMilestoneLength := int64(msg.EndBlock) - int64(msg.StartBlock) + 1
+
+	if msgMilestoneLength < int64(milestoneLength) {
+		logger.Error("Length of the milestone should be greater than configured minimum milestone length",
 			"StartBlock", msg.StartBlock,
 			"EndBlock", msg.EndBlock,
-			"Milestone Length", milestoneLength,
+			"Minimum Milestone Length", milestoneLength,
 		)
-
 		return common.ErrMilestoneInvalid(k.Codespace()).Result()
 	}
 
@@ -78,7 +79,6 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 			"proposer", validatorSet.Proposer.Signer.String(),
 			"msgProposer", msg.Proposer.String(),
 		)
-
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 

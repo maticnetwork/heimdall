@@ -45,7 +45,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	require.NoError(t, err)
 
 	// add current proposer to header
-	header.Proposer = stakingKeeper.GetValidatorSet(ctx).Proposer.Signer
+	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
 	suite.Run("Success", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -56,7 +56,6 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 			borChainId,
 			milestoneID,
 		)
-
 		// send milestone to handler
 		got := suite.handler(ctx, msgMilestone)
 		require.True(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
@@ -69,7 +68,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
 			header.StartBlock,
-			header.EndBlock-1,
+			header.EndBlock-9999999999999999999,
 			header.Hash,
 			borChainId,
 			milestoneID,
@@ -184,7 +183,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 
 	// send milestone to handler
 	got := suite.SendMilestone(header)
-	require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+	require.False(t, got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 }
 
 func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.Result) {

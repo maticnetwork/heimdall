@@ -9,8 +9,10 @@ import (
 
 // ValidateMilestone - Validates if milestone rootHash matches or not
 func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, milestoneLength uint64) (bool, error) {
-	if start+milestoneLength-1 != end {
-		return false, errors.New("Invalid milestone, difference in start and end block is not equal to sprint length")
+
+	msgMilestoneLength := int64(end) - int64(start) + 1
+	if msgMilestoneLength < int64(milestoneLength) {
+		return false, errors.New("Invalid milestone, difference in start and end block is less than milestone length")
 	}
 
 	// Check if blocks exist locally

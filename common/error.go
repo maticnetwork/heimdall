@@ -168,7 +168,7 @@ func ErrMilestoneNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrMilestoneInvalid(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeMilestoneInvalid, "Milestone not in continuity")
+	return newError(codespace, CodeMilestoneInvalid, "Milestone Msg Invalid")
 }
 
 func ErrOldMilestone(codespace sdk.CodespaceType) sdk.Error {
