@@ -298,14 +298,8 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 
 // GetRootHash get root hash from bor chain
 func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error) {
-	noOfBlock := end - start + 1
-
 	if start > end {
 		return false, errors.New("start is greater than end")
-	}
-
-	if noOfBlock > milestoneLength {
-		return false, errors.New("number of headers requested exceeds")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
