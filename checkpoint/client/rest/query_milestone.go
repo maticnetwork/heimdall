@@ -19,6 +19,7 @@ func registerQueryMilestoneRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/lastNoAck", latestNoAckMilestoneHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/noAck/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/ID/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
 }
 
 func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -175,6 +176,50 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID), queryID)
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var val bool
+		if err := jsoniter.Unmarshal(result, &val); err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		res, err := jsoniter.Marshal(map[string]interface{}{"result": val})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get milestone number
+		id := vars["id"]
+
+		// get query params
+		queryID, err := cliCtx.Codec.MarshalJSON(types.NewQueryMilestoneID(id))
+		if err != nil {
+			return
+		}
+
+		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByID), queryID)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

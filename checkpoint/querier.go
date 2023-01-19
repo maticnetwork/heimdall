@@ -44,6 +44,8 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, topupKeeper topup.K
 			return handleQueryLatestNoAckMilestone(ctx, keeper)
 		case types.QueryNoAckMilestoneByID:
 			return handleQueryNoAckMilestoneByID(ctx, req, keeper)
+		case types.QueryMilestoneByID:
+			return handleQueryMilestoneByID(ctx, req, keeper)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")

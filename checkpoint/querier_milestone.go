@@ -87,3 +87,19 @@ func handleQueryNoAckMilestoneByID(ctx sdk.Context, req abci.RequestQuery, keepe
 
 	return bz, nil
 }
+
+func handleQueryMilestoneByID(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var ID types.QueryMilestoneID
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &ID); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse milestoneID: %s", err))
+	}
+
+	res := keeper.GetMilestoneID(ctx, ID.MilestoneID)
+
+	bz, err := json.Marshal(res)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}

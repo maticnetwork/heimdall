@@ -6,6 +6,7 @@ const (
 	QueryCount                = "count"
 	QueryLatestNoAckMilestone = "latest-no-ack-milestone"
 	QueryNoAckMilestoneByID   = "no-ack-milestone-by-id"
+	QueryMilestoneByID        = "milestone-by-id"
 )
 
 // QueryMilestoneParams defines the params for querying accounts.
