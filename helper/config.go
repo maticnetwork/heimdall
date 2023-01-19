@@ -132,6 +132,9 @@ const (
 	//Milestone Length
 	MilestoneLength = uint64(24)
 
+	//MaticChain Milestone Confirmation Blocks
+	MaticChainMilestoneConfirmation = uint64(4)
+
 	MilestonePruneNumber = uint64(100)
 
 	//Milestone buffer Length
