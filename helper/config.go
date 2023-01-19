@@ -97,7 +97,7 @@ const (
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
 
-	DefaultMilestonePollInterval = 10 * time.Second
+	DefaultMilestonePollInterval = 6 * time.Second
 
 	DefaultEnableSH              = false
 	DefaultSHStateSyncedInterval = 15 * time.Minute
@@ -130,7 +130,7 @@ const (
 	MaxStateSyncSize = 30000
 
 	//Milestone Length
-	MilestoneLength = uint64(24)
+	MilestoneLength = uint64(12)
 
 	//MaticChain Milestone Confirmation Blocks
 	MaticChainMilestoneConfirmation = uint64(4)
@@ -383,8 +383,8 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		milestoneHardForkHeight = 300
-		milestoneBorBlockHeight = 1000 //Fixme:Change the value
+		milestoneHardForkHeight = 25
+		milestoneBorBlockHeight = 196 //Fixme:Change the value
 	}
 }
 
