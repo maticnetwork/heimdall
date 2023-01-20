@@ -100,7 +100,7 @@ func StartBridgeWithCtx(shutdownCtx context.Context) error {
 		// wait for interrupt and start shut down
 		<-shutdownCtx.Done()
 
-		logger.Info("Received stop signal - Stopping all services")
+		logger.Info("Received stop signal - Stopping all heimdall bridge services")
 		for _, service := range services {
 			srv := service
 			if srv.IsRunning() {

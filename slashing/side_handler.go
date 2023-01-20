@@ -159,7 +159,7 @@ func PostHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, sideTxResul
 	// check for replay - tick should be in conitunity
 	tickCount := k.GetTickCount(ctx)
 	if msg.ID != tickCount+1 {
-		k.Logger(ctx).Error("Tick not in countinuity. may be due to replay", "msgID", msg.ID, "expectedMsgID", tickCount+1)
+		k.Logger(ctx).Error("Tick not in continuity. may be due to replay", "msgID", msg.ID, "expectedMsgID", tickCount+1)
 		return hmCommon.ErrTickNotInContinuity(k.Codespace()).Result()
 	}
 
@@ -241,7 +241,7 @@ func PostHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, sideT
 	// check if tick ack msgs are in continuity.
 	tickCount := k.GetTickCount(ctx)
 	if msg.ID != tickCount {
-		k.Logger(ctx).Error("Tick-ack not in countinuity.", "msgID", msg.ID, "expectedMsgID", tickCount)
+		k.Logger(ctx).Error("Tick-ack not in continuity.", "msgID", msg.ID, "expectedMsgID", tickCount)
 		return hmCommon.ErrTickAckNotInContinuity(k.Codespace()).Result()
 	}
 
