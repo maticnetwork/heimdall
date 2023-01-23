@@ -112,7 +112,7 @@ func ErrOldCheckpoint(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrDisCountinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeDisCountinuousCheckpoint, "Checkpoint not in countinuity")
+	return newError(codespace, CodeDisCountinuousCheckpoint, "Checkpoint not in continuity")
 }
 
 func ErrNoACK(codespace sdk.CodespaceType, expiresAt uint64) sdk.Error {
@@ -215,7 +215,7 @@ func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidBorChainID, "Invalid Bor chain id")
 }
 
-func ErrSpanNotInCountinuity(codespace sdk.CodespaceType) sdk.Error {
+func ErrSpanNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
 }
 
@@ -287,7 +287,7 @@ func CodeToDefaultMsg(code CodeType) string {
 	case CodeOldCheckpoint:
 		return "Checkpoint already received for given start and end block"
 	case CodeDisCountinuousCheckpoint:
-		return "Checkpoint not in countinuity"
+		return "Checkpoint not in continuity"
 	case CodeNoCheckpointBuffer:
 		return "Checkpoint buffer Not Found"
 	case CodeOldValidator:
@@ -358,9 +358,9 @@ func ErrSlashInfoDetails(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrTickNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeTickNotInContinuity, "Tick not in countinuity")
+	return newError(codespace, CodeTickNotInContinuity, "Tick not in continuity")
 }
 
 func ErrTickAckNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeTickAckNotInContinuity, "Tick-ack not in countinuity")
+	return newError(codespace, CodeTickAckNotInContinuity, "Tick-ack not in continuity")
 }

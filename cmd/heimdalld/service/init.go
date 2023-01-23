@@ -1,4 +1,4 @@
-package main
+package service
 
 import (
 	"errors"
@@ -37,14 +37,6 @@ type initHeimdallConfig struct {
 }
 
 func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallConfig, config *cfg.Config) error {
-	// do not execute init if forceInit is false and genesis.json already exists (or we do not have permission to write to file)
-	if !initConfig.forceInit {
-		_, err := os.Stat(config.GenesisFile())
-		if err == nil || !errors.Is(err, os.ErrNotExist) { // https://stackoverflow.com/questions/12518876/how-to-check-if-a-file-exists-in-go
-			return nil
-		}
-	}
-
 	WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
 
 	nodeID, valPubKey, _, err := InitializeNodeValidatorFiles(config)
@@ -52,10 +44,34 @@ func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallC
 		return err
 	}
 
-	genesisCreated, err := helper.WriteGenesisFile(initConfig.chain, config.GenesisFile(), cdc)
-	if err != nil {
-		return err
-	} else if genesisCreated {
+	// do not execute init if forceInit is false and genesis.json already exists (or we do not have permission to write to file)
+	writeGenesis := initConfig.forceInit
+
+	if !writeGenesis {
+		// When not forcing, check if genesis file exists
+		_, err := os.Stat(config.GenesisFile())
+		if err != nil && errors.Is(err, os.ErrNotExist) {
+			logger.Info(fmt.Sprintf("Genesis file %v not found, writing genesis file\n", config.GenesisFile()))
+
+			writeGenesis = true
+		} else if err == nil {
+			logger.Info(fmt.Sprintf("Found genesis file %v, skipping writing genesis file\n", config.GenesisFile()))
+		} else {
+			logger.Error(fmt.Sprintf("Error checking if genesis file %v exists: %v\n", config.GenesisFile(), err))
+			return err
+		}
+	} else {
+		logger.Info(fmt.Sprintf("Force writing genesis file to %v\n", config.GenesisFile()))
+	}
+
+	if writeGenesis {
+		genesisCreated, err := helper.WriteGenesisFile(initConfig.chain, config.GenesisFile(), cdc)
+		if err != nil {
+			return err
+		} else if genesisCreated {
+			return nil
+		}
+	} else {
 		return nil
 	}
 
@@ -158,7 +174,7 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 				chain:       viper.GetString(helper.ChainFlag),
 				validatorID: viper.GetInt64(stakingcli.FlagValidatorID),
 				clientHome:  viper.GetString(helper.FlagClientHome),
-				forceInit:   true,
+				forceInit:   viper.GetBool(helper.OverwriteGenesisFlag),
 			}
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
@@ -170,6 +186,7 @@ func initCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
 	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Int(stakingcli.FlagValidatorID, 1, "--id=<validator ID here>, if left blank will be assigned 1")
+	cmd.Flags().Bool(helper.OverwriteGenesisFlag, false, "overwrite the genesis.json file if it exists")
 
 	return cmd
 }
