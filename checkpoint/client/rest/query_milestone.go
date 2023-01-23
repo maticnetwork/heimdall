@@ -19,7 +19,7 @@ func registerQueryMilestoneRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/lastNoAck", latestNoAckMilestoneHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/noAck/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/milestone/ID/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/ID/{id}", milestoneByIDHandlerFn(cliCtx)).Methods("GET")
 }
 
 func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
