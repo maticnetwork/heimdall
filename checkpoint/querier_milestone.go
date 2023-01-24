@@ -94,7 +94,11 @@ func handleQueryMilestoneByID(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse milestoneID: %s", err))
 	}
 
+	keeper.Logger(ctx).Error("In Milestone ID Querier 97")
+
 	res := keeper.GetMilestoneID(ctx, ID.MilestoneID)
+
+	keeper.Logger(ctx).Error("In Milestone ID Querier 102")
 
 	bz, err := json.Marshal(res)
 	if err != nil {

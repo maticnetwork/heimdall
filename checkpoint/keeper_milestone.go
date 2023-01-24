@@ -223,12 +223,17 @@ func (k *Keeper) SetMilestoneID(ctx sdk.Context, milestoneId string) {
 
 // GetLastNoAckMilestone returns last no ack milestone
 func (k *Keeper) GetMilestoneID(ctx sdk.Context, milestoneId string) bool {
+
+	k.Logger(ctx).Error("In GetMilestoneID")
+
 	store := ctx.KVStore(k.storeKey)
 	// check if No Ack Milestone is there
 	if store.Has(GetMilestoneIDKey(milestoneId)) {
+		k.Logger(ctx).Error("In GetMilestoneID 232")
 		return true
 	}
 
+	k.Logger(ctx).Error("In GetMilestoneID 236")
 	return false
 }
 

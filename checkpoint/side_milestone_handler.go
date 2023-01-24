@@ -20,6 +20,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 	// logger
 	logger := k.Logger(ctx)
+	milestoneLength := helper.MilestoneLength
 
 	//Check for the hard fork value
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
@@ -49,20 +50,20 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
-	// validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.Hash, msg.MilestoneID, contractCaller, milestoneLength)
-	// if err != nil {
-	// 	logger.Error("Error validating milestone",
-	// 		"startBlock", msg.StartBlock,
-	// 		"endBlock", msg.EndBlock,
-	// 		"hash", msg.Hash,
-	// 		"milestoneId", msg.MilestoneID,
-	// 		"error", err,
-	// 	)
-	// } else if validMilestone {
-	// vote `yes` if milestone is valid
-	result.Result = abci.SideTxResultType_Yes
-	return
-	//}
+	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.Hash, msg.MilestoneID, contractCaller, milestoneLength)
+	if err != nil {
+		logger.Error("Error validating milestone",
+			"startBlock", msg.StartBlock,
+			"endBlock", msg.EndBlock,
+			"hash", msg.Hash,
+			"milestoneId", msg.MilestoneID,
+			"error", err,
+		)
+	} else if validMilestone {
+		//vote `yes` if milestone is valid
+		result.Result = abci.SideTxResultType_Yes
+		return
+	}
 
 	logger.Error(
 		"Hash is not valid",

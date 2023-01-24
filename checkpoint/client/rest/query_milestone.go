@@ -205,6 +205,8 @@ func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
+		RestLogger.Error("Entered milestoneByIDHandler")
+
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
 		if !ok {
 			return
@@ -219,17 +221,23 @@ func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		RestLogger.Error("Query with Data 225")
+
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByID), queryID)
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
+		RestLogger.Error("Jsoniterr Unmarshal 233")
+
 		var val bool
 		if err := jsoniter.Unmarshal(result, &val); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
+
+		RestLogger.Error("jsoniter marshal 241")
 
 		res, err := jsoniter.Marshal(map[string]interface{}{"result": val})
 		if err != nil {
@@ -238,6 +246,8 @@ func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 			return
 		}
+
+		RestLogger.Error("cliCtx.WithHeight 251")
 
 		cliCtx = cliCtx.WithHeight(height)
 
