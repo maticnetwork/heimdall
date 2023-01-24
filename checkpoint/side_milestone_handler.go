@@ -2,7 +2,6 @@ package checkpoint
 
 import (
 	"strconv"
-	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -50,9 +49,6 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
-
-	time.Sleep(1 * time.Minute)
-
 	// validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.Hash, msg.MilestoneID, contractCaller, milestoneLength)
 	// if err != nil {
 	// 	logger.Error("Error validating milestone",
