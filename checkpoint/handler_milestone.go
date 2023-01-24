@@ -28,6 +28,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	//Get Validator
 	//
 
+	logger.Error("handleMsgMilestone", "block number", ctx.BlockHeight())
+
 	// Check proposer in message
 	validatorSet := k.sk.GetMilestoneValidatorSet(ctx)
 	if validatorSet.Proposer == nil {
