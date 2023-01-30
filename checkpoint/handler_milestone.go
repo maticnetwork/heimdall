@@ -84,7 +84,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
-	k.SetMilestoneID(ctx, msg.MilestoneID)
+	types.SetMilestoneID(msg.MilestoneID)
 
 	// Emit event for milestone
 	ctx.EventManager().EmitEvents(sdk.Events{

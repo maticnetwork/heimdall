@@ -10,6 +10,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
+
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -214,30 +215,13 @@ func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// get milestone number
 		id := vars["id"]
+		milestoneID := types.GetMilestoneID()
 
-		// get query params
-		queryID, err := cliCtx.Codec.MarshalJSON(types.NewQueryMilestoneID(id))
-		if err != nil {
-			return
-		}
+		val := id == milestoneID
 
-		RestLogger.Error("Query with Data 225")
-
-		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByID), queryID)
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		RestLogger.Error("Jsoniterr Unmarshal 233")
-
-		var val bool
-		if err := jsoniter.Unmarshal(result, &val); err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
-			return
-		}
-
-		RestLogger.Error("jsoniter marshal 241")
+		RestLogger.Error("jsoniter marshal 222", "id", id)
+		RestLogger.Error("jsoniter marshal 222", "milestoneID", milestoneID)
+		RestLogger.Error("jsoniter marshal 222", "val", val)
 
 		res, err := jsoniter.Marshal(map[string]interface{}{"result": val})
 		if err != nil {
@@ -247,9 +231,9 @@ func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		RestLogger.Error("cliCtx.WithHeight 251")
+		RestLogger.Error("cliCtx.WithHeight 232")
 
-		cliCtx = cliCtx.WithHeight(height)
+		cliCtx = cliCtx.WithHeight(0)
 
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
