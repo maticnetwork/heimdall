@@ -1,11 +1,15 @@
 package types
 
-var milestoneID string
+import (
+	"sync/atomic"
+)
+
+var milestoneId atomic.Value
 
 func GetMilestoneID() string {
-	return milestoneID
+	return milestoneId.Load().(string)
 }
 
 func SetMilestoneID(id string) {
-	milestoneID = id
+	milestoneId.Store(id)
 }
