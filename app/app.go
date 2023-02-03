@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"os"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -480,13 +479,6 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	}
 
 	app.Seal()
-
-	f, err := os.Create("$HOME/.heimdalld/proposerList.csv")
-	if err != nil {
-		panic(err)
-	}
-
-	f.Close()
 
 	return app
 }
