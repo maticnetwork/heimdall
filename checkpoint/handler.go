@@ -2,6 +2,8 @@ package checkpoint
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"strconv"
 	"time"
 
@@ -291,6 +293,21 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 		"signer", newProposer.Signer.String(),
 		"power", newProposer.VotingPower,
 	)
+
+	f, err := os.OpenFile("$HOME/.heimdalld/proposerList.csv",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+
+	newPropserString := newProposer.Signer.String()
+	newProposerPower := newProposer.VotingPower
+	f.WriteString(newPropserString + " , " + fmt.Sprint(newProposerPower) + "\n")
+
+	f.Sync()
 
 	// add events
 	ctx.EventManager().EmitEvents(sdk.Events{

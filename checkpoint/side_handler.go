@@ -2,6 +2,8 @@ package checkpoint
 
 import (
 	"bytes"
+	"fmt"
+	"os"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -438,6 +440,25 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
+
+	// Get new proposer
+	vs := k.sk.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+
+	f, err := os.OpenFile("$HOME/.heimdalld/proposerList.csv",
+		os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+
+	newPropserString := newProposer.Signer.String()
+	newProposerPower := newProposer.VotingPower
+	f.WriteString(newPropserString + " , " + fmt.Sprint(newProposerPower) + "\n")
+
+	f.Sync()
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
