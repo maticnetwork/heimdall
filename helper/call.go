@@ -618,7 +618,7 @@ func (c *ContractCaller) DecodeValidatorExitEvent(contractAddress common.Address
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "unStakeInit", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, "UnstakeInit", vLog); err != nil {
 				return nil, err
 			}
 
