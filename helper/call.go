@@ -30,14 +30,14 @@ import (
 // smart contracts' events names
 const (
 	newHeaderBlockEvent = "NewHeaderBlock"
-	topUpFeeEvent = "TopUpFee"
-	stakedEvent = "Staked"
-	stakeUpdateEvent = "StakeUpdate"
-	UnstakeInitEvent = "UnstakeInit"
-	signerChangeEvent = "SignerChange"
-	stateSyncedEvent = "StateSynced"
-	slashedEvent = "Slashed"
-	unJailedEvent = "UnJailed"
+	topUpFeeEvent       = "TopUpFee"
+	stakedEvent         = "Staked"
+	stakeUpdateEvent    = "StakeUpdate"
+	UnstakeInitEvent    = "UnstakeInit"
+	signerChangeEvent   = "SignerChange"
+	stateSyncedEvent    = "StateSynced"
+	slashedEvent        = "Slashed"
+	unJailedEvent       = "UnJailed"
 )
 
 // ContractsABIsMap is a cached map holding the ABIs of the contracts
