@@ -27,6 +27,7 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+// smart contracts' events names
 const (
 	newHeaderBlockEvent = "NewHeaderBlock"
 	topUpFeeEvent = "TopUpFee"

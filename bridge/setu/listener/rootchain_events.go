@@ -19,6 +19,8 @@ import (
 const (
 	blocksRange   = 1000
 	maxIterations = 1 // 1 iteration (1000 blocks) on rootchain is roughly 3.3 hours, which is enough for backtracking
+
+	// smart contracts' events names
 	stateSyncedEvent = "StateSynced"
 	stakeUpdateEvent = "StakeUpdate"
 )
