@@ -19,6 +19,8 @@ import (
 const (
 	blocksRange   = 1000
 	maxIterations = 1 // 1 iteration (1000 blocks) on rootchain is roughly 3.3 hours, which is enough for backtracking
+	stateSyncedEvent = "StateSynced"
+	stakeUpdateEvent = "StakeUpdate"
 )
 
 var (
@@ -47,7 +49,7 @@ func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, er
 	}
 
 	var event statesender.StatesenderStateSynced
-	if err = helper.UnpackLog(rl.stateSenderAbi, &event, "StateSynced", latestEvent); err != nil {
+	if err = helper.UnpackLog(rl.stateSenderAbi, &event, stateSyncedEvent, latestEvent); err != nil {
 		return nil, err
 	}
 
@@ -102,7 +104,7 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 	}
 
 	var event statesender.StatesenderStateSynced
-	if err = helper.UnpackLog(rl.stateSenderAbi, &event, "StateSynced", &events[0]); err != nil {
+	if err = helper.UnpackLog(rl.stateSenderAbi, &event, stateSyncedEvent, &events[0]); err != nil {
 		return nil, err
 	}
 
@@ -132,7 +134,7 @@ func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uin
 	}
 
 	var event stakinginfo.StakinginfoStakeUpdate
-	if err = helper.UnpackLog(rl.stakingInfoAbi, &event, "StakeUpdate", latestEvent); err != nil {
+	if err = helper.UnpackLog(rl.stakingInfoAbi, &event, stakeUpdateEvent, latestEvent); err != nil {
 		return 0, err
 	}
 
@@ -166,7 +168,7 @@ func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, no
 	}
 
 	var event stakinginfo.StakinginfoStakeUpdate
-	if err = helper.UnpackLog(rl.stakingInfoAbi, &event, "StakeUpdate", &events[0]); err != nil {
+	if err = helper.UnpackLog(rl.stakingInfoAbi, &event, stakeUpdateEvent, &events[0]); err != nil {
 		return nil, err
 	}
 
