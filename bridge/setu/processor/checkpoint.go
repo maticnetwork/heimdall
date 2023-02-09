@@ -16,7 +16,6 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 
-	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
@@ -492,63 +491,63 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 // createAndSendCheckpointToRootchain prepares the data required for rootchain checkpoint submission
 // and sends a transaction to rootchain
 func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointContext *CheckpointContext, start uint64, end uint64, height int64, txHash []byte) error {
-	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
-	// proof
-	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
-	if err != nil {
-		cp.Logger.Error("Error querying checkpoint tx proof", "txHash", txHash)
-		return err
-	}
+	// cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
+	// // proof
+	// tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
+	// if err != nil {
+	// 	cp.Logger.Error("Error querying checkpoint tx proof", "txHash", txHash)
+	// 	return err
+	// }
 
-	// fetch side txs sigs
-	decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
+	// // fetch side txs sigs
+	// decoder := helper.GetTxDecoder(authTypes.ModuleCdc)
 
-	stdTx, err := decoder(tx.Tx)
-	if err != nil {
-		cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
-		return err
-	}
+	// stdTx, err := decoder(tx.Tx)
+	// if err != nil {
+	// 	cp.Logger.Error("Error while decoding checkpoint tx", "txHash", tx.Tx.Hash(), "error", err)
+	// 	return err
+	// }
 
-	cmsg := stdTx.GetMsgs()[0]
+	// cmsg := stdTx.GetMsgs()[0]
 
-	sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
-	if !ok {
-		cp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
-		return err
-	}
+	// sideMsg, ok := cmsg.(hmTypes.SideTxMsg)
+	// if !ok {
+	// 	cp.Logger.Error("Invalid side-tx msg", "txHash", tx.Tx.Hash())
+	// 	return err
+	// }
 
-	// side-tx data
-	sideTxData := sideMsg.GetSideSignBytes()
+	// // side-tx data
+	// sideTxData := sideMsg.GetSideSignBytes()
 
-	// get sigs
-	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
-	if err != nil {
-		cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
-		return err
-	}
+	// // get sigs
+	// sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
+	// if err != nil {
+	// 	cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
+	// 	return err
+	// }
 
-	shouldSend, err := cp.shouldSendCheckpoint(checkpointContext, start, end)
-	if err != nil {
-		return err
-	}
+	//shouldSend, err := cp.shouldSendCheckpoint(checkpointContext, start, end)
+	//if err != nil {
+	//	return err
+	//}
 
-	if shouldSend {
-		// chain manager params
-		chainParams := checkpointContext.ChainmanagerParams.ChainParams
-		// root chain address
-		rootChainAddress := chainParams.RootChainAddress.EthAddress()
-		// root chain instance
-		rootChainInstance, err := cp.contractConnector.GetRootChainInstance(rootChainAddress)
-		if err != nil {
-			cp.Logger.Info("Error while creating rootchain instance", "error", err)
-			return err
-		}
+	//if shouldSend {
+	// chain manager params
+	//chainParams := checkpointContext.ChainmanagerParams.ChainParams
+	// root chain address
+	// rootChainAddress := chainParams.RootChainAddress.EthAddress()
+	// // root chain instance
+	// rootChainInstance, err := cp.contractConnector.GetRootChainInstance(rootChainAddress)
+	// if err != nil {
+	// 	cp.Logger.Info("Error while creating rootchain instance", "error", err)
+	// 	return err
+	// }
 
-		if err := cp.contractConnector.SendCheckpoint(sideTxData, sigs, rootChainAddress, rootChainInstance); err != nil {
-			cp.Logger.Info("Error submitting checkpoint to rootchain", "error", err)
-			return err
-		}
-	}
+	// if err := cp.contractConnector.SendCheckpoint(sideTxData, sigs, rootChainAddress, rootChainInstance); err != nil {
+	// 	cp.Logger.Info("Error submitting checkpoint to rootchain", "error", err)
+	// 	return err
+	// }
+	//}
 
 	return nil
 }
