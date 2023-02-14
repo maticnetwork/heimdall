@@ -47,9 +47,12 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 
 // SideHandleMsgSpan validates external calls required for processing proposed span
 func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	k.Logger(ctx).Debug("✅ Validating External call for span msg",
+	k.Logger(ctx).Info("✅ Validating External call for span msg",
 		"msgSeed", msg.Seed.String(),
 	)
+
+	k.Logger(ctx).Error("Error fetching current child block")
+	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 
 	// calculate next span seed locally
 	nextSpanSeed, err := k.GetNextSpanSeed(ctx)
