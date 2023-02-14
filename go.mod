@@ -7,7 +7,7 @@ require (
 	github.com/allegro/bigcache v1.2.1 // indirect
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cespare/cp v1.1.1 // indirect
-	github.com/cosmos/cosmos-sdk v0.37.4
+	github.com/cosmos/cosmos-sdk v0.46.9
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/gballet/go-libpcsclite v0.0.0-20191108122812-4678299bea08 // indirect
 	github.com/go-kit/kit v0.10.0

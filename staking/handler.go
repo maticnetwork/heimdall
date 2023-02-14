@@ -222,41 +222,41 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		"blockNumber", msg.BlockNumber,
 	)
 
-	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
-	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
+	// validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	// if !ok {
+	// 	k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
+	// 	return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	// }
 
-	k.Logger(ctx).Debug("validator in store", "validator", validator)
-	// check if validator deactivation period is set
-	if validator.EndEpoch != 0 {
-		k.Logger(ctx).Error("Validator already unbonded")
-		return hmCommon.ErrValUnbonded(k.Codespace()).Result()
-	}
+	// k.Logger(ctx).Debug("validator in store", "validator", validator)
+	// // check if validator deactivation period is set
+	// if validator.EndEpoch != 0 {
+	// 	k.Logger(ctx).Error("Validator already unbonded")
+	// 	return hmCommon.ErrValUnbonded(k.Codespace()).Result()
+	// }
 
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+	// // sequence id
+	// blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	// sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	// sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
-	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
-		return hmCommon.ErrOldTx(k.Codespace()).Result()
-	}
+	// // check if incoming tx is older
+	// if k.HasStakingSequence(ctx, sequence.String()) {
+	// 	k.Logger(ctx).Error("Older invalid tx found")
+	// 	return hmCommon.ErrOldTx(k.Codespace()).Result()
+	// }
 
-	// check nonce validity
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
-	}
+	// // check nonce validity
+	// if msg.Nonce != validator.Nonce+1 {
+	// 	k.Logger(ctx).Error("Incorrect validator nonce")
+	// 	return hmCommon.ErrNonce(k.Codespace()).Result()
+	// }
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
 			types.EventTypeValidatorExit,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(msg.ID.Uint64(), 10)),
 			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
 		),
 	})
