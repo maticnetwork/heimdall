@@ -22,7 +22,6 @@ import (
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/helper"
-	stakingTypes "github.com/maticnetwork/heimdall/staking/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -321,21 +320,6 @@ func (cp *CheckpointProcessor) handleCheckpointNoAck() {
 	checkpointContext, err := cp.getCheckpointContext()
 	if err != nil {
 		return
-	}
-
-	//Testing Testing Testing Testing Testing Testing Testing
-
-	valSet, err := util.GetValidatorSet(cp.cliCtx)
-
-	val := valSet.Validators[0]
-
-	msgTxHash := hmTypes.HexToHeimdallHash("123")
-	msg := stakingTypes.NewMsgValidatorExit(val.Signer, uint64(val.ID), val.EndEpoch, msgTxHash, 0, 0, 1)
-
-	// return broadcast to heimdall
-	cp.Logger.Info("Broadcast Unstake")
-	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
-		cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg, "error", err)
 	}
 
 	lastCreatedAt, err := cp.getLatestCheckpointTime(checkpointContext)
