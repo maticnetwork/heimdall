@@ -322,7 +322,7 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidatorJoin, sideTxResult abci.SideTxResultType) sdk.Result {
 	// Skip handler if validator join is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
-		k.Logger(ctx).Info("Skipping new validator-join since side-tx didn't get yes votes")
+		k.Logger(ctx).Error("Skipping new validator-join since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
@@ -383,7 +383,7 @@ func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidato
 
 	// // save staking sequence
 	// k.SetStakingSequence(ctx, sequence.String())
-	k.Logger(ctx).Info("✅ New validator successfully joined", "validator", strconv.FormatUint(0, 10))
+	k.Logger(ctx).Error("✅ New validator successfully joined", "validator", strconv.FormatUint(0, 10))
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
