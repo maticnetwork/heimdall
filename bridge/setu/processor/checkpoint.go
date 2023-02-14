@@ -333,6 +333,7 @@ func (cp *CheckpointProcessor) handleCheckpointNoAck() {
 	msg := stakingTypes.NewMsgValidatorExit(val.Signer, uint64(val.ID), val.EndEpoch, msgTxHash, 0, 0, 1)
 
 	// return broadcast to heimdall
+	cp.Logger.Info("Broadcast Unstake")
 	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg, "error", err)
 	}
