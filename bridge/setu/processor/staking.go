@@ -69,16 +69,16 @@ func (sp *StakingProcessor) RegisterTasks() {
 	}
 }
 
-func (cp *StakingProcessor) startPolling(ctx context.Context) {
+func (sp *StakingProcessor) startPolling(ctx context.Context) {
 	ticker := time.NewTicker(30 * time.Second) //Hardcoded the ticker for testing purpose
 	defer ticker.Stop()
 
 	for {
 		select {
 		case <-ticker.C:
-			go cp.handleUnstaking()
+			go sp.handleUnstaking()
 		case <-ctx.Done():
-			cp.Logger.Info("No-ack Polling stopped")
+			sp.Logger.Info("No-ack Polling stopped")
 			ticker.Stop()
 
 			return
@@ -102,6 +102,13 @@ func (sp *StakingProcessor) handleUnstaking() {
 	sp.Logger.Info("Broadcast Unstake")
 	if err = sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		sp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg, "error", err)
+	}
+
+	msg1 := stakingTypes.NewMsgSignerUpdate(val.Signer, uint64(val.ID), val.PubKey, msgTxHash, 0, 0, 1)
+	// return broadcast to heimdall
+	sp.Logger.Info("Broadcast Unstake")
+	if err = sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+		sp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg1, "error", err)
 	}
 }
 

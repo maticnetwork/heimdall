@@ -156,7 +156,7 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 
 // HandleMsgSignerUpdate handles signer update message
 func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("✅ Validating signer update msg",
+	k.Logger(ctx).Info("✅ Validating signer update msg",
 		"validatorID", msg.ID,
 		"NewSignerPubkey", msg.NewSignerPubKey.String(),
 		"txHash", msg.TxHash,
