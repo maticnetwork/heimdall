@@ -214,7 +214,7 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 
 // HandleMsgValidatorExit handle msg validator exit
 func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("✅ Validating validator exit msg",
+	k.Logger(ctx).Info("✅ Validating validator exit msg",
 		"validatorID", msg.ID,
 		"deactivatonEpoch", msg.DeactivationEpoch,
 		"txHash", msg.TxHash,

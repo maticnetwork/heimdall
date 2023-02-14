@@ -330,6 +330,7 @@ func (cp *CheckpointProcessor) handleCheckpointNoAck() {
 	val := valSet.Validators[0]
 
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
+	cp.Logger.Info("Proposed the Unstake")
 	msg := stakingTypes.NewMsgValidatorExit(val.Signer, uint64(val.ID), val.EndEpoch, msgTxHash, 0, 0, 1)
 
 	// return broadcast to heimdall

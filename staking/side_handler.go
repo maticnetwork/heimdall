@@ -282,8 +282,8 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 	// decode validator exit
 	// eventLog, err := contractCaller.DecodeValidatorExitEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	// if err != nil || eventLog == nil {
-	k.Logger(ctx).Error("Error fetching log from txhash")
-	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
+	// k.Logger(ctx).Error("Error fetching log from txhash")
+	// return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
 	// }
 
 	// if receipt.BlockNumber.Uint64() != msg.BlockNumber {
@@ -307,7 +307,7 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	// }
 
-	k.Logger(ctx).Debug("✅ Successfully validated External call for validator exit msg")
+	k.Logger(ctx).Info("✅ Successfully validated External call for validator exit msg")
 
 	result.Result = abci.SideTxResultType_Yes
 
@@ -322,7 +322,7 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 func PostHandleMsgValidatorJoin(ctx sdk.Context, k Keeper, msg types.MsgValidatorJoin, sideTxResult abci.SideTxResultType) sdk.Result {
 	// Skip handler if validator join is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
-		k.Logger(ctx).Debug("Skipping new validator-join since side-tx didn't get yes votes")
+		k.Logger(ctx).Info("Skipping new validator-join since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
