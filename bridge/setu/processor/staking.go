@@ -103,13 +103,6 @@ func (sp *StakingProcessor) handleUnstaking() {
 	if err = sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		sp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg, "error", err)
 	}
-
-	msg1 := stakingTypes.NewMsgSignerUpdate(val.Signer, uint64(val.ID), val.PubKey, msgTxHash, 0, 0, 1)
-	// return broadcast to heimdall
-	sp.Logger.Info("Broadcast Unstake")
-	if err = sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
-		sp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg1, "error", err)
-	}
 }
 
 func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logBytes string) error {
