@@ -263,51 +263,51 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 
 // SideHandleMsgValidatorExit  handle  side msg validator exit
 func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	k.Logger(ctx).Debug("✅ Validating External call for validator exit msg",
+	k.Logger(ctx).Error("✅ Validating External call for validator exit msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
 	)
 
-	// chainManager params
-	params := k.chainKeeper.GetParams(ctx)
-	chainParams := params.ChainParams
+	// // chainManager params
+	// params := k.chainKeeper.GetParams(ctx)
+	// chainParams := params.ChainParams
 
-	// get main tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
-	if err != nil || receipt == nil {
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeWaitFrConfirmation)
-	}
+	// // get main tx receipt
+	// receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	// if err != nil || receipt == nil {
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeWaitFrConfirmation)
+	// }
 
 	// decode validator exit
-	eventLog, err := contractCaller.DecodeValidatorExitEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
-	if err != nil || eventLog == nil {
-		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
-	}
+	// eventLog, err := contractCaller.DecodeValidatorExitEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
+	// if err != nil || eventLog == nil {
+	k.Logger(ctx).Error("Error fetching log from txhash in SideHandler")
+	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
+	// }
 
-	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
-		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
+	// if receipt.BlockNumber.Uint64() != msg.BlockNumber {
+	// 	k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64)
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// }
 
-	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
-		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
+	// if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
+	// 	k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// }
 
-	if eventLog.DeactivationEpoch.Uint64() != msg.DeactivationEpoch {
-		k.Logger(ctx).Error("DeactivationEpoch in message doesn't match with deactivationEpoch in log", "msgDeactivationEpoch", msg.DeactivationEpoch, "deactivationEpochFromTx", eventLog.DeactivationEpoch.Uint64)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
+	// if eventLog.DeactivationEpoch.Uint64() != msg.DeactivationEpoch {
+	// 	k.Logger(ctx).Error("DeactivationEpoch in message doesn't match with deactivationEpoch in log", "msgDeactivationEpoch", msg.DeactivationEpoch, "deactivationEpochFromTx", eventLog.DeactivationEpoch.Uint64)
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// }
 
 	// check nonce
-	if eventLog.Nonce.Uint64() != msg.Nonce {
-		k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
+	// if eventLog.Nonce.Uint64() != msg.Nonce {
+	// 	k.Logger(ctx).Error("Nonce in message doesn't match with nonce in log", "msgNonce", msg.Nonce, "nonceFromTx", eventLog.Nonce)
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// }
 
-	k.Logger(ctx).Debug("✅ Successfully validated External call for validator exit msg")
+	k.Logger(ctx).Error("✅ Successfully validated External call for validator exit msg")
 
 	result.Result = abci.SideTxResultType_Yes
 
@@ -606,46 +606,46 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidatorExit, sideTxResult abci.SideTxResultType) sdk.Result {
 	// Skip handler if validator exit is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
-		k.Logger(ctx).Debug("Skipping validator exit since side-tx didn't get yes votes")
+		k.Logger(ctx).Error("Skipping validator exit since side-tx didn't get yes votes in Exit")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
-	// Check for replay attack
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+	// // Check for replay attack
+	// blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
+	// sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
+	// sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
 
-	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
-		return hmCommon.ErrOldTx(k.Codespace()).Result()
-	}
+	// // check if incoming tx is older
+	// if k.HasStakingSequence(ctx, sequence.String()) {
+	// 	k.Logger(ctx).Error("Older invalid tx found")
+	// 	return hmCommon.ErrOldTx(k.Codespace()).Result()
+	// }
 
-	k.Logger(ctx).Debug("Persisting validator exit", "sideTxResult", sideTxResult)
+	// k.Logger(ctx).Debug("Persisting validator exit", "sideTxResult", sideTxResult)
 
-	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
-	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
+	// validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
+	// if !ok {
+	// 	k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
+	// 	return hmCommon.ErrNoValidator(k.Codespace()).Result()
+	// }
 
-	// set end epoch
-	validator.EndEpoch = msg.DeactivationEpoch
+	// // set end epoch
+	// validator.EndEpoch = msg.DeactivationEpoch
 
-	// update last updated
-	validator.LastUpdated = sequence.String()
+	// // update last updated
+	// validator.LastUpdated = sequence.String()
 
-	// update nonce
-	validator.Nonce = msg.Nonce
+	// // update nonce
+	// validator.Nonce = msg.Nonce
 
-	// Add deactivation time for validator
-	if err := k.AddValidator(ctx, validator); err != nil {
-		k.Logger(ctx).Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID.String())
-		return hmCommon.ErrValidatorNotDeactivated(k.Codespace()).Result()
-	}
+	// // Add deactivation time for validator
+	// if err := k.AddValidator(ctx, validator); err != nil {
+	// 	k.Logger(ctx).Error("Error while setting deactivation epoch to validator", "error", err, "validatorID", validator.ID.String())
+	// 	return hmCommon.ErrValidatorNotDeactivated(k.Codespace()).Result()
+	// }
 
-	// save staking sequence
-	k.SetStakingSequence(ctx, sequence.String())
+	// // save staking sequence
+	// k.SetStakingSequence(ctx, sequence.String())
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
@@ -658,7 +658,7 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),                // module name
 			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()), // tx hash
 			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),             // result
-			sdk.NewAttribute(types.AttributeKeyValidatorID, validator.ID.String()),
+			sdk.NewAttribute(types.AttributeKeyValidatorID, msg.ID.String()),
 			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
 		),
 	})
