@@ -41,8 +41,8 @@ func NewStakingProcessor(stakingInfoAbi *abi.ABI) *StakingProcessor {
 func (sp *StakingProcessor) Start() error {
 	sp.Logger.Info("Starting")
 
-	ackCtx, _ := context.WithCancel(context.Background())
-	go sp.startPolling(ackCtx)
+	//ackCtx, _ := context.WithCancel(context.Background())
+	//go sp.startPolling(ackCtx)
 
 	return nil
 }
