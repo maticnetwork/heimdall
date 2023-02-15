@@ -1,6 +1,7 @@
 package processor
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -39,6 +40,7 @@ func NewStakingProcessor(stakingInfoAbi *abi.ABI) *StakingProcessor {
 // Start starts new block subscription
 func (sp *StakingProcessor) Start() error {
 	sp.Logger.Info("Starting")
+
 	return nil
 }
 
@@ -60,6 +62,42 @@ func (sp *StakingProcessor) RegisterTasks() {
 
 	if err := sp.queueConnector.Server.RegisterTask("sendSignerChangeToHeimdall", sp.sendSignerChangeToHeimdall); err != nil {
 		sp.Logger.Error("RegisterTasks | sendSignerChangeToHeimdall", "error", err)
+	}
+}
+
+func (sp *StakingProcessor) startPolling(ctx context.Context) {
+	ticker := time.NewTicker(30 * time.Second) //Hardcoded the ticker for testing purpose
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			go sp.handleUnstaking()
+		case <-ctx.Done():
+			sp.Logger.Info("No-ack Polling stopped")
+			ticker.Stop()
+
+			return
+		}
+	}
+}
+
+func (sp *StakingProcessor) handleUnstaking() {
+	// fetch fresh checkpoint context
+
+	//Testing Testing Testing Testing Testing Testing Testing
+
+	valSet, err := util.GetValidatorSet(sp.cliCtx)
+
+	val := valSet.Validators[0]
+
+	msgTxHash := hmTypes.HexToHeimdallHash("123")
+	msg := stakingTypes.NewMsgValidatorExit(val.Signer, uint64(val.ID), val.EndEpoch, msgTxHash, 0, 0, 1)
+
+	// return broadcast to heimdall
+	sp.Logger.Info("Broadcast Unstaking In Staking Processor")
+	if err = sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+		sp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg, "error", err)
 	}
 }
 
