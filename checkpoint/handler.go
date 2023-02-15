@@ -74,6 +74,7 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
+	logger.Error("Checkpoint Handler")
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
 
