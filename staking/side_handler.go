@@ -263,7 +263,7 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 
 // SideHandleMsgValidatorExit  handle  side msg validator exit
 func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	k.Logger(ctx).Error("✅ Validating External call for validator exit msg",
+	k.Logger(ctx).Error("✅ New Validating External call for validator exit msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
@@ -282,8 +282,8 @@ func SideHandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k K
 	// decode validator exit
 	// eventLog, err := contractCaller.DecodeValidatorExitEvent(chainParams.StakingInfoAddress.EthAddress(), receipt, msg.LogIndex)
 	// if err != nil || eventLog == nil {
-	k.Logger(ctx).Error("Error fetching log from txhash in SideHandler")
-	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
+	// k.Logger(ctx).Error("Error fetching log from txhash in SideHandler")
+	// return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
 	// }
 
 	// if receipt.BlockNumber.Uint64() != msg.BlockNumber {
@@ -606,7 +606,7 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidatorExit, sideTxResult abci.SideTxResultType) sdk.Result {
 	// Skip handler if validator exit is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
-		k.Logger(ctx).Error("Skipping validator exit since side-tx didn't get yes votes in Exit")
+		k.Logger(ctx).Error("✅ Skipping validator exit since side-tx didn't get yes votes in Exit")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
@@ -648,6 +648,7 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 	// k.SetStakingSequence(ctx, sequence.String())
 
 	// TX bytes
+	k.Logger(ctx).Error("Reached at the End")
 	txBytes := ctx.TxBytes()
 	hash := tmTypes.Tx(txBytes).Hash()
 
