@@ -19,6 +19,7 @@ func registerQueryMilestoneRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/lastNoAck", latestNoAckMilestoneHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/{number}", milestoneByNumberHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/milestone/noAck/{id}", noAckMilestoneByIDHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/milestone/ID/{id}", milestoneByIDHandlerFn(cliCtx)).Methods("GET")
 }
 
 func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
@@ -195,6 +196,35 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		cliCtx = cliCtx.WithHeight(height)
+
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get milestone number
+		id := vars["id"]
+		milestoneID := types.GetMilestoneID()
+
+		val := id == milestoneID
+
+		res, err := jsoniter.Marshal(map[string]interface{}{"result": val})
+		if err != nil {
+			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(0)
 
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
