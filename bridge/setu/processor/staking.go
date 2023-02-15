@@ -40,6 +40,7 @@ func NewStakingProcessor(stakingInfoAbi *abi.ABI) *StakingProcessor {
 // Start starts new block subscription
 
 func (sp *StakingProcessor) Start() error {
+
 	sp.Logger.Info("Starting")
 
 	ackCtx, _ := context.WithCancel(context.Background())
@@ -70,7 +71,7 @@ func (sp *StakingProcessor) RegisterTasks() {
 }
 
 func (sp *StakingProcessor) startPolling(ctx context.Context) {
-	ticker := time.NewTicker(500 * time.Second) //Hardcoded the ticker for testing purpose
+	ticker := time.NewTicker(50 * time.Second) //Hardcoded the ticker for testing purpose
 	defer ticker.Stop()
 
 	for {
