@@ -2,6 +2,7 @@ package processor
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 	"time"
 
@@ -111,9 +112,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 			start = latestMilestone.EndBlock + 1
 		}
 
-		end := start + milestoneLength - 1
-
-		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, end, milestoneLength); err != nil {
+		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, milestoneLength); err != nil {
 			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
 			return err
 		}
@@ -125,25 +124,40 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 }
 
 // sendMilestoneToHeimdall - creates milestone msg and broadcasts to heimdall
-func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, start uint64, end uint64, milestoneLength uint64) error {
-	mp.Logger.Debug("Initiating milestone to Heimdall", "start", start, "end", end, "milestoneLength", milestoneLength)
+func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, startNum uint64, milestoneLength uint64) error {
+	mp.Logger.Debug("Initiating milestone to Heimdall", "start", startNum, "milestoneLength", milestoneLength)
+
+	blocksConfirmation := helper.MaticChainMilestoneConfirmation
 
 	// Get root hash
-	endBlock, err := mp.contractConnector.GetMaticChainBlock(big.NewInt(int64(end + 1)))
+	block, err := mp.contractConnector.GetMaticChainBlock(nil)
 	if err != nil {
 		return err
 	}
 
-	blockHash := endBlock.ParentHash
+	latestNum := block.Number.Uint64()
 
-	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(helper.GetAddress()).String()
+	if latestNum < startNum+milestoneLength+blocksConfirmation-1 {
+		return fmt.Errorf("Less than milestoneLength  Start=%v Latest Block=%v MilestoneLength=%v MaticChainConfirmation=%v", startNum, latestNum, milestoneLength, blocksConfirmation)
+	}
 
-	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(blockHash[:]))
+	endNum := latestNum - blocksConfirmation
+
+	block, err = mp.contractConnector.GetMaticChainBlock(big.NewInt(int64(endNum + 1)))
+	if err != nil {
+		return err
+	}
+
+	endHash := block.ParentHash
+
+	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(endHash[:]).String()
+
+	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(endHash[:]))
 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
-		"start", start,
-		"end", end,
-		"root", hmTypes.BytesToHeimdallHash(blockHash[:]),
+		"start", startNum,
+		"end", endNum,
+		"root", hmTypes.BytesToHeimdallHash(endHash[:]),
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
 	)
@@ -153,9 +167,9 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	// create and send milestone message
 	msg := milestoneTypes.NewMsgMilestoneBlock(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		start,
-		end,
-		hmTypes.BytesToHeimdallHash(blockHash[:]),
+		startNum,
+		endNum,
+		hmTypes.BytesToHeimdallHash(endHash[:]),
 		chainParams.BorChainID,
 		milestoneId,
 	)

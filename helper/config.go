@@ -134,6 +134,8 @@ const (
 
 	MilestonePruneNumber = uint64(100)
 
+	MaticChainMilestoneConfirmation = uint64(4)
+
 	//Milestone buffer Length
 	MilestoneBufferLength = MilestoneLength * 2
 	MilestoneBufferTime   = 256 * time.Second

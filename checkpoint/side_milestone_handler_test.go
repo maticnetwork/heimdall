@@ -89,7 +89,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			milestone.Proposer,
 			milestone.StartBlock,
-			milestone.EndBlock+1,
+			milestone.EndBlock-1,
 			milestone.Hash,
 			borChainId,
 			milestone.MilestoneID,
