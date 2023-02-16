@@ -22,6 +22,7 @@ const (
 	fetchMilestone          = "/milestone/latest"
 	fetchMilestoneNoAck     = "/milestone/noAck/%s"
 	fetchLastNoAckMilestone = "/milestone/lastNoAck"
+	fetchMilestoneID        = "/milestone/ID/%s"
 )
 
 var logger tmLog.Logger

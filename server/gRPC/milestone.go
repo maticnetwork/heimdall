@@ -126,3 +126,26 @@ func (h *HeimdallGRPCServer) FetchNoAckMilestone(ctx context.Context, in *proto.
 
 	return resp, nil
 }
+
+func (h *HeimdallGRPCServer) FetchMilestoneID(ctx context.Context, in *proto.FetchMilestoneIDRequest) (*proto.FetchMilestoneIDResponse, error) {
+	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
+
+	url := fmt.Sprintf(fetchMilestoneID, fmt.Sprint(in.MilestoneID))
+
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(url))
+
+	if err != nil {
+		logger.Error("Error while fetching milestone id")
+		return nil, err
+	}
+
+	resp := &proto.FetchMilestoneIDResponse{}
+	resp.Height = fmt.Sprint(result.Height)
+
+	if err := json.Unmarshal(result.Result, &resp.Result); err != nil {
+		logger.Error("Error unmarshalling milestone", "error", err)
+		return nil, err
+	}
+
+	return resp, nil
+}
