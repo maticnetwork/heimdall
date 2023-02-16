@@ -71,7 +71,7 @@ func (sp *StakingProcessor) RegisterTasks() {
 }
 
 func (sp *StakingProcessor) startPolling(ctx context.Context) {
-	ticker := time.NewTicker(50 * time.Second) //Hardcoded the ticker for testing purpose
+	ticker := time.NewTicker(5000 * time.Second) //Hardcoded the ticker for testing purpose
 	defer ticker.Stop()
 
 	for {
