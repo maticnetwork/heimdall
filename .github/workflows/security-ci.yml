@@ -32,7 +32,7 @@ jobs:
         continue-on-error: true
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          GOFLAGS: '-buildvcs=false'
+          GOFLAGS: -buildvcs=false
         with:
           args: --org=${{ secrets.SNYK_ORG }} --sarif-file-output=snyk.sarif
           command: code test
