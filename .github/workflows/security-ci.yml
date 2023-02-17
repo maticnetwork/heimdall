@@ -31,8 +31,8 @@ jobs:
         uses: snyk/actions/golang@master
         continue-on-error: true
         env:
+          GOFLAGS: "-buildvcs=false"
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-          GOFLAGS: -buildvcs=false
         with:
           args: --org=${{ secrets.SNYK_ORG }} --sarif-file-output=snyk.sarif
           command: code test
