@@ -51,7 +51,7 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 
 }
 
-// startPolling - polls heimdall and checks if new span needs to be proposed
+// startPolling - polls heimdall and checks if new milestone needs to be proposed
 func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength uint64, interval time.Duration) {
 	ticker := time.NewTicker(interval)
 	// stop ticker when everything done
@@ -96,8 +96,12 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 
 	if isProposer {
 		result, err := util.GetMilestoneCount(mp.cliCtx)
-		if err != nil || result == nil {
+		if err != nil {
 			return err
+		}
+
+		if result == nil {
+			return fmt.Errorf("Got nil result while fetching milestone count")
 		}
 
 		var start = helper.GetMilestoneBorBlockHeight()
@@ -105,8 +109,12 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 		if result.Count != 0 {
 			// fetch latest milestone
 			latestMilestone, err := util.GetLatestMilestone(mp.cliCtx)
-			if err != nil || latestMilestone == nil {
+			if err != nil {
 				return err
+			}
+
+			if latestMilestone == nil {
+				return fmt.Errorf("Got nil result while fetching latest milestone")
 			}
 
 			start = latestMilestone.EndBlock + 1
@@ -129,7 +137,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	blocksConfirmation := helper.MaticChainMilestoneConfirmation
 
-	// Get root hash
+	// Get latest matic block
 	block, err := mp.contractConnector.GetMaticChainBlock(nil)
 	if err != nil {
 		return err
@@ -152,12 +160,12 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	milestoneId := uuid.NewRandom().String() + "-" + hmTypes.BytesToHeimdallAddress(endHash[:]).String()
 
-	mp.Logger.Info("Root hash calculated", "root", hmTypes.BytesToHeimdallHash(endHash[:]))
+	mp.Logger.Info("End block hash", hmTypes.BytesToHeimdallHash(endHash[:]))
 
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", startNum,
 		"end", endNum,
-		"root", hmTypes.BytesToHeimdallHash(endHash[:]),
+		"hash", hmTypes.BytesToHeimdallHash(endHash[:]),
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
 	)

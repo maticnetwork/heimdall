@@ -2,7 +2,6 @@ package checkpoint
 
 import (
 	"bytes"
-	"fmt"
 	"strconv"
 	"time"
 
@@ -118,7 +117,7 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, msg types.MsgMilestoneTimeout, k
 	lastMilestone, err := k.GetLastMilestone(ctx)
 
 	if err != nil {
-		logger.Error("Didn't find the last milestone")
+		logger.Error("Didn't find the last milestone", "err", err)
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 	}
 
@@ -126,13 +125,6 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, msg types.MsgMilestoneTimeout, k
 
 	// If last milestone happens before milestone buffer time -- thrown an error
 	if lastMilestoneTime.After(currentTime) || (currentTime.Sub(lastMilestoneTime) < bufferTime) {
-		fmt.Print("last Milestone Time", lastMilestoneTime.Second())
-		fmt.Print("Current Time", currentTime.Second())
-
-		logger.Debug("Invalid Milestone Timeout msg", "lastMilestoneTime", lastMilestoneTime, "current time", currentTime,
-			"buffer Time", bufferTime.String(),
-		)
-
 		logger.Error("Invalid Milestone Timeout msg", "lastMilestoneTime", lastMilestoneTime, "current time", currentTime,
 			"buffer Time", bufferTime.String(),
 		)
