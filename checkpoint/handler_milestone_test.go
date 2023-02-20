@@ -47,6 +47,40 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
+	suite.Run("Failure-Before Hard Fork", func() {
+		msgMilestone := types.NewMsgMilestoneBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock,
+			header.Hash,
+			borChainId,
+			milestoneID,
+		)
+
+		ctxNew := ctx.WithBlockHeight(-1) //Setting height as -1 just to check for the hard fork.
+
+		// send milestone to handler
+		got := suite.handler(ctxNew, msgMilestone)
+		require.False(t, got.IsOK(), "expected send-milstone to get failed")
+		require.Equal(t, errs.CodeInvalidMsg, got.Code)
+	})
+
+	suite.Run("Failure-Invalid Start Block Number", func() {
+		msgMilestone := types.NewMsgMilestoneBlock(
+			header.Proposer,
+			uint64(1),
+			header.EndBlock+1,
+			header.Hash,
+			borChainId,
+			milestoneID,
+		)
+
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
+		require.False(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
+		require.Equal(t, errs.CodeNoMilestone, got.Code)
+	})
+
 	suite.Run("Success", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,

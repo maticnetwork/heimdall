@@ -21,8 +21,12 @@ func TestMilestoneQuerierTestSuite(t *testing.T) {
 func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 
-	path := []string{types.QueryLatestMilestone}
-	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone)
+	path_latest := []string{types.QueryLatestMilestone}
+	path_byNumber := []string{types.QueryMilestoneByNumber}
+	path_count := []string{types.QueryCount}
+	route_latest := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone)
+	route_byNumber := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByNumber)
+	route_count := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCount)
 	startBlock := uint64(0)
 	endBlock := uint64(255)
 	hash := hmTypes.HexToHeimdallHash("123")
@@ -39,23 +43,69 @@ func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 		milestoneID,
 		timestamp,
 	)
-	err := app.CheckpointKeeper.AddMilestone(ctx, milestoneBlock)
-	require.NoError(t, err)
 
-	req := abci.RequestQuery{
-		Path: route,
+	req_latest := abci.RequestQuery{
+		Path: route_latest,
 		Data: []byte{},
 	}
-	res, err := querier(ctx, path, req)
+
+	res, err := querier(ctx, path_latest, req_latest)
+
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	req_byNumber := abci.RequestQuery{
+		Path: route_byNumber,
+		Data: app.Codec().MustMarshalJSON(types.NewQueryMilestoneID(milestoneID)),
+	}
+
+	res, err = querier(ctx, path_byNumber, req_byNumber)
+
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	req_byNumber = abci.RequestQuery{
+		Path: route_byNumber,
+		Data: app.Codec().MustMarshalJSON(types.NewQueryMilestoneParams(1)),
+	}
+
+	res, err = querier(ctx, path_latest, req_byNumber)
+
+	require.Error(t, err)
+	require.Nil(t, res)
+
+	errNew := app.CheckpointKeeper.AddMilestone(ctx, milestoneBlock)
+	require.NoError(t, errNew)
+
+	res, err = querier(ctx, path_latest, req_latest)
 
 	require.NoError(t, err)
 	require.NotNil(t, res)
 
 	var milestone hmTypes.Milestone
 
-	err = json.Unmarshal(res, &milestone)
-	require.NoError(t, err)
+	errNew = json.Unmarshal(res, &milestone)
+	require.NoError(t, errNew)
 	require.Equal(t, milestone, milestoneBlock)
+
+	res, err = querier(ctx, path_latest, req_byNumber)
+
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	req_count := abci.RequestQuery{
+		Path: route_count,
+		Data: []byte{},
+	}
+
+	res, err = querier(ctx, path_count, req_count)
+
+	require.NoError(t, err)
+	require.NotNil(t, res)
+
+	var count uint64
+	errNew = json.Unmarshal(res, &count)
+	require.Equal(t, count, uint64(1))
 }
 func (suite *QuerierTestSuite) TestQueryLastNoAckMilestone() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier

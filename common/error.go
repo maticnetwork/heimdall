@@ -80,6 +80,7 @@ const (
 	CodeOldMilestone             CodeType = 7504
 	CodeInvalidMilestoneTimeout  CodeType = 7505
 	CodeTooManyMilestoneTimeout  CodeType = 7506
+	CodeInvalidMilestoneIndex    CodeType = 7507
 )
 
 // -------- Invalid msg
@@ -181,6 +182,10 @@ func ErrInvalidMilestoneTimeout(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrTooManyMilestoneTimeout(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeTooManyNoAck, "Too many milestone timeout msg")
+}
+
+func ErrInvalidMilestoneIndex(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoMilestone, "Invalid milestone index")
 }
 
 // ----------- Staking Errors

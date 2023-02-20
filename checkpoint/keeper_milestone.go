@@ -1,7 +1,6 @@
 package checkpoint
 
 import (
-	"errors"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -75,7 +74,7 @@ func (k *Keeper) GetMilestoneByNumber(ctx sdk.Context, number uint64) (*hmTypes.
 		return &milestone, nil
 	}
 
-	return nil, errors.New("Invalid milestone Index")
+	return nil, cmn.ErrInvalidMilestoneIndex(k.Codespace())
 }
 
 // GetLastMilestone gets last milestone, milestone number = GetCount()

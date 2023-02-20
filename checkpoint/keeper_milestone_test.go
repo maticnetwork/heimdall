@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	cmn "github.com/maticnetwork/heimdall/common"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	"github.com/stretchr/testify/require"
@@ -47,6 +48,54 @@ func (suite *KeeperTestSuite) TestAddMilestone() {
 	require.Equal(t, borChainId, result.BorChainID)
 	require.Equal(t, proposerAddress, result.Proposer)
 	require.Equal(t, timestamp, result.TimeStamp)
+
+	result, err = keeper.GetMilestoneByNumber(ctx, 1)
+	require.NoError(t, err)
+	require.Equal(t, startBlock, result.StartBlock)
+	require.Equal(t, endBlock, result.EndBlock)
+	require.Equal(t, hash, result.Hash)
+	require.Equal(t, borChainId, result.BorChainID)
+	require.Equal(t, proposerAddress, result.Proposer)
+	require.Equal(t, timestamp, result.TimeStamp)
+
+	result, err = keeper.GetMilestoneByNumber(ctx, 2)
+	require.Nil(t, result)
+	require.Equal(t, err, cmn.ErrInvalidMilestoneIndex(keeper.Codespace()))
+}
+
+func (suite *KeeperTestSuite) TestPruneMilestone() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.CheckpointKeeper
+
+	startBlock := uint64(0)
+	endBlock := uint64(63)
+	hash := hmTypes.HexToHeimdallHash("123")
+	proposerAddress := hmTypes.HexToHeimdallAddress("123")
+	timestamp := uint64(time.Now().Unix())
+	borChainId := "1234"
+	milestoneID := "0000"
+
+	milestone := hmTypes.CreateMilestone(
+		startBlock,
+		endBlock,
+		hash,
+		proposerAddress,
+		borChainId,
+		milestoneID,
+		timestamp,
+	)
+	err := keeper.AddMilestone(ctx, milestone)
+	require.NoError(t, err)
+
+	keeper.PruneMilestone(ctx, 2)
+	result, err := keeper.GetMilestoneByNumber(ctx, 1)
+	require.NotNil(t, result)
+	require.Nil(t, err)
+
+	keeper.PruneMilestone(ctx, 1)
+	result, err = keeper.GetMilestoneByNumber(ctx, 1)
+	require.Nil(t, result)
+	require.Equal(t, err, cmn.ErrInvalidMilestoneIndex(keeper.Codespace()))
 }
 
 func (suite *KeeperTestSuite) TestGetCount() {

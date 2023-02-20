@@ -517,7 +517,7 @@ func (k *Keeper) MilestoneIncrementAccum(ctx sdk.Context, times int) {
 
 	// replace
 
-	if err := k.UpdateValidatorSetInStore(ctx, validatorSet); err != nil {
+	if err := k.UpdateMilestoneValidatorSetInStore(ctx, validatorSet); err != nil {
 		k.Logger(ctx).Error("IncrementAccum | UpdateValidatorSetInStore", "error", err)
 	}
 }

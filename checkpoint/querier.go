@@ -33,9 +33,9 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, topupKeeper topup.K
 			return handleQueryCheckpointList(ctx, req, keeper)
 		case types.QueryNextCheckpoint:
 			return handleQueryNextCheckpoint(ctx, req, keeper, stakingKeeper, topupKeeper, contractCaller)
+
 		case types.QueryCount:
 			return handleQueryCount(ctx, keeper)
-
 		case types.QueryLatestMilestone:
 			return handleQueryLatestMilestone(ctx, keeper)
 		case types.QueryMilestoneByNumber:

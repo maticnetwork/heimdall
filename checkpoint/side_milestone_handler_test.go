@@ -32,6 +32,27 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 
 	borChainId := "1234"
 
+	suite.Run("Failure-Before Hard Fork", func() {
+
+		// create milestone msg
+		msgMilestone := types.NewMsgMilestoneBlock(
+			milestone.Proposer,
+			milestone.StartBlock,
+			milestone.EndBlock,
+			milestone.Hash,
+			borChainId,
+			milestone.MilestoneID,
+		)
+
+		ctxNew := ctx.WithBlockHeight(-1) //Setting height as -1 just to check for the hard fork.
+
+		// send milestone to handler
+		result := suite.sideHandler(ctxNew, msgMilestone)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
+		require.Equal(t, uint32(common.CodeInvalidBlockInput), result.Code)
+
+	})
+
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 
@@ -181,6 +202,33 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 		IsNoAckMilestone = keeper.GetNoAckMilestone(ctx, "WrongID")
 		require.False(t, IsNoAckMilestone)
 
+	})
+
+	suite.Run("Failure-Invalid Start Block", func() {
+		// create milestone msg
+		msgMilestone := types.NewMsgMilestoneBlock(
+			milestone.Proposer,
+			milestone.StartBlock+1,
+			milestone.EndBlock+1,
+			milestone.Hash,
+			borChainId,
+			"00000",
+		)
+
+		_ = suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
+
+		lastMilestone, err = keeper.GetLastMilestone(ctx)
+		require.Nil(t, lastMilestone)
+		require.Error(t, err)
+
+		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
+		require.Equal(t, lastNoAckMilestone, "00000")
+
+		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00000")
+		require.True(t, IsNoAckMilestone)
+
+		IsNoAckMilestone = keeper.GetNoAckMilestone(ctx, "WrongID")
+		require.False(t, IsNoAckMilestone)
 	})
 
 	suite.Run("Success", func() {
