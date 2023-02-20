@@ -124,6 +124,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 
 	if isProposer {
 		// fetch checkpoint context
+		cp.Logger.Error("Anon93 is current proposer")
 		checkpointContext, err := cp.getCheckpointContext()
 		if err != nil {
 			return err
@@ -155,17 +156,24 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		timeStamp := uint64(time.Now().Unix())
 		checkpointBufferTime := uint64(checkpointContext.CheckpointParams.CheckpointBufferTime.Seconds())
 
+		cp.Logger.Error("Break A")
+
 		bufferedCheckpoint, err := util.GetBufferedCheckpoint(cp.cliCtx)
 		if err != nil {
 			cp.Logger.Debug("No buffered checkpoint", "bufferedCheckpoint", bufferedCheckpoint)
 		}
+
+		cp.Logger.Error("Break B")
 
 		if bufferedCheckpoint != nil && !(bufferedCheckpoint.TimeStamp == 0 || ((timeStamp > bufferedCheckpoint.TimeStamp) && timeStamp-bufferedCheckpoint.TimeStamp >= checkpointBufferTime)) {
 			cp.Logger.Info("Checkpoint already exits in buffer", "Checkpoint", bufferedCheckpoint.String())
 			return nil
 		}
 
+		cp.Logger.Error("Break C")
+
 		if err := cp.createAndSendCheckpointToHeimdall(checkpointContext, start, end); err != nil {
+			cp.Logger.Error("Error while sending checkpoint in Anon93")
 			cp.Logger.Error("Error sending checkpoint to heimdall", "error", err)
 			return err
 		}
@@ -190,6 +198,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 		return err
 	}
 
+	cp.Logger.Error("Break H")
 	// var tx = sdk.TxResponse{}
 	// if err := jsoniter.Unmarshal([]byte(txBytes), &tx); err != nil {
 	// 	cp.Logger.Error("Error unmarshalling txResponse", "error", err)
@@ -203,6 +212,8 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 		cp.Logger.Error("Error checking isCurrentProposer in CheckpointConfirmation handler", "error", err)
 		return err
 	}
+
+	cp.Logger.Error("Break I")
 
 	var (
 		startBlock uint64
@@ -234,6 +245,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 		return err
 	}
 
+	cp.Logger.Error("Break J")
 	if shouldSend && isCurrentProposer {
 		txHash := common.FromHex(txHash)
 		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, blockHeight, txHash); err != nil {
@@ -241,6 +253,8 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 			return err
 		}
 	}
+
+	cp.Logger.Error("Break K")
 
 	cp.Logger.Info("I am not the current proposer or checkpoint already sent. Ignoring", "eventType", event.Type)
 
@@ -446,11 +460,15 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 	// get checkpoint params
 	checkpointParams := checkpointContext.CheckpointParams
 
+	cp.Logger.Error("Break D")
+
 	// Get root hash
 	root, err := cp.contractConnector.GetRootHash(start, end, checkpointParams.MaxCheckpointLength)
 	if err != nil {
 		return err
 	}
+
+	cp.Logger.Error("Break E")
 
 	cp.Logger.Info("Root hash calculated", "rootHash", hmTypes.BytesToHeimdallHash(root))
 
@@ -480,11 +498,15 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 		chainParams.BorChainID,
 	)
 
+	cp.Logger.Error("Break F")
+
 	// return broadcast to heimdall
 	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		cp.Logger.Error("Error while broadcasting checkpoint to heimdall", "error", err)
 		return err
 	}
+
+	cp.Logger.Error("Break G")
 
 	return nil
 }
