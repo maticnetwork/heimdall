@@ -17,7 +17,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	logger := k.Logger(ctx)
 	milestoneLength := helper.MilestoneLength
 
-	//Check for the hard fork value
+	//Check whether the chain has reached the hard fork length
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
 		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
 		return common.ErrInvalidMsg(k.Codespace(), "Network hasn't reached the milestone hard forked height").Result()
@@ -27,7 +27,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	//Get Validator
 	//
 
-	// Check proposer in message
+	//Get the milestone proposer
 	validatorSet := k.sk.GetMilestoneValidatorSet(ctx)
 	if validatorSet.Proposer == nil {
 		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer.String())
@@ -43,6 +43,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 
 	msgMilestoneLength := int64(msg.EndBlock) - int64(msg.StartBlock) + 1
 
+	//check for the minimum length of milestone
 	if msgMilestoneLength < int64(milestoneLength) {
 		logger.Error("Length of the milestone should be greater than configured minimum milestone length",
 			"StartBlock", msg.StartBlock,
@@ -53,7 +54,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		return common.ErrMilestoneInvalid(k.Codespace()).Result()
 	}
 
-	// fetch last milestone from store
+	// fetch last stored milestone from store
 	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil {
 		// make sure new milestone is in continuity
 		if lastMilestone.EndBlock+1 != msg.StartBlock {
@@ -73,6 +74,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	// Validate proposer
 	//
 
+	//check for the milestone proposer
 	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
 		logger.Error(
 			"Invalid proposer in msg",
@@ -83,6 +85,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
+	//Set the MilestoneID in the cache
 	types.SetMilestoneID(msg.MilestoneID)
 
 	// Emit event for milestone

@@ -21,13 +21,13 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 	// logger
 	logger := k.Logger(ctx)
 
-	//Check for the hard fork value
+	//Check whether the chain has reached the hard fork length
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
 		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
-	// validate milestone
+	//Get the milestone count
 	count := k.GetMilestoneCount(ctx)
 	lastMilestone, err := k.GetLastMilestone(ctx)
 
@@ -48,6 +48,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
+	//Validating the milestone
 	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.Hash, msg.MilestoneID, contractCaller, milestoneLength)
 	if err != nil {
 		logger.Error("Error validating milestone",
@@ -109,6 +110,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		}
 	}
 
+	//Get the latest stored milestone from store
 	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil { // fetch last milestone from store
 		// make sure new milestoen is after tip
 		if lastMilestone.EndBlock > msg.StartBlock {
@@ -147,6 +149,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 
 	}
 
+	//Add the milestone to the store
 	if err := k.AddMilestone(ctx, hmTypes.Milestone{ // Save milestone to buffer store
 		StartBlock:  msg.StartBlock, //Add milestone to store with root hash
 		EndBlock:    msg.EndBlock,
