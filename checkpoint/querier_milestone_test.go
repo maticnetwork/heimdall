@@ -105,6 +105,8 @@ func (suite *QuerierTestSuite) TestQueryLatestMilestone() {
 
 	var count uint64
 	errNew = json.Unmarshal(res, &count)
+
+	require.NoError(t, err)
 	require.Equal(t, count, uint64(1))
 }
 func (suite *QuerierTestSuite) TestQueryLastNoAckMilestone() {
