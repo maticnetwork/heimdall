@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	"os"
 	"runtime/debug"
 	"time"
 
@@ -40,7 +39,8 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	// init vars for the Light Client Rest server
 	cliCtx := context.NewCLIContext().WithCodec(cdc)
 	router := mux.NewRouter()
-	logger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "rest-server")
+	logsWriter := helper.GetLogsWriter(helper.GetConfig().LogsWriterFile)
+	logger := tmLog.NewTMLogger(log.NewSyncWriter(logsWriter)).With("module", "rest-server")
 
 	registerRoutesFn(cliCtx, router)
 
@@ -77,7 +77,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	})
 
 	// Setup gRPC server
-	gRPCLogger := tmLog.NewTMLogger(log.NewSyncWriter(os.Stdout)).With("module", "gRPC-server")
+	gRPCLogger := tmLog.NewTMLogger(log.NewSyncWriter(logsWriter)).With("module", "gRPC-server")
 	if err := gRPC.SetupGRPCServer(mainCtx, cdc, viper.GetString(FlagGrpcAddr), gRPCLogger); err != nil {
 		return err
 	}
