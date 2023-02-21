@@ -282,6 +282,9 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
 
+	proposer := k.sk.GetCurrentProposer(ctx)
+	logger.Error("TestingAnon93 Changed the proposer in NoACK", "Proposer", proposer.Signer)
+
 	// Get new proposer
 	vs := k.sk.GetValidatorSet(ctx)
 	newProposer := vs.GetProposer()

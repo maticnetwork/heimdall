@@ -338,6 +338,9 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 		logger.Error("Failed to set checkpoint buffer", "Error", err)
 	}
 
+	proposer := k.sk.GetCurrentProposer(ctx)
+	logger.Error("TestingAnon93 added the checkpoint to the buffer", "Proposer", proposer.Signer)
+
 	logger.Debug("New checkpoint into buffer stored",
 		"startBlock", msg.StartBlock,
 		"endBlock", msg.EndBlock,
@@ -424,6 +427,9 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
 	}
 
+	proposer := k.sk.GetCurrentProposer(ctx)
+	logger.Error("TestingAnon93 added the checkpoint to the db", "proposer", proposer.Signer)
+
 	logger.Debug("Checkpoint added to store", "checkpointNumber", msg.Number)
 
 	// Flush buffer
@@ -437,7 +443,11 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 	logger.Info("Valid ack received", "CurrentACKCount", k.GetACKCount(ctx)-1, "UpdatedACKCount", k.GetACKCount(ctx))
 
 	// Increment accum (selects new proposer)
+
 	k.sk.IncrementAccum(ctx, 1)
+
+	proposer = k.sk.GetCurrentProposer(ctx)
+	logger.Error("TestingAnon93 Changed the proposer in ACK", "Proposer", proposer.Signer)
 
 	// TX bytes
 	txBytes := ctx.TxBytes()

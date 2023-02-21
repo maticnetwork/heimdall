@@ -173,7 +173,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		cp.Logger.Error("Break C")
 
 		if err := cp.createAndSendCheckpointToHeimdall(checkpointContext, start, end); err != nil {
-			cp.Logger.Error("Error while sending checkpoint in Anon93")
+			cp.Logger.Error("Break C1")
 			cp.Logger.Error("Error sending checkpoint to heimdall", "error", err)
 			return err
 		}
@@ -182,6 +182,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		return
 	}
 
+	cp.Logger.Error("TestingAnon93 send the checkpoint to Heimdall")
 	return nil
 }
 
@@ -252,11 +253,14 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
 		}
+		cp.Logger.Error("Break K", "shouldSend", shouldSend)
 	}
 
-	cp.Logger.Error("Break K")
+	cp.Logger.Error("Break I", "shouldSend", shouldSend, "isCurrentProposer", isCurrentProposer)
 
 	cp.Logger.Info("I am not the current proposer or checkpoint already sent. Ignoring", "eventType", event.Type)
+
+	cp.Logger.Error("TestingAnon93 send the checkpoint to Rootchain")
 
 	return nil
 }
@@ -299,6 +303,7 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		latestCheckpoint, err := util.GetLatestCheckpoint(cp.cliCtx)
 		// event checkpoint is older than or equal to latest checkpoint
 		if err == nil && latestCheckpoint != nil && latestCheckpoint.EndBlock >= event.End.Uint64() {
+
 			cp.Logger.Debug("Checkpoint ack is already submitted", "start", event.Start, "end", event.End)
 			return nil
 		}
@@ -321,6 +326,8 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			return err
 		}
 	}
+
+	cp.Logger.Error("TestingAnon93 send the checkpoint ACK")
 
 	return nil
 }
@@ -718,13 +725,16 @@ func (cp *CheckpointProcessor) shouldSendCheckpoint(checkpointContext *Checkpoin
 	// check if we need to send checkpoint or not
 	if ((currentChildBlock + 1) == start) || (currentChildBlock == 0 && start == 0) {
 		cp.Logger.Info("Checkpoint Valid", "startBlock", start)
-
+		cp.Logger.Error("shouldSendCheckpoint-A")
 		shouldSend = true
 	} else if currentChildBlock > start {
+		cp.Logger.Error("shouldSendCheckpoint-B")
 		cp.Logger.Info("Start block does not match, checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
 	} else if currentChildBlock > end {
+		cp.Logger.Error("shouldSendCheckpoint-C")
 		cp.Logger.Info("Checkpoint already sent", "commitedLastBlock", currentChildBlock, "startBlock", start)
 	} else {
+		cp.Logger.Error("shouldSendCheckpoint-D")
 		cp.Logger.Info("No need to send checkpoint")
 	}
 
