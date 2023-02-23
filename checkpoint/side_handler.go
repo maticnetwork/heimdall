@@ -97,6 +97,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 
 	// logger
 	logger := k.Logger(ctx)
+	logger.Error("TestingAnon93 Entered Checkpoint module SideHandler", "Block Number", ctx.BlockHeight())
 
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller, maticTxConfirmations)

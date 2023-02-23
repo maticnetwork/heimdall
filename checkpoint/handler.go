@@ -74,6 +74,8 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
+	logger.Error("TestingAnon93 Entered Checkpoint module Handler", "Block Number", ctx.BlockHeight())
+
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
 
@@ -237,8 +239,10 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 
 // Handles checkpoint no-ack transaction
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
+
 	logger := k.Logger(ctx)
 
+	logger.Error("TestingAnon93 Entered Checkpoint NoAck module", "Block Number", ctx.BlockHeight())
 	// Get current block time
 	currentTime := ctx.BlockTime()
 
