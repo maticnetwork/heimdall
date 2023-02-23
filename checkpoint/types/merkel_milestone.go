@@ -11,7 +11,7 @@ import (
 func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, milestoneLength uint64) (bool, error) {
 	msgMilestoneLength := int64(end) - int64(start) + 1
 
-	//Check for the mimimum length of the milestone
+	//Check for the minimum length of the milestone
 	if msgMilestoneLength < int64(milestoneLength) {
 		return false, errors.New("Invalid milestone, difference in start and end block is less than milestone length")
 	}

@@ -47,6 +47,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	// add current proposer to header
 	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
+	//Test1- When the milestone msg is sent before the hardfork value
 	suite.Run("Failure-Before Hard Fork", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
@@ -65,6 +66,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeInvalidMsg, got.Code)
 	})
 
+	//Test2- When the first milestone is composed of incorrect start number
 	suite.Run("Failure-Invalid Start Block Number", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
@@ -81,6 +83,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeNoMilestone, got.Code)
 	})
 
+	//Test3- When the correct milestone is proposed
 	suite.Run("Success", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
@@ -98,6 +101,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Empty(t, bufferedHeader, "Should not store state")
 	})
 
+	//Test4- When milestone is proposed of length shorter than configured minimum length
 	suite.Run("Invalid msg based on milestone length", func() {
 		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -115,6 +119,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeMilestoneInvalid, got.Code)
 	})
 
+	//Test5- When milestone is proposed by wrong proposer
 	suite.Run("Invalid Proposer", func() {
 		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -132,6 +137,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeInvalidMsg, got.Code)
 	})
 
+	//Test6- When milestones are not in continuity
 	suite.Run("Milestone not in countinuity", func() {
 
 		err = keeper.AddMilestone(ctx, header)
@@ -143,7 +149,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		lastMilestone, err := keeper.GetLastMilestone(ctx)
 		if err == nil {
 			// pass wrong start
-			start = start + lastMilestone.EndBlock + 2
+			start = start + lastMilestone.EndBlock + 2 //Start block is 2 more than last milestone's end block
 		}
 
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -170,7 +176,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		lastMilestone, err := keeper.GetLastMilestone(ctx)
 		if err == nil {
 			// pass wrong start
-			start = start + lastMilestone.EndBlock - 2
+			start = start + lastMilestone.EndBlock - 2 //Start block is 2 less than last milestone's end block
 		}
 
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -190,6 +196,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	})
 }
 
+// Test to check that passed milestone should be in the store
 func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.CheckpointKeeper

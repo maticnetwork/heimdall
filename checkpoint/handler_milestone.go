@@ -12,7 +12,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-// handleMsgMilestone Validates milestone transaction
+// handleMsgMilestone validates milestone transaction
 func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
 	milestoneLength := helper.MilestoneLength
@@ -24,7 +24,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	}
 
 	//
-	//Get Validator
+	//Get milestone validator set
 	//
 
 	//Get the milestone proposer
@@ -41,6 +41,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	//Check for the msg milestone
 	//
 
+	//Calculate the milestone length
 	msgMilestoneLength := int64(msg.EndBlock) - int64(msg.StartBlock) + 1
 
 	//check for the minimum length of milestone

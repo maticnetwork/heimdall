@@ -88,6 +88,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 		return err
 	}
 
+	//check whether the node is current milestone proposer or not
 	isProposer, err := util.IsMilestoneProposer(mp.cliCtx)
 	if err != nil {
 		mp.Logger.Error("Error checking isProposer in HeaderBlock handler", "error", err)
@@ -117,9 +118,11 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 				return fmt.Errorf("Got nil result while fetching latest milestone")
 			}
 
+			//start block number should be continous to the end block of lasted stored milestone
 			start = latestMilestone.EndBlock + 1
 		}
 
+		//send the milestone to heimdall chain
 		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, milestoneLength); err != nil {
 			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
 			return err
@@ -151,6 +154,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	endNum := latestNum - blocksConfirmation
 
+	//fetch the endBlock+1 number instead of endBlock so that we can directly get the hash of endBlock using parent hash
 	block, err = mp.contractConnector.GetMaticChainBlock(big.NewInt(int64(endNum + 1)))
 	if err != nil {
 		return err
@@ -182,7 +186,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		milestoneId,
 	)
 
-	// return broadcast to heimdall
+	//broadcast to heimdall
 	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
 		return err
@@ -233,6 +237,7 @@ func (mp *MilestoneProcessor) checkAndProposeMilestoneTimeout() (err error) {
 	if isMilestoneTimeoutRequired {
 		var isProposer bool
 
+		//check if the node is the proposer list or not.
 		if isProposer, err = util.IsInMilestoneProposerList(mp.cliCtx, 10); err != nil {
 			mp.Logger.Error("Error checking IsInMilestoneProposerList while proposing Milestone Timeout ", "error", err)
 			return
