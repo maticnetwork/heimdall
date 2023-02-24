@@ -118,7 +118,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 				return fmt.Errorf("Got nil result while fetching latest milestone")
 			}
 
-			//start block number should be continous to the end block of lasted stored milestone
+			//start block number should be continuous to the end block of lasted stored milestone
 			start = latestMilestone.EndBlock + 1
 		}
 
