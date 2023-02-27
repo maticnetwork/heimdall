@@ -288,6 +288,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
+	k.Logger(ctx).Error("Setting the validator set")
 
 	return nil
 }
