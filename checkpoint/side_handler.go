@@ -338,6 +338,8 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 		logger.Error("Failed to set checkpoint buffer", "Error", err)
 	}
 
+	logger.Debug("TestingDevnet Checkpoint added to Buffer", "Proposer", k.sk.GetCurrentProposer(ctx))
+
 	logger.Debug("New checkpoint into buffer stored",
 		"startBlock", msg.StartBlock,
 		"endBlock", msg.EndBlock,
@@ -424,6 +426,8 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 		return sdk.ErrInternal("Failed to add checkpoint into store").Result()
 	}
 
+	logger.Error("TestingDevnet Adding Checkpoint", "Propser", k.sk.GetCurrentProposer(ctx))
+
 	logger.Debug("Checkpoint added to store", "checkpointNumber", msg.Number)
 
 	// Flush buffer
@@ -438,6 +442,8 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
+
+	logger.Error("TestingDevnet Changed Proposer in Ack", "Propser", k.sk.GetCurrentProposer(ctx))
 
 	// TX bytes
 	txBytes := ctx.TxBytes()

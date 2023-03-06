@@ -599,8 +599,11 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 
 		if ctx.BlockHeight() <= 500 {
 			// increment proposer priority
+			logger.Error("TestingDevnet Changed the proposer")
 			currentValidatorSet.IncrementProposerPriority(1)
 		}
+
+		logger.Error("TestingDevnet Passed", "Proposer", currentValidatorSet.Proposer)
 
 		// validator set change
 		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
