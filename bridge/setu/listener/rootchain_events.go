@@ -21,6 +21,12 @@ const (
 	maxIterations = 100
 )
 
+const (
+	// smart contracts' events names
+	stateSyncedEvent = "StateSynced"
+	stakeUpdateEvent = "StakeUpdate"
+)
+
 var (
 	errNoEventsFound = errors.New("no events found")
 )
@@ -47,7 +53,7 @@ func (rl *RootChainListener) getLatestStateID(ctx context.Context) (*big.Int, er
 	}
 
 	var event statesender.StatesenderStateSynced
-	if err = helper.UnpackLog(rl.stateSenderAbi, &event, "StateSynced", latestEvent); err != nil {
+	if err = helper.UnpackLog(rl.stateSenderAbi, &event, stateSyncedEvent, latestEvent); err != nil {
 		return nil, err
 	}
 
@@ -102,7 +108,7 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 	}
 
 	var event statesender.StatesenderStateSynced
-	if err = helper.UnpackLog(rl.stateSenderAbi, &event, "StateSynced", &events[0]); err != nil {
+	if err = helper.UnpackLog(rl.stateSenderAbi, &event, stateSyncedEvent, &events[0]); err != nil {
 		return nil, err
 	}
 
@@ -166,7 +172,7 @@ func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, no
 	}
 
 	var event stakinginfo.StakinginfoStakeUpdate
-	if err = helper.UnpackLog(rl.stakingInfoAbi, &event, "StakeUpdate", &events[0]); err != nil {
+	if err = helper.UnpackLog(rl.stakingInfoAbi, &event, stakeUpdateEvent, &events[0]); err != nil {
 		return nil, err
 	}
 
