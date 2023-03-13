@@ -39,6 +39,7 @@ const (
 	slashedEvent        = "Slashed"
 	unJailedEvent       = "UnJailed"
 )
+
 // ContractsABIsMap is a cached map holding the ABIs of the contracts
 var ContractsABIsMap = make(map[string]*abi.ABI)
 
