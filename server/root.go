@@ -35,6 +35,7 @@ import (
 
 const shutdownTimeout = 10 * time.Second
 const FlagGrpcAddr = "grpc-addr"
+const FlagRPCReadHeaderTimeout = "read-header-timeout"
 
 func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn func(ctx client.CLIContext, mux *mux.Router), restCh chan struct{}) error {
 	// init vars for the Light Client Rest server
@@ -47,8 +48,17 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	// server configuration
 	cfg := rpcserver.DefaultConfig()
 	cfg.MaxOpenConnections = viper.GetInt(client.FlagMaxOpenConnections)
-	cfg.ReadTimeout = time.Duration(0) * time.Second
-	cfg.WriteTimeout = time.Duration(0) * time.Second
+
+	if viper.GetUint(client.FlagRPCReadTimeout) != 0 {
+		readTimeOut := viper.GetUint(client.FlagRPCReadTimeout)
+		cfg.ReadTimeout = time.Duration(readTimeOut) * time.Second
+	}
+
+	if viper.GetUint(client.FlagRPCWriteTimeout) != 0 {
+		writeTimeOut := viper.GetUint(client.FlagRPCWriteTimeout)
+		cfg.WriteTimeout = time.Duration(writeTimeOut) * time.Second
+	}
+
 	listenAddr := viper.GetString(client.FlagListenAddr)
 
 	// this uses net.Listener underneath
@@ -85,6 +95,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	g.Go(func() error {
 		// wait for os interrupt, then close Listener
 		<-gCtx.Done()
+		logger.Info("Shutting down heimdall rest server...")
 		return listener.Close()
 	})
 	// wait here
@@ -159,6 +170,11 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 	logger.Info(fmt.Sprintf("Starting RPC HTTP server on %s", listener.Addr()))
 	recoverHandler := recoverAndLog(maxBytesHandler{h: handler, n: cfg.MaxBodyBytes}, logger)
 
+	readHeaderTimeout := viper.GetUint(FlagRPCReadHeaderTimeout)
+	if readHeaderTimeout == 0 {
+		readHeaderTimeout = uint(cfg.ReadTimeout)
+	}
+
 	s := &http.Server{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
@@ -174,7 +190,7 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 
 		}),
 		ReadTimeout:       cfg.ReadTimeout,
-		ReadHeaderTimeout: cfg.ReadTimeout,
+		ReadHeaderTimeout: time.Duration(readHeaderTimeout) * time.Second,
 		WriteTimeout:      cfg.WriteTimeout,
 		MaxHeaderBytes:    cfg.MaxHeaderBytes,
 		BaseContext: func(_ net.Listener) ctx.Context {
@@ -230,6 +246,9 @@ func DecorateWithRestFlags(cmd *cobra.Command) {
 	cmd.Flags().String(client.FlagListenAddr, "tcp://0.0.0.0:1317", "The address for the server to listen on")
 	cmd.Flags().Bool(client.FlagTrustNode, true, "Trust connected full node (don't verify proofs for responses)")
 	cmd.Flags().Int(client.FlagMaxOpenConnections, 1000, "The number of maximum open connections")
+	cmd.Flags().Uint(client.FlagRPCReadTimeout, 10, "The RPC read timeout (in seconds)")
+	cmd.Flags().Uint(FlagRPCReadHeaderTimeout, 10, "The RPC header read timeout (in seconds)")
+	cmd.Flags().Uint(client.FlagRPCWriteTimeout, 10, "The RPC write timeout (in seconds)")
 	// heimdall specific flags for rest server start
 	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
 	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
