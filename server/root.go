@@ -174,6 +174,7 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 	if readHeaderTimeout == 0 {
 		readHeaderTimeout = uint(cfg.ReadTimeout)
 	}
+
 	s := &http.Server{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
 			ctx := r.Context()
