@@ -597,11 +597,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 			return abci.ResponseEndBlock{}
 		}
 
-		if ctx.BlockHeight() <= 500 {
-			// increment proposer priority
-			logger.Error("TestingDevnet Changed the proposer")
-			currentValidatorSet.IncrementProposerPriority(1)
-		}
+		currentValidatorSet.IncrementProposerPriority(1)
 
 		logger.Error("TestingDevnet Passed", "Proposer", currentValidatorSet.Proposer)
 
