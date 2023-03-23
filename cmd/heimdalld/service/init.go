@@ -37,7 +37,9 @@ type initHeimdallConfig struct {
 }
 
 func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallConfig, config *cfg.Config) error {
-	WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), helper.GetDefaultHeimdallConfig())
+	conf := helper.GetDefaultHeimdallConfig()
+	conf.Chain = initConfig.chain
+	WriteDefaultHeimdallConfig(filepath.Join(config.RootDir, "config/heimdall-config.toml"), conf)
 
 	nodeID, valPubKey, _, err := InitializeNodeValidatorFiles(config)
 	if err != nil {

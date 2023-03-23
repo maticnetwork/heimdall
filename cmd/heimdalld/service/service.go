@@ -31,6 +31,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
+	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/node"
@@ -249,6 +250,19 @@ For profiling and benchmarking purposes, CPU profiling can be enabled via the '-
 which accepts a path for the resulting pprof file.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			LogsWriterFile := viper.GetString(helper.LogsWriterFileFlag)
+			if LogsWriterFile != "" {
+				logWriter := helper.GetLogsWriter(LogsWriterFile)
+
+				logger, err := SetupCtxLogger(logWriter, ctx.Config.LogLevel)
+				if err != nil {
+					logger.Error("Unable to setup logger", "err", err)
+					return err
+				}
+
+				ctx.Logger = logger
+			}
+
 			ctx.Logger.Info("starting ABCI with Tendermint")
 
 			startRestServer, _ := cmd.Flags().GetBool(helper.RestServerFlag)
@@ -753,4 +767,21 @@ func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
 func CryptoKeyToPubkey(key crypto.PubKey) hmTypes.PubKey {
 	validatorPublicKey := helper.GetPubObjects(key)
 	return hmTypes.NewPubKey(validatorPublicKey[:])
+}
+
+func SetupCtxLogger(logWriter io.Writer, logLevel string) (log.Logger, error) {
+	logger := log.NewTMLogger(log.NewSyncWriter(logWriter))
+
+	logger, err := tmflags.ParseLogLevel(logLevel, logger, cfg.DefaultLogLevel())
+	if err != nil {
+		return nil, err
+	}
+
+	if viper.GetBool(cli.TraceFlag) {
+		logger = log.NewTracingLogger(logger)
+	}
+
+	logger = logger.With("module", "main")
+
+	return logger, nil
 }
