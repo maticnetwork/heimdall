@@ -33,6 +33,7 @@ require (
 )
 
 require (
+	github.com/btcsuite/btcd v0.22.0-beta // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
