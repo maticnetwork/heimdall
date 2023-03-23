@@ -30,7 +30,7 @@ build: clean
 	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
 	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
-	
+
 # make install
 install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
@@ -82,7 +82,7 @@ build-docker-develop:
 .PHONY: contracts build
 
 PACKAGE_NAME          := github.com/maticnetwork/heimdall
-GOLANG_CROSS_VERSION  ?= v1.18.1
+GOLANG_CROSS_VERSION  ?= v1.19.1
 
 .PHONY: release-dry-run
 release-dry-run:
