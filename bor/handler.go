@@ -51,7 +51,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 
 	// Validate span continuity
 	if lastSpan.ID+1 != msg.ID || msg.StartBlock != lastSpan.EndBlock+1 || msg.EndBlock < msg.StartBlock {
-		k.Logger(ctx).Error("Blocks not in countinuity",
+		k.Logger(ctx).Error("Blocks not in continuity",
 			"lastSpanId", lastSpan.ID,
 			"spanId", msg.ID,
 			"lastSpanStartBlock", lastSpan.StartBlock,
@@ -60,7 +60,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 			"spanEndBlock", msg.EndBlock,
 		)
 
-		return common.ErrSpanNotInCountinuity(k.Codespace()).Result()
+		return common.ErrSpanNotInContinuity(k.Codespace()).Result()
 	}
 
 	// Validate Span duration

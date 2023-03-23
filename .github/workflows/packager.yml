@@ -195,6 +195,9 @@ jobs:
           NODE: validator
           NETWORK: mainnet
 
+      - name: Updating the apt-get
+        run: sudo apt-get update -y
+
       - name: Installing deps
         run: sudo apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
 

@@ -18,7 +18,7 @@ import (
 
 const (
 	blocksRange   = 1000
-	maxIterations = 100
+	maxIterations = 1 // 1 iteration (1000 blocks) on rootchain is roughly 3.3 hours, which is enough for backtracking
 )
 
 const (

@@ -3,6 +3,7 @@ package helper
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
 	"os"
@@ -11,7 +12,6 @@ import (
 	"time"
 
 	ethCrypto "github.com/ethereum/go-ethereum/crypto"
-	"github.com/ethereum/go-ethereum/eth"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	"github.com/spf13/cobra"
@@ -32,9 +32,11 @@ const (
 	WithHeimdallConfigFlag = "heimdall-config"
 	HomeFlag               = "home"
 	FlagClientHome         = "home-client"
+	OverwriteGenesisFlag   = "overwrite-genesis"
 	RestServerFlag         = "rest-server"
 	BridgeFlag             = "bridge"
 	LogLevel               = "log_level"
+	LogsWriterFileFlag     = "logs_writer_file"
 	SeedsFlag              = "seeds"
 
 	MainChain   = "mainnet"
@@ -94,8 +96,9 @@ const (
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
-	DefaultSHStateSyncedInterval    = 1 * time.Minute
-	DefaultSHStakeUpdateInterval    = 5 * time.Minute
+	DefaultEnableSH                 = false
+	DefaultSHStateSyncedInterval    = 15 * time.Minute
+	DefaultSHStakeUpdateInterval    = 3 * time.Hour
 	DefaultSHMaxDepthDuration       = time.Hour
 
 	DefaultMainchainGasLimit = uint64(5000000)
@@ -121,6 +124,9 @@ const (
 
 	// New max state sync size after hardfork
 	MaxStateSyncSize = 30000
+
+	// Default Open Collector Endpoint
+	DefaultOpenCollectorEndpoint = "localhost:4317"
 )
 
 var (
@@ -160,6 +166,7 @@ type Configuration struct {
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
 	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
+	EnableSH                 bool          `mapstructure:"enable_self_heal"`         // Enable self healing
 	SHStateSyncedInterval    time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
 	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
 	SHMaxDepthDuration       time.Duration `mapstructure:"sh_max_depth_duration"`    // Max duration that allows to suggest self-healing is not needed
@@ -167,8 +174,10 @@ type Configuration struct {
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
 
-	// json logging
-	LogsType string `mapstructure:"logs_type"` // if true, enable logging in json format
+	// Log related options
+	LogsType       string `mapstructure:"logs_type"`        // if true, enable logging in json format
+	LogsWriterFile string `mapstructure:"logs_writer_file"` // if given, Logs will be written to this file else os.Stdout
+
 	// current chain - newSelectionAlgoHeight depends on this
 	Chain string `mapstructure:"chain"`
 }
@@ -182,8 +191,6 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
-
-var maticEthClient *eth.EthAPIBackend
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -251,14 +258,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
-	// perform check for json logging
-	if conf.LogsType == "json" {
-		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
-	} else {
-		// default fallback
-		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
-	}
-
 	//  if there is a file with overrides submitted via flags => read it an merge it with the alreadey read standard configuration
 	if heimdallConfigFileFromFLag != "" {
 		heimdallViperFromFlag := viper.New()
@@ -281,6 +280,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	// update configuration data with submitted flags
 	if err := conf.UpdateWithFlags(viper.GetViper(), Logger); err != nil {
 		log.Fatalln("Unable to read flag values. Check log for details.", "Error", err)
+	}
+
+	// perform check for json logging
+	if conf.LogsType == "json" {
+		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(GetLogsWriter(conf.LogsWriterFile)))
+	} else {
+		// default fallback
+		Logger = logger.NewTMLogger(logger.NewSyncWriter(GetLogsWriter(conf.LogsWriterFile)))
 	}
 
 	// perform checks for timeout
@@ -379,14 +386,16 @@ func GetDefaultHeimdallConfig() Configuration {
 		NoACKPollInterval:        DefaultNoACKPollInterval,
 		ClerkPollInterval:        DefaultClerkPollInterval,
 		SpanPollInterval:         DefaultSpanPollInterval,
+		EnableSH:                 DefaultEnableSH,
 		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
 		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
 		SHMaxDepthDuration:       DefaultSHMaxDepthDuration,
 
 		NoACKWaitTime: NoACKWaitTime,
 
-		LogsType: DefaultLogsType,
-		Chain:    DefaultChain,
+		LogsType:       DefaultLogsType,
+		Chain:          DefaultChain,
+		LogsWriterFile: "", // default to stdout
 	}
 }
 
@@ -427,11 +436,6 @@ func GetMaticClient() *ethclient.Client {
 // GetMaticRPCClient returns matic's RPC client
 func GetMaticRPCClient() *rpc.Client {
 	return maticRPCClient
-}
-
-// GetMaticEthClient returns matic's Eth client
-func GetMaticEthClient() *eth.EthAPIBackend {
-	return maticEthClient
 }
 
 // GetPrivKey returns priv key object
@@ -641,6 +645,17 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	if err := v.BindPFlag(ChainFlag, cmd.PersistentFlags().Lookup(ChainFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, ChainFlag), "Error", err)
 	}
+
+	// add logsWriterFile flag
+	cmd.PersistentFlags().String(
+		LogsWriterFileFlag,
+		"",
+		"Set logs writer file, Default is os.Stdout",
+	)
+
+	if err := v.BindPFlag(LogsWriterFileFlag, cmd.PersistentFlags().Lookup(LogsWriterFileFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, LogsWriterFileFlag), "Error", err)
+	}
 }
 
 func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Logger) error {
@@ -751,6 +766,11 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		c.Chain = stringConfgValue
 	}
 
+	stringConfgValue = v.GetString(LogsWriterFileFlag)
+	if stringConfgValue != "" {
+		c.LogsWriterFile = stringConfgValue
+	}
+
 	return nil
 }
 
@@ -810,6 +830,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 	if cc.Chain != "" {
 		c.Chain = cc.Chain
 	}
+
+	if cc.LogsWriterFile != "" {
+		c.LogsWriterFile = cc.LogsWriterFile
+	}
 }
 
 // DecorateWithTendermintFlags creates tendermint flags for desired command and bind them to viper
@@ -841,5 +865,18 @@ func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 		case MumbaiChain:
 			tendermintConfig.P2P.Seeds = DefaultTestnetSeeds
 		}
+	}
+}
+
+func GetLogsWriter(logsWriterFile string) io.Writer {
+	if logsWriterFile != "" {
+		logWriter, err := os.OpenFile(logsWriterFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening log writer file: %v", err)
+		}
+
+		return logWriter
+	} else {
+		return os.Stdout
 	}
 }

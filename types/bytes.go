@@ -5,7 +5,7 @@ import (
 	"fmt"
 
 	jsoniter "github.com/json-iterator/go"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"

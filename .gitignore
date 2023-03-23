@@ -17,3 +17,5 @@ logs
 
 data/
 dist/
+
+.dccache
