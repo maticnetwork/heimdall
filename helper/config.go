@@ -3,6 +3,7 @@ package helper
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
 	"os"
@@ -35,6 +36,7 @@ const (
 	RestServerFlag         = "rest-server"
 	BridgeFlag             = "bridge"
 	LogLevel               = "log_level"
+	LogsWriterFileFlag     = "logs_writer_file"
 	SeedsFlag              = "seeds"
 
 	MainChain   = "mainnet"
@@ -172,8 +174,10 @@ type Configuration struct {
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
 
-	// json logging
-	LogsType string `mapstructure:"logs_type"` // if true, enable logging in json format
+	// Log related options
+	LogsType       string `mapstructure:"logs_type"`        // if true, enable logging in json format
+	LogsWriterFile string `mapstructure:"logs_writer_file"` // if given, Logs will be written to this file else os.Stdout
+
 	// current chain - newSelectionAlgoHeight depends on this
 	Chain string `mapstructure:"chain"`
 }
@@ -254,14 +258,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
-	// perform check for json logging
-	if conf.LogsType == "json" {
-		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
-	} else {
-		// default fallback
-		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
-	}
-
 	//  if there is a file with overrides submitted via flags => read it an merge it with the alreadey read standard configuration
 	if heimdallConfigFileFromFLag != "" {
 		heimdallViperFromFlag := viper.New()
@@ -284,6 +280,14 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	// update configuration data with submitted flags
 	if err := conf.UpdateWithFlags(viper.GetViper(), Logger); err != nil {
 		log.Fatalln("Unable to read flag values. Check log for details.", "Error", err)
+	}
+
+	// perform check for json logging
+	if conf.LogsType == "json" {
+		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(GetLogsWriter(conf.LogsWriterFile)))
+	} else {
+		// default fallback
+		Logger = logger.NewTMLogger(logger.NewSyncWriter(GetLogsWriter(conf.LogsWriterFile)))
 	}
 
 	// perform checks for timeout
@@ -389,8 +393,9 @@ func GetDefaultHeimdallConfig() Configuration {
 
 		NoACKWaitTime: NoACKWaitTime,
 
-		LogsType: DefaultLogsType,
-		Chain:    DefaultChain,
+		LogsType:       DefaultLogsType,
+		Chain:          DefaultChain,
+		LogsWriterFile: "", // default to stdout
 	}
 }
 
@@ -640,6 +645,17 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	if err := v.BindPFlag(ChainFlag, cmd.PersistentFlags().Lookup(ChainFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, ChainFlag), "Error", err)
 	}
+
+	// add logsWriterFile flag
+	cmd.PersistentFlags().String(
+		LogsWriterFileFlag,
+		"",
+		"Set logs writer file, Default is os.Stdout",
+	)
+
+	if err := v.BindPFlag(LogsWriterFileFlag, cmd.PersistentFlags().Lookup(LogsWriterFileFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, LogsWriterFileFlag), "Error", err)
+	}
 }
 
 func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Logger) error {
@@ -750,6 +766,11 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		c.Chain = stringConfgValue
 	}
 
+	stringConfgValue = v.GetString(LogsWriterFileFlag)
+	if stringConfgValue != "" {
+		c.LogsWriterFile = stringConfgValue
+	}
+
 	return nil
 }
 
@@ -809,6 +830,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 	if cc.Chain != "" {
 		c.Chain = cc.Chain
 	}
+
+	if cc.LogsWriterFile != "" {
+		c.LogsWriterFile = cc.LogsWriterFile
+	}
 }
 
 // DecorateWithTendermintFlags creates tendermint flags for desired command and bind them to viper
@@ -840,5 +865,18 @@ func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 		case MumbaiChain:
 			tendermintConfig.P2P.Seeds = DefaultTestnetSeeds
 		}
+	}
+}
+
+func GetLogsWriter(logsWriterFile string) io.Writer {
+	if logsWriterFile != "" {
+		logWriter, err := os.OpenFile(logsWriterFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening log writer file: %v", err)
+		}
+
+		return logWriter
+	} else {
+		return os.Stdout
 	}
 }
