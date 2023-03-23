@@ -126,7 +126,7 @@ func GetHeimdallApp() *app.HeimdallApp {
 	defer tick.Stop()
 
 	for hApp == nil {
-		select {
+		select { //nolint
 		case <-tick.C:
 			logger.Info("Waiting for heimdall app to be initialized")
 
@@ -195,7 +195,7 @@ func NewHeimdallService(pCtx context.Context, args []string) {
 	// rollback cmd
 	rootCmd.AddCommand(rollbackCmd(ctx))
 
-	if args != nil && len(args) > 0 {
+	if args != nil && len(args) > 0 { //nolint
 		rootCmd.SetArgs(args)
 	}
 
