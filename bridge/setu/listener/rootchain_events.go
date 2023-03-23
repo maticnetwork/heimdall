@@ -27,12 +27,6 @@ const (
 	stakeUpdateEvent = "StakeUpdate"
 )
 
-const (
-	// smart contracts' events names
-	stateSyncedEvent = "StateSynced"
-	stakeUpdateEvent = "StakeUpdate"
-)
-
 var (
 	errNoEventsFound = errors.New("no events found")
 )
