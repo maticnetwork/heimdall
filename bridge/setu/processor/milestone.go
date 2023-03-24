@@ -163,7 +163,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	endHash := block.ParentHash
 
-	milestoneId1 := fmt.Sprintf("%s - %s-%s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String(), "2")
+	milestoneId1 := fmt.Sprintf("%s - %s-%s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String(), "1")
 
 	//fetch the endBlock+1 number instead of endBlock so that we can directly get the hash of endBlock using parent hash
 	block, err = mp.contractConnector.GetMaticChainBlock(big.NewInt(int64(endNum + 2)))
@@ -173,7 +173,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	endHash2 := block.ParentHash
 
-	milestoneId2 := fmt.Sprintf("%s - %s-%s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String(), "1")
+	milestoneId2 := fmt.Sprintf("%s - %s-%s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String(), "2")
 
 	mp.Logger.Info("End block hash", hmTypes.BytesToHeimdallHash(endHash[:]))
 

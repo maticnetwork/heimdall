@@ -180,7 +180,7 @@ func IsMilestoneProposer(cliCtx cliContext.CLIContext) (bool, error) {
 func MilestoneProposer2(cliCtx cliContext.CLIContext) ([]byte, error) {
 	var (
 		proposers []hmtypes.Validator
-		count     = uint64(1)
+		count     = uint64(2)
 	)
 
 	result, err := helper.FetchFromAPI(cliCtx,
