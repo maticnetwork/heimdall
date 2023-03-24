@@ -17,6 +17,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	logger := k.Logger(ctx)
 	milestoneLength := helper.MilestoneLength
 
+	logger.Error("Entered Handler")
+
 	//Check whether the chain has reached the hard fork length
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
 		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
