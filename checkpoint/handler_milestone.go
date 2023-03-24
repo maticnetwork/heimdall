@@ -89,6 +89,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	//Set the MilestoneID in the cache
 	types.SetMilestoneID(msg.MilestoneID)
 
+	logger.Error("Milestone ID in Handler", "Start", msg.StartBlock, "End", msg.EndBlock, "MilestoneID", msg.MilestoneID, "Block", ctx.BlockHeight())
+
 	// Emit event for milestone
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

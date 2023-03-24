@@ -58,6 +58,8 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 			"milestoneId", msg.MilestoneID,
 			"error", err,
 		)
+
+		logger.Error("Milestone ID in SideHandler  62", "MilestoneID", msg.MilestoneID, "Block", ctx.BlockHeight())
 	} else if validMilestone {
 		// vote `yes` if milestone is valid
 		result.Result = abci.SideTxResultType_Yes
@@ -102,6 +104,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 
 	// Skip handler if milestone is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
+		logger.Error("Milestone ID in PostHandler  105 Handler", "MilestoneID", msg.MilestoneID, "Block", ctx.BlockHeight())
 		logger.Debug("Skipping new milestone since side-tx didn't get yes votes", "startBlock", msg.StartBlock, "endBlock", msg.EndBlock, "hash", msg.Hash, "milestoneId", msg.MilestoneID)
 		k.SetNoAckMilestone(ctx, msg.MilestoneID)
 
@@ -131,6 +134,8 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			logger.Error("milestone not in countinuity",
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock)
+
+			logger.Error("Milestone ID in PostHandler  136 Handler", "MilestoneID", msg.MilestoneID, "Block", ctx.BlockHeight())
 
 			k.SetNoAckMilestone(ctx, msg.MilestoneID)
 

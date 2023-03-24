@@ -163,32 +163,69 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	endHash := block.ParentHash
 
-	milestoneId := fmt.Sprintf("%s - %s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String())
+	milestoneId1 := fmt.Sprintf("%s - %s-%s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String(), "2")
+
+	//fetch the endBlock+1 number instead of endBlock so that we can directly get the hash of endBlock using parent hash
+	block, err = mp.contractConnector.GetMaticChainBlock(big.NewInt(int64(endNum)))
+	if err != nil {
+		return fmt.Errorf("Error while fetching %d block %w", endNum+1, err)
+	}
+
+	endHash2 := block.ParentHash
+
+	milestoneId2 := fmt.Sprintf("%s - %s-%s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String(), "1")
 
 	mp.Logger.Info("End block hash", hmTypes.BytesToHeimdallHash(endHash[:]))
 
-	mp.Logger.Info("✅ Creating and broadcasting new milestone",
+	mp.Logger.Info("✅ Creating and broadcasting new milestone 2",
 		"start", startNum,
 		"end", endNum,
 		"hash", hmTypes.BytesToHeimdallHash(endHash[:]),
-		"milestoneId", milestoneId,
+		"milestoneId", milestoneId1,
 		"milestoneLength", milestoneLength,
+	)
+
+	mp.Logger.Info("✅ Creating and broadcasting new milestone 1",
+		"start", startNum,
+		"end", endNum-1,
+		"hash", hmTypes.BytesToHeimdallHash(endHash2[:]),
+		"milestoneId", milestoneId2,
+		"milestoneLength", milestoneLength-1,
 	)
 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams
 
 	// create and send milestone message
-	msg := milestoneTypes.NewMsgMilestoneBlock(
+	msg1 := milestoneTypes.NewMsgMilestoneBlock(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		startNum,
 		endNum,
 		hmTypes.BytesToHeimdallHash(endHash[:]),
 		chainParams.BorChainID,
-		milestoneId,
+		milestoneId1,
+	)
+	proposer2, err := util.MilestoneProposer2(mp.cliCtx)
+	if err != nil {
+		return fmt.Errorf("Error while fetchinvkasnkjvadfkjgvnaodfnokadnfng %d block %w", endNum+1, err)
+	}
+
+	// create and send milestone message 1
+	msg2 := milestoneTypes.NewMsgMilestoneBlock(
+		hmTypes.BytesToHeimdallAddress(proposer2),
+		startNum,
+		endNum-1,
+		hmTypes.BytesToHeimdallHash(endHash2[:]),
+		chainParams.BorChainID,
+		milestoneId2,
 	)
 
 	//broadcast to heimdall
-	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+	if err := mp.txBroadcaster.BroadcastToHeimdall(msg1, nil); err != nil {
+		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
+	}
+
+	//broadcast to heimdall
+	if err := mp.txBroadcaster.BroadcastToHeimdall(msg2, nil); err != nil {
 		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
 		return err
 	}

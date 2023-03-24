@@ -262,6 +262,26 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 
 	})
 
+	suite.Run("Not in continuity 3", func() {
+		// create milestone msg
+		msgMilestone := types.NewMsgMilestoneBlock(
+			milestone.Proposer,
+			milestone.StartBlock,
+			milestone.EndBlock+64,
+			milestone.Hash,
+			borChainId,
+			"00003",
+		)
+		_ = suite.postHandler(ctx, msgMilestone, abci.SideTxResultType_Yes)
+
+		lastNoAckMilestone := keeper.GetLastNoAckMilestone(ctx)
+		require.Equal(t, lastNoAckMilestone, "00003")
+
+		IsNoAckMilestone := keeper.GetNoAckMilestone(ctx, "00003")
+		require.True(t, IsNoAckMilestone)
+
+	})
+
 	suite.Run("Pre Exist", func() {
 		// create milestone msg
 		msgMilestone := types.NewMsgMilestoneBlock(
