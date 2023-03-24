@@ -210,7 +210,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	}
 
 	// create and send milestone message 1
-	msg2 := milestoneTypes.NewMsgMilestoneBlock(
+	_ = milestoneTypes.NewMsgMilestoneBlock(
 		hmTypes.BytesToHeimdallAddress(proposer2),
 		startNum,
 		endNum+1,
@@ -224,11 +224,11 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
 	}
 
-	//broadcast to heimdall
-	if err := mp.txBroadcaster.BroadcastToHeimdall(msg2, nil); err != nil {
-		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
-		return err
-	}
+	// //broadcast to heimdall
+	// if err := mp.txBroadcaster.BroadcastToHeimdall(msg2, nil); err != nil {
+	// 	mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
+	// 	return err
+	// }
 
 	return nil
 }
