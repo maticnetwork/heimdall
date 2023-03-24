@@ -202,7 +202,7 @@ func MilestoneProposer2(cliCtx cliContext.CLIContext) ([]byte, error) {
 		return helper.GetAddress(), errors.Errorf("Length of proposer list is 0")
 	}
 
-	return proposers[0].Signer.Bytes(), nil
+	return proposers[1].Signer.Bytes(), nil
 }
 
 // IsInProposerList checks if we are in current proposer
