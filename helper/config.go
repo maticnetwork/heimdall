@@ -130,7 +130,7 @@ const (
 	MaxStateSyncSize = 30000
 
 	//Milestone Length
-	MilestoneLength = uint64(64)
+	MilestoneLength = uint64(12)
 
 	MilestonePruneNumber = uint64(100)
 

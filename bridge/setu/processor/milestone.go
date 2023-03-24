@@ -196,7 +196,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams
 
 	// create and send milestone message
-	msg1 := milestoneTypes.NewMsgMilestoneBlock(
+	_ = milestoneTypes.NewMsgMilestoneBlock(
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 		startNum,
 		endNum,
@@ -208,9 +208,10 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	if err != nil {
 		return fmt.Errorf("Error while fetchinvkasnkjvadfkjgvnaodfnokadnfng %d block %w", endNum+1, err)
 	}
+	mp.Logger.Info("✅", "Proposer", proposer2, "Signer", helper.GetAddress())
 
 	// create and send milestone message 1
-	_ = milestoneTypes.NewMsgMilestoneBlock(
+	msg := milestoneTypes.NewMsgMilestoneBlock(
 		hmTypes.BytesToHeimdallAddress(proposer2),
 		startNum,
 		endNum+1,
@@ -220,7 +221,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	)
 
 	//broadcast to heimdall
-	if err := mp.txBroadcaster.BroadcastToHeimdall(msg1, nil); err != nil {
+	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
 	}
 
