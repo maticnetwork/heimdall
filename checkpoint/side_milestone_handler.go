@@ -20,6 +20,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 	// logger
 	logger := k.Logger(ctx)
+	logger.Error("Entered the Side Handler")
 
 	//Check whether the chain has reached the hard fork length
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
