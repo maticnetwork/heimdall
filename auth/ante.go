@@ -11,7 +11,9 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/chainmanager"
+	chTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -141,6 +143,17 @@ func NewAnteHandler(
 
 		if len(signerAddrs) > 1 {
 			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
+		}
+
+		switch msg := stdTx.Msg.(type) {
+		case chTypes.MsgMilestone:
+			logger := util.Logger().With("service", "processor", "module", "anteHandler")
+			logger.Error("MLTESTING Error in Milestone Proposer Starting", "Proposer", msg.Proposer, "Signer", types.AccAddressToHeimdallAddress(signerAddrs[0]))
+			// if types.AccAddressToHeimdallAddress(signerAddrs[0]) != msg.Proposer {
+			// 	logger.Error("MLTESTING Error in Milestone Proposer Ending")
+			// 	return newCtx, sdk.ErrUnauthorized("Milestone Proposer doesn't match the signer").Result(), true
+			// }
+
 		}
 
 		isGenesis := ctx.BlockHeight() == 0
