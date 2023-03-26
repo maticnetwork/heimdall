@@ -179,7 +179,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	// create and send milestone message
 	msg := milestoneTypes.NewMsgMilestoneBlock(
-		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+		hmTypes.BytesToHeimdallAddress([]byte{}),
 		startNum,
 		endNum,
 		hmTypes.BytesToHeimdallHash(endHash[:]),

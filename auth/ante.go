@@ -145,16 +145,19 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
 		}
 
+		logger := util.Logger().With("service", "processor", "module", "anteHandler")
+
 		switch msg := stdTx.Msg.(type) {
 		case chTypes.MsgMilestone:
-			logger := util.Logger().With("service", "processor", "module", "anteHandler")
 			logger.Error("MLTESTING Error in Milestone Proposer Starting", "Proposer", msg.Proposer, "Signer", types.AccAddressToHeimdallAddress(signerAddrs[0]))
-			// if types.AccAddressToHeimdallAddress(signerAddrs[0]) != msg.Proposer {
-			// 	logger.Error("MLTESTING Error in Milestone Proposer Ending")
-			// 	return newCtx, sdk.ErrUnauthorized("Milestone Proposer doesn't match the signer").Result(), true
-			// }
+			if types.AccAddressToHeimdallAddress(signerAddrs[0]) != msg.Proposer {
+				logger.Error("MLTESTING Error in Milestone Proposer Ending")
+				return newCtx, sdk.ErrUnauthorized("Milestone Proposer doesn't match the signer").Result(), true
+			}
 
 		}
+
+		logger.Error("MLTESTING Error 160160160160160")
 
 		isGenesis := ctx.BlockHeight() == 0
 
