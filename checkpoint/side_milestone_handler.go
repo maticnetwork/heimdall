@@ -20,7 +20,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 	// logger
 	logger := k.Logger(ctx)
-	logger.Error("Entered the Side Handler")
+	logger.Error("Entered the Side Handler", "MilestonePropsoer", msg.Proposer, "Start Block", msg.StartBlock, "MilestoneID", msg.MilestoneID)
 
 	//Check whether the chain has reached the hard fork length
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
@@ -62,6 +62,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 	} else if validMilestone {
 		// vote `yes` if milestone is valid
 		result.Result = abci.SideTxResultType_Yes
+		logger.Error("Exiting the Handler", "MilestonePropsoer", msg.Proposer, "Start Block", msg.StartBlock, "MilestoneID", msg.MilestoneID)
 		return
 	}
 
@@ -100,6 +101,8 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 			sdk.NewAttribute(types.AttributeKeyMilestoneID, msg.MilestoneID),
 		),
 	})
+
+	logger.Error("Entered the PostHandler", "MilestonePropsoer", msg.Proposer, "Start Block", msg.StartBlock, "MilestoneID", msg.MilestoneID)
 
 	// Skip handler if milestone is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
@@ -149,6 +152,8 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		}
 
 	}
+
+	logger.Error("Exiting the PostHandler", "MilestonePropsoer", msg.Proposer, "Start Block", msg.StartBlock, "MilestoneID", msg.MilestoneID)
 
 	//Add the milestone to the store
 	if err := k.AddMilestone(ctx, hmTypes.Milestone{ // Save milestone to buffer store

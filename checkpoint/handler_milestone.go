@@ -16,7 +16,7 @@ import (
 func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
 	milestoneLength := helper.MilestoneLength
-	logger.Error("Entered the Handler")
+	logger.Error("Entered the Handler", "MilestonePropsoer", msg.Proposer, "Start Block", msg.StartBlock, "MilestoneID", msg.MilestoneID)
 
 	//Check whether the chain has reached the hard fork length
 	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
@@ -86,6 +86,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		logger.Error("First milestone to start from", "block", helper.GetMilestoneBorBlockHeight(), "milestone start block", msg.StartBlock, "error", err)
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 	}
+
+	logger.Error("Exiting the Handler", "MilestonePropsoer", msg.Proposer, "Start Block", msg.StartBlock, "MilestoneID", msg.MilestoneID)
 
 	//Set the MilestoneID in the cache
 	types.SetMilestoneID(msg.MilestoneID)

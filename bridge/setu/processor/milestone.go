@@ -54,7 +54,7 @@ func (mp *MilestoneProcessor) RegisterTasks() {
 
 // startPolling - polls heimdall and checks if new milestone needs to be proposed
 func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength uint64, interval time.Duration) {
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(1 * time.Second)
 	// stop ticker when everything done
 	defer ticker.Stop()
 
