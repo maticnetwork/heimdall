@@ -154,7 +154,6 @@ func NewAnteHandler(
 				logger.Error("MLTESTING Error in Milestone Proposer Ending")
 				return newCtx, sdk.ErrUnauthorized("Milestone Proposer doesn't match the signer").Result(), true
 			}
-
 		}
 
 		logger.Error("MLTESTING Error 160160160160160")
@@ -167,6 +166,8 @@ func NewAnteHandler(
 			return newCtx, res, true
 		}
 
+		logger.Error("MLTESTING Error 169")
+
 		// deduct the fees
 		if !feeForTx.IsZero() {
 			res = DeductFees(feeCollector, newCtx, signerAcc, feeForTx)
@@ -178,6 +179,8 @@ func NewAnteHandler(
 			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
 		}
 
+		logger.Error("MLTESTING Error 182")
+
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		stdSigs := stdTx.GetSignatures()
@@ -185,12 +188,18 @@ func NewAnteHandler(
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
 
+		logger.Error("MLTESTING Error 191")
+
 		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
 
+		logger.Error("MLTESTING Error 198")
+
 		ak.SetAccount(newCtx, signerAcc)
+
+		logger.Error("MLTESTING Error 202")
 
 		// TODO: tx tags (?)
 		return newCtx, sdk.Result{GasWanted: gasForTx}, false // continue...
