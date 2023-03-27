@@ -167,19 +167,25 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	mp.Logger.Info("End block hash", hmTypes.BytesToHeimdallHash(endHash[:]))
 
+	chainParams := milestoneContext.ChainmanagerParams.ChainParams
+
+	a, err := util.MilestoneProposer2(mp.cliCtx)
+	if err != nil {
+		return fmt.Errorf("Error while fetching proposer %w", err)
+	}
+
 	mp.Logger.Info("✅ Creating and broadcasting new milestone",
 		"start", startNum,
 		"end", endNum,
 		"hash", hmTypes.BytesToHeimdallHash(endHash[:]),
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
+		"Proposer", hmTypes.BytesToHeimdallAddress(a),
 	)
-
-	chainParams := milestoneContext.ChainmanagerParams.ChainParams
 
 	// create and send milestone message
 	msg := milestoneTypes.NewMsgMilestoneBlock(
-		hmTypes.BytesToHeimdallAddress([]byte{}),
+		hmTypes.BytesToHeimdallAddress(a),
 		startNum,
 		endNum,
 		hmTypes.BytesToHeimdallHash(endHash[:]),

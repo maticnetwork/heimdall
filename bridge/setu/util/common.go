@@ -177,6 +177,34 @@ func IsMilestoneProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	return false, nil
 }
 
+func MilestoneProposer2(cliCtx cliContext.CLIContext) ([]byte, error) {
+	var (
+		proposers []hmtypes.Validator
+		count     = uint64(3)
+	)
+
+	result, err := helper.FetchFromAPI(cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(MilestoneProposersURL, strconv.FormatUint(count, 10))),
+	)
+	if err != nil {
+		logger.Error("Error fetching milestone proposers", "url", MilestoneProposersURL, "error", err)
+		return []byte{}, err
+	}
+
+	err = jsoniter.ConfigFastest.Unmarshal(result.Result, &proposers)
+	if err != nil {
+		logger.Error("error unmarshalling milestone proposer slice", "error", err)
+		return []byte{}, err
+	}
+
+	if len(proposers) == 0 {
+		logger.Error("length of proposer list is 0")
+		return []byte{}, errors.Errorf("Length of proposer list is 0")
+	}
+
+	return proposers[1].Signer.Bytes(), nil
+}
+
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
