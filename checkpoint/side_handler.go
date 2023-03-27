@@ -100,6 +100,8 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	// logger
 	logger := k.Logger(ctx)
 
+	logger.Error("Entered the Checkpoint Handler")
+
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller, maticTxConfirmations)
 	if err != nil {

@@ -81,6 +81,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
 
+	logger.Error("Entered the Checkpoint Handler")
+
 	//
 	// Check checkpoint buffer
 	//
