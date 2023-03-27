@@ -11,9 +11,7 @@ import (
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/chainmanager"
-	chTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -145,19 +143,6 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrUnauthorized("wrong number of signers").Result(), true
 		}
 
-		logger := util.Logger().With("service", "processor", "module", "anteHandler")
-
-		switch msg := stdTx.Msg.(type) {
-		case chTypes.MsgMilestone:
-			logger.Error("MLTESTING Error in Milestone Proposer Starting", "Proposer", msg.Proposer, "Signer", types.AccAddressToHeimdallAddress(signerAddrs[0]))
-			if types.AccAddressToHeimdallAddress(signerAddrs[0]) != msg.Proposer {
-				logger.Error("MLTESTING Error in Milestone Proposer Ending")
-				return newCtx, sdk.ErrUnauthorized("Milestone Proposer doesn't match the signer").Result(), true
-			}
-		}
-
-		logger.Error("MLTESTING Error 160160160160160")
-
 		isGenesis := ctx.BlockHeight() == 0
 
 		// fetch first signer, who's going to pay the fees
@@ -165,8 +150,6 @@ func NewAnteHandler(
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
-
-		logger.Error("MLTESTING Error 169")
 
 		// deduct the fees
 		if !feeForTx.IsZero() {
@@ -179,8 +162,6 @@ func NewAnteHandler(
 			signerAcc = ak.GetAccount(newCtx, signerAcc.GetAddress())
 		}
 
-		logger.Error("MLTESTING Error 182")
-
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		stdSigs := stdTx.GetSignatures()
@@ -188,18 +169,12 @@ func NewAnteHandler(
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
 
-		logger.Error("MLTESTING Error 191")
-
 		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
 
-		logger.Error("MLTESTING Error 198")
-
 		ak.SetAccount(newCtx, signerAcc)
-
-		logger.Error("MLTESTING Error 202")
 
 		// TODO: tx tags (?)
 		return newCtx, sdk.Result{GasWanted: gasForTx}, false // continue...

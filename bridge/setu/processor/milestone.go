@@ -96,7 +96,14 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 		return err
 	}
 
-	if isProposer {
+	//check whether the node is current milestone proposer or not
+	isProposer2, err := util.IsMilestoneProposer2(mp.cliCtx)
+	if err != nil {
+		mp.Logger.Error("Error checking isProposer in HeaderBlock handler 2", "error", err)
+		return err
+	}
+
+	if isProposer || isProposer2 {
 		result, err := util.GetMilestoneCount(mp.cliCtx)
 		if err != nil {
 			return err
@@ -193,6 +200,8 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		chainParams.BorChainID,
 		milestoneId,
 	)
+
+	mp.Logger.Error("✅✅✅✅✅✅✅✅✅✅✅✅✅Proposing✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅")
 
 	//broadcast to heimdall
 	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {

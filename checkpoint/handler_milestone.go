@@ -1,6 +1,7 @@
 package checkpoint
 
 import (
+	"bytes"
 	"strconv"
 	"time"
 
@@ -32,6 +33,21 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	if validatorSet.Proposer == nil {
 		logger.Error("No proposer in validator set", "msgProposer", msg.Proposer.String())
 		return common.ErrInvalidMsg(k.Codespace(), "No proposer in stored validator set").Result()
+	}
+
+	//
+	// Validate proposer
+	//
+
+	//check for the milestone proposer
+	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
+		logger.Error(
+			"Invalid proposer in msg",
+			"proposer", validatorSet.Proposer.Signer.String(),
+			"msgProposer", msg.Proposer.String(),
+		)
+
+		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
 	//Increment the priority in the milestone validator set
@@ -70,21 +86,6 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		logger.Error("First milestone to start from", "block", helper.GetMilestoneBorBlockHeight(), "milestone start block", msg.StartBlock, "error", err)
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 	}
-
-	//
-	// Validate proposer
-	//
-
-	// //check for the milestone proposer
-	// if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
-	// 	logger.Error(
-	// 		"Invalid proposer in msg",
-	// 		"proposer", validatorSet.Proposer.Signer.String(),
-	// 		"msgProposer", msg.Proposer.String(),
-	// 	)
-
-	// 	return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
-	// }
 
 	//Set the MilestoneID in the cache
 	types.SetMilestoneID(msg.MilestoneID)

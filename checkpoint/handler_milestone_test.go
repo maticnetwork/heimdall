@@ -83,6 +83,26 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeNoMilestone, got.Code)
 	})
 
+	//Test4- When milestone is proposed of length shorter than configured minimum length
+	suite.Run("Invalid msg based on milestone length", func() {
+		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
+		msgMilestone := types.NewMsgMilestoneBlock(
+			header.Proposer,
+			header.StartBlock,
+			header.EndBlock-1,
+			header.Hash,
+			borChainId,
+			milestoneID,
+		)
+
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		require.Equal(t, errs.CodeInvalidMsg, got.Code)
+	})
+
+	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
+
 	//Test3- When the correct milestone is proposed
 	suite.Run("Success", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -99,24 +119,6 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.True(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
 		bufferedHeader, _ := keeper.GetLastMilestone(ctx)
 		require.Empty(t, bufferedHeader, "Should not store state")
-	})
-
-	//Test4- When milestone is proposed of length shorter than configured minimum length
-	suite.Run("Invalid msg based on milestone length", func() {
-		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
-		msgMilestone := types.NewMsgMilestoneBlock(
-			header.Proposer,
-			header.StartBlock,
-			header.EndBlock-1,
-			header.Hash,
-			borChainId,
-			milestoneID,
-		)
-
-		// send milestone to handler
-		got := suite.handler(ctx, msgMilestone)
-		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
-		require.Equal(t, errs.CodeMilestoneInvalid, got.Code)
 	})
 
 	//Test5- When milestone is proposed by wrong proposer
@@ -136,6 +138,8 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 		require.Equal(t, errs.CodeInvalidMsg, got.Code)
 	})
+
+	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
 	//Test6- When milestones are not in continuity
 	suite.Run("Milestone not in countinuity", func() {
@@ -167,6 +171,8 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		//require.Equal(t, errs.CodeMilestoneNotInContinuity, got.Code)
 
 	})
+
+	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
 	suite.Run("Milestone not in countinuity", func() {
 
