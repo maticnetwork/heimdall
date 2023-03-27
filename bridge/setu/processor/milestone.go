@@ -181,6 +181,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		"milestoneId", milestoneId,
 		"milestoneLength", milestoneLength,
 		"Proposer", hmTypes.BytesToHeimdallAddress(a),
+		"OwnAddres", hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 	)
 
 	// create and send milestone message
