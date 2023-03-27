@@ -130,11 +130,11 @@ const (
 	MaxStateSyncSize = 30000
 
 	//Milestone Length
-	MilestoneLength = uint64(64)
+	MilestoneLength = uint64(12)
 
 	MilestonePruneNumber = uint64(100)
 
-	MaticChainMilestoneConfirmation = uint64(4)
+	MaticChainMilestoneConfirmation = uint64(16)
 
 	//Milestone buffer Length
 	MilestoneBufferLength = MilestoneLength * 2
