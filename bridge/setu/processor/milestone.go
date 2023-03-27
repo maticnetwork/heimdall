@@ -177,10 +177,8 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	chainParams := milestoneContext.ChainmanagerParams.ChainParams
 
-	mp.Logger.Error("❌❌❌❌❌❌❌❌❌ NO PROPOSING ❌❌❌❌❌❌❌❌❌")
-
 	// create and send milestone message
-	_ = milestoneTypes.NewMsgMilestoneBlock(
+	msg := milestoneTypes.NewMsgMilestoneBlock(
 		hmTypes.BytesToHeimdallAddress([]byte{}),
 		startNum,
 		endNum,
@@ -189,11 +187,11 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 		milestoneId,
 	)
 
-	// //broadcast to heimdall
-	// if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
-	// 	mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
-	// 	return err
-	// }
+	//broadcast to heimdall
+	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
+		return err
+	}
 
 	return nil
 }
