@@ -130,7 +130,7 @@ const (
 	MaxStateSyncSize = 30000
 
 	//Milestone Length
-	MilestoneLength = uint64(64)
+	MilestoneLength = uint64(16)
 
 	MilestonePruneNumber = uint64(100)
 
@@ -382,8 +382,8 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		milestoneHardForkHeight = 300
-		milestoneBorBlockHeight = 1000 //Fixme:Change the value
+		milestoneHardForkHeight = 30
+		milestoneBorBlockHeight = 100 //Fixme:Change the value
 	}
 }
 

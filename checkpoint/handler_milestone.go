@@ -1,7 +1,6 @@
 package checkpoint
 
 import (
-	"bytes"
 	"strconv"
 	"time"
 
@@ -76,16 +75,16 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	// Validate proposer
 	//
 
-	//check for the milestone proposer
-	if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
-		logger.Error(
-			"Invalid proposer in msg",
-			"proposer", validatorSet.Proposer.Signer.String(),
-			"msgProposer", msg.Proposer.String(),
-		)
+	// //check for the milestone proposer
+	// if !bytes.Equal(msg.Proposer.Bytes(), validatorSet.Proposer.Signer.Bytes()) {
+	// 	logger.Error(
+	// 		"Invalid proposer in msg",
+	// 		"proposer", validatorSet.Proposer.Signer.String(),
+	// 		"msgProposer", msg.Proposer.String(),
+	// 	)
 
-		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
-	}
+	// 	return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
+	// }
 
 	//Set the MilestoneID in the cache
 	types.SetMilestoneID(msg.MilestoneID)
