@@ -52,9 +52,7 @@ type FeeCollector interface {
 	) sdk.Error
 }
 
-//
 // MainTxMsg tx hash
-//
 type MainTxMsg interface {
 	GetTxHash() types.HeimdallHash
 	GetLogIndex() uint64
