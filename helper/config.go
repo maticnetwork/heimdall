@@ -97,7 +97,7 @@ const (
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
 
-	DefaultMilestonePollInterval = 10 * time.Second
+	DefaultMilestonePollInterval = 30 * time.Second
 
 	DefaultEnableSH              = false
 	DefaultSHStateSyncedInterval = 15 * time.Minute

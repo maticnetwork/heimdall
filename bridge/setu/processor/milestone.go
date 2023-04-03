@@ -42,7 +42,7 @@ func (mp *MilestoneProcessor) Start() error {
 	mp.Logger.Info("Start polling for milestone", "milestoneLength", helper.MilestoneLength, "pollInterval", helper.GetConfig().MilestonePollInterval)
 
 	go mp.startPolling(milestoneCtx, helper.MilestoneLength, helper.GetConfig().MilestonePollInterval)
-	go mp.startPollingMilestoneTimeout(milestoneCtx, helper.GetConfig().MilestonePollInterval)
+	go mp.startPollingMilestoneTimeout(milestoneCtx, 2*helper.GetConfig().MilestonePollInterval)
 
 	return nil
 }
