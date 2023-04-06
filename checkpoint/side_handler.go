@@ -438,6 +438,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
+	logger.Error("Testing1 Ack")
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
