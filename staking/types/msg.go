@@ -201,9 +201,7 @@ func (msg MsgStakeUpdate) GetNonce() uint64 {
 	return msg.Nonce
 }
 
-//
 // validator update
-//
 var _ sdk.Msg = &MsgSignerUpdate{}
 
 // MsgSignerUpdate signer update struct

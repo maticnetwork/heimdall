@@ -61,9 +61,7 @@ func TestSideHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(SideHandlerTestSuite))
 }
 
-//
 // Test cases
-//
 func (suite *SideHandlerTestSuite) TestSideHandler() {
 	t, ctx := suite.T(), suite.ctx
 
