@@ -597,8 +597,11 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 			return abci.ResponseEndBlock{}
 		}
 
-		// increment proposer priority
-		currentValidatorSet.IncrementProposerPriority(1)
+		//Hard fork to remove the rotation of the validator list on update
+		if ctx.BlockHeight() < 200 {
+			// increment proposer priority
+			currentValidatorSet.IncrementProposerPriority(1)
+		}
 
 		// validator set change
 		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
