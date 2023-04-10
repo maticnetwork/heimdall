@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/RichardKnop/machinery v1.7.4
 	github.com/cbergoon/merkletree v0.2.0
-	github.com/cosmos/cosmos-sdk v0.37.4
+	github.com/cosmos/cosmos-sdk v0.47.1
 	github.com/ethereum/go-ethereum v1.10.4
 	github.com/go-kit/kit v0.10.0
 	github.com/gogo/protobuf v1.3.2

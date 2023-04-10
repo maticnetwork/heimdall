@@ -147,7 +147,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		}
 
 		start := expectedCheckpointState.newStart
-		end := expectedCheckpointState.newEnd
+		end := expectedCheckpointState.newEnd + 300
 
 		//
 		// Check checkpoint buffer
