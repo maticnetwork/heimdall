@@ -147,7 +147,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		}
 
 		start := expectedCheckpointState.newStart
-		end := expectedCheckpointState.newEnd + 300
+		end := expectedCheckpointState.newEnd
 
 		//
 		// Check checkpoint buffer
@@ -479,6 +479,12 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 		accountRootHash,
 		chainParams.BorChainID,
 	)
+
+	cp.Logger.Error("✅ Waiting Start")
+
+	time.Sleep(4 * time.Minute)
+
+	cp.Logger.Error("✅ Waiting Done")
 
 	// return broadcast to heimdall
 	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
