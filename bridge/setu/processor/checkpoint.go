@@ -482,7 +482,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 
 	cp.Logger.Error("✅ Waiting Start")
 
-	time.Sleep(4 * time.Minute)
+	time.Sleep(10 * time.Minute)
 
 	cp.Logger.Error("✅ Waiting Done")
 
