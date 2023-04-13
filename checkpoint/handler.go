@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"math"
 	"strconv"
 	"time"
 
@@ -256,6 +257,30 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 			"buffer Time", bufferTime.String(),
 		)
 
+		return common.ErrInvalidNoACK(k.Codespace()).Result()
+	}
+
+	timeDiff := currentTime.Sub(lastCheckpointTime)
+	var count float64 = 0
+	// check if last checkpoint was < NoACK wait time
+	if timeDiff.Seconds() >= helper.GetConfig().NoACKWaitTime.Seconds() && count == 0 {
+		count = math.Floor(timeDiff.Seconds() / helper.GetConfig().NoACKWaitTime.Seconds())
+	}
+
+	var isProposer bool = false
+
+	currentValidatorSet := k.sk.GetValidatorSet(ctx)
+	currentValidatorSet.IncrementProposerPriority(1)
+
+	for i := 0; i < int(count); i++ {
+		if currentValidatorSet.Proposer.Signer == msg.From {
+			isProposer = true
+			break
+		}
+	}
+
+	if !isProposer {
+		logger.Debug("Invalid No ACK --Incorrect Proposer")
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
