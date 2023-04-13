@@ -123,6 +123,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 	}
 
 	if isProposer {
+		cp.Logger.Error("NoAcktTesting----PREPARING CHECKPOINT")
 		// fetch checkpoint context
 		checkpointContext, err := cp.getCheckpointContext()
 		if err != nil {
@@ -485,6 +486,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 		cp.Logger.Error("Error while broadcasting checkpoint to heimdall", "error", err)
 		return err
 	}
+	cp.Logger.Error("NoAcktTesting----SENDING CHECKPOINT TO HEIMDALL")
 
 	return nil
 }
@@ -549,7 +551,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 			return err
 		}
 	}
-
+	cp.Logger.Error("NoAcktTesting----SENDING CHECKPOINT TO ROOTCHAIN")
 	return nil
 }
 

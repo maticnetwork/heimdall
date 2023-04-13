@@ -174,6 +174,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
+	logger.Error("NoAcktTesting----PASSED THE HANDLER")
+
 	// Emit event for checkpoint
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
@@ -281,6 +283,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
+	logger.Error("NoAcktTesting----CHANGED THE PROPOSER IN THE NOACK")
 
 	// Get new proposer
 	vs := k.sk.GetValidatorSet(ctx)

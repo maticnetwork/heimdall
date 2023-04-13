@@ -109,6 +109,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 		)
 	} else if validCheckpoint {
 		// vote `yes` if checkpoint is valid
+		logger.Error("NoAcktTesting----PASSED THE SIDE HANDLER")
 		result.Result = abci.SideTxResultType_Yes
 		return
 	}
@@ -337,6 +338,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	}); err != nil {
 		logger.Error("Failed to set checkpoint buffer", "Error", err)
 	}
+	logger.Error("NoAcktTesting----ADDED CHECKPOINT TO BUFFER")
 
 	logger.Debug("New checkpoint into buffer stored",
 		"startBlock", msg.StartBlock,
@@ -438,6 +440,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
+	logger.Error("NoAcktTesting----IN ACK CHANGED THE PROPOSER")
 
 	// TX bytes
 	txBytes := ctx.TxBytes()
