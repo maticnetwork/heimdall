@@ -89,7 +89,7 @@ const (
 	DefaultHeimdallServerURL = "http://0.0.0.0:1317"
 	DefaultTendermintNodeURL = "http://0.0.0.0:26657"
 
-	NoACKWaitTime = 1800 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
+	NoACKWaitTime = 180 * time.Second // Time ack service waits to clear buffer and elect new proposer (1800 seconds ~ 30 mins)
 
 	DefaultCheckpointerPollInterval = 5 * time.Minute
 	DefaultSyncerPollInterval       = 1 * time.Minute
