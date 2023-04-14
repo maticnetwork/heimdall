@@ -265,10 +265,12 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	currentValidatorSet.IncrementProposerPriority(1)
 
 	for i := 0; i < int(count); i++ {
+		logger.Error("BB step 1", "count", i, "Proposer", currentValidatorSet.Proposer.Signer, "msg", msg.From)
 		if currentValidatorSet.Proposer.Signer == msg.From {
 			isProposer = true
 			break
 		}
+		currentValidatorSet.IncrementProposerPriority(1)
 	}
 
 	if !isProposer {
