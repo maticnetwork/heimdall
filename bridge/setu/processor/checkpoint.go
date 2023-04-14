@@ -114,8 +114,6 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 		return err
 	}
 
-	return nil
-
 	cp.Logger.Info("Processing new header", "headerNumber", header.Number)
 
 	isProposer, err := util.IsProposer(cp.cliCtx)
