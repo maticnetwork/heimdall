@@ -87,7 +87,7 @@ func (cp *CheckpointProcessor) RegisterTasks() {
 }
 
 func (cp *CheckpointProcessor) startPollingForNoAck(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(3 * time.Second)
 	defer ticker.Stop()
 
 	for {
@@ -317,34 +317,9 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 // 3. Send NoAck to heimdall if required.
 func (cp *CheckpointProcessor) handleCheckpointNoAck() {
 	// fetch fresh checkpoint context
-	checkpointContext, err := cp.getCheckpointContext()
-	if err != nil {
+	if err := cp.proposeCheckpointNoAck(); err != nil {
+		cp.Logger.Error("Error proposing Checkpoint No-Ack ", "error", err)
 		return
-	}
-
-	lastCreatedAt, err := cp.getLatestCheckpointTime(checkpointContext)
-	if err != nil {
-		cp.Logger.Error("Error fetching latest checkpoint time from rootchain", "error", err)
-		return
-	}
-
-	isNoAckRequired, count := cp.checkIfNoAckIsRequired(checkpointContext, lastCreatedAt)
-	if isNoAckRequired {
-		var isProposer bool
-
-		if isProposer, err = util.IsInProposerList(cp.cliCtx, count); err != nil {
-			cp.Logger.Error("Error checking IsInProposerList while proposing Checkpoint No-Ack ", "error", err)
-			return
-		}
-
-		// if i am the proposer and NoAck is required, then propose No-Ack
-		if isProposer {
-			// send Checkpoint No-Ack to heimdall
-			if err := cp.proposeCheckpointNoAck(); err != nil {
-				cp.Logger.Error("Error proposing Checkpoint No-Ack ", "error", err)
-				return
-			}
-		}
 	}
 }
 

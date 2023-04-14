@@ -243,6 +243,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	// Get current block time
 	currentTime := ctx.BlockTime()
 
+	logger.Error("BB ENTERED THE HANDLER FOR NO ACK")
 	// Get buffer time from params
 	bufferTime := k.GetParams(ctx).CheckpointBufferTime
 
@@ -250,15 +251,6 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	// TODO figure out how to handle this error
 	lastCheckpoint, _ := k.GetLastCheckpoint(ctx)
 	lastCheckpointTime := time.Unix(int64(lastCheckpoint.TimeStamp), 0)
-
-	// If last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
-	if lastCheckpointTime.After(currentTime) || (currentTime.Sub(lastCheckpointTime) < bufferTime) {
-		logger.Debug("Invalid No ACK -- Waiting for last checkpoint ACK", "lastCheckpointTime", lastCheckpointTime, "current time", currentTime,
-			"buffer Time", bufferTime.String(),
-		)
-
-		return common.ErrInvalidNoACK(k.Codespace()).Result()
-	}
 
 	timeDiff := currentTime.Sub(lastCheckpointTime)
 	var count float64 = 0
@@ -281,9 +273,11 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	if !isProposer {
 		logger.Debug("Invalid No ACK --Incorrect Proposer")
+		logger.Error("BB FAILED THE CHECK", "Proposer", msg.From)
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
+	logger.Error("BB PASSESS", "Proposer", msg.From)
 	// Check last no ack - prevents repetitive no-ack
 	lastNoAck := k.GetLastNoAck(ctx)
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
