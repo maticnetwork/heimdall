@@ -254,9 +254,12 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	timeDiff := currentTime.Sub(lastCheckpointTime)
 	var count float64 = 0
+	logger.Error("BB step A")
 	// check if last checkpoint was < NoACK wait time
 	if timeDiff.Seconds() >= (180*time.Second).Seconds() && count == 0 {
-		count = math.Floor(timeDiff.Seconds() / helper.GetConfig().NoACKWaitTime.Seconds())
+		logger.Error("BB step B")
+		count = math.Floor(timeDiff.Seconds() / (180 * time.Second).Seconds())
+
 	}
 
 	var isProposer bool = false
