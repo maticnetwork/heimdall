@@ -254,10 +254,9 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	timeDiff := currentTime.Sub(lastCheckpointTime)
 	var count float64 = 0
-	logger.Error("BB step A")
+
 	// check if last checkpoint was < NoACK wait time
 	if timeDiff.Seconds() >= (360*time.Second).Seconds() && count == 0 {
-		logger.Error("BB step B")
 		count = math.Floor(timeDiff.Seconds() / (360 * time.Second).Seconds())
 
 	}
@@ -268,9 +267,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	pr := currentValidatorSet.Proposer.Signer
 	currentValidatorSet.IncrementProposerPriority(1)
 
-	logger.Error("BB step 0", "count", count)
 	for i := 0; i < int(count); i++ {
-		logger.Error("BB step 1", "count", i, "Proposer", currentValidatorSet.Proposer.Signer, "msg", msg.From)
 		if currentValidatorSet.Proposer.Signer == msg.From {
 			isProposer = true
 			break
@@ -279,12 +276,9 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	}
 
 	if !isProposer {
-		logger.Debug("Invalid No ACK --Incorrect Proposer")
-		logger.Error("BB FAILED THE CHECK", "Proposer", msg.From, "Current PRoposer", pr)
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
-	logger.Error("BB PASSESS", "Proposer", msg.From, "Current Propser", pr)
 	// Check last no ack - prevents repetitive no-ack
 	lastNoAck := k.GetLastNoAck(ctx)
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
