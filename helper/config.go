@@ -207,6 +207,8 @@ var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
 
+var validatorlistRotationStopHeight int64 = 0
+
 // Contracts
 // var RootChain types.Contract
 // var DepositManager types.Contract
@@ -355,12 +357,15 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
+		validatorlistRotationStopHeight = 100000000 //change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
+		validatorlistRotationStopHeight = 100000000 //change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
+		validatorlistRotationStopHeight = 200 //change this value
 	}
 }
 
@@ -477,6 +482,11 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
+}
+
+// GetValidatorlistRotationStopHeight returns validatorlistRotationStopHeight
+func GetValidatorlistRotationStopHeight() int64 {
+	return validatorlistRotationStopHeight
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command
