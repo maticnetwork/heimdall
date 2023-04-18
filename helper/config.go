@@ -206,6 +206,7 @@ var GenesisDoc tmTypes.GenesisDoc
 var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
+var noAckProposerCheckHeight int64 = 0
 
 // Contracts
 // var RootChain types.Contract
@@ -355,12 +356,15 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
+		noAckProposerCheckHeight = 0 //Change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
+		noAckProposerCheckHeight = 0 //Change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
+		noAckProposerCheckHeight = 0 //Change this value
 	}
 }
 
@@ -477,6 +481,11 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
+}
+
+// GetNoAckProposerCheckHeight returns noAckProposerCheckHeight
+func GetNoAckProposerCheckHeight() int64 {
+	return noAckProposerCheckHeight
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command

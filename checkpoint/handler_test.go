@@ -13,6 +13,7 @@ import (
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	errs "github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -400,6 +401,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 	checkpointBufferTime := params.CheckpointBufferTime
+	noAckTime := helper.GetConfig().NoACKWaitTime
 
 	dividendAccount := hmTypes.DividendAccount{
 		User:      hmTypes.HexToHeimdallAddress("123"),
@@ -410,7 +412,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, stakingKeeper, ctx, false, 10)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -431,10 +433,32 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	newTime := lastCheckpoint.TimeStamp + uint64(checkpointBufferTime)
 	suite.ctx = ctx.WithBlockTime(time.Unix(0, int64(newTime)))
 
-	result := suite.SendNoAck()
-	require.True(t, result.IsOK(), "expected send-NoAck to be ok, got %v", got)
+	validatorSet := stakingKeeper.GetValidatorSet(ctx)
+
+	//Rotate the list to get the next proposer in line
+	validatorSet.IncrementProposerPriority(1)
+	noAckProposer := validatorSet.Proposer.Signer
+
+	result := suite.SendNoAck(noAckProposer)
+	require.False(t, result.IsOK(), "expected send-NoAck to be false, got %v", true)
 
 	ackCount := keeper.GetACKCount(ctx)
+	require.Equal(t, uint64(0), ackCount, "Should not update state")
+
+	// set time lastCheckpoint timestamp + noAckWaitTime
+	newTime = lastCheckpoint.TimeStamp + uint64(noAckTime)
+	suite.ctx = ctx.WithBlockTime(time.Unix(0, int64(newTime)))
+
+	//This noAck should false as noAckProposer is invalid, we are passing current
+	//checkpoint proposer as noAck proposer
+	result = suite.SendNoAck(stakingKeeper.GetValidatorSet(ctx).Proposer.Signer)
+	require.False(t, result.IsOK(), "expected send-NoAck to be false , got %v", true)
+
+	//This noAck should return true as noAckProposer is valid
+	result = suite.SendNoAck(noAckProposer)
+	require.True(t, result.IsOK(), "expected send-NoAck to be true, got %v", false)
+
+	ackCount = keeper.GetACKCount(ctx)
 	require.Equal(t, uint64(0), ackCount, "Should not update state")
 }
 
@@ -472,7 +496,13 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 	got := suite.SendCheckpoint(header)
 	require.True(t, got.IsOK(), "expected send-checkpoint to be ok, got %v", got)
 
-	result := suite.SendNoAck()
+	validatorSet := stakingKeeper.GetValidatorSet(ctx)
+
+	//Rotate the list to get the next proposer in line
+	validatorSet.IncrementProposerPriority(1)
+	noAckProposer := validatorSet.Proposer.Signer
+
+	result := suite.SendNoAck(noAckProposer)
 	require.True(t, !result.IsOK(), errs.CodeToDefaultMsg(result.Code))
 }
 
@@ -509,9 +539,9 @@ func (suite *HandlerTestSuite) SendCheckpoint(header hmTypes.Checkpoint) (res sd
 	return result
 }
 
-func (suite *HandlerTestSuite) SendNoAck() (res sdk.Result) {
+func (suite *HandlerTestSuite) SendNoAck(noAckProposer hmTypes.HeimdallAddress) (res sdk.Result) {
 	_, _, ctx := suite.T(), suite.app, suite.ctx
-	msgNoAck := types.NewMsgCheckpointNoAck(hmTypes.HexToHeimdallAddress("123"))
+	msgNoAck := types.NewMsgCheckpointNoAck(noAckProposer)
 
 	result := suite.handler(ctx, msgNoAck)
 	sideResult := suite.sideHandler(ctx, msgNoAck)

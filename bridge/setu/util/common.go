@@ -141,11 +141,11 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
-	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count+1, 10))
 
 	response, err := helper.FetchFromAPI(
 		cliCtx,
-		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count, 10))),
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(ProposersURL, strconv.FormatUint(count+1, 10))),
 	)
 	if err != nil {
 		logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
@@ -159,10 +159,10 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 		return false, err
 	}
 
-	logger.Debug("Fetched proposers list", "numberOfProposers", count)
+	logger.Debug("Fetched proposers list", "numberOfProposers", count+1)
 
-	for _, proposer := range proposers {
-		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+	for i := 1; i <= int(count) && i < len(proposers); i++ {
+		if bytes.Equal(proposers[i].Signer.Bytes(), helper.GetAddress()) {
 			return true, nil
 		}
 	}
