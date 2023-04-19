@@ -263,12 +263,11 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	//Hardfork to check the validaty of the NoAckProposer
 	if ctx.BlockHeight() >= helper.GetNoAckProposerCheckHeight() {
 		timeDiff := currentTime.Sub(lastCheckpointTime)
+
 		var count float64 = 0
-		// check if last checkpoint was > NoACK wait time
+
 		//count value is calculated based on the time passed since the last checkpoint
-		if timeDiff.Seconds() >= helper.GetConfig().NoACKWaitTime.Seconds() && count == 0 {
-			count = math.Floor(timeDiff.Seconds() / helper.GetConfig().NoACKWaitTime.Seconds())
-		}
+		count = math.Floor(timeDiff.Seconds() / bufferTime.Seconds())
 
 		var isProposer bool = false
 
@@ -280,6 +279,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 				isProposer = true
 				break
 			}
+
 			currentValidatorSet.IncrementProposerPriority(1)
 		}
 

@@ -13,7 +13,6 @@ import (
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	errs "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
 
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -401,7 +400,6 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	maxSize := uint64(256)
 	params := keeper.GetParams(ctx)
 	checkpointBufferTime := params.CheckpointBufferTime
-	noAckTime := helper.GetConfig().NoACKWaitTime
 
 	dividendAccount := hmTypes.DividendAccount{
 		User:      hmTypes.HexToHeimdallAddress("123"),
@@ -429,8 +427,8 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	got := suite.SendCheckpoint(header)
 	require.True(t, got.IsOK(), "expected send-NoAck to be ok, got %v", got)
 
-	// set time lastCheckpoint timestamp + checkpointBufferTime
-	newTime := lastCheckpoint.TimeStamp + uint64(checkpointBufferTime)
+	// set time lastCheckpoint timestamp + checkpointBufferTime-10
+	newTime := lastCheckpoint.TimeStamp + uint64(checkpointBufferTime) - uint64(10)
 	suite.ctx = ctx.WithBlockTime(time.Unix(0, int64(newTime)))
 
 	validatorSet := stakingKeeper.GetValidatorSet(ctx)
@@ -446,7 +444,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 	require.Equal(t, uint64(0), ackCount, "Should not update state")
 
 	// set time lastCheckpoint timestamp + noAckWaitTime
-	newTime = lastCheckpoint.TimeStamp + uint64(noAckTime)
+	newTime = lastCheckpoint.TimeStamp + uint64(checkpointBufferTime)
 	suite.ctx = ctx.WithBlockTime(time.Unix(0, int64(newTime)))
 
 	//This noAck should false as noAckProposer is invalid, we are passing current
