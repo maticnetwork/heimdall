@@ -264,7 +264,6 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	var isProposer bool = false
 
 	currentValidatorSet := k.sk.GetValidatorSet(ctx)
-	pr := currentValidatorSet.Proposer.Signer
 	currentValidatorSet.IncrementProposerPriority(1)
 
 	for i := 0; i < int(count); i++ {
