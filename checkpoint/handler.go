@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -239,7 +240,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 // Handles checkpoint no-ack transaction
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
-
+	fmt.Println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅8980980980980980")
 	// Get current block time
 	currentTime := ctx.BlockTime()
 
