@@ -23,18 +23,21 @@ type Pulp struct {
 
 // GetPulpHash returns string hash
 func GetPulpHash(msg sdk.Msg) []byte {
+	fmt.Println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅26")
 	return crypto.Keccak256([]byte(fmt.Sprintf("%s::%s", msg.Route(), msg.Type())))[:PulpHashLength]
 }
 
 // RegisterConcrete should be used to register concrete types that will appear in
 // interface fields/elements to be encoded/decoded by pulp.
 func (p *Pulp) RegisterConcrete(msg sdk.Msg) {
+	fmt.Println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅33")
 	rtype := reflect.TypeOf(msg)
 	p.typeInfos[hex.EncodeToString(GetPulpHash(msg))] = rtype
 }
 
 // GetMsgTxInstance get new instance associated with base tx
 func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
+	fmt.Println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅40")
 	rtype := p.typeInfos[hex.EncodeToString(hash[:PulpHashLength])]
 
 	return reflect.New(rtype).Elem().Interface().(sdk.Msg)
@@ -43,7 +46,7 @@ func (p *Pulp) GetMsgTxInstance(hash []byte) interface{} {
 // EncodeToBytes encodes msg to bytes
 func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
 	msg := tx.GetMsgs()[0]
-
+	fmt.Println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅49")
 	txBytes, err := rlp.EncodeToBytes(tx)
 	if err != nil {
 		return nil, err
@@ -55,6 +58,7 @@ func (p *Pulp) EncodeToBytes(tx StdTx) ([]byte, error) {
 // DecodeBytes decodes bytes to msg
 func (p *Pulp) DecodeBytes(data []byte) (interface{}, error) {
 	var txRaw StdTxRaw
+	fmt.Println("✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅✅61")
 
 	if len(data) <= PulpHashLength {
 		return nil, errors.New("Invalid data length, should be greater than PulpPrefix")
