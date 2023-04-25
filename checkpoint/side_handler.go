@@ -97,6 +97,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 
 	// logger
 	logger := k.Logger(ctx)
+	logger.Error("NoAcktTesting----ENTERED THE CHECKPOINT SIDE HANDLER")
 
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller, maticTxConfirmations)
@@ -127,6 +128,7 @@ func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 // SideHandleMsgCheckpointAck handles MsgCheckpointAck message for external call
 func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpointAck, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	logger := k.Logger(ctx)
+	logger.Error("NoAcktTesting----ENTERED THE ACK SIDE HANDLER")
 
 	params := k.GetParams(ctx)
 	chainParams := k.ck.GetParams(ctx).ChainParams
@@ -171,6 +173,8 @@ func SideHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidACK)
 	}
+
+	logger.Error("NoAcktTesting----PASSED THE ACK SIDE HANDLER")
 
 	// say `yes`
 	result.Result = abci.SideTxResultType_Yes

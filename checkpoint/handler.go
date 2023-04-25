@@ -74,6 +74,8 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
+	logger.Error("NoAcktTesting----ENTERED THE CHECKPOINT HANDLER")
+
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
 
@@ -174,7 +176,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, con
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
-	logger.Error("NoAcktTesting----PASSED THE HANDLER")
+	logger.Error("NoAcktTesting----PASSED THE CHECKPOINT HANDLER")
 
 	// Emit event for checkpoint
 	ctx.EventManager().EmitEvents(sdk.Events{
@@ -223,6 +225,8 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 
 		return common.ErrBadAck(k.Codespace()).Result()
 	}
+
+	logger.Error("NoAcktTesting----PASSED THE CHECKPOINT ACK HANDLER")
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

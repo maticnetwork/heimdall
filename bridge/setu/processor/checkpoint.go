@@ -141,11 +141,14 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 			return errors.New("no of blocks on childchain is less than confirmations required")
 		}
 
+		cp.Logger.Error("NoAcktTesting----Calculating next expected checkpoint")
 		expectedCheckpointState, err := cp.nextExpectedCheckpoint(checkpointContext, latestConfirmedChildBlock)
 		if err != nil {
 			cp.Logger.Error("Error while calculate next expected checkpoint", "error", err)
 			return err
 		}
+
+		cp.Logger.Error("NoAcktTesting----Calculated next expected checkpoint")
 
 		start := expectedCheckpointState.newStart
 		end := expectedCheckpointState.newEnd
@@ -308,6 +311,8 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			return err
 		}
 	}
+
+	cp.Logger.Error("NoAcktTesting---- Sending checkpointAck to Heimdall")
 
 	return nil
 }
@@ -496,6 +501,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointContext *CheckpointContext, start uint64, end uint64, height int64, txHash []byte) error {
 	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
 	// proof
+
 	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
 	if err != nil {
 		cp.Logger.Error("Error querying checkpoint tx proof", "txHash", txHash)
