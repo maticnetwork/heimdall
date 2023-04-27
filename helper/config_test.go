@@ -7,6 +7,8 @@ import (
 
 	"github.com/spf13/viper"
 
+	hmTypes "github.com/maticnetwork/heimdall/types"
+
 	cfg "github.com/tendermint/tendermint/config"
 )
 
@@ -46,6 +48,46 @@ func TestHeimdallConfigNewSelectionAlgoHeight(t *testing.T) {
 		if nsah == 0 && !shouldBeZero || nsah != 0 && shouldBeZero {
 			t.Errorf("Invalid GetNewSelectionAlgoHeight = %d for chain %s", nsah, chain)
 		}
+	}
+}
+
+func TestGetChainManagerAddressMigration(t *testing.T) {
+	t.Parallel()
+
+	newMaticContractAddress := "0x0000000000000000000000000000000000001234"
+
+	chainManagerAddressMigrations["mumbai"] = map[int64]ChainManagerAddressMigration{
+		350: {MaticTokenAddress: hmTypes.HexToHeimdallAddress(newMaticContractAddress)},
+	}
+
+	viper.Set("chain", "mumbai")
+	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
+	migration, found := GetChainManagerAddressMigration(350)
+
+	if !found {
+		t.Errorf("Expected migration to be found")
+	}
+
+	if migration.MaticTokenAddress.String() != newMaticContractAddress {
+		t.Errorf("Expected matic token address to be %s, got %s", newMaticContractAddress, migration.MaticTokenAddress.String())
+	}
+
+	// test for non existing migration
+	_, found = GetChainManagerAddressMigration(351)
+	if found {
+		t.Errorf("Expected migration to not be found")
+	}
+
+	// test for non existing chain
+	conf.BorRPCUrl = ""
+
+	viper.Set("chain", "newChain")
+	InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+
+	_, found = GetChainManagerAddressMigration(350)
+	if found {
+		t.Errorf("Expected migration to not be found")
 	}
 }
 
