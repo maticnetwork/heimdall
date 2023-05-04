@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
 
+DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
 echo "The version is of form - VersionMajor.VersionMinor.VersionPatch-VersionMeta"
 echo "Let's take 0.3.4-beta as an example. Here:"
 echo "* VersionMajor is - 0"
@@ -53,13 +55,13 @@ echo "New version is: $version"
 replaceVersion="Version: "$version
 replaceStandards="Standards-Version: v"$version
 fileArray=(
-    "../packaging/deb/heimdalld/DEBIAN/control"
-    "../packaging/templates/package_scripts/control"
-    "../packaging/templates/package_scripts/control.arm64"
-    "../packaging/templates/package_scripts/control.profile.amd64"
-    "../packaging/templates/package_scripts/control.profile.arm64"
-    "../packaging/templates/package_scripts/control.validator"
-    "../packaging/templates/package_scripts/control.validator.arm64"
+    "${DIR}/../packaging/deb/heimdalld/DEBIAN/control"
+    "${DIR}/../packaging/templates/package_scripts/control"
+    "${DIR}/../packaging/templates/package_scripts/control.arm64"
+    "${DIR}/../packaging/templates/package_scripts/control.profile.amd64"
+    "${DIR}/../packaging/templates/package_scripts/control.profile.arm64"
+    "${DIR}/../packaging/templates/package_scripts/control.validator"
+    "${DIR}/../packaging/templates/package_scripts/control.validator.arm64"
 )
 for file in ${fileArray[@]}; do
     # get the line starting with `Version` in the control file and store it in the $tempVersion variable
@@ -68,9 +70,9 @@ for file in ${fileArray[@]}; do
 done
 
 fileArrayStandards=(
-    "../packaging/deb/heimdalld/DEBIAN/control"
-    "../packaging/templates/package_scripts/control.validator"
-    "../packaging/templates/package_scripts/control.validator.arm64"
+    "${DIR}/../packaging/deb/heimdalld/DEBIAN/control"
+    "${DIR}/../packaging/templates/package_scripts/control.validator"
+    "${DIR}/../packaging/templates/package_scripts/control.validator.arm64"
 )
 for file in ${fileArrayStandards[@]}; do
     # get the line starting with `Standards-Version` in the control file and store it in the $tempStandards variable
