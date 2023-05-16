@@ -597,11 +597,18 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 			return abci.ResponseEndBlock{}
 		}
 
+		fmt.Println("ValidatorSetRotationDemo✅✅", "Control is inside the EndBlocker")
+		fmt.Println("ValidatorSetRotationDemo✅✅", "BlockHeight", ctx.BlockHeight(), "HardFork Height", helper.GetValidatorSetRotationStopHeight())
+		fmt.Println("ValidatorSetRotationDemo✅✅", "Current Proposer", currentValidatorSet.Proposer.Signer)
+
 		//Hardfork to remove the rotation of validator list on stake update
 		if ctx.BlockHeight() < helper.GetValidatorSetRotationStopHeight() {
 			// increment proposer priority
 			currentValidatorSet.IncrementProposerPriority(1)
+			fmt.Println("ValidatorSetRotationDemo✅✅", "Rotated the validator set")
 		}
+
+		fmt.Println("ValidatorSetRotationDemo✅✅", "New Proposer", currentValidatorSet.Proposer.Signer)
 
 		// validator set change
 		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())

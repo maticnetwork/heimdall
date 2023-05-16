@@ -207,7 +207,7 @@ var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
 
-var validatorSetRotationStopHeight int64 = 0
+var validatorSetRotationStopHeight int64 = 250
 
 // Contracts
 // var RootChain types.Contract
