@@ -207,7 +207,7 @@ var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
 
-var validatorSetRotationStopHeight int64 = 300
+var validatorSetRotationStopHeight int64 = 0
 
 // Contracts
 // var RootChain types.Contract
@@ -365,7 +365,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		validatorSetRotationStopHeight = 1000000 //Change this value
+		validatorSetRotationStopHeight = 350 //Change this value
 	}
 }
 
