@@ -365,7 +365,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		validatorSetRotationStopHeight = 350 //Change this value
+		validatorSetRotationStopHeight = 450 //Change this value
 	}
 }
 
