@@ -239,6 +239,24 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
 
+	k.FlushCheckpointBuffer(ctx)
+
+	// Get new proposer
+	vs := k.sk.GetValidatorSet(ctx)
+	newProposer := vs.GetProposer()
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeCheckpointNoAck,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer.String()),
+		),
+	})
+
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+
 	// Get current block time
 	currentTime := ctx.BlockTime()
 
@@ -282,24 +300,24 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	// Increment accum (selects new proposer)
 	k.sk.IncrementAccum(ctx, 1)
 
-	// Get new proposer
-	vs := k.sk.GetValidatorSet(ctx)
-	newProposer := vs.GetProposer()
-	logger.Debug(
-		"New proposer selected",
-		"validator", newProposer.Signer.String(),
-		"signer", newProposer.Signer.String(),
-		"power", newProposer.VotingPower,
-	)
+	// // Get new proposer
+	// vs1 := k.sk.GetValidatorSet(ctx)
+	// newProposer1 := vs.GetProposer()
+	// logger.Debug(
+	// 	"New proposer selected",
+	// 	"validator", newProposer.Signer.String(),
+	// 	"signer", newProposer.Signer.String(),
+	// 	"power", newProposer.VotingPower,
+	// )
 
-	// add events
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeCheckpointNoAck,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer.String()),
-		),
-	})
+	// // add events
+	// ctx.EventManager().EmitEvents(sdk.Events{
+	// 	sdk.NewEvent(
+	// 		types.EventTypeCheckpointNoAck,
+	// 		sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+	// 		sdk.NewAttribute(types.AttributeKeyNewProposer, newProposer.Signer.String()),
+	// 	),
+	// })
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
