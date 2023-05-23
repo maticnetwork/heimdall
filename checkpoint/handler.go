@@ -240,6 +240,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	logger := k.Logger(ctx)
 
 	k.FlushCheckpointBuffer(ctx)
+	logger.Error("CLEARED THE BUFFER")
 
 	// Get new proposer
 	vs := k.sk.GetValidatorSet(ctx)
