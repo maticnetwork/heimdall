@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -87,7 +88,7 @@ func (cp *CheckpointProcessor) RegisterTasks() {
 }
 
 func (cp *CheckpointProcessor) startPollingForNoAck(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(500 * time.Second)
+	ticker := time.NewTicker(interval)
 	defer ticker.Stop()
 
 	for {
@@ -250,6 +251,8 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 // sendCheckpointAckToHeimdall - handles checkpointAck event from rootchain
 // 1. create and broadcast checkpointAck msg to heimdall.
 func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, checkpointAckStr string) error {
+
+	fmt.Println("ACK RECEIVED")
 
 	return nil
 	// fetch checkpoint context
