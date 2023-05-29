@@ -14,7 +14,7 @@ ldflags = -X github.com/maticnetwork/heimdall/version.Name=heimdall \
 		  -X github.com/cosmos/cosmos-sdk/version.Version=$(VERSION) \
 		  -X github.com/cosmos/cosmos-sdk/version.Commit=$(COMMIT)
 
-BUILD_FLAGS := -ldflags '$(ldflags)'
+BUILD_FLAGS := -ldflags '$(ldflags)' -tags cleveldb
 
 clean:
 	rm -rf build
@@ -29,12 +29,15 @@ build: clean
 	mkdir -p build
 	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
 	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
+	@echo $(BUILD_FLAGS)
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
 
 # make install
 install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
+	@echo $(BUILD_FLAGS)
+	@echo "====================================================\n==================Install Successful==================\n===================================================="
 
 contracts:
 	abigen --abi=contracts/rootchain/rootchain.abi --pkg=rootchain --out=contracts/rootchain/rootchain.go
