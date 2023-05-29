@@ -29,14 +29,12 @@ build: clean
 	mkdir -p build
 	go build $(BUILD_FLAGS) -o build/heimdalld ./cmd/heimdalld
 	go build $(BUILD_FLAGS) -o build/heimdallcli ./cmd/heimdallcli
-	@echo $(BUILD_FLAGS)
 	@echo "====================================================\n==================Build Successful==================\n===================================================="
 
 # make install
 install:
 	go install $(BUILD_FLAGS) ./cmd/heimdalld
 	go install $(BUILD_FLAGS) ./cmd/heimdallcli
-	@echo $(BUILD_FLAGS)
 	@echo "====================================================\n==================Install Successful==================\n===================================================="
 
 contracts:
