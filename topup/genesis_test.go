@@ -34,7 +34,7 @@ func TestGenesisTestSuite(t *testing.T) {
 	suite.Run(t, new(GenesisTestSuite))
 }
 
-//TestInitExportGenesis test import and export genesis state
+// TestInitExportGenesis test import and export genesis state
 func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	s1 := rand.NewSource(time.Now().UnixNano())
