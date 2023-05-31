@@ -123,7 +123,7 @@ func TestValidateBasic(t *testing.T) {
 		{
 			in:  Validator{},
 			out: false,
-			msg: "Valid basic validator test",
+			msg: "Invalid basic validator test",
 		},
 	}
 
