@@ -14,6 +14,7 @@ type valInput struct {
 	startEpoch uint64
 	endEpoch   uint64
 	power      int64
+	nonce      uint64
 	pubKey     PubKey
 	signer     HeimdallAddress
 }
@@ -32,29 +33,32 @@ func TestNewValidator(t *testing.T) {
 			in: valInput{
 				id:     ValidatorID(uint64(0)),
 				signer: BytesToHeimdallAddress([]byte("12345678909876543210")),
+				nonce:  uint64(0),
 			},
-			out: &Validator{Signer: BytesToHeimdallAddress([]byte("12345678909876543210"))},
+			out: &Validator{Signer: BytesToHeimdallAddress([]byte("12345678909876543210")), Nonce: uint64(0)},
 			msg: "testing for exact HeimdallAddress",
 		},
 		{
 			in: valInput{
 				id:     ValidatorID(uint64(0)),
 				signer: BytesToHeimdallAddress([]byte("1")),
+				nonce:  uint64(1),
 			},
-			out: &Validator{Signer: BytesToHeimdallAddress([]byte("1"))},
+			out: &Validator{Signer: BytesToHeimdallAddress([]byte("1")), Nonce: uint64(1)},
 			msg: "testing for small HeimdallAddress",
 		},
 		{
 			in: valInput{
 				id:     ValidatorID(uint64(0)),
 				signer: BytesToHeimdallAddress([]byte("123456789098765432101")),
+				nonce:  uint64(32),
 			},
-			out: &Validator{Signer: BytesToHeimdallAddress([]byte("123456789098765432101"))},
+			out: &Validator{Signer: BytesToHeimdallAddress([]byte("123456789098765432101")), Nonce: uint64(32)},
 			msg: "testing for excessively long HeimdallAddress, max length is supposed to be 20",
 		},
 	}
 	for _, c := range tc {
-		out := NewValidator(c.in.id, c.in.startEpoch, c.in.endEpoch, 1, c.in.power, c.in.pubKey, c.in.signer)
+		out := NewValidator(c.in.id, c.in.startEpoch, c.in.endEpoch, c.in.nonce, c.in.power, c.in.pubKey, c.in.signer)
 		assert.Equal(t, c.out, out)
 	}
 }
@@ -91,8 +95,6 @@ func TestSortValidatorByAddress(t *testing.T) {
 func TestValidateBasic(t *testing.T) {
 	t.Parallel()
 
-	neg1, uNeg1 := uint64(1), uint64(0)
-	uNeg1 = uNeg1 - neg1
 	tc := []struct {
 		in  Validator
 		out bool
@@ -113,20 +115,7 @@ func TestValidateBasic(t *testing.T) {
 			out: false,
 			msg: "Invalid PubKey",
 		},
-
-		//		{
-		//			in:  Validator{StartEpoch: uNeg1, EndEpoch: 5, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
-		//			out: false,
-		//			msg: "Invalid StartEpoch",
-		//		},
 		{
-			// do we allow for endEpoch to be smaller than startEpoch ??
-			in:  Validator{StartEpoch: 1, EndEpoch: uNeg1, Nonce: 0, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte("3"))},
-			out: false,
-			msg: "Invalid endEpoch",
-		},
-		{
-			// in:  Validator{StartEpoch: 1, EndEpoch: 1, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: HeimdallAddress(BytesToHeimdallAddress([]byte(string(""))))},
 			in:  Validator{StartEpoch: 1, EndEpoch: 1, Nonce: 0, PubKey: NewPubKey([]byte("nonZeroTestPubKey")), Signer: BytesToHeimdallAddress([]byte(""))},
 			out: false,
 			msg: "Invalid Signer",
