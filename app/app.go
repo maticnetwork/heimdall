@@ -619,6 +619,22 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		}
 	}
 
+	// Change root chain contract addresses if required
+	if chainManagerAddressMigration, found := helper.GetChainManagerAddressMigration(ctx.BlockHeight()); found {
+		params := app.ChainKeeper.GetParams(ctx)
+
+		params.ChainParams.MaticTokenAddress = chainManagerAddressMigration.MaticTokenAddress
+		params.ChainParams.StakingManagerAddress = chainManagerAddressMigration.StakingManagerAddress
+		params.ChainParams.RootChainAddress = chainManagerAddressMigration.RootChainAddress
+		params.ChainParams.SlashManagerAddress = chainManagerAddressMigration.SlashManagerAddress
+		params.ChainParams.StakingInfoAddress = chainManagerAddressMigration.StakingInfoAddress
+		params.ChainParams.StateSenderAddress = chainManagerAddressMigration.StateSenderAddress
+
+		// update chain manager state
+		app.ChainKeeper.SetParams(ctx, params)
+		logger.Info("Updated chain manager state", "params", params)
+	}
+
 	// end block
 	app.mm.EndBlock(ctx, req)
 

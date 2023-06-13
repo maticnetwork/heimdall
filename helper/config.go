@@ -22,6 +22,7 @@ import (
 	"github.com/tendermint/tendermint/privval"
 
 	"github.com/maticnetwork/heimdall/file"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	cfg "github.com/tendermint/tendermint/config"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -206,6 +207,21 @@ var GenesisDoc tmTypes.GenesisDoc
 var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
+
+type ChainManagerAddressMigration struct {
+	MaticTokenAddress     hmTypes.HeimdallAddress
+	RootChainAddress      hmTypes.HeimdallAddress
+	StakingManagerAddress hmTypes.HeimdallAddress
+	SlashManagerAddress   hmTypes.HeimdallAddress
+	StakingInfoAddress    hmTypes.HeimdallAddress
+	StateSenderAddress    hmTypes.HeimdallAddress
+}
+
+var chainManagerAddressMigrations = map[string]map[int64]ChainManagerAddressMigration{
+	MainChain:   {},
+	MumbaiChain: {},
+	"default":   {},
+}
 
 // Contracts
 // var RootChain types.Contract
@@ -477,6 +493,17 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
+}
+
+func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
+	chainMigration := chainManagerAddressMigrations[conf.Chain]
+	if chainMigration == nil {
+		chainMigration = chainManagerAddressMigrations["default"]
+	}
+
+	result, found := chainMigration[blockNum]
+
+	return result, found
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command

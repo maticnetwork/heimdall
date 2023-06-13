@@ -12,6 +12,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/clerk/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
@@ -142,6 +143,8 @@ type clerkEventListParams struct {
 //	200: clerkEventListResponse
 func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		var logger = helper.Logger.With("module", "/clerk/event-record/list")
+		logger.Info("Serving event record list")
 		vars := r.URL.Query()
 
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -160,6 +163,8 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			page = _page
 		}
 
+		logger.Info("Serving event record list", "page", page)
+
 		limit := uint64(50) // default limit
 
 		if vars.Get("limit") != "" {
@@ -173,6 +178,7 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				limit = _limit
 			}
 		}
+		logger.Info("Serving event record list", "limit", limit)
 
 		var (
 			res []byte
@@ -192,6 +198,8 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				return
 			}
 
+			logger.Info("Serving event record list", "from-time", fromTime, "to-time", toTime)
+
 			// get result by time-range query
 			res, err = timeRangeQuery(cliCtx, fromTime, toTime, page, limit)
 		} else if vars.Get("from-id") != "" && vars.Get("to-time") != "" {
@@ -207,6 +215,23 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				return
 			}
 
+			node, err := cliCtx.GetNode()
+			if err != nil {
+				return
+			}
+
+			status, err := node.Status()
+			if err != nil {
+				return
+			}
+
+			time := status.SyncInfo.LatestBlockTime
+			if toTime > time.Unix() {
+				return
+			}
+
+			logger.Info("Serving event record list", "from-id", fromID, "to-time", toTime)
+
 			// get result by till time-range query
 			res, err = tillTimeRangeQuery(cliCtx, fromID, toTime, limit)
 		} else {
@@ -216,15 +241,18 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// send internal server error if error occurred during the query
 		if err != nil {
+			logger.Error("Error while querying event record list", "error", err.Error())
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
 		// check content
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No records found"); !ok {
+			logger.Error("Error while querying event record list", "error", "No records found")
 			return
 		}
 
+		logger.Info("Served event record lisy successfully")
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
