@@ -301,7 +301,8 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 
 	rootHash, err := c.MaticChainClient.GetRootHash(ctx, start, end)
 	if err != nil {
-		return nil, errors.New("could not fetch rootHash from matic chain")
+		Logger.Error("Could not fetch rootHash from matic chain", "error", err)
+		return nil, err
 	}
 
 	return common.FromHex(rootHash), nil
