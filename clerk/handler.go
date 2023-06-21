@@ -63,6 +63,8 @@ func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, c
 		return common.ErrOldTx(k.Codespace()).Result()
 	}
 
+	k.Logger(ctx).Error("❌❌❌❌❌❌❌HANDLER❌❌❌❌❌❌❌❌❌")
+
 	// add events
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(

@@ -88,9 +88,6 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
-	k.Logger(ctx).Error("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
-
-	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 
 	if !bytes.Equal(eventLog.Data, msg.Data) {
 		if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
@@ -115,6 +112,8 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 			}
 		}
 	}
+
+	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler❌❌❌❌❌❌❌❌❌")
 
 	result.Result = abci.SideTxResultType_Yes
 
@@ -178,6 +177,8 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 			sdk.NewAttribute(types.AttributeKeyRecordContract, msg.ContractAddress.String()),
 		),
 	})
+
+	k.Logger(ctx).Error("❌❌❌❌❌❌❌❌❌POST HANDLER❌❌❌❌❌❌❌")
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
