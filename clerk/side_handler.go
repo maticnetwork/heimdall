@@ -88,6 +88,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
+	k.Logger(ctx).Error("❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌❌")
 
 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 
