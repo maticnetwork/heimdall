@@ -226,7 +226,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 
 		// TODO - check if i am the proposer of this tick ack or not.
 
-		// create msg checkpoint ack message
+		// create msg tick ack message
 		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Nonce.Uint64(), event.Amount.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
