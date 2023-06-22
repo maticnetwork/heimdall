@@ -2,6 +2,7 @@ package clerk
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -113,6 +114,8 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 	// 	}
 	// }
 
+	fmt.Println("❌❌❌❌❌❌siDE handler❌❌❌❌❌❌❌❌", "msg", msg.Data, "msg ID", msg.ID)
+
 	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler❌❌❌❌❌❌❌❌❌")
 
 	result.Result = abci.SideTxResultType_Yes
@@ -177,6 +180,8 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 			sdk.NewAttribute(types.AttributeKeyRecordContract, msg.ContractAddress.String()),
 		),
 	})
+
+	fmt.Println("❌❌❌❌❌❌PSOT handler❌❌❌❌❌❌❌❌", "msg", msg.Data, "msg ID", msg.ID)
 
 	k.Logger(ctx).Error("❌❌❌❌❌❌❌❌❌POST HANDLER❌❌❌❌❌❌❌")
 
