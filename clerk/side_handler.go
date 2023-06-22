@@ -89,29 +89,29 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if !bytes.Equal(eventLog.Data, msg.Data) {
-		if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
-			if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
-				k.Logger(ctx).Error(
-					"Data from event does not match with Msg Data",
-					"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
-					"MsgData", hmTypes.BytesToHexBytes(msg.Data),
-				)
+	// if !bytes.Equal(eventLog.Data, msg.Data) {
+	// 	if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
+	// 		if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
+	// 			k.Logger(ctx).Error(
+	// 				"Data from event does not match with Msg Data",
+	// 				"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
+	// 				"MsgData", hmTypes.BytesToHexBytes(msg.Data),
+	// 			)
 
-				return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-			}
-		} else {
-			if !(len(eventLog.Data) > helper.LegacyMaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
-				k.Logger(ctx).Error(
-					"Data from event does not match with Msg Data",
-					"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
-					"MsgData", hmTypes.BytesToHexBytes(msg.Data),
-				)
+	// 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// 		}
+	// 	} else {
+	// 		if !(len(eventLog.Data) > helper.LegacyMaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
+	// 			k.Logger(ctx).Error(
+	// 				"Data from event does not match with Msg Data",
+	// 				"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
+	// 				"MsgData", hmTypes.BytesToHexBytes(msg.Data),
+	// 			)
 
-				return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-			}
-		}
-	}
+	// 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// 		}
+	// 	}
+	// }
 
 	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler❌❌❌❌❌❌❌❌❌")
 
