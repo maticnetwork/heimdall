@@ -169,9 +169,9 @@ func NewAnteHandler(
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
 
-		msgs := tx.GetMsgs()
+		msgs := stdTx.Msg
 
-		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler❌❌❌❌❌❌❌❌❌❌❌", "Msg", msgs[0])
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler❌❌❌❌❌❌❌❌❌❌❌", "Msg", msgs)
 
 		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
 		if !res.IsOK() {
