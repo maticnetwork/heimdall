@@ -309,31 +309,31 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	// perform checks for timeout
 	if conf.EthRPCTimeout == 0 {
 		// fallback to default
-		Logger.Debug("Invalid ETH RPC timeout provided, falling back to default value", "timeout", DefaultEthRPCTimeout)
+		Logger.Debug("Missing ETH RPC timeout or invalid value provided, falling back to default", "timeout", DefaultEthRPCTimeout)
 		conf.EthRPCTimeout = DefaultEthRPCTimeout
 	}
 
 	if conf.BorRPCTimeout == 0 {
 		// fallback to default
-		Logger.Debug("Invalid BOR RPC timeout provided, falling back to default value", "timeout", DefaultBorRPCTimeout)
+		Logger.Debug("Missing BOR RPC timeout or invalid value provided, falling back to default", "timeout", DefaultBorRPCTimeout)
 		conf.BorRPCTimeout = DefaultBorRPCTimeout
 	}
 
 	if conf.SHStateSyncedInterval == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing StateSynced interval provided, falling back to default value", "interval", DefaultSHStateSyncedInterval)
+		Logger.Debug("Missing self-healing StateSynced interval or invalid value provided, falling back to default", "interval", DefaultSHStateSyncedInterval)
 		conf.SHStateSyncedInterval = DefaultSHStateSyncedInterval
 	}
 
 	if conf.SHStakeUpdateInterval == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing StakeUpdate interval provided, falling back to default value", "interval", DefaultSHStakeUpdateInterval)
+		Logger.Debug("Missing self-healing StakeUpdate interval or invalid value provided, falling back to default", "interval", DefaultSHStakeUpdateInterval)
 		conf.SHStakeUpdateInterval = DefaultSHStakeUpdateInterval
 	}
 
 	if conf.SHMaxDepthDuration == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing max depth duration provided, falling back to default value", "duration", DefaultSHMaxDepthDuration)
+		Logger.Debug("Missing self-healing max depth duration or invalid value provided, falling back to default", "duration", DefaultSHMaxDepthDuration)
 		conf.SHMaxDepthDuration = DefaultSHMaxDepthDuration
 	}
 
