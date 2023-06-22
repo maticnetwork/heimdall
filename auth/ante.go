@@ -169,6 +169,10 @@ func NewAnteHandler(
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
 
+		msgs := tx.GetMsgs()
+
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler❌❌❌❌❌❌❌❌❌❌❌", "Msg", msgs[0])
+
 		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
 		if !res.IsOK() {
 			return newCtx, res, true
@@ -236,6 +240,7 @@ func processSig(
 		copy(pk[:], p[:])
 
 		if !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
+			fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler❌❌❌❌❌❌❌❌❌❌❌")
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
