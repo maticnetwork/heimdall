@@ -324,5 +324,15 @@ func GetSignBytes(chainID string, stdTx authTypes.StdTx, acc authTypes.Account, 
 		accNum = acc.GetAccountNumber()
 	}
 
-	return authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Msg, stdTx.Memo)
+	signBytes := authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Msg, stdTx.Memo)
+
+	fmt.Println("❌❌❌❌❌❌❌❌❌❌Sign Bytes❌❌❌❌❌❌❌❌❌❌❌")
+	const old = ",\"data\":\"0x\","
+	const new = ",\"data\":\"0x0\","
+
+	fmt.Println("❌❌❌❌❌❌❌❌❌❌Sign Bytes ---❌❌❌❌❌❌❌❌❌❌❌")
+
+	signBytes = bytes.Replace(signBytes, []byte(old), []byte(new), 1)
+	return signBytes
+
 }
