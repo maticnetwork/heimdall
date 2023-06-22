@@ -90,9 +90,6 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler votes no❌❌❌❌❌❌❌❌❌")
-	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-
 	// if !bytes.Equal(eventLog.Data, msg.Data) {
 	// 	if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
 	// 		if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
@@ -121,7 +118,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler❌❌❌❌❌❌❌❌❌")
 
-	result.Result = abci.SideTxResultType_No
+	result.Result = abci.SideTxResultType_Yes
 
 	return
 }
