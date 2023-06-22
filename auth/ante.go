@@ -240,7 +240,8 @@ func processSig(
 		copy(pk[:], p[:])
 
 		if !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
-			fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler❌❌❌❌❌❌❌❌❌❌❌")
+
+			fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler❌❌❌❌❌❌❌❌❌❌❌", "ACC", acc.GetAddress(), "PK", pk.Address())
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
