@@ -90,6 +90,9 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler votes no❌❌❌❌❌❌❌❌❌")
+	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+
 	// if !bytes.Equal(eventLog.Data, msg.Data) {
 	// 	if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
 	// 		if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
@@ -118,7 +121,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler❌❌❌❌❌❌❌❌❌")
 
-	result.Result = abci.SideTxResultType_Yes
+	result.Result = abci.SideTxResultType_No
 
 	return
 }
@@ -126,6 +129,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, sideTxResult abci.SideTxResultType) sdk.Result {
 	// Skip handler if clerk is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
+		fmt.Println("❌❌❌❌❌❌PSOT handler failed in NO ❌❌❌❌❌❌❌❌", "msg", msg.Data, "msg ID", msg.ID, "BLOCK", ctx.BlockHeight())
 		k.Logger(ctx).Debug("Skipping new clerk since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
