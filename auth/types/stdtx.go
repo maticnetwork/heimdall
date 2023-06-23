@@ -129,7 +129,7 @@ func (ss StdSignature) MarshalYAML() (interface{}, error) {
 // UnmarshalJSON unmarshals from JSON assuming Bech32 encoding.
 func (ss *StdSignature) UnmarshalJSON(data []byte) error {
 	var s string
-	if err := jsoniter.ConfigFastest.Unmarshal(data, &s); err != nil {
+	if err := jsoniter.ConfigCompatibleWithStandardLibrary.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
