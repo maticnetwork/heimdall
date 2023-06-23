@@ -52,9 +52,7 @@ type FeeCollector interface {
 	) sdk.Error
 }
 
-//
 // MainTxMsg tx hash
-//
 type MainTxMsg interface {
 	GetTxHash() types.HeimdallHash
 	GetLogIndex() uint64
@@ -85,17 +83,24 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
 		}
 
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "StdTx", stdTx)
+
 		// get account params
 		params := ak.GetParams(ctx)
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "params", params)
 
 		// gas for tx
 		gasForTx := params.MaxTxGas // stdTx.Fee.Gas
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "gasForTx", gasForTx)
 
 		amount, ok := sdk.NewIntFromString(params.TxFees)
 		if !ok {
 			return newCtx, sdk.ErrInternal("Invalid param tx fees").Result(), true
 		}
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "amt", amount)
+
 		feeForTx := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: amount}} // stdTx.Fee.Amount
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "feeForTx", feeForTx)
 
 		// new gas meter
 		newCtx = SetGasMeter(simulate, ctx, gasForTx)
@@ -131,10 +136,12 @@ func NewAnteHandler(
 		if res := ValidateMemo(stdTx, params); !res.IsOK() {
 			return newCtx, res, true
 		}
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "res", res)
 
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		signerAddrs := stdTx.GetSigners()
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "signerAdd", signerAddrs)
 
 		if len(signerAddrs) == 0 {
 			return newCtx, sdk.ErrNoSignatures("no signers").Result(), true
@@ -151,6 +158,7 @@ func NewAnteHandler(
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "signerAcc", signerAcc)
 
 		// deduct the fees
 		if !feeForTx.IsZero() {
@@ -166,13 +174,18 @@ func NewAnteHandler(
 		// stdSigs contains the sequence number, account number, and signatures.
 		// When simulating, this would just be a 0-length slice.
 		stdSigs := stdTx.GetSignatures()
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "stdSigs", stdSigs)
 
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(newCtx.ChainID(), stdTx, signerAcc, isGenesis)
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "signBytes", signBytes)
+
 		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
+
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "sinferAcc", signerAcc)
 
 		ak.SetAccount(newCtx, signerAcc)
 
@@ -229,6 +242,8 @@ func processSig(
 		var pk secp256k1.PubKeySecp256k1
 		p, err := authTypes.RecoverPubkey(signBytes, sig.Bytes())
 		copy(pk[:], p[:])
+
+		fmt.Println("❌❌❌❌❌❌❌❌❌❌ante handler prevvvv❌❌❌❌❌❌❌❌❌❌❌", "acc", acc.GetAddress(), "pk", pk.Address())
 
 		if err != nil || !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
