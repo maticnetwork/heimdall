@@ -11,7 +11,7 @@ import (
 	amino "github.com/tendermint/go-amino"
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
-	yaml "gopkg.in/yaml.v3"
+	yaml "gopkg.in/yaml.v2"
 
 	"github.com/maticnetwork/heimdall/auth/exported"
 	"github.com/maticnetwork/heimdall/types"
