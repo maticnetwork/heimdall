@@ -1,11 +1,11 @@
 package types
 
 import (
-	"encoding/json"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
@@ -121,7 +121,7 @@ func (ss *StdSignature) Unmarshal(data []byte) error {
 // MarshalJSON marshals to JSON using Bech32.
 func (ss StdSignature) MarshalJSON() ([]byte, error) {
 	fmt.Println("Marshalling Here in Ante")
-	return json.Marshal(ss.String())
+	return jsoniter.ConfigFastest.Marshal(ss.String())
 }
 
 // MarshalYAML marshals to YAML using Bech32.
@@ -134,7 +134,7 @@ func (ss *StdSignature) UnmarshalJSON(data []byte) error {
 	fmt.Println("Unmarshalling Here in Ante")
 
 	var s string
-	if err := json.Unmarshal(data, &s); err != nil {
+	if err := jsoniter.ConfigFastest.Unmarshal(data, &s); err != nil {
 		return err
 	}
 
