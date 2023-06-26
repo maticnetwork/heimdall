@@ -24,6 +24,7 @@ type StdSignDoc struct {
 
 // StdSignBytes returns the bytes to sign for a transaction.
 func StdSignBytes(chainID string, accnum uint64, sequence uint64, msg sdk.Msg, memo string) []byte {
+	fmt.Println("❌❌❌❌❌❌StdSignBytesss❌❌❌❌❌", "GetSignBytes", msg.GetSignBytes())
 	msgsBytes := json.RawMessage(msg.GetSignBytes())
 	fmt.Println("❌❌❌❌❌❌❌❌❌❌StdSignBytess❌❌❌❌❌❌❌❌❌❌❌", "msgBytes", msgsBytes)
 
