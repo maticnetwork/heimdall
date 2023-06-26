@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -24,6 +25,7 @@ type StdSignDoc struct {
 // StdSignBytes returns the bytes to sign for a transaction.
 func StdSignBytes(chainID string, accnum uint64, sequence uint64, msg sdk.Msg, memo string) []byte {
 	msgsBytes := json.RawMessage(msg.GetSignBytes())
+	fmt.Println("❌❌❌❌❌❌❌❌❌❌StdSignBytes❌❌❌❌❌❌❌❌❌❌❌", "msgsBytes", msgsBytes)
 
 	bz, err := ModuleCdc.MarshalJSON(StdSignDoc{
 		AccountNumber: accnum,
@@ -36,7 +38,13 @@ func StdSignBytes(chainID string, accnum uint64, sequence uint64, msg sdk.Msg, m
 		panic(err)
 	}
 
-	return sdk.MustSortJSON(bz)
+	fmt.Println("❌❌❌❌❌❌❌❌❌❌StdSignBytes❌❌❌❌❌❌❌❌❌❌❌", "bz", bz)
+
+	a := sdk.MustSortJSON(bz)
+
+	fmt.Println("❌❌❌❌❌❌❌❌❌❌StdSignBytes❌❌❌❌❌❌❌❌❌❌❌", "a", a)
+
+	return a
 }
 
 // StdSignMsg is a convenience structure for passing along
