@@ -89,6 +89,8 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 			return nil
 		}
 
+		event.Data = hmTypes.HexToHexBytes("")
+		
 		cp.Logger.Debug(
 			"⬜ New event found",
 			"event", eventName,

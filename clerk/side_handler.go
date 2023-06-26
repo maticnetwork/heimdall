@@ -89,6 +89,8 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
+	eventLog.Data = hmTypes.HexToHexBytes("")
+
 	if !bytes.Equal(eventLog.Data, msg.Data) {
 		if ctx.BlockHeight() > helper.SpanOverrideBlockHeight {
 			if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {

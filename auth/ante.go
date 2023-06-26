@@ -52,9 +52,7 @@ type FeeCollector interface {
 	) sdk.Error
 }
 
-//
 // MainTxMsg tx hash
-//
 type MainTxMsg interface {
 	GetTxHash() types.HeimdallHash
 	GetLogIndex() uint64
@@ -238,6 +236,7 @@ func processSig(
 		copy(pk[:], p[:])
 
 		if !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
+			helper.Logger.Error("MISMATCHED ADDRESSES!", "acc", acc.GetAddress(), "pk", pk.Address())
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
