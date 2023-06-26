@@ -73,8 +73,14 @@ func (msg MsgEventRecord) ValidateBasic() sdk.Error {
 
 // GetSignBytes Implements Msg.
 func (msg MsgEventRecord) GetSignBytes() []byte {
-	a := sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(msg))
-	fmt.Println("❌❌❌❌❌❌❌❌❌❌GetSignBy1tes❌❌❌❌❌❌❌❌❌❌❌", "GetSignBytes", a)
+	fmt.Println("✅✅✅✅✅✅✅GetSignBy1tes✅✅✅✅✅✅", "MSGS", msg)
+
+	c := ModuleCdc.MustMarshalJSON(msg)
+
+	fmt.Println("✅✅✅✅✅GetSignBy1tes✅✅✅✅✅", "c", c)
+
+	a := sdk.MustSortJSON(c)
+	fmt.Println("✅✅✅✅✅GetSignBy1tes✅✅✅✅✅", "GetSignBytes", a)
 
 	return a
 }
