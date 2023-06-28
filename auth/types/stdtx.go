@@ -1,6 +1,7 @@
 package types
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -8,7 +9,6 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/rlp"
 )
 
@@ -148,13 +148,24 @@ func (ss StdSignature) Empty() bool {
 	return len(ss.Bytes()) == 0
 }
 
+func Bytes2Hex(d []byte) string {
+	return hex.EncodeToString(d)
+}
+func ToHex(b []byte) string {
+	hex := Bytes2Hex(b)
+	if len(hex) == 0 {
+		hex = "0"
+	}
+	return "0x" + hex
+}
+
 // String implements the Stringer interface.
 func (ss StdSignature) String() string {
 	if ss.Empty() {
 		return ""
 	}
 
-	return hexutil.Encode(ss)
+	return ToHex(ss)
 }
 
 //
@@ -224,7 +235,7 @@ func DefaultTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 			return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
 		}
 
-		fmt.Println("💯💯💯💯💯", "tx", tx.Signature, tx.Msg, tx.Memo, "💯💯💯💯💯")
+		fmt.Println("", "tx", tx.Signature, tx.Msg, tx.Memo, "")
 
 		return tx, nil
 	}
