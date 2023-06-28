@@ -224,6 +224,8 @@ func DefaultTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 			return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
 		}
 
+		fmt.Println("💯💯💯💯💯", "tx", tx.Signature, tx.Msg, tx.Memo, "💯💯💯💯💯")
+
 		return tx, nil
 	}
 }
