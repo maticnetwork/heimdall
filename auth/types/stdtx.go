@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -211,6 +212,8 @@ func DefaultTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 		if err != nil {
 			return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
 		}
+
+		fmt.Println("💯💯💯💯💯", "tx", tx.Signature, tx.Msg, tx.Memo, "💯💯💯💯💯")
 
 		return tx, nil
 	}
