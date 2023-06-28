@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 
@@ -76,8 +77,15 @@ func (bz HexBytes) Bytes() []byte {
 	return bz
 }
 
+func Encode(b []byte) string {
+	enc := make([]byte, len(b)*2+2)
+	copy(enc, "0x")
+	hex.Encode(enc[2:], b)
+	return string(enc)
+}
+
 func (bz HexBytes) String() string {
-	return common.ToHex(bz)
+	return Encode(bz)
 }
 
 // Format format bytes
