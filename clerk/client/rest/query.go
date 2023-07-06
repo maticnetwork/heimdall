@@ -252,7 +252,7 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		logger.Info("Served event record lisy successfully")
+		logger.Info("Served event record list successfully")
 		rest.PostProcessResponse(w, cliCtx, res)
 	}
 }
