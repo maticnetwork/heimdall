@@ -1,0 +1,30 @@
+name: prerelease-test-fleet
+
+on:
+  push:
+  # release:
+  #   types: [published]
+
+jobs:
+  prerelease-test-fleet:
+    # if: "github.event.release.prerelease"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Prepare
+        id: prepare
+        run: |
+            curl --location --request POST '${{ secrets.AWX_DOMAIN }}' \
+            --header 'Authorization: Basic ${{ secrets.AWX_KEY }}' \
+            --header 'Content-Type: application/json' \
+            --data-raw '{
+                "extra_vars": {
+                    "HEIMDALL_VERSION": "v0.3.4-beta",
+                    "UPGRADE_HEIMDALL": true,
+                    "CLIENT_UPGRADE_MODE": true
+                }
+            }'
