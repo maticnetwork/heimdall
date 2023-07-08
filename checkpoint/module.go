@@ -253,7 +253,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 
 		if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
 			return fmt.Errorf(
-				"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+				"Checkpoint block doesn't match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
 				header.StartBlock,
 				start,
 				header.EndBlock,

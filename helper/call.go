@@ -330,7 +330,7 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
 
-// GetBalance get balance of account (returns big.Int balance wont fit in uint64)
+// GetBalance get balance of account (returns big.Int balance won't fit in uint64)
 func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()

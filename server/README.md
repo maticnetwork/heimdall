@@ -5,7 +5,7 @@ Installation
 
 
 Steps to follow
-1. Add the Swagger Comments to the API added or updated using documention at https://goswagger.io/use/spec.html.
+1. Add the Swagger Comments to the API added or updated using documentation at https://goswagger.io/use/spec.html.
 2. Run GO111MODULE=off swagger generate spec -o ./swagger.yaml --scan-models  from the root directory.
 3. cd maticnetwork/heimdall/server
 4. Replace the Swagger.yaml file inside swagger-ui directory with the swagger.yaml newly generated in root directly in step 2
@@ -14,7 +14,7 @@ Steps to follow
 7. cd maticnetwork/heimdall && make run-server
 
 Steps to follow for updated swagger-ui without using go-swagger
-1. Add the Swagger Comments to the API added or updated using documention at https://goswagger.io/use/spec.html.
+1. Add the Swagger Comments to the API added or updated using documentation at https://goswagger.io/use/spec.html.
 2. Run GO111MODULE=off swagger generate spec -o ./swagger.yaml --scan-models  from the root directory.
 3. Copy zip file of source code from https://github.com/swagger-api/swagger-ui/releases
 4. Unzip the zip file. Copy the contents of dist/ from the zip to heimdall/server/swagger-ui/

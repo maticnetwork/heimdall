@@ -223,7 +223,7 @@ func (bl *BaseListener) StartSubscription(ctx context.Context, subscription ethe
 
 			// cancel subscription
 			if bl.cancelSubscription != nil {
-				bl.Logger.Debug("Cancelling the subscription of listner")
+				bl.Logger.Debug("Cancelling the subscription of listener")
 				bl.cancelSubscription()
 			}
 

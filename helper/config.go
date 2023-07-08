@@ -285,7 +285,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		}
 
 		var confFromFlag Configuration
-		// unmarshal configuration from the configuration file submited as a flag
+		// unmarshal configuration from the configuration file submitted as a flag
 		if err = heimdallViperFromFlag.UnmarshalExact(&confFromFlag); err != nil {
 			log.Fatalln("Unable to unmarshall config file submitted via flag", "Error", err)
 		}
@@ -380,7 +380,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	}
 }
 
-// GetDefaultHeimdallConfig returns configration with default params
+// GetDefaultHeimdallConfig returns configuration with default params
 func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
@@ -633,7 +633,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
 		0,
-		"Set main chain gas limti",
+		"Set main chain gas limit",
 	)
 
 	if err := v.BindPFlag(MainchainGasLimitFlag, cmd.PersistentFlags().Lookup(MainchainGasLimitFlag)); err != nil {
@@ -644,7 +644,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Int64(
 		MainchainMaxGasPriceFlag,
 		0,
-		"Set main chain max gas limti",
+		"Set main chain max gas limit",
 	)
 
 	if err := v.BindPFlag(MainchainMaxGasPriceFlag, cmd.PersistentFlags().Lookup(MainchainMaxGasPriceFlag)); err != nil {
