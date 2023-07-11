@@ -321,7 +321,10 @@ func GetSignBytes(ctx sdk.Context, chainID string, stdTx authTypes.StdTx, acc au
 
 	signBytes := authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Msg, stdTx.Memo)
 
+	fmt.Print("SIGN BYTES 1", "signBytes", string(signBytes))
+
 	if ctx.BlockHeight() > helper.GetNewHexToStringAlgoHeight() {
+		fmt.Print("AFTER")
 		return signBytes
 	}
 
@@ -329,8 +332,11 @@ func GetSignBytes(ctx sdk.Context, chainID string, stdTx authTypes.StdTx, acc au
 	const old = ",\"data\":\"0x0\","
 
 	if bytes.Contains(signBytes, []byte(new)) {
+		fmt.Print("BEFORE")
 		signBytes = bytes.Replace(signBytes, []byte(new), []byte(old), 1)
 	}
+
+	fmt.Print("SIGN BYTES 2", "signBytes", string(signBytes))
 
 	return signBytes
 }
