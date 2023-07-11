@@ -2,13 +2,13 @@ package types
 
 import (
 	"bytes"
-	"encoding/hex"
 	"fmt"
 
 	jsoniter "github.com/json-iterator/go"
 	"gopkg.in/yaml.v3"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
 // HexBytes the main purpose of HexBytes is to enable HEX-encoding for json/encoding.
@@ -78,20 +78,9 @@ func (bz HexBytes) Bytes() []byte {
 	return bz
 }
 
-func Bytes2Hex(d []byte) string {
-	return hex.EncodeToString(d)
-}
-func ToHex(b []byte) string {
-	hex := Bytes2Hex(b)
-	if len(hex) == 0 {
-		hex = "0"
-	}
-	return "0x" + hex
-}
-
 func (bz HexBytes) String() string {
-	fmt.Println("OLDER VERSION")
-	return ToHex(bz)
+	fmt.Println("NEW VERSION")
+	return hexutil.Encode(bz)
 }
 
 // Format format bytes
