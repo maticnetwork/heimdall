@@ -90,7 +90,7 @@ func ToHex(b []byte) string {
 }
 
 func (bz HexBytes) String() string {
-	fmt.Println("VAIBHAV JINDAL")
+	fmt.Println("OLDER VERSION")
 	return ToHex(bz)
 }
 
