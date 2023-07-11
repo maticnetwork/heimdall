@@ -116,8 +116,6 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 
 	fmt.Println("❌❌❌❌❌❌siDE handler❌❌❌❌❌❌❌❌", "msg", msg.Data, "msg ID", msg.ID)
 
-	k.Logger(ctx).Error("❌❌❌❌❌❌❌side handler❌❌❌❌❌❌❌❌❌")
-
 	result.Result = abci.SideTxResultType_Yes
 
 	return
@@ -183,8 +181,6 @@ func PostHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 	})
 
 	fmt.Println("❌❌❌❌❌❌PSOT handler❌❌❌❌❌❌❌❌", "msg", msg.Data, "msg ID", msg.ID)
-
-	k.Logger(ctx).Error("❌❌❌❌❌❌❌❌❌POST HANDLER❌❌❌❌❌❌❌")
 
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
