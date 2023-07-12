@@ -553,12 +553,12 @@ github.com/markbates/oncer v0.0.0-20181203154359-bf2de49a0be2/go.mod h1:Ld9puTsI
 github.com/markbates/safe v1.0.1/go.mod h1:nAqgmRi7cY2nqMc92/bSEeQA+R4OheNU2T1kNSCBdG0=
 github.com/maticnetwork/bor v0.2.18-0.20220922050621-c91d4ca1fa4f h1:GJwlDTapZGPFhVNjflv2lOPSp0qB0p2PJ137qbaJRcY=
 github.com/maticnetwork/bor v0.2.18-0.20220922050621-c91d4ca1fa4f/go.mod h1:tskr68Tlk2R6NLBQW2gaiQKx3BCdRvsGkcnhFUPKyh4=
-github.com/maticnetwork/cosmos-sdk v0.37.5-0.20230706145801-2dfd49c9d1f2 h1:XZ57V1/L5Gyc5iMisnf6hBIsWHpCmQbvCmkl6Lkq5NE=
-github.com/maticnetwork/cosmos-sdk v0.37.5-0.20230706145801-2dfd49c9d1f2/go.mod h1:VfMy8c0w0WXkd9I139H5LQNTGFYKB72huPJLIBrdV/Y=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20230706174850-0be58f4db397 h1:ESkhK9MwjkNq1UrUdiOgSEnPFKq+WjhPSiVk+f2kUZc=
+github.com/maticnetwork/cosmos-sdk v0.37.5-0.20230706174850-0be58f4db397/go.mod h1:Feswsmv1748vsAmGTpzlzfmdes9YSy0JFbKsiSdLtps=
 github.com/maticnetwork/polyproto v0.0.2 h1:cPxuxbIDItdwGnucc3lZB58U8Zfe1mH73PWTGd15554=
 github.com/maticnetwork/polyproto v0.0.2/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
-github.com/maticnetwork/tendermint v0.26.0-dev0.0.20230706143301-8449066721ba h1:BvCGzLIi+L7sxpGgFtO/UbMxhHwcKYPjY8UyC5XdMCo=
-github.com/maticnetwork/tendermint v0.26.0-dev0.0.20230706143301-8449066721ba/go.mod h1:90S74348uYSGfWwNIgvzQiRRakSH/c7VVt1TR5mzIuY=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20230706174505-1e1686af9dd3 h1:kLXMxBhREXXEDog0E45nYitDfSwxJ0zxbmGpoQdaQxg=
+github.com/maticnetwork/tendermint v0.26.0-dev0.0.20230706174505-1e1686af9dd3/go.mod h1:90S74348uYSGfWwNIgvzQiRRakSH/c7VVt1TR5mzIuY=
 github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd/go.mod h1:9ELz6aaclSIGnZBoaSLZ3NAl1VTufbOrXBPvtcy6WiQ=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
 github.com/mattn/go-colorable v0.1.2/go.mod h1:U0ppj6V5qS13XJ6of8GYAs25YV2eR4EVcfRqFIhoBtE=
