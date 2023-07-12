@@ -56,12 +56,12 @@ build-arm: clean
 # Code quality
 #
 
+LINT_COMMAND := $(shell command -v golangci-lint 2> /dev/null)
 lint:
-	@./build/bin/golangci-lint run --config ./.golangci.yml
-
-lintci-deps:
-	rm -f ./build/bin/golangci-lint
-	curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b ./build/bin v1.53.3
+ifndef LINT_COMMAND
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.53.3
+endif
+	golangci-lint run --config ./.golangci.yml
 
 #
 # docker commands

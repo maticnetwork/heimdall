@@ -503,6 +503,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		ctx.Logger.Info("exiting...")
 
 		if tracerProvider != nil {
+			// nolint: contextcheck
 			if err := tracerProvider.Shutdown(*traceCtx); err == nil {
 				ctx.Logger.Info("Shutting Down OpenTelemetry")
 			}

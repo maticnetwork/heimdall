@@ -37,9 +37,6 @@ jobs:
         with:
           go-version: 1.20.x
 
-      - name: Golang-ci install
-        run: make lintci-deps
-
       - name: "Run linter"
         run: make lint
 
