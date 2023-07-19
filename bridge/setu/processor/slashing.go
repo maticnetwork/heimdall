@@ -69,7 +69,7 @@ func (sp *SlashingProcessor) RegisterTasks() {
 
 // processSlashLimitEvent - processes slash limit event
 func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight int64) error {
-	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
+	sp.Logger.Info("Received sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
 	var event sdk.StringEvent
 	if err := jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
@@ -123,7 +123,7 @@ sendTickToRootchain - create and submit tick tx to rootchain to slashing faulty 
 4. create tick tx and submit to rootchain
 */
 func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight int64) (err error) {
-	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
+	sp.Logger.Info("Received sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
 	var event sdk.StringEvent
 	if err = jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {

@@ -435,7 +435,7 @@ func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, 
 		_, ok := tx.(types.StdTx)
 		require.True(t, ok, "tx must be in form auth.types.StdTx")
 		// GasWanted set correctly
-		require.True(t, result.GasUsed > result.GasWanted, "GasUsed not greated than GasWanted")
+		require.True(t, result.GasUsed > result.GasWanted, "GasUsed not greater than GasWanted")
 		// Check that context is set correctly
 		require.Equal(t, result.GasUsed, newCtx.GasMeter().GasConsumed(), "Context not updated correctly")
 	}
