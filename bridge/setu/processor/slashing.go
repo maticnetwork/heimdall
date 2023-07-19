@@ -296,7 +296,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 
 // createAndSendTickToRootchain prepares the data required for rootchain tick submission
 // and sends a transaction to rootchain
-func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash []byte, slashInfoList []*hmTypes.ValidatorSlashingInfo, proposerAddr hmTypes.HeimdallAddress) error {
+func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash []byte, _ []*hmTypes.ValidatorSlashingInfo, _ hmTypes.HeimdallAddress) error {
 	sp.Logger.Info("Preparing tick to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash))
 
 	// proof

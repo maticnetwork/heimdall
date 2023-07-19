@@ -21,7 +21,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version: 1.20.x
 
       - name: "Build binaries"
         run: make build
@@ -35,7 +35,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version: 1.20.x
 
       - name: "Run linter"
         run: make lint
@@ -49,7 +49,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v3
         with:
-          go-version: 1.19.x
+          go-version: 1.20.x
 
       - name: "Run tests"
         run: make tests
@@ -73,7 +73,7 @@ jobs:
 
         - uses: actions/setup-go@v3
           with:
-            go-version: 1.19.x
+            go-version: 1.20.x
 
         - name: Checkout matic-cli
           uses: actions/checkout@v3

@@ -82,6 +82,7 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 
 				// Querying and processing Begin events
 				for i := fromBlock; i <= toBlock; i++ {
+					// nolint: contextcheck
 					events, err := helper.GetBeginBlockEvents(hl.httpClient, int64(i))
 					if err != nil {
 						hl.Logger.Error("Error fetching begin block events", "error", err)

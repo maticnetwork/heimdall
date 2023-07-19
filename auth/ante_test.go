@@ -407,6 +407,7 @@ func (suite *AnteTestSuite) TestFees() {
 //
 
 // run the tx through the anteHandler and ensure its valid
+// nolint: unparam
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, sdk.Result, bool) {
 	t.Helper()
 
@@ -420,6 +421,7 @@ func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx
 }
 
 // run the tx through the anteHandler and ensure it fails with the given code
+// nolint: unparam
 func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool, code sdk.CodeType) (sdk.Context, sdk.Result, bool) {
 	t.Helper()
 

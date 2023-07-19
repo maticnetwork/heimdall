@@ -2,7 +2,7 @@ package app
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -33,7 +33,7 @@ func SetupSimulation(dirPrefix, dbName string) (simTypes.Config, dbm.DB, string,
 		lggr = log.NewNopLogger()
 	}
 
-	dir, err := ioutil.TempDir("", dirPrefix)
+	dir, err := os.MkdirTemp("", dirPrefix)
 	if err != nil {
 		return simTypes.Config{}, nil, "", nil, false, err
 	}
@@ -55,7 +55,7 @@ func SimulationOperations(app App, cdc *codec.Codec, config simTypes.Config) []s
 	}
 
 	if config.ParamsFile != "" {
-		bz, err := ioutil.ReadFile(config.ParamsFile)
+		bz, err := os.ReadFile(config.ParamsFile)
 		if err != nil {
 			panic(err)
 		}
@@ -80,7 +80,7 @@ func CheckExportSimulation(app App, config simTypes.Config, params simTypes.Para
 			return err
 		}
 
-		if err = ioutil.WriteFile(config.ExportStatePath, appState, 0644); err != nil { //nolint
+		if err = os.WriteFile(config.ExportStatePath, appState, 0644); err != nil { //nolint
 			return err
 		}
 	}
@@ -93,7 +93,7 @@ func CheckExportSimulation(app App, config simTypes.Config, params simTypes.Para
 			return err
 		}
 
-		if err = ioutil.WriteFile(config.ExportParamsPath, paramsBz, 0644); err != nil { //nolint
+		if err = os.WriteFile(config.ExportParamsPath, paramsBz, 0644); err != nil { //nolint
 			return err
 		}
 	}
