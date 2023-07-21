@@ -322,6 +322,7 @@ func GetSignBytes(ctx sdk.Context, chainID string, stdTx authTypes.StdTx, acc au
 	signBytes := authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Msg, stdTx.Memo)
 
 	fmt.Println("VAIBHAV ✅✅✅✅", "Entered the GetSignBytes")
+	fmt.Println("VAIBHAV ✅✅✅✅", "Pre Hardfork", "Current Height", ctx.BlockHeight(), "HardFork Block", helper.GetNewHexToStringAlgoHeight())
 
 	if ctx.BlockHeight() > helper.GetNewHexToStringAlgoHeight() {
 		return signBytes
