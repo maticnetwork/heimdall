@@ -327,7 +327,7 @@ func GetSignBytes(ctx sdk.Context, chainID string, stdTx authTypes.StdTx, acc au
 		return signBytes
 	}
 
-	fmt.Println("VAIBHAV ✅✅✅✅", "Before Hardfork")
+	fmt.Println("VAIBHAV ✅✅✅✅", "Before Hardfork", "Current Height", ctx.BlockHeight(), "HardFork Block", helper.GetNewHexToStringAlgoHeight())
 	fmt.Println("VAIBHAV ✅✅✅✅", "Before", "SignBytes", string(signBytes))
 
 	const new = ",\"data\":\"0x\","
