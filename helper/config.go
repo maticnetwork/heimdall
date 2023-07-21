@@ -371,7 +371,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 
 	switch conf.Chain {
 	case MainChain:
-		fmt.Println("MAINNET")
+		fmt.Println("MIANE")
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
@@ -380,12 +380,12 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		fmt.Println("MUMBAI")
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
-		newHexToStringAlgoHeight = 0
+		newHexToStringAlgoHeight = 10630672
 	default:
 		fmt.Println("DEFAULT")
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		newHexToStringAlgoHeight = 122
+		newHexToStringAlgoHeight = 0
 
 	}
 }
