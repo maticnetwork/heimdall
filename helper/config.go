@@ -276,6 +276,8 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
+	fmt.Println("HEIMDALL CONFIG!!: ", conf)
+	fmt.Println("CHAIN!!: ", conf.Chain)
 	//  if there is a file with overrides submitted via flags => read it an merge it with the alreadey read standard configuration
 	if heimdallConfigFileFromFLag != "" {
 		heimdallViperFromFlag := viper.New()
