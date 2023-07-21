@@ -305,6 +305,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		log.Fatalln("Unable to read flag values. Check log for details.", "Error", err)
 	}
 
+	fmt.Println("CONFIG AFTER UpdateWithFlags!!: ", conf)
 	// perform check for json logging
 	if conf.LogsType == "json" {
 		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(GetLogsWriter(conf.LogsWriterFile)))
@@ -813,6 +814,7 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 	// get chain from viper/cobra flag
 	stringConfgValue = v.GetString(ChainFlag)
 	if stringConfgValue != "" {
+		fmt.Println("stringConfgValue VALUE!!: ", stringConfgValue)
 		c.Chain = stringConfgValue
 	}
 
