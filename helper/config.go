@@ -371,6 +371,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	cdc.MustUnmarshalBinaryBare(privVal.Key.PrivKey.Bytes(), &privObject)
 	cdc.MustUnmarshalBinaryBare(privObject.PubKey().Bytes(), &pubObject)
 
+	fmt.Println("CHAIN BEFORE SWITCH CASE!!: ", conf.Chain)
+	isMumbai := conf.Chain == MumbaiChain
+	fmt.Println("ISMUMBAI?!!: ", isMumbai)
 	switch conf.Chain {
 	case MainChain:
 		fmt.Println("MAIN")
