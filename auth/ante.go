@@ -325,11 +325,12 @@ func GetSignBytes(ctx sdk.Context, chainID string, stdTx authTypes.StdTx, acc au
 		return signBytes
 	}
 
-	const new = ",\"data\":\"0x\","
-	const old = ",\"data\":\"0x0\","
+	const newData = ",\"data\":\"0x\","
 
-	if bytes.Contains(signBytes, []byte(new)) {
-		signBytes = bytes.Replace(signBytes, []byte(new), []byte(old), 1)
+	const oldData = ",\"data\":\"0x0\","
+
+	if bytes.Contains(signBytes, []byte(newData)) {
+		signBytes = bytes.Replace(signBytes, []byte(newData), []byte(oldData), 1)
 	}
 
 	return signBytes
