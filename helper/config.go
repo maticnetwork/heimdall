@@ -208,6 +208,8 @@ var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
 
+var newHexToStringAlgoHeight int64 = 0
+
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
 	RootChainAddress      hmTypes.HeimdallAddress
@@ -371,12 +373,16 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
+		newHexToStringAlgoHeight = 9266260
+
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
+		newHexToStringAlgoHeight = 10630672
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
+		newHexToStringAlgoHeight = 0
 	}
 }
 
@@ -493,6 +499,11 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
+}
+
+// GetNewHexToStringAlgoHeight returns newHexToStringAlgoHeight
+func GetNewHexToStringAlgoHeight() int64 {
+	return newHexToStringAlgoHeight
 }
 
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
