@@ -36,7 +36,7 @@ type App interface {
 	// Exports the state of the application for a genesis file.
 	ExportAppStateAndValidators() (json.RawMessage, []tmTypes.GenesisValidator, error)
 
-	// All the registered module account addreses.
+	// All the registered module account addresses.
 	ModuleAccountAddrs() map[string]bool
 
 	// Helper for the simulation framework.
