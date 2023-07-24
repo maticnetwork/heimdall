@@ -595,10 +595,13 @@ github.com/mailru/easyjson v0.0.0-20190614124828-94de47d64c63/go.mod h1:C1wdFJiN
 github.com/mailru/easyjson v0.0.0-20190626092158-b2ccc519800e/go.mod h1:C1wdFJiN94OJF2b5HbByQZoLdCWB1Yqtg26g4irojpc=
 github.com/markbates/oncer v0.0.0-20181203154359-bf2de49a0be2/go.mod h1:Ld9puTsIW75CHf65OeIOkyKbteujpZVXDpWK6YGZbxE=
 github.com/markbates/safe v1.0.1/go.mod h1:nAqgmRi7cY2nqMc92/bSEeQA+R4OheNU2T1kNSCBdG0=
-github.com/maticnetwork/bor v0.2.18-0.20220922050621-c91d4ca1fa4f h1:GJwlDTapZGPFhVNjflv2lOPSp0qB0p2PJ137qbaJRcY=
-github.com/maticnetwork/bor v0.2.18-0.20220922050621-c91d4ca1fa4f/go.mod h1:tskr68Tlk2R6NLBQW2gaiQKx3BCdRvsGkcnhFUPKyh4=
+github.com/maticnetwork/bor v0.4.0 h1:unctzHiXTz+xATLVQzZ6DVwJfoFIvgI6l81PFgU7rk4=
+github.com/maticnetwork/bor v0.4.0/go.mod h1:l1YMTszDgq9ljutxKU6iYEDbDRjFjUIuf4Z32R94dWY=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20230724090011-a85aaf468bfd h1:y4jlj7tc20ra9f6lEwRw7jDvSXNK08kgHeRT69IFbJo=
 github.com/maticnetwork/cosmos-sdk v0.37.5-0.20230724090011-a85aaf468bfd/go.mod h1:I1eh/lc///p4wO8kJAHh5rd6P6XSYw9TnURLIu7y1n0=
+github.com/maticnetwork/crand v1.0.2 h1:Af0tAivC8zrxXDpGWNWVT/0s1fOz8w0eRbahZgURS8I=
+github.com/maticnetwork/crand v1.0.2/go.mod h1:/NRNL3bj2eYdqpWmoIP5puxndTpi0XRxpj5ZKxfHjyg=
+github.com/maticnetwork/heimdall v0.3.1-0.20230105132832-d0063f71e3f0/go.mod h1:A3bUSe9jjMQHEPPOUW1JytM3x2g3t+jvsbPY66KBPIs=
 github.com/maticnetwork/polyproto v0.0.2 h1:cPxuxbIDItdwGnucc3lZB58U8Zfe1mH73PWTGd15554=
 github.com/maticnetwork/polyproto v0.0.2/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
 github.com/maticnetwork/tendermint v0.26.0-dev0.0.20230719144702-2a4b4a5a8b55 h1:PWvC08DUojoHcWVigUpri3sTDqAvoAmzFCU821+iEyw=
