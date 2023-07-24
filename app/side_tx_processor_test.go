@@ -489,7 +489,7 @@ func (suite *SideTxProcessorTestSuite) TestBeginSideBlocker() {
 					// try to set random state data to store
 					happ.SidechannelKeeper.SetTx(ctx, 900, testTxStateData1)
 
-					panic("Panicked in handler")
+					panic("Paniced in handler")
 				},
 			}
 			router.AddRoute(routeMsgSideCounter, handler)

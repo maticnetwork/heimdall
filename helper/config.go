@@ -208,8 +208,6 @@ var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
 
-var newHexToStringAlgoHeight int64 = 0
-
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
 	RootChainAddress      hmTypes.HeimdallAddress
@@ -287,7 +285,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		}
 
 		var confFromFlag Configuration
-		// unmarshal configuration from the configuration file submitted as a flag
+		// unmarshal configuration from the configuration file submited as a flag
 		if err = heimdallViperFromFlag.UnmarshalExact(&confFromFlag); err != nil {
 			log.Fatalln("Unable to unmarshall config file submitted via flag", "Error", err)
 		}
@@ -373,20 +371,16 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
-		newHexToStringAlgoHeight = 9266260
-
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
-		newHexToStringAlgoHeight = 10630672
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		newHexToStringAlgoHeight = 0
 	}
 }
 
-// GetDefaultHeimdallConfig returns configuration with default params
+// GetDefaultHeimdallConfig returns configration with default params
 func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
@@ -499,11 +493,6 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
-}
-
-// GetNewHexToStringAlgoHeight returns newHexToStringAlgoHeight
-func GetNewHexToStringAlgoHeight() int64 {
-	return newHexToStringAlgoHeight
 }
 
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
@@ -644,7 +633,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
 		0,
-		"Set main chain gas limit",
+		"Set main chain gas limti",
 	)
 
 	if err := v.BindPFlag(MainchainGasLimitFlag, cmd.PersistentFlags().Lookup(MainchainGasLimitFlag)); err != nil {
@@ -655,7 +644,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Int64(
 		MainchainMaxGasPriceFlag,
 		0,
-		"Set main chain max gas limit",
+		"Set main chain max gas limti",
 	)
 
 	if err := v.BindPFlag(MainchainMaxGasPriceFlag, cmd.PersistentFlags().Lookup(MainchainMaxGasPriceFlag)); err != nil {

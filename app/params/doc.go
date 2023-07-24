@@ -3,9 +3,9 @@ Package params defines the simulation parameters in the simapp.
 
 It contains the default weights used for each transaction used on the module's
 simulation. These weights define the chance for a transaction to be simulated at
-any given operation.
+any gived operation.
 
-You can replace the default values for the weights by providing a params.json
+You can repace the default values for the weights by providing a params.json
 file with the weights defined for each of the transaction operations:
 
 	{

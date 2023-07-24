@@ -254,7 +254,7 @@ func GetRecordSequenceKey(sequence string) []byte {
 // Utils
 //
 
-// IterateRecordsAndApplyFn iterate records and apply the given function.
+// IterateRecordsAndApplyFn interate records and apply the given function.
 func (k *Keeper) IterateRecordsAndApplyFn(ctx sdk.Context, f func(record types.EventRecord) error) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -287,7 +287,7 @@ func (k *Keeper) GetRecordSequences(ctx sdk.Context) (sequences []string) {
 	return
 }
 
-// IterateRecordSequencesAndApplyFn iterate records and apply the given function.
+// IterateRecordSequencesAndApplyFn interate records and apply the given function.
 func (k *Keeper) IterateRecordSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(k.storeKey)
 

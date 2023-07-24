@@ -48,7 +48,7 @@ func NewProcessorService(
 	processorService.BaseService = *common.NewBaseService(logger, processorServiceStr, processorService)
 
 	//
-	// Initialize processors
+	// Intitialize processors
 	//
 
 	// initialize checkpoint processor

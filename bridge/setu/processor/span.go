@@ -56,7 +56,6 @@ func (sp *SpanProcessor) startPolling(ctx context.Context, interval time.Duratio
 	for {
 		select {
 		case <-ticker.C:
-			// nolint: contextcheck
 			sp.checkAndPropose()
 		case <-ctx.Done():
 			sp.Logger.Info("Polling stopped")

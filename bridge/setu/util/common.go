@@ -5,7 +5,7 @@ import (
 	"context"
 	"encoding/hex"
 	"fmt"
-	"io"
+	"io/ioutil"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -521,7 +521,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 		return 0
 	}
 
-	body, err := io.ReadAll(resp.Body)
+	body, err := ioutil.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	if err != nil {

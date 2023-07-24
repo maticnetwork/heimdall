@@ -34,7 +34,7 @@ var (
 var rootCmd = &cobra.Command{
 	Use:     "heimdall-bridge",
 	Aliases: []string{"bridge"},
-	Short:   "Heimdall bridge daemon",
+	Short:   "Heimdall bridge deamon",
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		if cmd.Use != version.Cmd.Use {
 			// initialize tendermint viper config

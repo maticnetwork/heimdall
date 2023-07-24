@@ -3,7 +3,7 @@ package simulation
 import (
 	"fmt"
 	"io"
-	"os"
+	"io/ioutil"
 
 	jsoniter "github.com/json-iterator/go"
 )
@@ -49,7 +49,7 @@ func (es EventStats) ExportJSON(path string) {
 		panic(err)
 	}
 
-	if err = os.WriteFile(path, bz, 0644); err != nil { //nolint
+	if err = ioutil.WriteFile(path, bz, 0644); err != nil { //nolint
 		panic(err)
 	}
 }
