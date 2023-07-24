@@ -50,7 +50,7 @@ jobs:
           API_KEY: ${{ secrets.DATADOG_API_KEY }}
           APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
         run: |
-          duration_minutes=10  # Set the number of minutes for the loop
+          duration_minutes=10  # Set the number of minutes for loop
           duration_seconds=$((duration_minutes * 60))
           start_time=$(date +%s)
 
