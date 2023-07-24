@@ -9,22 +9,62 @@ jobs:
   prerelease-test-fleet:
     # if: "github.event.release.prerelease" 
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        monitor_name:
+          - REORG_ALERT
+          - TX_POOL_ALERT
+          
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"      
+      
       - name: Checkout
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
 
-      - name: Prepare
-        id: prepare
+      # - name: Prepare
+      #   id: prepare
+      #   run: |
+      #       curl --location --request POST '${{ secrets.AWX_DOMAIN }}' \
+      #       --header 'Authorization: Basic ${{ secrets.AWX_KEY }}' \
+      #       --header 'Content-Type: application/json' \
+      #       --data-raw '{
+      #           "extra_vars": {
+      #               "HEIMDALL_VERSION": "v0.3.4-beta",
+      #               "UPGRADE_HEIMDALL": true,
+      #               "CLIENT_UPGRADE_MODE": true
+      #           }
+      #       }'
+      
+      - name: Install dependencies
         run: |
-            curl --location --request POST '${{ secrets.AWX_DOMAIN }}' \
-            --header 'Authorization: Basic ${{ secrets.AWX_KEY }}' \
-            --header 'Content-Type: application/json' \
-            --data-raw '{
-                "extra_vars": {
-                    "HEIMDALL_VERSION": "v0.3.4-beta",
-                    "UPGRADE_HEIMDALL": true,
-                    "CLIENT_UPGRADE_MODE": true
-                }
-            }'
+          python -m pip install --upgrade pip
+          pip install requests
+          
+      - name: Run monitor check script for X minutes
+        env:
+          API_KEY: ${{ secrets.DATADOG_API_KEY }}
+          APP_KEY: ${{ secrets.DATADOG_APP_KEY }}
+        run: |
+          duration_minutes=10  # Set the number of minutes for the loop
+          duration_seconds=$((duration_minutes * 60))
+          start_time=$(date +%s)
+
+          while true; do
+            current_time=$(date +%s)
+            elapsed_time=$((current_time - start_time))
+
+            if [ $elapsed_time -gt $duration_seconds ]; then
+              break  # Exit the loop after the specified duration
+            fi
+
+            # Execute the script with the current monitor ID
+            python get_monitor_status.py ${{ matrix.monitor_name }}
+
+            # Sleep for 1 minute before the next iteration
+            sleep 60
+          done
