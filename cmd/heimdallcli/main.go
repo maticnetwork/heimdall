@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"path"
 	"strings"
@@ -161,7 +160,7 @@ func txCmd(cdc *amino.Codec) *cobra.Command {
 	return txCmd
 }
 
-func convertAddressToHexCmd(cdc *codec.Codec) *cobra.Command {
+func convertAddressToHexCmd(_ *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "address-to-hex [address]",
 		Short: "Convert address to hex",
@@ -180,7 +179,7 @@ func convertAddressToHexCmd(cdc *codec.Codec) *cobra.Command {
 	return client.GetCommands(cmd)[0]
 }
 
-func convertHexToAddressCmd(cdc *codec.Codec) *cobra.Command {
+func convertHexToAddressCmd(_ *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "hex-to-address [hex]",
 		Short: "Convert hex to address",
@@ -196,7 +195,7 @@ func convertHexToAddressCmd(cdc *codec.Codec) *cobra.Command {
 }
 
 // exportCmd a state dump file
-func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
+func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export-heimdall",
 		Short: "Export genesis file with state-dump",
@@ -241,7 +240,7 @@ func exportCmd(ctx *server.Context, cdc *codec.Codec) *cobra.Command {
 }
 
 // generateKeystore generate keystore file from private key
-func generateKeystore(cdc *codec.Codec) *cobra.Command {
+func generateKeystore(_ *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "generate-keystore <private-key>",
 		Short: "Generates keystore file using private key",
@@ -274,7 +273,7 @@ func generateKeystore(cdc *codec.Codec) *cobra.Command {
 			}
 
 			// Then write the new keyfile in place of the old one.
-			if err := ioutil.WriteFile(keyFileName(key.Address), keyjson, 0600); err != nil {
+			if err := os.WriteFile(keyFileName(key.Address), keyjson, 0600); err != nil {
 				return err
 			}
 			return nil
@@ -313,7 +312,7 @@ func generateValidatorKey(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			err = ioutil.WriteFile("priv_validator_key.json", jsonBytes, 0600)
+			err = os.WriteFile("priv_validator_key.json", jsonBytes, 0600)
 			if err != nil {
 				return err
 			}

@@ -216,7 +216,10 @@ func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, sto
 		helper.InitHeimdallConfig("")
 		helper.UpdateTendermintConfig(serverCtx.Config, viper.GetViper())
 		// create new heimdall app
-		hApp = app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+		hApp = app.NewHeimdallApp(logger, db,
+			baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString(flagPruning))),
+			baseapp.SetHaltHeight(viper.GetUint64(FlagHaltHeight)),
+			baseapp.SetHaltTime(viper.GetUint64(FlagHaltTime)))
 
 		return hApp
 	}
@@ -503,6 +506,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		ctx.Logger.Info("exiting...")
 
 		if tracerProvider != nil {
+			// nolint: contextcheck
 			if err := tracerProvider.Shutdown(*traceCtx); err == nil {
 				ctx.Logger.Info("Shutting Down OpenTelemetry")
 			}

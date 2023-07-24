@@ -66,6 +66,7 @@ func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.V
 	// extract seed from hash
 	seedBytes := helper.ToBytes32(blkHash.Bytes()[:32])
 	seed := int64(binary.BigEndian.Uint64(seedBytes[:]))
+	// nolint: staticcheck
 	rand.Seed(seed)
 
 	// weighted range from validators' voting power

@@ -3,8 +3,8 @@ package app
 import (
 	"encoding/json"
 	"io"
-	"io/ioutil"
 	"math/rand"
+	"os"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -51,7 +51,7 @@ func AppStateFn(cdc *codec.Codec, simManager *module.SimulationManager) simtypes
 		case config.ParamsFile != "":
 			appParams := make(simtypes.AppParams)
 
-			bz, err := ioutil.ReadFile(config.ParamsFile)
+			bz, err := os.ReadFile(config.ParamsFile)
 			if err != nil {
 				panic(err)
 			}
@@ -115,7 +115,7 @@ func AppStateRandomizedFn(
 
 // AppStateFromGenesisFileFn util function to generate the genesis AppState from a genesis.json file.
 func AppStateFromGenesisFileFn(r io.Reader, cdc *codec.Codec, genesisFile string) (tmtypes.GenesisDoc, []simtypes.Account) {
-	bytes, err := ioutil.ReadFile(genesisFile)
+	bytes, err := os.ReadFile(genesisFile)
 	if err != nil {
 		panic(err)
 	}

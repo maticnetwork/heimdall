@@ -7,7 +7,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"math/big"
 	"math/bits"
 	"net/http"
@@ -546,9 +546,9 @@ func SignStdTx(cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool,
 func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx, err error) {
 	var bytes []byte
 	if filename == "-" {
-		bytes, err = ioutil.ReadAll(os.Stdin)
+		bytes, err = io.ReadAll(os.Stdin)
 	} else {
-		bytes, err = ioutil.ReadFile(filename)
+		bytes, err = os.ReadFile(filename)
 	}
 
 	if err != nil {
@@ -674,7 +674,7 @@ func populateAccountFromState(txBldr authTypes.TxBuilder, cliCtx context.CLICont
 	return txBldr.WithAccountNumber(accNum).WithSequence(accSeq), nil
 }
 
-func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, cliCtx context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
+func buildUnsignedStdTxOffline(txBldr authTypes.TxBuilder, _ context.CLIContext, msgs []sdk.Msg) (stdTx authTypes.StdTx, err error) {
 	stdSignMsg, err := txBldr.BuildSignMsg(msgs)
 	if err != nil {
 		return stdTx, err
@@ -791,7 +791,7 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 
 	// response
 	if resp.StatusCode == 200 {
-		body, err := ioutil.ReadAll(resp.Body)
+		body, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return result, err
 		}
