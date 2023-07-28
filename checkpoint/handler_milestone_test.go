@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	errs "github.com/maticnetwork/heimdall/common"
@@ -263,6 +264,7 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
+	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock+cmTypes.DefaultMaticchainMilestoneTxConfirmations).Return(true)
 	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, milestoneLength).Return(header.Hash.Bytes(), nil)
 	suite.contractCaller.On("GetVoteOnHash", header.StartBlock, header.EndBlock, milestoneLength, header.Hash.String(), header.MilestoneID).Return(true, nil)
 
