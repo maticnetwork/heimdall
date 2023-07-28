@@ -16,6 +16,7 @@ var (
 	MilestoneNoAckKey     = []byte{0x40} //Key to store the NoAckMilestone
 	MilestoneLastNoAckKey = []byte{0x50} //Key to store the Latest NoAckMilestone
 	LastMilestoneTimeout  = []byte{0x60} //Key to store the Last Milestone Timeout
+	BlockNumberKey        = []byte{0x70} //Key to store the count
 )
 
 // AddMilestone adds milestone in the store
@@ -122,6 +123,30 @@ func (k *Keeper) GetMilestoneCount(ctx sdk.Context) uint64 {
 	}
 
 	return uint64(0)
+}
+
+// SetMilestoneBlockNumber set the block number when the latest milestone enter the handler
+func (k *Keeper) SetMilestoneBlockNumber(ctx sdk.Context, number int64) {
+	store := ctx.KVStore(k.storeKey)
+	// convert block number to bytes
+	value := []byte(strconv.FormatInt(number, 10))
+	// set
+	store.Set(BlockNumberKey, value)
+}
+
+// GetMilestoneBlockNumber returns the block number when the latest milestone enter the handler
+func (k *Keeper) GetMilestoneBlockNumber(ctx sdk.Context) int64 {
+	store := ctx.KVStore(k.storeKey)
+	// check if block number is there
+	if store.Has(BlockNumberKey) {
+		// get the block number
+		result, err := strconv.ParseInt(string(store.Get(BlockNumberKey)), 10, 64)
+		if err == nil {
+			return result
+		}
+	}
+
+	return int64(0)
 }
 
 // PruneMilestone remove the milestone from the db based on number

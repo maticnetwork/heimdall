@@ -17,12 +17,6 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	logger := k.Logger(ctx)
 	milestoneLength := helper.MilestoneLength
 
-	//Check whether the chain has reached the hard fork length
-	if ctx.BlockHeight() < helper.GetMilestoneHardForkHeight() {
-		logger.Error("Network hasn't reached the", "Hard forked height", helper.GetMilestoneHardForkHeight())
-		return common.ErrInvalidMsg(k.Codespace(), "Network hasn't reached the milestone hard forked height").Result()
-	}
-
 	//
 	//Get milestone validator set
 	//
@@ -47,6 +41,16 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		)
 
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
+	}
+
+	if ctx.BlockHeight()-k.GetMilestoneBlockNumber(ctx) < 2 {
+		logger.Error(
+			"Previous milestone still in voting phase",
+			"previousMilestoneBlock", k.GetMilestoneBlockNumber(ctx),
+			"currentMilestoneBlock", ctx.BlockHeight(),
+		)
+
+		return common.ErrPrevMilestoneInVoting(k.Codespace()).Result()
 	}
 
 	//Increment the priority in the milestone validator set
@@ -85,6 +89,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		logger.Error("First milestone to start from", "block", helper.GetMilestoneBorBlockHeight(), "milestone start block", msg.StartBlock, "error", err)
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 	}
+
+	k.SetMilestoneBlockNumber(ctx, ctx.BlockHeight())
 
 	//Set the MilestoneID in the cache
 	types.SetMilestoneID(msg.MilestoneID)
