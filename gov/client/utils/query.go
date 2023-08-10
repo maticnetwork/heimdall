@@ -5,7 +5,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
 
 	"github.com/maticnetwork/heimdall/gov/types"
 	"github.com/maticnetwork/heimdall/helper"
@@ -13,7 +12,8 @@ import (
 
 const (
 	defaultPage  = 1
-	defaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	maxPages     = 10  // ten 100 result pages should more than suffice for querying votes on a proposal
+	defaultLimit = 100 // should be consistent with maxPerPage in tendermint/tendermint/rpc/core/pipe.go:23
 )
 
 // Proposer contains metadata of a governance proposal used for querying a
@@ -46,7 +46,7 @@ func QueryDepositsByTxQuery(cliCtx context.CLIContext, params types.QueryProposa
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	searchResult, err := utils.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
+	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -88,24 +88,33 @@ func QueryVotesByTxQuery(cliCtx context.CLIContext, params types.QueryProposalPa
 
 	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
 	// support configurable pagination.
-	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
-	if err != nil {
-		return nil, err
-	}
-
 	var votes []types.Vote
+	numResultsFetched := 0
 
-	for _, info := range searchResult.Txs {
-		for _, msg := range info.Tx.GetMsgs() {
-			if msg.Type() == types.TypeMsgVote {
-				voteMsg := msg.(types.MsgVote)
+	for page := defaultPage; page <= maxPages; page++ {
+		searchResult, err := helper.QueryTxsByEvents(cliCtx, events, page, defaultLimit)
+		if err != nil {
+			return nil, err
+		}
 
-				votes = append(votes, types.Vote{
-					Voter:      voteMsg.Validator,
-					ProposalID: params.ProposalID,
-					Option:     voteMsg.Option,
-				})
+		for _, info := range searchResult.Txs {
+			for _, msg := range info.Tx.GetMsgs() {
+				if msg.Type() == types.TypeMsgVote {
+					voteMsg := msg.(types.MsgVote)
+
+					votes = append(votes, types.Vote{
+						Voter:      voteMsg.Validator,
+						ProposalID: params.ProposalID,
+						Option:     voteMsg.Option,
+					})
+				}
 			}
+		}
+
+		numResultsFetched += len(searchResult.Txs)
+
+		if numResultsFetched >= searchResult.TotalCount {
+			break
 		}
 	}
 
