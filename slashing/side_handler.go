@@ -56,7 +56,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 // SideHandleMsgTick handles MsgTick message for external call
 func SideHandleMsgTick(ctx sdk.Context, k Keeper, msg types.MsgTick, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	k.Logger(ctx).Debug("✅ Validating External call for tick msg")
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for tick msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for tick msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
@@ -96,7 +96,7 @@ func SideHandleMsgTickAck(ctx sdk.Context, k Keeper, msg types.MsgTickAck, contr
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for tick-ack msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for tick-ack msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }
@@ -137,7 +137,7 @@ func SideHandleMsgUnjail(ctx sdk.Context, k Keeper, msg types.MsgUnjail, contrac
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	k.Logger(ctx).Debug("✅ Succesfully validated External call for tick msg")
+	k.Logger(ctx).Debug("✅ Successfully validated External call for tick msg")
 	result.Result = abci.SideTxResultType_Yes
 	return
 }

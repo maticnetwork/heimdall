@@ -94,7 +94,7 @@ func (keeper *Keeper) GetTopupSequences(ctx sdk.Context) (sequences []string) {
 	return
 }
 
-// IterateTopupSequencesAndApplyFn interate validators and apply the given function.
+// IterateTopupSequencesAndApplyFn iterate validators and apply the given function.
 func (keeper *Keeper) IterateTopupSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(keeper.key)
 
