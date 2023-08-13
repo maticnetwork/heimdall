@@ -117,3 +117,19 @@ release:
 		-w /go/src/$(PACKAGE_NAME) \
 		goreleaser/goreleaser-cross:${GOLANG_CROSS_VERSION} \
 		--rm-dist --skip-validate
+
+.PHONY: help
+help:
+	@echo "Available targets:"
+	@echo "  clean               - Removes the build directory."
+	@echo "  tests               - Runs Go tests on specific packages."
+	@echo "  build               - Compiles the Heimdall binaries."
+	@echo "  install             - Installs the Heimdall binaries."
+	@echo "  contracts           - Generates Go bindings for Ethereum contracts."
+	@echo "  build-arm           - Compiles the Heimdall binaries for ARM64 architecture."
+	@echo "  lint                - Runs the GolangCI-Lint tool on the codebase."
+	@echo "  build-docker        - Builds a Docker image for the latest Git tag."
+	@echo "  push-docker         - Pushes the Docker image for the latest Git tag."
+	@echo "  build-docker-develop- Builds a Docker image for the development branch."
+	@echo "  release-dry-run     - Performs a dry run of the release process."
+	@echo "  release             - Executes the actual release process."
