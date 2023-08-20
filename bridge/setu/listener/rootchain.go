@@ -30,6 +30,7 @@ type RootChainListener struct {
 
 	stakingInfoAbi *abi.ABI
 	stateSenderAbi *abi.ABI
+	subGraph       *graphClient
 }
 
 const (

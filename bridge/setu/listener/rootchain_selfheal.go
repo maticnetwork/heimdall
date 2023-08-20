@@ -3,6 +3,7 @@ package listener
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -32,11 +33,23 @@ var (
 	}, []string{"id", "nonce", "contract_address", "block_number", "tx_hash"})
 )
 
+type graphClient struct {
+	graphUrl string
+	client   *http.Client
+}
+
 // startSelfHealing starts self-healing processes for all required events
 func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
 	if !helper.GetConfig().EnableSH {
 		rl.Logger.Info("Self-healing disabled")
 		return
+	}
+
+	if subGraphUrl := helper.GetConfig().SubGraphUrl; len(subGraphUrl) > 0 {
+		rl.subGraph = &graphClient{
+			graphUrl: subGraphUrl,
+			client:   &http.Client{Timeout: 10 * time.Second},
+		}
 	}
 
 	stakeUpdateTicker := time.NewTicker(helper.GetConfig().SHStakeUpdateInterval)
