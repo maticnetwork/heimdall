@@ -30,7 +30,9 @@ type RootChainListener struct {
 
 	stakingInfoAbi *abi.ABI
 	stateSenderAbi *abi.ABI
-	subGraph       *graphClient
+
+	// For self-heal, Will be only initialised if sub_graph_url is provided
+	subGraphClient *subGraphClient
 }
 
 const (

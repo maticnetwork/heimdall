@@ -43,14 +43,14 @@ type stateSyncResponse struct {
 }
 
 func (rl *RootChainListener) querySubGraph(query []byte, ctx context.Context) (data []byte, err error) {
-	request, err := http.NewRequestWithContext(ctx, http.MethodPost, rl.subGraph.graphUrl, bytes.NewBuffer(query))
+	request, err := http.NewRequestWithContext(ctx, http.MethodPost, rl.subGraphClient.graphUrl, bytes.NewBuffer(query))
 	if err != nil {
 		return nil, err
 	}
 
 	request.Header.Set("Content-Type", "application/json")
 
-	response, err := rl.subGraph.client.Do(request)
+	response, err := rl.subGraphClient.httpClient.Do(request)
 	if err != nil {
 		return nil, err
 	}

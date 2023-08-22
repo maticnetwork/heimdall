@@ -31,9 +31,9 @@ var (
 	}, []string{"id", "nonce", "contract_address", "block_number", "tx_hash"})
 )
 
-type graphClient struct {
-	graphUrl string
-	client   *http.Client
+type subGraphClient struct {
+	graphUrl   string
+	httpClient *http.Client
 }
 
 // startSelfHealing starts self-healing processes for all required events
@@ -43,9 +43,9 @@ func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
 		return
 	}
 
-	rl.subGraph = &graphClient{
-		graphUrl: helper.GetConfig().SubGraphUrl,
-		client:   &http.Client{Timeout: 10 * time.Second},
+	rl.subGraphClient = &subGraphClient{
+		graphUrl:   helper.GetConfig().SubGraphUrl,
+		httpClient: &http.Client{Timeout: 5 * time.Second},
 	}
 
 	stakeUpdateTicker := time.NewTicker(helper.GetConfig().SHStakeUpdateInterval)
