@@ -48,6 +48,8 @@ func (rl *RootChainListener) querySubGraph(query []byte, ctx context.Context) (d
 		return nil, err
 	}
 
+	request.Header.Set("Content-Type", "application/json")
+
 	response, err := rl.subGraph.client.Do(request)
 	if err != nil {
 		return nil, err
