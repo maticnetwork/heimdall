@@ -88,6 +88,10 @@ func (rl *RootChainListener) getCurrentStateID(ctx context.Context) (*big.Int, e
 
 // getStateSync returns the StateSynced event based on the given state ID
 func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*statesender.StatesenderStateSynced, error) {
+	if rl.subGraph != nil {
+		return rl.getStateSyncGraph(ctx, stateId)
+	}
+
 	rootchainContext, err := rl.getRootChainContext()
 	if err != nil {
 		return nil, err
@@ -155,6 +159,10 @@ func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uin
 
 // getStakeUpdate returns StakeUpdate event based on the given validator ID and nonce
 func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, nonce uint64) (*stakinginfo.StakinginfoStakeUpdate, error) {
+	if rl.subGraph != nil {
+		return rl.getStakeUpdateGraph(ctx, validatorId, nonce)
+	}
+
 	rootchainContext, err := rl.getRootChainContext()
 	if err != nil {
 		return nil, err
