@@ -172,7 +172,7 @@ func (rl *RootChainListener) getStakeUpdateGraph(ctx context.Context, validatorI
 	for _, logs := range receipt.Logs {
 		if strconv.Itoa(int(logs.Index)) == response.Data.StakeUpdates[0].LogIndex {
 			var event stakinginfo.StakinginfoStakeUpdate
-			if err = helper.UnpackLog(rl.stakingInfoAbi, &event, "StakeUpdate", logs); err != nil {
+			if err = helper.UnpackLog(rl.stakingInfoAbi, &event, stakeUpdateEvent, logs); err != nil {
 				return nil, err
 			}
 
@@ -222,7 +222,7 @@ func (rl *RootChainListener) getStateSyncGraph(ctx context.Context, stateId int6
 	for _, logs := range receipt.Logs {
 		if strconv.Itoa(int(logs.Index)) == response.Data.StateSyncs[0].LogIndex {
 			var event statesender.StatesenderStateSynced
-			if err = helper.UnpackLog(rl.stateSenderAbi, &event, "StateSynced", logs); err != nil {
+			if err = helper.UnpackLog(rl.stateSenderAbi, &event, stateSyncedEvent, logs); err != nil {
 				return nil, err
 			}
 

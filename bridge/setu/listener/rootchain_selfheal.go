@@ -10,6 +10,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promauto"
 
+	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
@@ -128,7 +129,7 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 				stakeUpdate.Raw.TxHash.String(),
 			).Add(1)
 
-			if _, err = rl.processEvent(ctx, stakeUpdate.Raw); err != nil {
+			if _, err = rl.processEvent(ctx, stakeUpdate.Raw, common.Hex2Bytes(stakinginfo.StakeUpdateEventID)); err != nil {
 				rl.Logger.Error("Error processing stake update for validator", "error", err, "id", id)
 			} else {
 				rl.Logger.Info("Processed stake update for validator", "id", id, "nonce", nonce)
@@ -182,7 +183,7 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 			stateSynced.Raw.TxHash.String(),
 		).Add(1)
 
-		ignore, err := rl.processEvent(ctx, stateSynced.Raw)
+		ignore, err := rl.processEvent(ctx, stateSynced.Raw, common.Hex2Bytes(statesender.StateSyncedEventID))
 		if err != nil {
 			rl.Logger.Error("Unable to update state id on heimdall", "error", err)
 			i--
@@ -212,13 +213,7 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 	}
 }
 
-func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) (bool, error) {
-	// Check existence of topics beforehand and ignore if no topic exists
-	// (TODO): Identify issue of empty events: See Jira POS-818
-	if len(event.Topics) == 0 {
-		return true, nil
-	}
-
+func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log, topic []byte) (bool, error) {
 	blockTime, err := rl.contractConnector.GetMainChainBlockTime(ctx, event.BlockNumber)
 	if err != nil {
 		rl.Logger.Error("Unable to get block time", "error", err)
@@ -230,7 +225,6 @@ func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) 
 		return true, err
 	}
 
-	topic := event.Topics[0].Bytes()
 	for _, abiObject := range rl.abis {
 		selectedEvent := helper.EventByID(abiObject, topic)
 		if selectedEvent == nil {
