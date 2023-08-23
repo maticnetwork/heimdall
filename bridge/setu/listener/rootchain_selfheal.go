@@ -110,7 +110,7 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 
 			nonce++
 
-			rl.Logger.Info("Processing stake update for validator", "id", id, "nonce", nonce)
+			rl.Logger.Info("Processing stake update for validator", "id", id, "ethereumNonce", ethereumNonce, "nonce", nonce)
 
 			var stakeUpdate *types.Log
 
