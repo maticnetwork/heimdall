@@ -85,8 +85,14 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 	for _, validator := range validatorSet.Validators {
 		wg.Add(1)
 
-		go func(id, nonce uint64) {
+		go func(id uint64) {
 			defer wg.Done()
+
+			nonce, _, err := util.GetValidatorNonce(rl.cliCtx, id)
+			if err != nil {
+				rl.Logger.Error("Error getting nonce for validator from heimdall", "error", err, "id", id)
+				return
+			}
 
 			var ethereumNonce uint64
 
@@ -129,7 +135,7 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 			} else {
 				rl.Logger.Info("Processed stake update for validator", "id", id, "nonce", nonce)
 			}
-		}(validator.ID.Uint64(), validator.Nonce)
+		}(validator.ID.Uint64())
 	}
 
 	wg.Wait()
