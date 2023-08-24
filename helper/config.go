@@ -357,15 +357,15 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
-		validatorSetRotationStopHeight = 1000000 //Change this value
+		validatorSetRotationStopHeight = 50000000 //Change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
-		validatorSetRotationStopHeight = 1000000 //Change this value
+		validatorSetRotationStopHeight = 50000000 //Change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		validatorSetRotationStopHeight = 1000000 //Change this value
+		validatorSetRotationStopHeight = 50000000 //Change this value
 	}
 }
 
