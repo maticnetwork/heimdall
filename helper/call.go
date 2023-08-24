@@ -47,6 +47,7 @@ var ContractsABIsMap = make(map[string]*abi.ABI)
 type IContractCaller interface {
 	GetHeaderInfo(headerID uint64, rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (root common.Hash, start, end, createdAt uint64, proposer types.HeimdallAddress, err error)
 	GetRootHash(start uint64, end uint64, checkpointLength uint64) ([]byte, error)
+	GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error)
 	GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error)
 	GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error)
 	CurrentHeaderBlock(rootChainInstance *rootchain.Rootchain, childBlockInterval uint64) (uint64, error)
@@ -300,12 +301,30 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	defer cancel()
 
 	rootHash, err := c.MaticChainClient.GetRootHash(ctx, start, end)
+
 	if err != nil {
 		Logger.Error("Could not fetch rootHash from matic chain", "error", err)
 		return nil, err
 	}
 
 	return common.FromHex(rootHash), nil
+}
+
+// GetRootHash get root hash from bor chain
+func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error) {
+	if start > end {
+		return false, errors.New("start is greater than end")
+	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
+	defer cancel()
+
+	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	if err != nil {
+		return false, errors.New("could not fetch vote from matic chain")
+	}
+
+	return vote, nil
 }
 
 // GetLastChildBlock fetch current child block
@@ -478,38 +497,20 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		receipt, _ = receiptCache.(*ethTypes.Receipt)
 	}
 
-	receiptBlockNumber := receipt.BlockNumber.Uint64()
+	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
 
-	Logger.Debug("Tx included in block", "block", receiptBlockNumber, "tx", tx)
-
-	// fetch the last finalized main chain block (available post-merge)
-	latestFinalizedBlock, err := c.GetMainChainFinalizedBlock()
+	// get main chain block
+	latestBlk, err := c.GetMainChainBlock(nil)
 	if err != nil {
-		Logger.Error("error getting latest finalized block from main chain", "error", err)
+		Logger.Error("error getting latest block from main chain", "error", err)
+		return nil, err
 	}
 
-	// If latest finalized block is available, use it to check if receipt is finalized or not.
-	// Else, fallback to the `requiredConfirmations` value
-	if latestFinalizedBlock != nil {
-		Logger.Debug("Latest finalized block on main chain obtained", "Block", latestFinalizedBlock.Number.Uint64(), "receipt block", receiptBlockNumber)
+	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
 
-		if receiptBlockNumber > latestFinalizedBlock.Number.Uint64() {
-			return nil, errors.New("not enough confirmations")
-		}
-	} else {
-		// get current/latest main chain block
-		latestBlk, err := c.GetMainChainBlock(nil)
-		if err != nil {
-			Logger.Error("error getting latest block from main chain", "error", err)
-			return nil, err
-		}
-
-		Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64(), "receipt block", receiptBlockNumber)
-
-		diff := latestBlk.Number.Uint64() - receiptBlockNumber
-		if diff < requiredConfirmations {
-			return nil, errors.New("not enough confirmations")
-		}
+	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
+	if diff < requiredConfirmations {
+		return nil, errors.New("not enough confirmations")
 	}
 
 	return receipt, nil
@@ -896,8 +897,8 @@ func populateABIs(contractCallerObj *ContractCaller) error {
 				Logger.Error("Error while getting ABI for contract caller", "name", contractABI, "error", err)
 				return err
 			} else {
-				// init ABI
 				ContractsABIsMap[contractABI] = ccAbi
+				Logger.Debug("ABI initialized", "name", contractABI)
 			}
 		} else {
 			// use cached abi

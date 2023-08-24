@@ -239,6 +239,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	app.subspaces[borTypes.ModuleName] = app.ParamsKeeper.Subspace(borTypes.DefaultParamspace)
 	app.subspaces[clerkTypes.ModuleName] = app.ParamsKeeper.Subspace(clerkTypes.DefaultParamspace)
 	app.subspaces[topupTypes.ModuleName] = app.ParamsKeeper.Subspace(topupTypes.DefaultParamspace)
+
 	//
 	// Contract caller
 	//
@@ -597,8 +598,11 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 			return abci.ResponseEndBlock{}
 		}
 
-		// increment proposer priority
-		currentValidatorSet.IncrementProposerPriority(1)
+		//Hardfork to remove the rotation of validator list on stake update
+		if ctx.BlockHeight() < helper.GetValidatorSetRotationStopHeight() {
+			// increment proposer priority
+			currentValidatorSet.IncrementProposerPriority(1)
+		}
 
 		// validator set change
 		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())
