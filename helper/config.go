@@ -227,7 +227,6 @@ var chainManagerAddressMigrations = map[string]map[int64]ChainManagerAddressMigr
 	"default":   {},
 }
 
-
 // Contracts
 // var RootChain types.Contract
 // var DepositManager types.Contract
@@ -377,17 +376,17 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
-    validatorSetRotationStopHeight = 50000000 //Change this value
+		validatorSetRotationStopHeight = 50000000 //Change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
-    validatorSetRotationStopHeight = 50000000 //Change this value
+		validatorSetRotationStopHeight = 50000000 //Change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
-    validatorSetRotationStopHeight = 50000000 //Change this value
+		validatorSetRotationStopHeight = 50000000 //Change this value
 	}
 }
 
@@ -505,7 +504,6 @@ func GetNewSelectionAlgoHeight() int64 {
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
 }
-
 
 // GetValidatorSetRotationStopHeight returns validatorSetRotationStopHeight
 func GetValidatorSetRotationStopHeight() int64 {
