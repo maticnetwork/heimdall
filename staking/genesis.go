@@ -31,7 +31,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 				panic(err)
 			}
 
-			// increament accum if init validator set
+			// increment accum if init validator set
 			if len(data.CurrentValSet.Validators) == 0 {
 				keeper.IncrementAccum(ctx, 1)
 			}

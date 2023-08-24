@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"io/ioutil"
 	"os"
 	"path"
 
@@ -15,7 +14,7 @@ var resetCmd = &cobra.Command{
 	Short: "Reset bridge server data",
 	RunE: func(cmd *cobra.Command, args []string) error {
 		dbLocation := viper.GetString(bridgeDBFlag)
-		dir, err := ioutil.ReadDir(dbLocation)
+		dir, err := os.ReadDir(dbLocation)
 		if err != nil {
 			return err
 		}

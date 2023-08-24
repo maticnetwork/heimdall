@@ -78,6 +78,7 @@ $ %s query checkpoint params
 
 			var params types.Params
 			if err := jsoniter.ConfigFastest.Unmarshal(bz, &params); err != nil {
+				// nolint: nilerr
 				return nil
 			}
 			return cliCtx.PrintOutput(params)

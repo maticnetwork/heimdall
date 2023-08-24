@@ -227,10 +227,11 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 	// check header count
 	currentCheckpointNumber, err := contractCaller.CurrentHeaderBlock(rootChainInstance, childBlockInterval)
 	if err != nil {
+		// nolint: nilerr
 		return nil
 	}
 
-	// Dont multiply
+	// Don't multiply
 	if state.AckCount != currentCheckpointNumber {
 		fmt.Println("Checkpoint count doesn't match",
 			"contractCheckpointNumber", currentCheckpointNumber,
@@ -253,7 +254,7 @@ func verifyGenesis(state types.GenesisState, chainManagerState chainmanagerTypes
 
 		if header.StartBlock != start || header.EndBlock != end || !bytes.Equal(header.RootHash.Bytes(), root.Bytes()) {
 			return fmt.Errorf(
-				"Checkpoint block doesnt match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
+				"Checkpoint block doesn't match: startExpected %v, startReceived %v, endExpected %v, endReceived %v, rootHashExpected %v, rootHashReceived %v",
 				header.StartBlock,
 				start,
 				header.EndBlock,

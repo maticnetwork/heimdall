@@ -22,6 +22,7 @@ import (
 	"github.com/tendermint/tendermint/privval"
 
 	"github.com/maticnetwork/heimdall/file"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	cfg "github.com/tendermint/tendermint/config"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -209,6 +210,24 @@ var spanOverrideHeight int64 = 0
 
 var validatorSetRotationStopHeight int64 = 0
 
+var newHexToStringAlgoHeight int64 = 0
+
+type ChainManagerAddressMigration struct {
+	MaticTokenAddress     hmTypes.HeimdallAddress
+	RootChainAddress      hmTypes.HeimdallAddress
+	StakingManagerAddress hmTypes.HeimdallAddress
+	SlashManagerAddress   hmTypes.HeimdallAddress
+	StakingInfoAddress    hmTypes.HeimdallAddress
+	StateSenderAddress    hmTypes.HeimdallAddress
+}
+
+var chainManagerAddressMigrations = map[string]map[int64]ChainManagerAddressMigration{
+	MainChain:   {},
+	MumbaiChain: {},
+	"default":   {},
+}
+
+
 // Contracts
 // var RootChain types.Contract
 // var DepositManager types.Contract
@@ -271,7 +290,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		}
 
 		var confFromFlag Configuration
-		// unmarshal configuration from the configuration file submited as a flag
+		// unmarshal configuration from the configuration file submitted as a flag
 		if err = heimdallViperFromFlag.UnmarshalExact(&confFromFlag); err != nil {
 			log.Fatalln("Unable to unmarshall config file submitted via flag", "Error", err)
 		}
@@ -295,31 +314,31 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	// perform checks for timeout
 	if conf.EthRPCTimeout == 0 {
 		// fallback to default
-		Logger.Debug("Invalid ETH RPC timeout provided, falling back to default value", "timeout", DefaultEthRPCTimeout)
+		Logger.Debug("Missing ETH RPC timeout or invalid value provided, falling back to default", "timeout", DefaultEthRPCTimeout)
 		conf.EthRPCTimeout = DefaultEthRPCTimeout
 	}
 
 	if conf.BorRPCTimeout == 0 {
 		// fallback to default
-		Logger.Debug("Invalid BOR RPC timeout provided, falling back to default value", "timeout", DefaultBorRPCTimeout)
+		Logger.Debug("Missing BOR RPC timeout or invalid value provided, falling back to default", "timeout", DefaultBorRPCTimeout)
 		conf.BorRPCTimeout = DefaultBorRPCTimeout
 	}
 
 	if conf.SHStateSyncedInterval == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing StateSynced interval provided, falling back to default value", "interval", DefaultSHStateSyncedInterval)
+		Logger.Debug("Missing self-healing StateSynced interval or invalid value provided, falling back to default", "interval", DefaultSHStateSyncedInterval)
 		conf.SHStateSyncedInterval = DefaultSHStateSyncedInterval
 	}
 
 	if conf.SHStakeUpdateInterval == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing StakeUpdate interval provided, falling back to default value", "interval", DefaultSHStakeUpdateInterval)
+		Logger.Debug("Missing self-healing StakeUpdate interval or invalid value provided, falling back to default", "interval", DefaultSHStakeUpdateInterval)
 		conf.SHStakeUpdateInterval = DefaultSHStakeUpdateInterval
 	}
 
 	if conf.SHMaxDepthDuration == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing max depth duration provided, falling back to default value", "duration", DefaultSHMaxDepthDuration)
+		Logger.Debug("Missing self-healing max depth duration or invalid value provided, falling back to default", "duration", DefaultSHMaxDepthDuration)
 		conf.SHMaxDepthDuration = DefaultSHMaxDepthDuration
 	}
 
@@ -357,19 +376,22 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
-		validatorSetRotationStopHeight = 50000000 //Change this value
+		newHexToStringAlgoHeight = 9266260
+    validatorSetRotationStopHeight = 50000000 //Change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
-		validatorSetRotationStopHeight = 50000000 //Change this value
+		newHexToStringAlgoHeight = 12048023
+    validatorSetRotationStopHeight = 50000000 //Change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		validatorSetRotationStopHeight = 50000000 //Change this value
+		newHexToStringAlgoHeight = 0
+    validatorSetRotationStopHeight = 50000000 //Change this value
 	}
 }
 
-// GetDefaultHeimdallConfig returns configration with default params
+// GetDefaultHeimdallConfig returns configuration with default params
 func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
@@ -484,9 +506,26 @@ func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
 }
 
+
 // GetValidatorSetRotationStopHeight returns validatorSetRotationStopHeight
 func GetValidatorSetRotationStopHeight() int64 {
 	return validatorSetRotationStopHeight
+}
+
+// GetNewHexToStringAlgoHeight returns newHexToStringAlgoHeight
+func GetNewHexToStringAlgoHeight() int64 {
+	return newHexToStringAlgoHeight
+}
+
+func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
+	chainMigration := chainManagerAddressMigrations[conf.Chain]
+	if chainMigration == nil {
+		chainMigration = chainManagerAddressMigrations["default"]
+	}
+
+	result, found := chainMigration[blockNum]
+
+	return result, found
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command
@@ -616,7 +655,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
 		0,
-		"Set main chain gas limti",
+		"Set main chain gas limit",
 	)
 
 	if err := v.BindPFlag(MainchainGasLimitFlag, cmd.PersistentFlags().Lookup(MainchainGasLimitFlag)); err != nil {
@@ -627,7 +666,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Int64(
 		MainchainMaxGasPriceFlag,
 		0,
-		"Set main chain max gas limti",
+		"Set main chain max gas limit",
 	)
 
 	if err := v.BindPFlag(MainchainMaxGasPriceFlag, cmd.PersistentFlags().Lookup(MainchainMaxGasPriceFlag)); err != nil {

@@ -69,7 +69,7 @@ func (sp *SlashingProcessor) RegisterTasks() {
 
 // processSlashLimitEvent - processes slash limit event
 func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight int64) error {
-	sp.Logger.Info("Recevied sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
+	sp.Logger.Info("Received sendTickToHeimdall request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
 	var event sdk.StringEvent
 	if err := jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
@@ -123,7 +123,7 @@ sendTickToRootchain - create and submit tick tx to rootchain to slashing faulty 
 4. create tick tx and submit to rootchain
 */
 func (sp *SlashingProcessor) sendTickToRootchain(eventBytes string, blockHeight int64) (err error) {
-	sp.Logger.Info("Recevied sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
+	sp.Logger.Info("Received sendTickToRootchain request", "eventBytes", eventBytes, "blockHeight", blockHeight)
 
 	var event sdk.StringEvent
 	if err = jsoniter.ConfigFastest.Unmarshal([]byte(eventBytes), &event); err != nil {
@@ -226,7 +226,7 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 
 		// TODO - check if i am the proposer of this tick ack or not.
 
-		// create msg checkpoint ack message
+		// create msg tick ack message
 		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Nonce.Uint64(), event.Amount.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
@@ -296,7 +296,7 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 
 // createAndSendTickToRootchain prepares the data required for rootchain tick submission
 // and sends a transaction to rootchain
-func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash []byte, slashInfoList []*hmTypes.ValidatorSlashingInfo, proposerAddr hmTypes.HeimdallAddress) error {
+func (sp *SlashingProcessor) createAndSendTickToRootchain(height int64, txHash []byte, _ []*hmTypes.ValidatorSlashingInfo, _ hmTypes.HeimdallAddress) error {
 	sp.Logger.Info("Preparing tick to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash))
 
 	// proof

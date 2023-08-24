@@ -14,6 +14,7 @@ import (
 //
 
 // returns context and app on clerk keeper
+// nolint: unparam
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context) {
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
