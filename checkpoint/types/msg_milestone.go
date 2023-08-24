@@ -45,7 +45,7 @@ func NewMsgMilestoneBlock(
 
 // Type returns message type
 func (msg MsgMilestone) Type() string {
-	return "milestone"
+	return EventTypeMilestone
 }
 
 func (msg MsgMilestone) Route() string {

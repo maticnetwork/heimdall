@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	cmTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	errs "github.com/maticnetwork/heimdall/common"
@@ -44,46 +45,9 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	header, err := chSim.GenRandMilestone(start, milestoneLength)
 	require.NoError(t, err)
 
-	// add current proposer to header
-	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
+	ctx = ctx.WithBlockHeight(3)
 
-	//Test1- When the milestone msg is sent before the hardfork value
-	suite.Run("Failure-Before Hard Fork", func() {
-		msgMilestone := types.NewMsgMilestoneBlock(
-			header.Proposer,
-			header.StartBlock,
-			header.EndBlock,
-			header.Hash,
-			borChainId,
-			milestoneID,
-		)
-
-		ctxNew := ctx.WithBlockHeight(-1) //Setting height as -1 just to check for the hard fork.
-
-		// send milestone to handler
-		got := suite.handler(ctxNew, msgMilestone)
-		require.False(t, got.IsOK(), "expected send-milstone to get failed")
-		require.Equal(t, errs.CodeInvalidMsg, got.Code)
-	})
-
-	//Test2- When the first milestone is composed of incorrect start number
-	suite.Run("Failure-Invalid Start Block Number", func() {
-		msgMilestone := types.NewMsgMilestoneBlock(
-			header.Proposer,
-			uint64(1),
-			header.EndBlock+1,
-			header.Hash,
-			borChainId,
-			milestoneID,
-		)
-
-		// send milestone to handler
-		got := suite.handler(ctx, msgMilestone)
-		require.False(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
-		require.Equal(t, errs.CodeNoMilestone, got.Code)
-	})
-
-	//Test3- When milestone is proposed by wrong proposer
+	//Test1- When milestone is proposed by wrong proposer
 	suite.Run("Invalid Proposer", func() {
 		header.Proposer = hmTypes.HexToHeimdallAddress("1234")
 		msgMilestone := types.NewMsgMilestoneBlock(
@@ -101,9 +65,10 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeInvalidMsg, got.Code)
 	})
 
+	// add current proposer to header
 	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
-	//Test4- When milestone is proposed of length shorter than configured minimum length
+	//Test2- When milestone is proposed of length shorter than configured minimum length
 	suite.Run("Invalid msg based on milestone length", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
@@ -120,9 +85,29 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.Equal(t, errs.CodeMilestoneInvalid, got.Code)
 	})
 
+	// add current proposer to header
 	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
-	//Test5- When the correct milestone is proposed
+	//Test3- When the first milestone is composed of incorrect start number
+	suite.Run("Failure-Invalid Start Block Number", func() {
+		msgMilestone := types.NewMsgMilestoneBlock(
+			header.Proposer,
+			uint64(1),
+			header.EndBlock+1,
+			header.Hash,
+			borChainId,
+			milestoneID,
+		)
+
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
+		require.False(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
+		require.Equal(t, errs.CodeNoMilestone, got.Code)
+	})
+
+	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
+
+	//Test4- When the correct milestone is proposed
 	suite.Run("Success", func() {
 		msgMilestone := types.NewMsgMilestoneBlock(
 			header.Proposer,
@@ -138,14 +123,40 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.True(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
 		bufferedHeader, _ := keeper.GetLastMilestone(ctx)
 		require.Empty(t, bufferedHeader, "Should not store state")
+		milestoneBlockNumber := keeper.GetMilestoneBlockNumber(ctx)
+		require.Equal(t, int64(3), milestoneBlockNumber, "Mismatch in milestoneBlockNumber")
 	})
 
 	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
-	//Test6- When milestones are not in continuity
+	ctx = ctx.WithBlockHeight(int64(4))
+
+	//Test5- When previous milestone is still in voting phase
+	suite.Run("Previous milestone is still in voting phase", func() {
+
+		msgMilestone := types.NewMsgMilestoneBlock(
+			header.Proposer,
+			start,
+			start+milestoneLength-1,
+			header.Hash,
+			borChainId,
+			milestoneID,
+		)
+
+		// send milestone to handler
+		got := suite.handler(ctx, msgMilestone)
+		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
+		require.Equal(t, errs.CodePrevMilestoneInVoting, got.Code)
+	})
+
+	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
+
+	ctx = ctx.WithBlockHeight(int64(6))
+
+	//Test5- When milestone is not in continuity
 	suite.Run("Milestone not in countinuity", func() {
 
-		err = keeper.AddMilestone(ctx, header)
+		err := keeper.AddMilestone(ctx, header)
 		require.NoError(t, err)
 
 		_, err = keeper.GetLastMilestone(ctx)
@@ -170,11 +181,11 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		got := suite.handler(ctx, msgMilestone)
 		require.True(t, !got.IsOK(), errs.CodeToDefaultMsg(got.Code))
 		require.Equal(t, errs.CodeMilestoneNotInContinuity, got.Code)
-
 	})
 
 	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
+	//Test6- When milestone is not in continuity
 	suite.Run("Milestone not in countinuity", func() {
 
 		_, err = keeper.GetLastMilestone(ctx)
@@ -254,8 +265,11 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 	)
 
 	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock).Return(true)
+	suite.contractCaller.On("CheckIfBlocksExist", header.EndBlock+cmTypes.DefaultMaticchainMilestoneTxConfirmations).Return(true)
 	suite.contractCaller.On("GetRootHash", header.StartBlock, header.EndBlock, milestoneLength).Return(header.Hash.Bytes(), nil)
 	suite.contractCaller.On("GetVoteOnHash", header.StartBlock, header.EndBlock, milestoneLength, header.Hash.String(), header.MilestoneID).Return(true, nil)
+
+	ctx = ctx.WithBlockHeight(int64(3))
 
 	// send milestone to handler
 	result := suite.handler(ctx, msgMilestone)

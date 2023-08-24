@@ -8,7 +8,7 @@ import (
 )
 
 // ValidateMilestone - Validates if milestone rootHash matches or not
-func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, milestoneLength uint64) (bool, error) {
+func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, milestoneLength uint64, confirmations uint64) (bool, error) {
 	msgMilestoneLength := int64(end) - int64(start) + 1
 
 	//Check for the minimum length of the milestone
@@ -16,8 +16,8 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 		return false, errors.New("Invalid milestone, difference in start and end block is less than milestone length")
 	}
 
-	// Check if blocks exist locally
-	if !contractCaller.CheckIfBlocksExist(end) {
+	// Check if blocks+confirmations  exist locally
+	if !contractCaller.CheckIfBlocksExist(end + confirmations) {
 		return false, errors.New("blocks not found locally")
 	}
 

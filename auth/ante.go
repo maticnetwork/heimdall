@@ -12,6 +12,7 @@ import (
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/chainmanager"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -121,6 +122,11 @@ func NewAnteHandler(
 				}
 			}
 		}()
+
+		//Check whether the chain has reached the hard fork length to execute milestone msgs
+		if ctx.BlockHeight() <= helper.GetMilestoneHardForkHeight() && stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone {
+			return newCtx, sdk.ErrUnknownRequest("Milestone msgs proposed before the hardfork").Result(), true
+		}
 
 		// validate tx
 		if err := tx.ValidateBasic(); err != nil {
