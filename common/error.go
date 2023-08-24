@@ -32,6 +32,7 @@ const (
 	CodeNoCheckpointBuffer       CodeType = 1511
 	CodeCheckpointBuffer         CodeType = 1512
 	CodeCheckpointAlreadyExists  CodeType = 1513
+	CodeInvalidNoAckProposer     CodeType = 1505
 
 	CodeOldValidator        CodeType = 2500
 	CodeNoValidator         CodeType = 2501
@@ -150,6 +151,10 @@ func ErrCheckpointBufferFound(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidNoACK, "Invalid No ACK -- Waiting for last checkpoint ACK")
+}
+
+func ErrInvalidNoACKProposer(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidNoAckProposer, "Invalid No ACK Proposer")
 }
 
 func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
