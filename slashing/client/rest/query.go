@@ -564,7 +564,7 @@ func tickCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, err := jsoniter.ConfigFastest.Marshal(&tickCount)
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

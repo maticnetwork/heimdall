@@ -210,6 +210,7 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 		ctx, cancel := ctx.WithTimeout(ctx.Background(), shutdownTimeout)
 		defer cancel()
 
+		// nolint: contextcheck
 		return s.Shutdown(ctx)
 	})
 

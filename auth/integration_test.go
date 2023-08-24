@@ -13,6 +13,7 @@ import (
 //
 
 // returns context and app with params set on account keeper
+// nolint: unparam
 func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context) {
 	app := app.Setup(isCheckTx)
 	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
