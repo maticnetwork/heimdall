@@ -195,11 +195,7 @@ func (k *Keeper) GetLastNoAckMilestone(ctx sdk.Context) string {
 func (k *Keeper) GetNoAckMilestone(ctx sdk.Context, milestoneId string) bool {
 	store := ctx.KVStore(k.storeKey)
 	// check if No Ack Milestone is there
-	if store.Has(GetMilestoneNoAckKey(milestoneId)) {
-		return true
-	}
-
-	return false
+	return store.Has(GetMilestoneNoAckKey(milestoneId))
 }
 
 // SetLastMilestoneTimeout set lastMilestone timeout time

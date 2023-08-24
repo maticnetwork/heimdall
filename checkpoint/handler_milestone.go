@@ -113,7 +113,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 }
 
 // Handles milestone timeout transaction
-func handleMsgMilestoneTimeout(ctx sdk.Context, msg types.MsgMilestoneTimeout, k Keeper) sdk.Result {
+func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
 
 	// Get current block time
