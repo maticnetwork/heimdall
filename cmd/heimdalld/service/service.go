@@ -31,6 +31,7 @@ import (
 	"github.com/tendermint/tendermint/crypto"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
+	tmflags "github.com/tendermint/tendermint/libs/cli/flags"
 	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/node"
@@ -126,7 +127,7 @@ func GetHeimdallApp() *app.HeimdallApp {
 	defer tick.Stop()
 
 	for hApp == nil {
-		select {
+		select { //nolint
 		case <-tick.C:
 			logger.Info("Waiting for heimdall app to be initialized")
 
@@ -195,7 +196,7 @@ func NewHeimdallService(pCtx context.Context, args []string) {
 	// rollback cmd
 	rootCmd.AddCommand(rollbackCmd(ctx))
 
-	if args != nil && len(args) > 0 {
+	if args != nil && len(args) > 0 { //nolint
 		rootCmd.SetArgs(args)
 	}
 
@@ -215,7 +216,10 @@ func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, sto
 		helper.InitHeimdallConfig("")
 		helper.UpdateTendermintConfig(serverCtx.Config, viper.GetViper())
 		// create new heimdall app
-		hApp = app.NewHeimdallApp(logger, db, baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString("pruning"))))
+		hApp = app.NewHeimdallApp(logger, db,
+			baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString(flagPruning))),
+			baseapp.SetHaltHeight(viper.GetUint64(FlagHaltHeight)),
+			baseapp.SetHaltTime(viper.GetUint64(FlagHaltTime)))
 
 		return hApp
 	}
@@ -249,6 +253,19 @@ For profiling and benchmarking purposes, CPU profiling can be enabled via the '-
 which accepts a path for the resulting pprof file.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			LogsWriterFile := viper.GetString(helper.LogsWriterFileFlag)
+			if LogsWriterFile != "" {
+				logWriter := helper.GetLogsWriter(LogsWriterFile)
+
+				logger, err := SetupCtxLogger(logWriter, ctx.Config.LogLevel)
+				if err != nil {
+					logger.Error("Unable to setup logger", "err", err)
+					return err
+				}
+
+				ctx.Logger = logger
+			}
+
 			ctx.Logger.Info("starting ABCI with Tendermint")
 
 			startRestServer, _ := cmd.Flags().GetBool(helper.RestServerFlag)
@@ -489,6 +506,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		ctx.Logger.Info("exiting...")
 
 		if tracerProvider != nil {
+			// nolint: contextcheck
 			if err := tracerProvider.Shutdown(*traceCtx); err == nil {
 				ctx.Logger.Info("Shutting Down OpenTelemetry")
 			}
@@ -753,4 +771,21 @@ func WriteDefaultHeimdallConfig(path string, conf helper.Configuration) {
 func CryptoKeyToPubkey(key crypto.PubKey) hmTypes.PubKey {
 	validatorPublicKey := helper.GetPubObjects(key)
 	return hmTypes.NewPubKey(validatorPublicKey[:])
+}
+
+func SetupCtxLogger(logWriter io.Writer, logLevel string) (log.Logger, error) {
+	logger := log.NewTMLogger(log.NewSyncWriter(logWriter))
+
+	logger, err := tmflags.ParseLogLevel(logLevel, logger, cfg.DefaultLogLevel())
+	if err != nil {
+		return nil, err
+	}
+
+	if viper.GetBool(cli.TraceFlag) {
+		logger = log.NewTracingLogger(logger)
+	}
+
+	logger = logger.With("module", "main")
+
+	return logger, nil
 }

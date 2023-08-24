@@ -83,7 +83,7 @@ func (suite *KeeperTestSuite) TestValidator() {
 	}
 
 	// Check if Validator matches in state
-	require.Equal(t, valInfo, *validators[valId], "Validators in state doesnt match")
+	require.Equal(t, valInfo, *validators[valId], "Validators in state doesn't match")
 	require.Equal(t, types.HexToHeimdallAddress(mappedSignerAddress.Hex()), validators[0].Signer, "Signer address doesn't match")
 }
 

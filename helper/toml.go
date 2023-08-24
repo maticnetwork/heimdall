@@ -23,10 +23,10 @@ bor_rpc_url = "{{ .BorRPCUrl }}"
 # RPC endpoint for tendermint
 tendermint_rpc_url = "{{ .TendermintRPCUrl }}"
 
-# Heimdall REST server endpoint
-heimdall_rest_server = "{{ .HeimdallServerURL }}"
-
 #### Bridge configs ####
+
+# Heimdall REST server endpoint, which is used by bridge
+heimdall_rest_server = "{{ .HeimdallServerURL }}"
 
 # AMQP endpoint
 amqp_url = "{{ .AmqpURL }}"

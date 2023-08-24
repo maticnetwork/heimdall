@@ -444,6 +444,7 @@ func (suite *AnteTestSuite) TestMilestoneHardFork() {
 //
 
 // run the tx through the anteHandler and ensure its valid
+// nolint: unparam
 func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, sdk.Result, bool) {
 	t.Helper()
 
@@ -457,6 +458,7 @@ func checkValidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx
 }
 
 // run the tx through the anteHandler and ensure it fails with the given code
+// nolint: unparam
 func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, tx sdk.Tx, simulate bool, code sdk.CodeType) (sdk.Context, sdk.Result, bool) {
 	t.Helper()
 
@@ -470,7 +472,7 @@ func checkInvalidTx(t *testing.T, anteHandler sdk.AnteHandler, ctx sdk.Context, 
 		_, ok := tx.(types.StdTx)
 		require.True(t, ok, "tx must be in form auth.types.StdTx")
 		// GasWanted set correctly
-		require.True(t, result.GasUsed > result.GasWanted, "GasUsed not greated than GasWanted")
+		require.True(t, result.GasUsed > result.GasWanted, "GasUsed not greater than GasWanted")
 		// Check that context is set correctly
 		require.Equal(t, result.GasUsed, newCtx.GasMeter().GasConsumed(), "Context not updated correctly")
 	}

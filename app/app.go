@@ -541,7 +541,7 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 	}
 
 	// TODO make sure old validtors dont go in validator updates ie deactivated validators have to be removed
-	// udpate validators
+	// update validators
 	return abci.ResponseInitChain{
 		// validator updates
 		Validators: valUpdates,
@@ -618,6 +618,22 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 				PubKey: v.PubKey.ABCIPubKey(),
 			})
 		}
+	}
+
+	// Change root chain contract addresses if required
+	if chainManagerAddressMigration, found := helper.GetChainManagerAddressMigration(ctx.BlockHeight()); found {
+		params := app.ChainKeeper.GetParams(ctx)
+
+		params.ChainParams.MaticTokenAddress = chainManagerAddressMigration.MaticTokenAddress
+		params.ChainParams.StakingManagerAddress = chainManagerAddressMigration.StakingManagerAddress
+		params.ChainParams.RootChainAddress = chainManagerAddressMigration.RootChainAddress
+		params.ChainParams.SlashManagerAddress = chainManagerAddressMigration.SlashManagerAddress
+		params.ChainParams.StakingInfoAddress = chainManagerAddressMigration.StakingInfoAddress
+		params.ChainParams.StateSenderAddress = chainManagerAddressMigration.StateSenderAddress
+
+		// update chain manager state
+		app.ChainKeeper.SetParams(ctx, params)
+		logger.Info("Updated chain manager state", "params", params)
 	}
 
 	// end block

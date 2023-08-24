@@ -194,7 +194,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": totalPower})
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -571,7 +571,7 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, err := jsoniter.ConfigFastest.Marshal(_proposerBonusPercent)
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return

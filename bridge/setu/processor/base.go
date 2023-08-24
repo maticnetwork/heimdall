@@ -2,7 +2,7 @@ package processor
 
 import (
 	"encoding/base64"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"time"
 
@@ -107,7 +107,7 @@ func (bp *BaseProcessor) Stop() {
 
 // isOldTx checks if the transaction already exists in the chain or not
 // It is a generic function, which is consumed in all processors
-func (bp *BaseProcessor) isOldTx(cliCtx cliContext.CLIContext, txHash string, logIndex uint64, eventType util.BridgeEvent, event interface{}) (bool, error) {
+func (bp *BaseProcessor) isOldTx(_ cliContext.CLIContext, txHash string, logIndex uint64, eventType util.BridgeEvent, event interface{}) (bool, error) {
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "isOldTx", time.Now())
 
 	queryParam := map[string]interface{}{
@@ -163,7 +163,7 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 		return false, err
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	if err != nil {

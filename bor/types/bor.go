@@ -27,11 +27,11 @@ type ValidatorSet struct {
 	Proposer   *Validator   `json:"proposer"`
 
 	// cached (unexported)
-	totalVotingPower int64
-	validatorsMap    map[common.Address]int // address -> index
+	totalVotingPower int64 //nolint
+	validatorsMap    map[common.Address]int //nolint // address -> index
 }
 
-// Validator represets Volatile state for each Validator
+// Validator represents Volatile state for each Validator
 type Validator struct {
 	ID               uint64         `json:"ID"`
 	Address          common.Address `json:"signer"`

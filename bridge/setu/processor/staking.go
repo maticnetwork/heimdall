@@ -118,7 +118,7 @@ func (sp *StakingProcessor) sendValidatorJoinToHeimdall(eventName string, logByt
 			"blockNumber", vLog.BlockNumber,
 		)
 
-		// msg validator exit
+		// msg validator join
 		msg := stakingTypes.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),
@@ -258,7 +258,7 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			"blockNumber", vLog.BlockNumber,
 		)
 
-		// msg validator exit
+		// msg validator update
 		msg := stakingTypes.NewMsgStakeUpdate(
 			hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 			event.ValidatorId.Uint64(),

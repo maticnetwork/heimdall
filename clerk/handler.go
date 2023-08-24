@@ -27,7 +27,7 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 	}
 }
 
-func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
+func handleMsgEventRecord(ctx sdk.Context, msg types.MsgEventRecord, k Keeper, _ helper.IContractCaller) sdk.Result {
 	k.Logger(ctx).Debug("✅ Validating clerk msg",
 		"id", msg.ID,
 		"contract", msg.ContractAddress,

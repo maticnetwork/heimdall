@@ -27,6 +27,19 @@ import (
 	"github.com/maticnetwork/heimdall/types"
 )
 
+// smart contracts' events names
+const (
+	newHeaderBlockEvent = "NewHeaderBlock"
+	topUpFeeEvent       = "TopUpFee"
+	stakedEvent         = "Staked"
+	stakeUpdateEvent    = "StakeUpdate"
+	UnstakeInitEvent    = "UnstakeInit"
+	signerChangeEvent   = "SignerChange"
+	stateSyncedEvent    = "StateSynced"
+	slashedEvent        = "Slashed"
+	unJailedEvent       = "UnJailed"
+)
+
 // ContractsABIsMap is a cached map holding the ABIs of the contracts
 var ContractsABIsMap = make(map[string]*abi.ABI)
 
@@ -290,7 +303,8 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	rootHash, err := c.MaticChainClient.GetRootHash(ctx, start, end)
 
 	if err != nil {
-		return nil, errors.New("could not fetch rootHash from matic chain")
+		Logger.Error("Could not fetch rootHash from matic chain", "error", err)
+		return nil, err
 	}
 
 	return common.FromHex(rootHash), nil
@@ -335,7 +349,7 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
 }
 
-// GetBalance get balance of account (returns big.Int balance wont fit in uint64)
+// GetBalance get balance of account (returns big.Int balance won't fit in uint64)
 func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
@@ -516,7 +530,7 @@ func (c *ContractCaller) DecodeNewHeaderBlockEvent(contractAddress common.Addres
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.RootChainABI, event, "NewHeaderBlock", vLog); err != nil {
+			if err := UnpackLog(&c.RootChainABI, event, newHeaderBlockEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -542,7 +556,7 @@ func (c *ContractCaller) DecodeValidatorTopupFeesEvent(contractAddress common.Ad
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "TopUpFee", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, topUpFeeEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -567,7 +581,7 @@ func (c *ContractCaller) DecodeValidatorJoinEvent(contractAddress common.Address
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "Staked", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, stakedEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -593,7 +607,7 @@ func (c *ContractCaller) DecodeValidatorStakeUpdateEvent(contractAddress common.
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "StakeUpdate", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, stakeUpdateEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -619,7 +633,7 @@ func (c *ContractCaller) DecodeValidatorExitEvent(contractAddress common.Address
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "unStakeInit", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, UnstakeInitEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -645,7 +659,7 @@ func (c *ContractCaller) DecodeSignerUpdateEvent(contractAddress common.Address,
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "SignerChange", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, signerChangeEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -671,7 +685,7 @@ func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, 
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StateSenderABI, event, "StateSynced", vLog); err != nil {
+			if err := UnpackLog(&c.StateSenderABI, event, stateSyncedEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -699,7 +713,7 @@ func (c *ContractCaller) DecodeSlashedEvent(contractAddress common.Address, rece
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "Slashed", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, slashedEvent, vLog); err != nil {
 				return nil, err
 			}
 
@@ -725,7 +739,7 @@ func (c *ContractCaller) DecodeUnJailedEvent(contractAddress common.Address, rec
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
-			if err := UnpackLog(&c.StakingInfoABI, event, "UnJailed", vLog); err != nil {
+			if err := UnpackLog(&c.StakingInfoABI, event, unJailedEvent, vLog); err != nil {
 				return nil, err
 			}
 

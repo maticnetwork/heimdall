@@ -226,7 +226,7 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*hmTypes.Valida
 	return
 }
 
-// IterateValidatorsAndApplyFn interate validators and apply the given function.
+// IterateValidatorsAndApplyFn iterate validators and apply the given function.
 func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator hmTypes.Validator) error) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -250,7 +250,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store")
 		return err
 	}
 
@@ -432,7 +432,7 @@ func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []string) {
 	return
 }
 
-// IterateStakingSequencesAndApplyFn interate validators and apply the given function.
+// IterateStakingSequencesAndApplyFn iterate validators and apply the given function.
 func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -463,7 +463,7 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
 	if !found {
-		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store")
 		return errors.New("validator not found")
 	}
 
@@ -496,7 +496,7 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
-		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store")
 		return
 	}
 

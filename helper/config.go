@@ -3,6 +3,7 @@ package helper
 import (
 	"crypto/ecdsa"
 	"fmt"
+	"io"
 	"log"
 	"math/big"
 	"os"
@@ -21,6 +22,7 @@ import (
 	"github.com/tendermint/tendermint/privval"
 
 	"github.com/maticnetwork/heimdall/file"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 
 	cfg "github.com/tendermint/tendermint/config"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -35,6 +37,7 @@ const (
 	RestServerFlag         = "rest-server"
 	BridgeFlag             = "bridge"
 	LogLevel               = "log_level"
+	LogsWriterFileFlag     = "logs_writer_file"
 	SeedsFlag              = "seeds"
 
 	MainChain   = "mainnet"
@@ -189,8 +192,10 @@ type Configuration struct {
 	// wait time related options
 	NoACKWaitTime time.Duration `mapstructure:"no_ack_wait_time"` // Time ack service waits to clear buffer and elect new proposer
 
-	// json logging
-	LogsType string `mapstructure:"logs_type"` // if true, enable logging in json format
+	// Log related options
+	LogsType       string `mapstructure:"logs_type"`        // if true, enable logging in json format
+	LogsWriterFile string `mapstructure:"logs_writer_file"` // if given, Logs will be written to this file else os.Stdout
+
 	// current chain - newSelectionAlgoHeight depends on this
 	Chain string `mapstructure:"chain"`
 }
@@ -223,6 +228,22 @@ var spanOverrideHeight int64 = 0
 var milestoneHardForkHeight int64 = 0
 
 var milestoneBorBlockHeight uint64 = 0
+var newHexToStringAlgoHeight int64 = 0
+
+type ChainManagerAddressMigration struct {
+	MaticTokenAddress     hmTypes.HeimdallAddress
+	RootChainAddress      hmTypes.HeimdallAddress
+	StakingManagerAddress hmTypes.HeimdallAddress
+	SlashManagerAddress   hmTypes.HeimdallAddress
+	StakingInfoAddress    hmTypes.HeimdallAddress
+	StateSenderAddress    hmTypes.HeimdallAddress
+}
+
+var chainManagerAddressMigrations = map[string]map[int64]ChainManagerAddressMigration{
+	MainChain:   {},
+	MumbaiChain: {},
+	"default":   {},
+}
 
 // Contracts
 // var RootChain types.Contract
@@ -275,14 +296,6 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		log.Fatalln("Unable to unmarshall config", "Error", err)
 	}
 
-	// perform check for json logging
-	if conf.LogsType == "json" {
-		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(os.Stdout))
-	} else {
-		// default fallback
-		Logger = logger.NewTMLogger(logger.NewSyncWriter(os.Stdout))
-	}
-
 	//  if there is a file with overrides submitted via flags => read it an merge it with the alreadey read standard configuration
 	if heimdallConfigFileFromFLag != "" {
 		heimdallViperFromFlag := viper.New()
@@ -294,7 +307,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		}
 
 		var confFromFlag Configuration
-		// unmarshal configuration from the configuration file submited as a flag
+		// unmarshal configuration from the configuration file submitted as a flag
 		if err = heimdallViperFromFlag.UnmarshalExact(&confFromFlag); err != nil {
 			log.Fatalln("Unable to unmarshall config file submitted via flag", "Error", err)
 		}
@@ -307,34 +320,42 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		log.Fatalln("Unable to read flag values. Check log for details.", "Error", err)
 	}
 
+	// perform check for json logging
+	if conf.LogsType == "json" {
+		Logger = logger.NewTMJSONLogger(logger.NewSyncWriter(GetLogsWriter(conf.LogsWriterFile)))
+	} else {
+		// default fallback
+		Logger = logger.NewTMLogger(logger.NewSyncWriter(GetLogsWriter(conf.LogsWriterFile)))
+	}
+
 	// perform checks for timeout
 	if conf.EthRPCTimeout == 0 {
 		// fallback to default
-		Logger.Debug("Invalid ETH RPC timeout provided, falling back to default value", "timeout", DefaultEthRPCTimeout)
+		Logger.Debug("Missing ETH RPC timeout or invalid value provided, falling back to default", "timeout", DefaultEthRPCTimeout)
 		conf.EthRPCTimeout = DefaultEthRPCTimeout
 	}
 
 	if conf.BorRPCTimeout == 0 {
 		// fallback to default
-		Logger.Debug("Invalid BOR RPC timeout provided, falling back to default value", "timeout", DefaultBorRPCTimeout)
+		Logger.Debug("Missing BOR RPC timeout or invalid value provided, falling back to default", "timeout", DefaultBorRPCTimeout)
 		conf.BorRPCTimeout = DefaultBorRPCTimeout
 	}
 
 	if conf.SHStateSyncedInterval == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing StateSynced interval provided, falling back to default value", "interval", DefaultSHStateSyncedInterval)
+		Logger.Debug("Missing self-healing StateSynced interval or invalid value provided, falling back to default", "interval", DefaultSHStateSyncedInterval)
 		conf.SHStateSyncedInterval = DefaultSHStateSyncedInterval
 	}
 
 	if conf.SHStakeUpdateInterval == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing StakeUpdate interval provided, falling back to default value", "interval", DefaultSHStakeUpdateInterval)
+		Logger.Debug("Missing self-healing StakeUpdate interval or invalid value provided, falling back to default", "interval", DefaultSHStakeUpdateInterval)
 		conf.SHStakeUpdateInterval = DefaultSHStakeUpdateInterval
 	}
 
 	if conf.SHMaxDepthDuration == 0 {
 		// fallback to default
-		Logger.Debug("Invalid self-healing max depth duration provided, falling back to default value", "duration", DefaultSHMaxDepthDuration)
+		Logger.Debug("Missing self-healing max depth duration or invalid value provided, falling back to default", "duration", DefaultSHMaxDepthDuration)
 		conf.SHMaxDepthDuration = DefaultSHMaxDepthDuration
 	}
 
@@ -372,22 +393,25 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
+		newHexToStringAlgoHeight = 9266260
 		milestoneHardForkHeight = 50
 		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
+		newHexToStringAlgoHeight = 12048023
 		milestoneHardForkHeight = 50
 		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
-		milestoneHardForkHeight = 300
+		newHexToStringAlgoHeight = 0
+		milestoneHardForkHeight = 50
 		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	}
 }
 
-// GetDefaultHeimdallConfig returns configration with default params
+// GetDefaultHeimdallConfig returns configuration with default params
 func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
@@ -417,8 +441,9 @@ func GetDefaultHeimdallConfig() Configuration {
 
 		NoACKWaitTime: NoACKWaitTime,
 
-		LogsType: DefaultLogsType,
-		Chain:    DefaultChain,
+		LogsType:       DefaultLogsType,
+		Chain:          DefaultChain,
+		LogsWriterFile: "", // default to stdout
 	}
 }
 
@@ -510,6 +535,22 @@ func GetMilestoneHardForkHeight() int64 {
 // GetMilestoneBorBlockHeight returns milestoneBorBlockHeight
 func GetMilestoneBorBlockHeight() uint64 {
 	return milestoneBorBlockHeight
+}
+
+// GetNewHexToStringAlgoHeight returns newHexToStringAlgoHeight
+func GetNewHexToStringAlgoHeight() int64 {
+	return newHexToStringAlgoHeight
+}
+
+func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
+	chainMigration := chainManagerAddressMigrations[conf.Chain]
+	if chainMigration == nil {
+		chainMigration = chainManagerAddressMigrations["default"]
+	}
+
+	result, found := chainMigration[blockNum]
+
+	return result, found
 }
 
 // DecorateWithHeimdallFlags adds persistent flags for heimdall-config and bind flags with command
@@ -650,7 +691,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
 		0,
-		"Set main chain gas limti",
+		"Set main chain gas limit",
 	)
 
 	if err := v.BindPFlag(MainchainGasLimitFlag, cmd.PersistentFlags().Lookup(MainchainGasLimitFlag)); err != nil {
@@ -661,7 +702,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().Int64(
 		MainchainMaxGasPriceFlag,
 		0,
-		"Set main chain max gas limti",
+		"Set main chain max gas limit",
 	)
 
 	if err := v.BindPFlag(MainchainMaxGasPriceFlag, cmd.PersistentFlags().Lookup(MainchainMaxGasPriceFlag)); err != nil {
@@ -688,6 +729,17 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 
 	if err := v.BindPFlag(ChainFlag, cmd.PersistentFlags().Lookup(ChainFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, ChainFlag), "Error", err)
+	}
+
+	// add logsWriterFile flag
+	cmd.PersistentFlags().String(
+		LogsWriterFileFlag,
+		"",
+		"Set logs writer file, Default is os.Stdout",
+	)
+
+	if err := v.BindPFlag(LogsWriterFileFlag, cmd.PersistentFlags().Lookup(LogsWriterFileFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, LogsWriterFileFlag), "Error", err)
 	}
 }
 
@@ -808,6 +860,11 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		c.Chain = stringConfgValue
 	}
 
+	stringConfgValue = v.GetString(LogsWriterFileFlag)
+	if stringConfgValue != "" {
+		c.LogsWriterFile = stringConfgValue
+	}
+
 	return nil
 }
 
@@ -871,6 +928,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 	if cc.Chain != "" {
 		c.Chain = cc.Chain
 	}
+
+	if cc.LogsWriterFile != "" {
+		c.LogsWriterFile = cc.LogsWriterFile
+	}
 }
 
 // DecorateWithTendermintFlags creates tendermint flags for desired command and bind them to viper
@@ -902,5 +963,18 @@ func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 		case MumbaiChain:
 			tendermintConfig.P2P.Seeds = DefaultTestnetSeeds
 		}
+	}
+}
+
+func GetLogsWriter(logsWriterFile string) io.Writer {
+	if logsWriterFile != "" {
+		logWriter, err := os.OpenFile(logsWriterFile, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0666)
+		if err != nil {
+			log.Fatalf("error opening log writer file: %v", err)
+		}
+
+		return logWriter
+	} else {
+		return os.Stdout
 	}
 }

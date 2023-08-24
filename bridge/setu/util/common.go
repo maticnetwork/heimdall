@@ -6,10 +6,9 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
-	"os"
 	"strconv"
 	"sync"
 	"time"
@@ -92,7 +91,8 @@ var loggerOnce sync.Once
 func Logger() log.Logger {
 	loggerOnce.Do(func() {
 		defaultLevel := "info"
-		logger = log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+		logsWriter := helper.GetLogsWriter(helper.GetConfig().LogsWriterFile)
+		logger = log.NewTMLogger(log.NewSyncWriter(logsWriter))
 		option, err := log.AllowLevel(viper.GetString("log_level"))
 		if err != nil {
 			// cosmos sdk is using different style of log format
@@ -653,7 +653,7 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 		return 0
 	}
 
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
 	if err != nil {

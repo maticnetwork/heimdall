@@ -52,4 +52,4 @@ docker run heimdall
 
 ### Documentation 
 
-Latest docs are [here](https://docs.matic.network/) 
+Latest docs are [here](https://wiki.polygon.technology/docs/category/heimdall) 
