@@ -33,27 +33,6 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 
 	borChainId := "1234"
 
-	suite.Run("Failure-Before Hard Fork", func() {
-
-		// create milestone msg
-		msgMilestone := types.NewMsgMilestoneBlock(
-			milestone.Proposer,
-			milestone.StartBlock,
-			milestone.EndBlock,
-			milestone.Hash,
-			borChainId,
-			milestone.MilestoneID,
-		)
-
-		ctxNew := ctx.WithBlockHeight(-1) //Setting height as -1 just to check for the hard fork.
-
-		// send milestone to handler
-		result := suite.sideHandler(ctxNew, msgMilestone)
-		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should Fail")
-		require.Equal(t, uint32(common.CodeInvalidBlockInput), result.Code)
-
-	})
-
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 

@@ -79,8 +79,8 @@ func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength 
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error) {
 	//Milestone proposing mechanism will work only after specific block height
-	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
-		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
+	if util.GetBlockHeight(mp.cliCtx) < helper.GetAalborgHardForkHeight() {
+		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetAalborgHardForkHeight())
 		return nil
 	}
 
@@ -225,8 +225,8 @@ func (mp *MilestoneProcessor) startPollingMilestoneTimeout(ctx context.Context, 
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndProposeMilestoneTimeout() (err error) {
 	//Milestone proposing mechanism will work only after specific block height
-	if util.GetBlockHeight(mp.cliCtx) < helper.GetMilestoneHardForkHeight() {
-		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetMilestoneHardForkHeight())
+	if util.GetBlockHeight(mp.cliCtx) < helper.GetAalborgHardForkHeight() {
+		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetAalborgHardForkHeight())
 		return nil
 	}
 

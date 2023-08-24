@@ -224,13 +224,10 @@ var GenesisDoc tmTypes.GenesisDoc
 var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
-var noAckProposerCheckHeight int64 = 0
-
-var milestoneHardForkHeight int64 = 0
 
 var milestoneBorBlockHeight uint64 = 0
 
-var validatorSetRotationStopHeight int64 = 0
+var aalborgHeight int64 = 0
 
 var newHexToStringAlgoHeight int64 = 0
 
@@ -397,27 +394,21 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	case MainChain:
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
-		newHexToStringAlgoHeight = 9266260 
-		noAckProposerCheckHeight = 50000000       
-		milestoneHardForkHeight = 50
-		milestoneBorBlockHeight = 1000            //Fixme:Change the value
-		validatorSetRotationStopHeight = 50000000 //Change this value
+		newHexToStringAlgoHeight = 9266260
+		aalborgHeight = 10000000000    //To be decided
+		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
-		noAckProposerCheckHeight = 50000000        
-		milestoneHardForkHeight = 50
-		milestoneBorBlockHeight = 1000            //Fixme:Change the value
-		validatorSetRotationStopHeight = 50000000 //Change this value
+		aalborgHeight = 10000000000    //To be decided
+		milestoneBorBlockHeight = 1000 //Fixme:Change the value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
-		noAckProposerCheckHeight = 50000000        
-		milestoneHardForkHeight = 50
-		milestoneBorBlockHeight = 1000            //Fixme:Change the value
-		validatorSetRotationStopHeight = 50000000 //Change this value
+		aalborgHeight = 0
+		milestoneBorBlockHeight = 0
 	}
 }
 
@@ -537,23 +528,14 @@ func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
 }
 
-// GetNoAckProposerCheckHeight returns noAckProposerCheckHeight
-func GetNoAckProposerCheckHeight() int64 {
-	return noAckProposerCheckHeight
-}
-// GetMilestoneHardForkHeight returns milestoneHardForkHeight
-func GetMilestoneHardForkHeight() int64 {
-	return milestoneHardForkHeight
+// GetAalborgHardForkHeight returns AalborgHardForkHeight
+func GetAalborgHardForkHeight() int64 {
+	return aalborgHeight
 }
 
 // GetMilestoneBorBlockHeight returns milestoneBorBlockHeight
 func GetMilestoneBorBlockHeight() uint64 {
 	return milestoneBorBlockHeight
-}
-
-// GetValidatorSetRotationStopHeight returns validatorSetRotationStopHeight
-func GetValidatorSetRotationStopHeight() int64 {
-	return validatorSetRotationStopHeight
 }
 
 // GetNewHexToStringAlgoHeight returns newHexToStringAlgoHeight
