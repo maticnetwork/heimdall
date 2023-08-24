@@ -264,10 +264,8 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	if ctx.BlockHeight() >= helper.GetNoAckProposerCheckHeight() {
 		timeDiff := currentTime.Sub(lastCheckpointTime)
 
-		var count float64
-
 		//count value is calculated based on the time passed since the last checkpoint
-		count = math.Floor(timeDiff.Seconds() / bufferTime.Seconds())
+		count := math.Floor(timeDiff.Seconds() / bufferTime.Seconds())
 
 		var isProposer bool = false
 

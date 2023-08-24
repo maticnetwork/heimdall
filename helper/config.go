@@ -375,17 +375,17 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
-    noAckProposerCheckHeight = 50000000 //Change this value
+		noAckProposerCheckHeight = 50000000 //Change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
-    noAckProposerCheckHeight = 50000000 //Change this value
+		noAckProposerCheckHeight = 50000000 //Change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
-    noAckProposerCheckHeight = 50000000 //Change this value
+		noAckProposerCheckHeight = 50000000 //Change this value
 	}
 }
 
