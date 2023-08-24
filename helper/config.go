@@ -398,21 +398,21 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
 		milestoneHardForkHeight = 50
-		milestoneBorBlockHeight = 1000 //Fixme:Change the value
+		milestoneBorBlockHeight = 1000            //Fixme:Change the value
 		validatorSetRotationStopHeight = 50000000 //Change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
 		milestoneHardForkHeight = 50
-		milestoneBorBlockHeight = 1000 //Fixme:Change the value
+		milestoneBorBlockHeight = 1000            //Fixme:Change the value
 		validatorSetRotationStopHeight = 50000000 //Change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		milestoneHardForkHeight = 50
-		milestoneBorBlockHeight = 1000 //Fixme:Change the value
+		milestoneBorBlockHeight = 1000            //Fixme:Change the value
 		validatorSetRotationStopHeight = 50000000 //Change this value
 	}
 }
@@ -532,7 +532,6 @@ func GetNewSelectionAlgoHeight() int64 {
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
 }
-
 
 // GetMilestoneHardForkHeight returns milestoneHardForkHeight
 func GetMilestoneHardForkHeight() int64 {
