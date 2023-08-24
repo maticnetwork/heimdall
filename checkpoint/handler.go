@@ -237,7 +237,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 }
 
 // Handles checkpoint no-ack transaction
-func handleMsgCheckpointNoAck(ctx sdk.Context, _ types.MsgCheckpointNoAck, k Keeper) sdk.Result {
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
 
 	// Get current block time
