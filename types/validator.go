@@ -8,6 +8,7 @@ import (
 	"strconv"
 
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/ethereum/go-ethereum/common"
 )
 
 // Validator heimdall validator
@@ -76,7 +77,7 @@ func (v *Validator) ValidateBasic() bool {
 		return false
 	}
 
-	if bytes.Equal(v.Signer.Bytes(), []byte("")) {
+	if bytes.Equal(v.Signer.Bytes(), HeimdallAddress(common.Address{}).Bytes()) {
 		return false
 	}
 

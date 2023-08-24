@@ -174,6 +174,27 @@ func (suite *QuerierTestSuite) TestHandleQueryProposer() {
 	require.NotNil(t, res)
 }
 
+func (suite *QuerierTestSuite) TestHandleQueryMilestoneProposer() {
+	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+	keeper := app.StakingKeeper
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
+
+	path := []string{types.QueryMilestoneProposer}
+
+	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneProposer)
+
+	req := abci.RequestQuery{
+		Path: route,
+		Data: app.Codec().MustMarshalJSON(types.NewQueryProposerParams(uint64(2))),
+	}
+	res, err := querier(ctx, path, req)
+	// check no error found
+	require.NoError(t, err)
+
+	// check response is not nil
+	require.NotNil(t, res)
+}
+
 func (suite *QuerierTestSuite) TestHandleQueryCurrentProposer() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
 	keeper := app.StakingKeeper

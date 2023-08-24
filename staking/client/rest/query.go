@@ -142,6 +142,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		proposerHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
+		"/staking/milestoneProposer/{times}",
+		milestoneProposerHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
 		"/staking/current-proposer",
 		currentProposerHandlerFn(cliCtx),
 	).Methods("GET")
@@ -453,6 +457,47 @@ func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// error if no checkpoint found
 		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No proposer found"); !ok {
+			return
+		}
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+func milestoneProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get proposer times
+		times, ok := rest.ParseUint64OrReturnBadRequest(w, vars["times"])
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryProposerParams(times))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneProposer), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching milestoneproposers ", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
+		// error if no checkpoint found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No milestone proposer found"); !ok {
 			return
 		}
 

@@ -14,10 +14,15 @@ import (
 )
 
 const (
-	spanURL              = "/bor/span/%v"
-	eventRecordList      = "/clerk/event-record/list"
-	fetchCheckpointCount = "/checkpoints/count"
-	fetchCheckpoint      = "/checkpoints/%s"
+	spanURL                 = "/bor/span/%v"
+	eventRecordList         = "/clerk/event-record/list"
+	fetchCheckpointCount    = "/checkpoints/count"
+	fetchCheckpoint         = "/checkpoints/%s"
+	fetchMilestoneCount     = "/checkpoints/count"
+	fetchMilestone          = "/milestone/latest"
+	fetchMilestoneNoAck     = "/milestone/noAck/%s"
+	fetchLastNoAckMilestone = "/milestone/lastNoAck"
+	fetchMilestoneID        = "/milestone/ID/%s"
 )
 
 var logger tmLog.Logger

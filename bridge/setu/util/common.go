@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -24,6 +25,7 @@ import (
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	chainManagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
+	milestoneTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerktypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
@@ -37,10 +39,14 @@ const (
 	AccountDetailsURL       = "/auth/accounts/%v"
 	LastNoAckURL            = "/checkpoints/last-no-ack"
 	CheckpointParamsURL     = "/checkpoints/params"
+	MilestoneParamsURL      = "/milestone/params"
+	MilestoneCountURL       = "/milestone/count"
 	ChainManagerParamsURL   = "/chainmanager/params"
 	ProposersURL            = "/staking/proposer/%v"
+	MilestoneProposersURL   = "/staking/milestoneProposer/%v"
 	BufferedCheckpointURL   = "/checkpoints/buffer"
 	LatestCheckpointURL     = "/checkpoints/latest"
+	LatestMilestoneURL      = "/milestone/latest"
 	CountCheckpointURL      = "/checkpoints/count"
 	CurrentProposerURL      = "/staking/current-proposer"
 	LatestSpanURL           = "/bor/latest-span"
@@ -139,6 +145,38 @@ func IsProposer(cliCtx cliContext.CLIContext) (bool, error) {
 	return false, nil
 }
 
+func IsMilestoneProposer(cliCtx cliContext.CLIContext) (bool, error) {
+	var (
+		proposers []hmtypes.Validator
+		count     = uint64(1)
+	)
+
+	result, err := helper.FetchFromAPI(cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(MilestoneProposersURL, strconv.FormatUint(count, 10))),
+	)
+	if err != nil {
+		logger.Error("Error fetching milestone proposers", "url", MilestoneProposersURL, "error", err)
+		return false, err
+	}
+
+	err = jsoniter.ConfigFastest.Unmarshal(result.Result, &proposers)
+	if err != nil {
+		logger.Error("error unmarshalling milestone proposer slice", "error", err)
+		return false, err
+	}
+
+	if len(proposers) == 0 {
+		logger.Error("length of proposer list is 0")
+		return false, errors.Errorf("Length of proposer list is 0")
+	}
+
+	if bytes.Equal(proposers[0].Signer.Bytes(), helper.GetAddress()) {
+		return true, nil
+	}
+
+	return false, nil
+}
+
 // IsInProposerList checks if we are in current proposer
 func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
@@ -149,6 +187,37 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	)
 	if err != nil {
 		logger.Error("Unable to send request for next proposers", "url", ProposersURL, "error", err)
+		return false, err
+	}
+
+	// unmarshall data from buffer
+	var proposers []hmtypes.Validator
+	if err := jsoniter.ConfigFastest.Unmarshal(response.Result, &proposers); err != nil {
+		logger.Error("Error unmarshalling validator data ", "error", err)
+		return false, err
+	}
+
+	logger.Debug("Fetched proposers list", "numberOfProposers", count)
+
+	for _, proposer := range proposers {
+		if bytes.Equal(proposer.Signer.Bytes(), helper.GetAddress()) {
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+// IsInProposerList checks if we are in current proposer
+func IsInMilestoneProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
+	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
+
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(fmt.Sprintf(MilestoneProposersURL, strconv.FormatUint(count, 10))),
+	)
+	if err != nil {
+		logger.Error("Unable to send request for next proposers", "url", MilestoneProposersURL, "error", err)
 		return false, err
 	}
 
@@ -383,6 +452,27 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	return &params, nil
 }
 
+// GetCheckpointParams return params
+func GetMilestoneParams(cliCtx cliContext.CLIContext) (*milestoneTypes.Params, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(MilestoneParamsURL),
+	)
+
+	if err != nil {
+		logger.Error("Error fetching Milestone params", "err", err)
+		return nil, err
+	}
+
+	var params milestoneTypes.Params
+	if err := json.Unmarshal(response.Result, &params); err != nil {
+		logger.Error("Error unmarshalling Checkpoint params", "url", MilestoneParamsURL)
+		return nil, err
+	}
+
+	return &params, nil
+}
+
 // GetBufferedCheckpoint return checkpoint from bueffer
 func GetBufferedCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, error) {
 	response, err := helper.FetchFromAPI(
@@ -423,6 +513,48 @@ func GetLatestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, err
 	}
 
 	return &checkpoint, nil
+}
+
+// GetLatestMilestone return last successful milestone
+func GetLatestMilestone(cliCtx cliContext.CLIContext) (*hmtypes.Milestone, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(LatestMilestoneURL),
+	)
+
+	if err != nil {
+		logger.Debug("Error fetching latest milestone", "err", err)
+		return nil, err
+	}
+
+	var milestone hmtypes.Milestone
+	if err = json.Unmarshal(response.Result, &milestone); err != nil {
+		logger.Error("Error unmarshalling latest milestone", "url", LatestMilestoneURL, "err", err)
+		return nil, err
+	}
+
+	return &milestone, nil
+}
+
+// GetCheckpointParams return params
+func GetMilestoneCount(cliCtx cliContext.CLIContext) (*milestoneTypes.Count, error) {
+	response, err := helper.FetchFromAPI(
+		cliCtx,
+		helper.GetHeimdallServerEndpoint(MilestoneCountURL),
+	)
+
+	if err != nil {
+		logger.Error("Error fetching Milestone count", "err", err)
+		return nil, err
+	}
+
+	var count milestoneTypes.Count
+	if err := json.Unmarshal(response.Result, &count); err != nil {
+		logger.Error("Error unmarshalling milestone Count", "url", MilestoneCountURL)
+		return nil, err
+	}
+
+	return &count, nil
 }
 
 // AppendPrefix returns publickey in uncompressed format

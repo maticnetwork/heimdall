@@ -55,10 +55,12 @@ const (
 	NoACKPollIntervalFlag        = "noack_poll_interval"
 	ClerkPollIntervalFlag        = "clerk_poll_interval"
 	SpanPollIntervalFlag         = "span_poll_interval"
+	MilestonePollIntervalFlag    = "milestone_poll_interval"
 	MainchainGasLimitFlag        = "main_chain_gas_limit"
 	MainchainMaxGasPriceFlag     = "main_chain_max_gas_price"
-	NoACKWaitTimeFlag            = "no_ack_wait_time"
-	ChainFlag                    = "chain"
+
+	NoACKWaitTimeFlag = "no_ack_wait_time"
+	ChainFlag         = "chain"
 
 	// ---
 	// TODO Move these to common client flags
@@ -97,10 +99,14 @@ const (
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
-	DefaultEnableSH                 = false
-	DefaultSHStateSyncedInterval    = 15 * time.Minute
-	DefaultSHStakeUpdateInterval    = 3 * time.Hour
-	DefaultSHMaxDepthDuration       = time.Hour
+
+	DefaultMilestonePollInterval = 30 * time.Second
+
+	DefaultEnableSH              = false
+	DefaultSHStateSyncedInterval = 15 * time.Minute
+	DefaultSHStakeUpdateInterval = 3 * time.Hour
+
+	DefaultSHMaxDepthDuration = time.Hour
 
 	DefaultMainchainGasLimit = uint64(5000000)
 
@@ -126,6 +132,16 @@ const (
 	// New max state sync size after hardfork
 	MaxStateSyncSize = 30000
 
+	//Milestone Length
+	MilestoneLength = uint64(12)
+
+	MilestonePruneNumber = uint64(100)
+
+	MaticChainMilestoneConfirmation = uint64(16)
+
+	//Milestone buffer Length
+	MilestoneBufferLength = MilestoneLength * 2
+	MilestoneBufferTime   = 256 * time.Second
 	// Default Open Collector Endpoint
 	DefaultOpenCollectorEndpoint = "localhost:4317"
 )
@@ -167,6 +183,7 @@ type Configuration struct {
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
 	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
+	MilestonePollInterval    time.Duration `mapstructure:"milestone_poll_interval"`
 	EnableSH                 bool          `mapstructure:"enable_self_heal"`         // Enable self healing
 	SHStateSyncedInterval    time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
 	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
@@ -207,6 +224,10 @@ var GenesisDoc tmTypes.GenesisDoc
 var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
+
+var milestoneHardForkHeight int64 = 0
+
+var milestoneBorBlockHeight uint64 = 0
 
 var validatorSetRotationStopHeight int64 = 0
 
@@ -376,16 +397,22 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
+		milestoneHardForkHeight = 50
+		milestoneBorBlockHeight = 1000            //Fixme:Change the value
 		validatorSetRotationStopHeight = 50000000 //Change this value
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
+		milestoneHardForkHeight = 50
+		milestoneBorBlockHeight = 1000            //Fixme:Change the value
 		validatorSetRotationStopHeight = 50000000 //Change this value
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
+		milestoneHardForkHeight = 50
+		milestoneBorBlockHeight = 1000            //Fixme:Change the value
 		validatorSetRotationStopHeight = 50000000 //Change this value
 	}
 }
@@ -412,6 +439,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		NoACKPollInterval:        DefaultNoACKPollInterval,
 		ClerkPollInterval:        DefaultClerkPollInterval,
 		SpanPollInterval:         DefaultSpanPollInterval,
+		MilestonePollInterval:    DefaultMilestonePollInterval,
 		EnableSH:                 DefaultEnableSH,
 		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
 		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
@@ -503,6 +531,16 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
+}
+
+// GetMilestoneHardForkHeight returns milestoneHardForkHeight
+func GetMilestoneHardForkHeight() int64 {
+	return milestoneHardForkHeight
+}
+
+// GetMilestoneBorBlockHeight returns milestoneBorBlockHeight
+func GetMilestoneBorBlockHeight() uint64 {
+	return milestoneBorBlockHeight
 }
 
 // GetValidatorSetRotationStopHeight returns validatorSetRotationStopHeight
@@ -649,6 +687,17 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, SpanPollIntervalFlag), "Error", err)
 	}
 
+	// add MilestonePollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		MilestonePollIntervalFlag,
+		DefaultMilestonePollInterval.String(),
+		"Set milestone interval",
+	)
+
+	if err := v.BindPFlag(MilestonePollIntervalFlag, cmd.PersistentFlags().Lookup(MilestonePollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MilestonePollIntervalFlag), "Error", err)
+	}
+
 	// add MainchainGasLimitFlag flag
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
@@ -786,6 +835,15 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		}
 	}
 
+	// get milestone poll interval from viper/cobra
+	stringConfgValue = v.GetString(MilestonePollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.MilestonePollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", MilestonePollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
 	// get time that ack service waits to clear buffer and elect new proposer from viper/cobra
 	stringConfgValue = v.GetString(NoACKWaitTimeFlag)
 	if stringConfgValue != "" {
@@ -868,6 +926,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.SpanPollInterval != 0 {
 		c.SpanPollInterval = cc.SpanPollInterval
+	}
+
+	if cc.MilestonePollInterval != 0 {
+		c.MilestonePollInterval = cc.MilestonePollInterval
 	}
 
 	if cc.NoACKWaitTime != 0 {

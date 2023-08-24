@@ -67,7 +67,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	// and returns with the details we use to proxy orders to that socket
 	listener, err := rpcserver.Listen(listenAddr, cfg)
 	if err != nil {
-		logger.Error("RPC could not listen: %v", err)
+		logger.Error("RPC could not listen: %v ", err)
 		return err
 	}
 	// no err? -> signal here that server is open for business
