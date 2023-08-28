@@ -201,8 +201,6 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, _ h
 func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keeper, _ helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
-	return common.ErrBadAck(k.Codespace()).Result()
-
 	// Get last checkpoint from buffer
 	headerBlock, err := k.GetCheckpointFromBuffer(ctx)
 	if err != nil {
