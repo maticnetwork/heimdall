@@ -411,11 +411,20 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 	}
 
 	// adjust checkpoint data if latest checkpoint is already submitted
-	if checkpointObj.EndBlock > msg.EndBlock {
-		logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
-		checkpointObj.EndBlock = msg.EndBlock
-		checkpointObj.RootHash = msg.RootHash
-		checkpointObj.Proposer = msg.Proposer
+	if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() {
+		if checkpointObj.EndBlock > msg.EndBlock {
+			logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
+			checkpointObj.EndBlock = msg.EndBlock
+			checkpointObj.RootHash = msg.RootHash
+			checkpointObj.Proposer = msg.Proposer
+		}
+	} else {
+		if checkpointObj.EndBlock != msg.EndBlock {
+			logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
+			checkpointObj.EndBlock = msg.EndBlock
+			checkpointObj.RootHash = msg.RootHash
+			checkpointObj.Proposer = msg.Proposer
+		}
 	}
 
 	//
