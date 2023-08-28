@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"fmt"
 	"math"
 	"strconv"
 	"time"
@@ -266,6 +267,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	//Hardfork to check the validaty of the NoAckProposer
 	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+		fmt.Println("############IN ACK###############", ctx.BlockHeight())
 		timeDiff := currentTime.Sub(lastCheckpointTime)
 
 		//count value is calculated based on the time passed since the last checkpoint
@@ -289,6 +291,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 		if !isProposer {
 			return common.ErrInvalidNoACKProposer(k.Codespace()).Result()
 		}
+		fmt.Println("############OUT ACK###############", ctx.BlockHeight())
 	}
 
 	// Check last no ack - prevents repetitive no-ack

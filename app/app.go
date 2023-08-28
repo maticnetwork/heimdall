@@ -601,8 +601,12 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		//Hardfork to remove the rotation of validator list on stake update
 		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() {
 			// increment proposer priority
+			fmt.Println("############ENTER IN ROTATION IN ", currentValidatorSet.Proposer)
 			currentValidatorSet.IncrementProposerPriority(1)
+			fmt.Println("############ENTER IN ROTATION OUT", currentValidatorSet.Proposer)
 		}
+
+		fmt.Println("############DIDN'T ENTER IN ROTATION", currentValidatorSet.Proposer)
 
 		// validator set change
 		logger.Debug("[ENDBLOCK] Updated current validator set", "proposer", currentValidatorSet.GetProposer())

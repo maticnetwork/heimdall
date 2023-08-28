@@ -3,6 +3,7 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -293,6 +294,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 	//Hard fork changes for milestone
 	//When there is any update in checkpoint validator set, we assign it to milestone validator set too.
 	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+		fmt.Println("############UPDATE VALIDATOR SET TOO###############", ctx.BlockHeight())
 		store.Set(CurrentMilestoneValidatorSetKey, bz)
 	}
 

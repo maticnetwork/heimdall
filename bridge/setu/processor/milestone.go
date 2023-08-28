@@ -79,10 +79,10 @@ func (mp *MilestoneProcessor) startPolling(ctx context.Context, milestoneLength 
 // 3. if so, propose milestone to heimdall.
 func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error) {
 	//Milestone proposing mechanism will work only after specific block height
-	if util.GetBlockHeight(mp.cliCtx) < helper.GetAalborgHardForkHeight() {
-		mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetAalborgHardForkHeight())
-		return nil
-	}
+	// if util.GetBlockHeight(mp.cliCtx) < helper.GetAalborgHardForkHeight() {
+	// 	mp.Logger.Debug("Block height Less than fork height", "current block height", util.GetBlockHeight(mp.cliCtx), "milestone hard fork height", helper.GetAalborgHardForkHeight())
+	// 	return nil
+	// }
 
 	// fetch milestone context
 	milestoneContext, err := mp.getMilestoneContext()

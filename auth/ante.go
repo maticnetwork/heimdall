@@ -125,6 +125,7 @@ func NewAnteHandler(
 
 		//Check whether the chain has reached the hard fork length to execute milestone msgs
 		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() && stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone {
+			fmt.Println("############FAILED IN ANTE###############", ctx.BlockHeight())
 			return newCtx, sdk.ErrUnknownRequest("Milestone msgs proposed before the hardfork").Result(), true
 		}
 
