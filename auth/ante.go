@@ -123,11 +123,22 @@ func NewAnteHandler(
 			}
 		}()
 
+		fmt.Println("############FAILED IN ANTE 127###############", ctx.BlockHeight())
+		if stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone {
+			fmt.Println("############TRUE1###############", ctx.BlockHeight())
+		}
+
+		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() {
+			fmt.Println("############TRUE2###############", ctx.BlockHeight())
+		}
+
 		//Check whether the chain has reached the hard fork length to execute milestone msgs
 		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() && stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone {
 			fmt.Println("############FAILED IN ANTE###############", ctx.BlockHeight())
 			return newCtx, sdk.ErrUnknownRequest("Milestone msgs proposed before the hardfork").Result(), true
 		}
+
+		fmt.Println("############FAILED IN ANTE 137###############", ctx.BlockHeight())
 
 		// validate tx
 		if err := tx.ValidateBasic(); err != nil {
