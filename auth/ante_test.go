@@ -422,7 +422,8 @@ func (suite *AnteTestSuite) TestMilestoneHardFork() {
 	// checkpoint msg
 	msg := TestMilestoneMsg{*sdkAuth.NewTestMsg(addr1)}
 
-	ctx = ctx.WithBlockHeight(int64(0))
+	//Setting block height to -1 t0 check for the hard fork
+	ctx = ctx.WithBlockHeight(int64(-1))
 	// test good tx from one signer
 	tx = types.NewTestTx(ctx, sdk.Msg(&msg), priv1, acc1.GetAccountNumber(), uint64(0))
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeUnknownRequest)

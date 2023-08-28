@@ -292,7 +292,7 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 
 	//Hard fork changes for milestone
 	//When there is any update in checkpoint validator set, we assign it to milestone validator set too.
-	if ctx.BlockHeight() >= helper.GetMilestoneHardForkHeight() {
+	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
 		store.Set(CurrentMilestoneValidatorSetKey, bz)
 	}
 

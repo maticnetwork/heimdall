@@ -265,7 +265,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	}
 
 	//Hardfork to check the validaty of the NoAckProposer
-	if ctx.BlockHeight() >= helper.GetNoAckProposerCheckHeight() {
+	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
 		timeDiff := currentTime.Sub(lastCheckpointTime)
 
 		//count value is calculated based on the time passed since the last checkpoint

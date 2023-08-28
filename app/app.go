@@ -599,7 +599,7 @@ func (app *HeimdallApp) EndBlocker(ctx sdk.Context, req abci.RequestEndBlock) ab
 		}
 
 		//Hardfork to remove the rotation of validator list on stake update
-		if ctx.BlockHeight() < helper.GetValidatorSetRotationStopHeight() {
+		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() {
 			// increment proposer priority
 			currentValidatorSet.IncrementProposerPriority(1)
 		}
