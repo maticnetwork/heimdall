@@ -395,20 +395,17 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
-		aalborgHeight = 10000000000    //To be decided
-		milestoneBorBlockHeight = 1000 //Fixme:Change the value
+		aalborgHeight = 1000000000 //NOTE:IT IS NOT CONFIRMED,WILL CHANGE THIS VALUE IN FUTURE
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
-		aalborgHeight = 10000000000    //To be decided
-		milestoneBorBlockHeight = 1000 //Fixme:Change the value
+		aalborgHeight = 18035772
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
-		milestoneBorBlockHeight = 0
 	}
 }
 
