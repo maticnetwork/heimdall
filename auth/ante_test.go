@@ -427,7 +427,7 @@ func (suite *AnteTestSuite) TestMilestoneHardFork() {
 	ctx = ctx.WithBlockHeight(int64(-1))
 	// test good tx from one signer
 	tx = types.NewTestTx(ctx, sdk.Msg(&msgTimeout), priv1, acc1.GetAccountNumber(), uint64(0))
-	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInternal)
+	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeTxDecode)
 
 	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress())
 	require.Equal(t, amt1, (acc1.GetCoins()).AmountOf(authTypes.FeeToken))
