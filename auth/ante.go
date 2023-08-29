@@ -87,7 +87,7 @@ func NewAnteHandler(
 		//Check whether the chain has reached the hard fork length to execute milestone msgs
 		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() && (stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone || stdTx.Msg.Type() == checkpointTypes.EventTypeMilestoneTimeout) {
 			newCtx = SetGasMeter(simulate, ctx, 0)
-			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
+			return newCtx, sdk.ErrTxDecode("error decoding transaction").Result(), true
 		}
 
 		// get account params
