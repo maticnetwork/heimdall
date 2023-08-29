@@ -84,6 +84,12 @@ func NewAnteHandler(
 			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
 		}
 
+		//Check whether the chain has reached the hard fork length to execute milestone msgs
+		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() && (stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone || stdTx.Msg.Type() == checkpointTypes.EventTypeMilestoneTimeout) {
+			newCtx = SetGasMeter(simulate, ctx, 0)
+			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
+		}
+
 		// get account params
 		params := ak.GetParams(ctx)
 
@@ -122,11 +128,6 @@ func NewAnteHandler(
 				}
 			}
 		}()
-
-		//Check whether the chain has reached the hard fork length to execute milestone msgs
-		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() && stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone {
-			return newCtx, sdk.ErrUnknownRequest("Milestone msgs proposed before the hardfork").Result(), true
-		}
 
 		// validate tx
 		if err := tx.ValidateBasic(); err != nil {
