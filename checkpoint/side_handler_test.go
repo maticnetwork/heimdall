@@ -497,6 +497,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	suite.Run("InvalidEndBlock", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 		header2, _ := chSim.GenRandCheckpoint(header.EndBlock+1, maxSize, params.MaxCheckpointLength)
+		checkpointNumber = checkpointNumber + 1
 		msgCheckpoint := types.NewMsgCheckpointBlock(
 			header2.Proposer,
 			header2.StartBlock,
@@ -525,5 +526,181 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 
 		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
 		require.Nil(t, afterAckBufferedCheckpoint)
+	})
+
+	suite.Run("Before Aalborg fork-BufferCheckpoint more than Ack", func() {
+		latestCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		header3, _ := chSim.GenRandCheckpoint(latestCheckpoint.EndBlock+1, maxSize, params.MaxCheckpointLength)
+		checkpointNumber = checkpointNumber + 1
+
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header3.Proposer,
+			header3.StartBlock,
+			header3.EndBlock,
+			header3.RootHash,
+			header3.RootHash,
+			"1234",
+		)
+
+		ctx = ctx.WithBlockHeight(int64(-1))
+
+		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-checkpoint to be ok, got %v", result)
+
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			checkpointNumber,
+			header3.Proposer,
+			header3.StartBlock,
+			header3.EndBlock-1,
+			header3.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+
+		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
+
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
+
+		latestCheckpoint, err = keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		require.Equal(t, header3.EndBlock-1, latestCheckpoint.EndBlock, "expected latest checkpoint based on ack value")
+	})
+
+	suite.Run("Before Aalborg fork-BufferedCheckpoint less than Ack", func() {
+		latestCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		header4, _ := chSim.GenRandCheckpoint(latestCheckpoint.EndBlock+1, maxSize, params.MaxCheckpointLength)
+		checkpointNumber = checkpointNumber + 1
+
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header4.Proposer,
+			header4.StartBlock,
+			header4.EndBlock,
+			header4.RootHash,
+			header4.RootHash,
+			"1234",
+		)
+
+		ctx = ctx.WithBlockHeight(int64(-1))
+
+		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-checkpoint to be ok, got %v", result)
+
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			checkpointNumber,
+			header4.Proposer,
+			header4.StartBlock,
+			header4.EndBlock+1,
+			header4.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+
+		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
+
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
+
+		latestCheckpoint, err = keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		require.Equal(t, header4.EndBlock, latestCheckpoint.EndBlock, "expected latest checkpoint based on ack value")
+	})
+
+	suite.Run("After Aalborg fork-BufferCheckpoint more than Ack", func() {
+		latestCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		header5, _ := chSim.GenRandCheckpoint(latestCheckpoint.EndBlock+1, maxSize, params.MaxCheckpointLength)
+		checkpointNumber = checkpointNumber + 1
+
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header5.Proposer,
+			header5.StartBlock,
+			header5.EndBlock,
+			header5.RootHash,
+			header5.RootHash,
+			"1234",
+		)
+
+		ctx = ctx.WithBlockHeight(int64(1))
+
+		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-checkpoint to be ok, got %v", result)
+
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			checkpointNumber,
+			header5.Proposer,
+			header5.StartBlock,
+			header5.EndBlock-1,
+			header5.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+
+		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
+
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
+
+		latestCheckpoint, err = keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		require.Equal(t, header5.EndBlock-1, latestCheckpoint.EndBlock, "expected latest checkpoint based on ack value")
+	})
+
+	suite.Run("After Aalborg fork-BufferCheckpoint less than Ack", func() {
+		latestCheckpoint, err := keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		header6, _ := chSim.GenRandCheckpoint(latestCheckpoint.EndBlock+1, maxSize, params.MaxCheckpointLength)
+		checkpointNumber = checkpointNumber + 1
+
+		msgCheckpoint := types.NewMsgCheckpointBlock(
+			header6.Proposer,
+			header6.StartBlock,
+			header6.EndBlock,
+			header6.RootHash,
+			header6.RootHash,
+			"1234",
+		)
+
+		ctx = ctx.WithBlockHeight(int64(1))
+
+		result := suite.postHandler(ctx, msgCheckpoint, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-checkpoint to be ok, got %v", result)
+
+		msgCheckpointAck := types.NewMsgCheckpointAck(
+			hmTypes.HexToHeimdallAddress("123"),
+			checkpointNumber,
+			header6.Proposer,
+			header6.StartBlock,
+			header6.EndBlock+1,
+			header6.RootHash,
+			hmTypes.HexToHeimdallHash("123123"),
+			uint64(1),
+		)
+
+		result = suite.postHandler(ctx, msgCheckpointAck, abci.SideTxResultType_Yes)
+		require.True(t, result.IsOK(), "expected send-ack to be ok, got %v", result)
+
+		afterAckBufferedCheckpoint, _ := keeper.GetCheckpointFromBuffer(ctx)
+		require.Nil(t, afterAckBufferedCheckpoint)
+
+		latestCheckpoint, err = keeper.GetLastCheckpoint(ctx)
+		require.Nil(t, err)
+
+		require.Equal(t, header6.EndBlock+1, latestCheckpoint.EndBlock, "expected latest checkpoint based on ack value")
 	})
 }
