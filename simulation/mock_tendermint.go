@@ -81,7 +81,7 @@ func (vals mockValidators) randomProposer(r *rand.Rand) types.HexBytes {
 	return pk.Address().Bytes()
 }
 
-// updateValidators mimicks Tendermint's update logic
+// updateValidators mimics Tendermint's update logic
 // nolint: unparam
 func updateValidators(tb testing.TB, r *rand.Rand, params Params,
 	current map[string]mockValidator, updates []abci.ValidatorUpdate,
