@@ -2,8 +2,6 @@ module github.com/maticnetwork/heimdall
 
 go 1.21
 
-toolchain go1.21.0
-
 require (
 	github.com/RichardKnop/machinery v1.7.4
 	github.com/cbergoon/merkletree v0.2.0
