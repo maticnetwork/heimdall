@@ -253,6 +253,13 @@ For profiling and benchmarking purposes, CPU profiling can be enabled via the '-
 which accepts a path for the resulting pprof file.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			for _, arg := range args {
+				if !strings.HasPrefix(arg, "--") {
+					return fmt.Errorf(
+						"\tinvalid argument: %s \n\tall flags must start with --",
+						arg)
+				}
+			}
 			LogsWriterFile := viper.GetString(helper.LogsWriterFileFlag)
 			if LogsWriterFile != "" {
 				logWriter := helper.GetLogsWriter(LogsWriterFile)
