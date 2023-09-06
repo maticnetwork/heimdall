@@ -489,6 +489,7 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		receipt, err = c.GetMainTxReceipt(tx)
 		if err != nil {
 			Logger.Error("Error while fetching mainChain receipt", "txHash", tx.Hex(), "error", err)
+			Logger.Info(">>>>>>>>>>>>>>>>>>>>>>>>>>> %#v", receipt)
 			return nil, err
 		}
 
