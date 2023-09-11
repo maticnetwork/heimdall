@@ -14,7 +14,7 @@ import (
 
 // handleMsgMilestone validates milestone transaction
 func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.Result {
-	logger := k.Logger(ctx)
+	logger := k.MilestoneLogger(ctx)
 	milestoneLength := helper.MilestoneLength
 
 	//
@@ -114,7 +114,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 
 // Handles milestone timeout transaction
 func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k Keeper) sdk.Result {
-	logger := k.Logger(ctx)
+	logger := k.MilestoneLogger(ctx)
 
 	// Get current block time
 	currentTime := ctx.BlockTime()

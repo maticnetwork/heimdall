@@ -20,7 +20,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 	milestoneLength := helper.MilestoneLength
 
 	// logger
-	logger := k.Logger(ctx)
+	logger := k.MilestoneLogger(ctx)
 
 	//Get the milestone count
 	count := k.GetMilestoneCount(ctx)
@@ -72,7 +72,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 // PostHandleMsgMilestone handles msg milestone
 func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, sideTxResult abci.SideTxResultType) sdk.Result {
-	logger := k.Logger(ctx)
+	logger := k.MilestoneLogger(ctx)
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// TX bytes

@@ -4,6 +4,7 @@ import (
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/tendermint/tendermint/libs/log"
 
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -18,6 +19,11 @@ var (
 	LastMilestoneTimeout  = []byte{0x60} //Key to store the Last Milestone Timeout
 	BlockNumberKey        = []byte{0x70} //Key to store the count
 )
+
+// Logger returns a module-specific logger
+func (k Keeper) MilestoneLogger(ctx sdk.Context) log.Logger {
+	return ctx.Logger().With("module", "Milestone")
+}
 
 // AddMilestone adds milestone in the store
 func (k *Keeper) AddMilestone(ctx sdk.Context, milestone hmTypes.Milestone) error {
