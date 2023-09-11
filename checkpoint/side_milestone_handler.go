@@ -109,7 +109,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil { // fetch last milestone from store
 		// make sure new milestoen is after tip
 		if lastMilestone.EndBlock > msg.StartBlock {
-			logger.Error(" already exists",
+			logger.Error(" Milestone already exists",
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock,
 			)

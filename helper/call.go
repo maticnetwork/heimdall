@@ -313,7 +313,7 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 // GetRootHash get root hash from bor chain
 func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error) {
 	if start > end {
-		return false, errors.New("start is greater than end")
+		return false, errors.New("Start block number is greater than the end block number")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
@@ -321,7 +321,7 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 
 	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	if err != nil {
-		return false, errors.New("could not fetch vote from matic chain")
+		return false, errors.New(fmt.Sprint("Error in fetching vote from matic chain", "err", err))
 	}
 
 	return vote, nil

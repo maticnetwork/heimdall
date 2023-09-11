@@ -2,6 +2,7 @@ package types
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -13,12 +14,12 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 
 	//Check for the minimum length of the milestone
 	if msgMilestoneLength < int64(milestoneLength) {
-		return false, errors.New("Invalid milestone, difference in start and end block is less than milestone length")
+		return false, errors.New(fmt.Sprint("Invalid milestone, difference in start and end block is less than milestone length", "Milestone Length:", milestoneLength))
 	}
 
 	// Check if blocks+confirmations  exist locally
 	if !contractCaller.CheckIfBlocksExist(end + confirmations) {
-		return false, errors.New("blocks not found locally")
+		return false, errors.New(fmt.Sprint("End block number with confirmation is not availbale in the Bor chain", "EndBlock", end, "Confirmation", confirmations))
 	}
 
 	//Get the vote on hash of milestone from Bor
