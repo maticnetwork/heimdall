@@ -140,7 +140,7 @@ const (
 	MaticChainMilestoneConfirmation = uint64(16)
 
 	//Milestone buffer Length
-	MilestoneBufferLength = MilestoneLength * 2
+	MilestoneBufferLength = MilestoneLength * 5
 	MilestoneBufferTime   = 256 * time.Second
 	// Default Open Collector Endpoint
 	DefaultOpenCollectorEndpoint = "localhost:4317"
