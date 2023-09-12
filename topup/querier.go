@@ -91,7 +91,7 @@ func handleQueryDividendAccount(ctx sdk.Context, req abci.RequestQuery, keeper K
 	return bz, nil
 }
 
-func handleDividendAccountRoot(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+func handleDividendAccountRoot(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	// Calculate new account root hash
 	dividendAccounts := keeper.GetAllDividendAccounts(ctx)
 

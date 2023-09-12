@@ -64,6 +64,7 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 
 	// fetch gas limit
 	callMsg.From = fromAddress
+	// nolint: ineffassign,staticcheck
 	gasLimit, err := client.EstimateGas(context.Background(), callMsg)
 
 	chainId, err := client.ChainID(context.Background())

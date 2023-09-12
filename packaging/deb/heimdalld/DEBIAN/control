@@ -3,11 +3,11 @@ Section: develop
 Priority: Testing
 Maintainer: Polygon <team@polygon.technology>
 Build-Depends: debhelper-compat (= 13)
-Standards-Version: v0.3.4
+Standards-Version: v0.3.5-beta
 Homepage: https://polygon.technology
 Rules-Requires-Root: no
 Package: heimdalld
-Version: 0.3.4
+Version: 0.3.5-beta
 Architecture: amd64
 Multi-Arch: foreign
 Depends:

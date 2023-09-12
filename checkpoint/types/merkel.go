@@ -98,6 +98,7 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmType
 func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmTypes.HeimdallAddress, proofToVerify string) (bool, error) {
 	proof, _, err := GetAccountProof(dividendAccounts, userAddr)
 	if err != nil {
+		// nolint: nilerr
 		return false, nil
 	}
 
@@ -109,6 +110,7 @@ func VerifyAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmT
 	return false, nil
 }
 
+//nolint:unparam
 func convertTo32(input []byte) (output [32]byte, err error) {
 	l := len(input)
 	if l > 32 || l == 0 {

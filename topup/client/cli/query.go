@@ -71,6 +71,7 @@ func GetSequence(cdc *codec.Codec) *cobra.Command {
 			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, t), queryParams)
 			if err != nil {
 				fmt.Println("No topup exists")
+				// nolint: nilerr
 				return nil
 			}
 
