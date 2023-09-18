@@ -1,6 +1,7 @@
 package checkpoint
 
 import (
+	"fmt"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -43,6 +44,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
+	fmt.Println("#########Entered Here 1######")
 	//Validating the milestone
 	validMilestone, err := types.ValidateMilestone(msg.StartBlock, msg.EndBlock, msg.Hash, msg.MilestoneID, contractCaller, milestoneLength, cmTypes.DefaultMaticchainMilestoneTxConfirmations)
 	if err != nil {

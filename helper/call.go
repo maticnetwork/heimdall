@@ -316,10 +316,13 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 		return false, errors.New("Start block number is greater than the end block number")
 	}
 
+	fmt.Println("#########Entered Here 5######")
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
+	fmt.Println("#########Entered Here 6######")
 	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	fmt.Println("#########Entered Here 7######")
 	if err != nil {
 		return false, errors.New(fmt.Sprint("Error in fetching vote from matic chain", "err", err))
 	}
@@ -815,7 +818,9 @@ func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
 	// Get block by number.
 	var block *ethTypes.Header
 
+	fmt.Println("#########Entered Here3######")
 	err := c.MaticChainRPC.Call(&block, "eth_getBlockByNumber", fmt.Sprintf("0x%x", end), false)
+	fmt.Println("#########Entered Here 4######")
 	if err != nil {
 		return false
 	}
