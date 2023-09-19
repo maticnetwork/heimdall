@@ -98,28 +98,20 @@ func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
 
 	requiredConfirmations := rootchainContext.ChainmanagerParams.MainchainTxConfirmations
 	headerNumber := newHeader.header.Number
-	from := headerNumber
 
-	// If incoming header is a `finalized` header, it can directly be considered as
-	// the upper cap (i.e. the `to` value)
-	//
-	// If incoming header is a `latest` header, rely on `requiredConfirmations` to get
-	// finalized block range.
-	if !newHeader.isFinalized {
-		// This check is only useful when the L1 blocks received are < requiredConfirmations
-		// just for the below headerNumber -= requiredConfirmations math operation
-		confirmationBlocks := big.NewInt(0).SetUint64(requiredConfirmations)
-		if headerNumber.Cmp(confirmationBlocks) <= 0 {
-			rl.Logger.Error("Block number less than Confirmations required", "blockNumber", headerNumber.Uint64, "confirmationsRequired", confirmationBlocks.Uint64)
-			return
-		}
-
-		// subtract the `confirmationBlocks` to only consider blocks before that
-		headerNumber = headerNumber.Sub(headerNumber, confirmationBlocks)
-
-		// update the `from` value
-		from = headerNumber
+	// This check is only useful when the L1 blocks received are < requiredConfirmations
+	// just for the below headerNumber -= requiredConfirmations math operation
+	confirmationBlocks := big.NewInt(0).SetUint64(requiredConfirmations)
+	if headerNumber.Cmp(confirmationBlocks) <= 0 {
+		rl.Logger.Error("Block number less than Confirmations required", "blockNumber", headerNumber.Uint64, "confirmationsRequired", confirmationBlocks.Uint64)
+		return
 	}
+
+	// subtract the `confirmationBlocks` to only consider blocks before that
+	headerNumber = headerNumber.Sub(headerNumber, confirmationBlocks)
+
+	// update the `from` value
+	from := headerNumber
 
 	// get last block from storage
 	hasLastBlock, _ := rl.storageClient.Has([]byte(lastRootBlockKey), nil)
