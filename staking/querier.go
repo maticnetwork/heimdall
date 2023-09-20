@@ -222,7 +222,7 @@ func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper K
 
 	// check if incoming tx already exists
 	if !keeper.HasStakingSequence(ctx, sequence.String()) {
-		keeper.Logger(ctx).Error("No staking sequence exist: %s %s", params.TxHash, params.LogIndex)
+		keeper.Logger(ctx).Warn("No staking sequence exist: %s %s", params.TxHash, params.LogIndex)
 		return nil, nil
 	}
 

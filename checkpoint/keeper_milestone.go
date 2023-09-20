@@ -213,7 +213,7 @@ func (k *Keeper) SetLastMilestoneTimeout(ctx sdk.Context, timestamp uint64) {
 	store.Set(LastMilestoneTimeout, value)
 }
 
-// GetLastMilestoneTimeout returns lastMilestone timout time
+// GetLastMilestoneTimeout returns lastMilestone timeout time
 func (k *Keeper) GetLastMilestoneTimeout(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	//check if lastMilestoneTimeout key exists

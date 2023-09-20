@@ -74,7 +74,7 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, err := jsoniter.Marshal(map[string]interface{}{"count": count})
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -189,7 +189,7 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		res, err := jsoniter.Marshal(map[string]interface{}{"result": val})
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -218,7 +218,7 @@ func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		res, err := jsoniter.Marshal(map[string]interface{}{"result": val})
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return

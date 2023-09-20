@@ -66,7 +66,7 @@ func (k *Keeper) GetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validato
 }
 
 // HasValidatorSigningInfo returns if a given validator has signing information
-// persited.
+// persisted.
 func (k *Keeper) HasValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID) bool {
 	_, ok := k.GetValidatorSigningInfo(ctx, valID)
 	return ok

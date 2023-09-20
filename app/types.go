@@ -18,7 +18,7 @@ type App interface {
 	Name() string
 
 	// The application types codec.
-	// NOTE: This shoult be sealed before being returned.
+	// NOTE: This should not be sealed before being returned.
 	Codec() *codec.Codec
 
 	// Application updates every begin block.
