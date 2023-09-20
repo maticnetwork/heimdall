@@ -830,15 +830,26 @@ func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.St
 
 // CheckIfBlocksExist - check if the given block exists on local chain
 func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
-	// Get block by number.
-	var block *ethTypes.Header
+	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
+	defer cancel()
 
-	err := c.MaticChainRPC.Call(&block, "eth_getBlockByNumber", fmt.Sprintf("0x%x", end), false)
-	if err != nil {
+	block := c.GetBlockByNumber(ctx, end)
+	if block == nil {
 		return false
 	}
 
-	return end == block.Number.Uint64()
+	return end == block.NumberU64()
+}
+
+// GetBlockByNumber returns blocks by number from child chain (bor)
+func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint64) *ethTypes.Block {
+	block, err := c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	if err != nil {
+		Logger.Error("Unable to fetch block by number from child chain", "block", block, "err", err)
+		return nil
+	}
+
+	return block
 }
 
 //
