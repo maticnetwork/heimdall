@@ -19,7 +19,7 @@ Note this is still a work in progress:
 
 TODO: removal/purge on removal using dpkg
       cleanup of control files to list what we want
-      copyright inclusuion
+      copyright inclusion
 
 
 CLI:
