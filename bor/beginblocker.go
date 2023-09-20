@@ -11,6 +11,13 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+// ResponseWithHeight defines a response object type that wraps an original
+// response with a height.
+type ResponseWithHeight struct {
+	Height string              `json:"height"`
+	Result jsoniter.RawMessage `json:"result"`
+}
+
 func BeginBlocker(ctx sdk.Context, _ abci.RequestBeginBlock, k Keeper) {
 	if ctx.BlockHeight() == helper.GetSpanOverrideHeight() {
 		k.Logger(ctx).Info("overriding span BeginBlocker", "height", ctx.BlockHeight())

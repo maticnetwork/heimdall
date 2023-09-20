@@ -55,10 +55,12 @@ const (
 	NoACKPollIntervalFlag        = "noack_poll_interval"
 	ClerkPollIntervalFlag        = "clerk_poll_interval"
 	SpanPollIntervalFlag         = "span_poll_interval"
+	MilestonePollIntervalFlag    = "milestone_poll_interval"
 	MainchainGasLimitFlag        = "main_chain_gas_limit"
 	MainchainMaxGasPriceFlag     = "main_chain_max_gas_price"
-	NoACKWaitTimeFlag            = "no_ack_wait_time"
-	ChainFlag                    = "chain"
+
+	NoACKWaitTimeFlag = "no_ack_wait_time"
+	ChainFlag         = "chain"
 
 	// ---
 	// TODO Move these to common client flags
@@ -97,10 +99,14 @@ const (
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
-	DefaultEnableSH                 = false
-	DefaultSHStateSyncedInterval    = 15 * time.Minute
-	DefaultSHStakeUpdateInterval    = 3 * time.Hour
-	DefaultSHMaxDepthDuration       = time.Hour
+
+	DefaultMilestonePollInterval = 30 * time.Second
+
+	DefaultEnableSH              = false
+	DefaultSHStateSyncedInterval = 15 * time.Minute
+	DefaultSHStakeUpdateInterval = 3 * time.Hour
+
+	DefaultSHMaxDepthDuration = time.Hour
 
 	DefaultMainchainGasLimit = uint64(5000000)
 
@@ -126,6 +132,16 @@ const (
 	// New max state sync size after hardfork
 	MaxStateSyncSize = 30000
 
+	//Milestone Length
+	MilestoneLength = uint64(12)
+
+	MilestonePruneNumber = uint64(100)
+
+	MaticChainMilestoneConfirmation = uint64(16)
+
+	//Milestone buffer Length
+	MilestoneBufferLength = MilestoneLength * 5
+	MilestoneBufferTime   = 256 * time.Second
 	// Default Open Collector Endpoint
 	DefaultOpenCollectorEndpoint = "localhost:4317"
 )
@@ -150,6 +166,7 @@ type Configuration struct {
 	EthRPCUrl        string `mapstructure:"eth_rpc_url"`        // RPC endpoint for main chain
 	BorRPCUrl        string `mapstructure:"bor_rpc_url"`        // RPC endpoint for bor chain
 	TendermintRPCUrl string `mapstructure:"tendermint_rpc_url"` // tendemint node url
+	SubGraphUrl      string `mapstructure:"sub_graph_url"`      // sub graph url
 
 	EthRPCTimeout time.Duration `mapstructure:"eth_rpc_timeout"` // timeout for eth rpc
 	BorRPCTimeout time.Duration `mapstructure:"bor_rpc_timeout"` // timeout for bor rpc
@@ -167,6 +184,7 @@ type Configuration struct {
 	NoACKPollInterval        time.Duration `mapstructure:"noack_poll_interval"`      // Poll interval for ack service to send no-ack in case of no checkpoints
 	ClerkPollInterval        time.Duration `mapstructure:"clerk_poll_interval"`
 	SpanPollInterval         time.Duration `mapstructure:"span_poll_interval"`
+	MilestonePollInterval    time.Duration `mapstructure:"milestone_poll_interval"`
 	EnableSH                 bool          `mapstructure:"enable_self_heal"`         // Enable self healing
 	SHStateSyncedInterval    time.Duration `mapstructure:"sh_state_synced_interval"` // Interval to self-heal StateSynced events if missing
 	SHStakeUpdateInterval    time.Duration `mapstructure:"sh_stake_update_interval"` // Interval to self-heal StakeUpdate events if missing
@@ -207,6 +225,10 @@ var GenesisDoc tmTypes.GenesisDoc
 var newSelectionAlgoHeight int64 = 0
 
 var spanOverrideHeight int64 = 0
+
+var milestoneBorBlockHeight uint64 = 0
+
+var aalborgHeight int64 = 0
 
 var newHexToStringAlgoHeight int64 = 0
 
@@ -374,15 +396,17 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		newSelectionAlgoHeight = 375300
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
-
+		aalborgHeight = 15950759 //NOTE:IT IS NOT CONFIRMED,WILL CHANGE THIS VALUE IN FUTURE
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
+		aalborgHeight = 18035772
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
+		aalborgHeight = 0
 	}
 }
 
@@ -408,6 +432,7 @@ func GetDefaultHeimdallConfig() Configuration {
 		NoACKPollInterval:        DefaultNoACKPollInterval,
 		ClerkPollInterval:        DefaultClerkPollInterval,
 		SpanPollInterval:         DefaultSpanPollInterval,
+		MilestonePollInterval:    DefaultMilestonePollInterval,
 		EnableSH:                 DefaultEnableSH,
 		SHStateSyncedInterval:    DefaultSHStateSyncedInterval,
 		SHStakeUpdateInterval:    DefaultSHStakeUpdateInterval,
@@ -499,6 +524,16 @@ func GetNewSelectionAlgoHeight() int64 {
 // GetSpanOverrideHeight returns spanOverrideHeight
 func GetSpanOverrideHeight() int64 {
 	return spanOverrideHeight
+}
+
+// GetAalborgHardForkHeight returns AalborgHardForkHeight
+func GetAalborgHardForkHeight() int64 {
+	return aalborgHeight
+}
+
+// GetMilestoneBorBlockHeight returns milestoneBorBlockHeight
+func GetMilestoneBorBlockHeight() uint64 {
+	return milestoneBorBlockHeight
 }
 
 // GetNewHexToStringAlgoHeight returns newHexToStringAlgoHeight
@@ -640,6 +675,17 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, SpanPollIntervalFlag), "Error", err)
 	}
 
+	// add MilestonePollIntervalFlag flag
+	cmd.PersistentFlags().String(
+		MilestonePollIntervalFlag,
+		DefaultMilestonePollInterval.String(),
+		"Set milestone interval",
+	)
+
+	if err := v.BindPFlag(MilestonePollIntervalFlag, cmd.PersistentFlags().Lookup(MilestonePollIntervalFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, MilestonePollIntervalFlag), "Error", err)
+	}
+
 	// add MainchainGasLimitFlag flag
 	cmd.PersistentFlags().Uint64(
 		MainchainGasLimitFlag,
@@ -777,6 +823,15 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		}
 	}
 
+	// get milestone poll interval from viper/cobra
+	stringConfgValue = v.GetString(MilestonePollIntervalFlag)
+	if stringConfgValue != "" {
+		if c.MilestonePollInterval, err = time.ParseDuration(stringConfgValue); err != nil {
+			loggerInstance.Error(logErrMsg, "Flag", MilestonePollIntervalFlag, "Error", err)
+			return err
+		}
+	}
+
 	// get time that ack service waits to clear buffer and elect new proposer from viper/cobra
 	stringConfgValue = v.GetString(NoACKWaitTimeFlag)
 	if stringConfgValue != "" {
@@ -859,6 +914,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.SpanPollInterval != 0 {
 		c.SpanPollInterval = cc.SpanPollInterval
+	}
+
+	if cc.MilestonePollInterval != 0 {
+		c.MilestonePollInterval = cc.MilestonePollInterval
 	}
 
 	if cc.NoACKWaitTime != 0 {

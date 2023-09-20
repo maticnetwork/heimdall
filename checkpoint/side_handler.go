@@ -26,6 +26,8 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 			return SideHandleMsgCheckpoint(ctx, k, msg, contractCaller)
 		case types.MsgCheckpointAck:
 			return SideHandleMsgCheckpointAck(ctx, k, msg, contractCaller)
+		case types.MsgMilestone:
+			return SideHandleMsgMilestone(ctx, k, msg, contractCaller)
 		default:
 			return abci.ResponseDeliverSideTx{
 				Code: uint32(sdk.CodeUnknownRequest),
@@ -193,6 +195,8 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 			return PostHandleMsgCheckpoint(ctx, k, msg, sideTxResult)
 		case types.MsgCheckpointAck:
 			return PostHandleMsgCheckpointAck(ctx, k, msg, sideTxResult)
+		case types.MsgMilestone:
+			return PostHandleMsgMilestone(ctx, k, msg, sideTxResult)
 		default:
 			return sdk.ErrUnknownRequest("Unrecognized checkpoint Msg type").Result()
 		}
@@ -407,11 +411,20 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 	}
 
 	// adjust checkpoint data if latest checkpoint is already submitted
-	if checkpointObj.EndBlock > msg.EndBlock {
-		logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
-		checkpointObj.EndBlock = msg.EndBlock
-		checkpointObj.RootHash = msg.RootHash
-		checkpointObj.Proposer = msg.Proposer
+	if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() {
+		if checkpointObj.EndBlock > msg.EndBlock {
+			logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
+			checkpointObj.EndBlock = msg.EndBlock
+			checkpointObj.RootHash = msg.RootHash
+			checkpointObj.Proposer = msg.Proposer
+		}
+	} else {
+		if checkpointObj.EndBlock != msg.EndBlock {
+			logger.Info("Adjusting endBlock to one already submitted on chain", "endBlock", checkpointObj.EndBlock, "adjustedEndBlock", msg.EndBlock)
+			checkpointObj.EndBlock = msg.EndBlock
+			checkpointObj.RootHash = msg.RootHash
+			checkpointObj.Proposer = msg.Proposer
+		}
 	}
 
 	//

@@ -142,6 +142,10 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 		proposerHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
+		"/staking/milestoneProposer/{times}",
+		milestoneProposerHandlerFn(cliCtx),
+	).Methods("GET")
+	r.HandleFunc(
 		"/staking/current-proposer",
 		currentProposerHandlerFn(cliCtx),
 	).Methods("GET")
@@ -190,7 +194,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, err := jsoniter.ConfigFastest.Marshal(map[string]interface{}{"result": totalPower})
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return
@@ -462,6 +466,47 @@ func proposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
+func milestoneProposerHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		// get proposer times
+		times, ok := rest.ParseUint64OrReturnBadRequest(w, vars["times"])
+		if !ok {
+			return
+		}
+
+		// get query params
+		queryParams, err := cliCtx.Codec.MarshalJSON(types.NewQueryProposerParams(times))
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneProposer), queryParams)
+		if err != nil {
+			RestLogger.Error("Error while fetching milestoneproposers ", "Error", err.Error())
+			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+
+			return
+		}
+
+		// error if no checkpoint found
+		if ok := hmRest.ReturnNotFoundIfNoContent(w, res, "No milestone proposer found"); !ok {
+			return
+		}
+
+		// return result
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
 // swagger:route GET /staking/current-proposer staking stakingCurrentProposer
 // It returns proposer for current validator set
 // responses:
@@ -526,7 +571,7 @@ func proposerBonusPercentHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, err := jsoniter.ConfigFastest.Marshal(_proposerBonusPercent)
 		if err != nil {
-			RestLogger.Error("Error while marshalling resposne to Json", "error", err)
+			RestLogger.Error("Error while marshalling response to Json", "error", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 
 			return

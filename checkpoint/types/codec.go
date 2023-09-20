@@ -9,6 +9,10 @@ func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgCheckpointAck{}, "checkpoint/MsgCheckpointACK", nil)
 	cdc.RegisterConcrete(MsgCheckpointNoAck{}, "checkpoint/MsgCheckpointNoACK", nil)
 	cdc.RegisterConcrete(MsgCheckpointAdjust{}, "checkpoint/MsgCheckpointAdjust", nil)
+
+	//################ Milestone ######################
+	cdc.RegisterConcrete(MsgMilestone{}, "checkpoint/MsgMilestone", nil)
+	cdc.RegisterConcrete(MsgMilestoneTimeout{}, "checkpoint/MsgMilestoneTimeout", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

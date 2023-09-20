@@ -12,6 +12,7 @@ import (
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
 	"github.com/maticnetwork/heimdall/chainmanager"
+	checkpointTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
 )
@@ -81,6 +82,12 @@ func NewAnteHandler(
 			// during runTx.
 			newCtx = SetGasMeter(simulate, ctx, 0)
 			return newCtx, sdk.ErrInternal("tx must be StdTx").Result(), true
+		}
+
+		//Check whether the chain has reached the hard fork length to execute milestone msgs
+		if ctx.BlockHeight() < helper.GetAalborgHardForkHeight() && (stdTx.Msg.Type() == checkpointTypes.EventTypeMilestone || stdTx.Msg.Type() == checkpointTypes.EventTypeMilestoneTimeout) {
+			newCtx = SetGasMeter(simulate, ctx, 0)
+			return newCtx, sdk.ErrTxDecode("error decoding transaction").Result(), true
 		}
 
 		// get account params

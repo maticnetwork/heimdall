@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"math"
 	"strconv"
 	"time"
 
@@ -26,6 +27,10 @@ func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
 			return handleMsgCheckpointAck(ctx, msg, k, contractCaller)
 		case types.MsgCheckpointNoAck:
 			return handleMsgCheckpointNoAck(ctx, msg, k)
+		case types.MsgMilestone:
+			return handleMsgMilestone(ctx, msg, k)
+		case types.MsgMilestoneTimeout:
+			return handleMsgMilestoneTimeout(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in checkpoint module").Result()
 		}
@@ -236,7 +241,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 }
 
 // Handles checkpoint no-ack transaction
-func handleMsgCheckpointNoAck(ctx sdk.Context, _ types.MsgCheckpointNoAck, k Keeper) sdk.Result {
+func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k Keeper) sdk.Result {
 	logger := k.Logger(ctx)
 
 	// Get current block time
@@ -257,6 +262,33 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, _ types.MsgCheckpointNoAck, k Kee
 		)
 
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
+	}
+
+	//Hardfork to check the validaty of the NoAckProposer
+	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+		timeDiff := currentTime.Sub(lastCheckpointTime)
+
+		//count value is calculated based on the time passed since the last checkpoint
+		count := math.Floor(timeDiff.Seconds() / bufferTime.Seconds())
+
+		var isProposer bool = false
+
+		currentValidatorSet := k.sk.GetValidatorSet(ctx)
+		currentValidatorSet.IncrementProposerPriority(1)
+
+		for i := 0; i < int(count); i++ {
+			if currentValidatorSet.Proposer.Signer == msg.From {
+				isProposer = true
+				break
+			}
+
+			currentValidatorSet.IncrementProposerPriority(1)
+		}
+
+		//If NoAck sender is not the valid proposer, return error
+		if !isProposer {
+			return common.ErrInvalidNoACKProposer(k.Codespace()).Result()
+		}
 	}
 
 	// Check last no ack - prevents repetitive no-ack

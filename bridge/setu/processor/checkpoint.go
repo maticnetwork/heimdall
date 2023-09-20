@@ -625,20 +625,20 @@ func (cp *CheckpointProcessor) checkIfNoAckIsRequired(checkpointContext *Checkpo
 		index = 1
 	}
 
+	// checkpoint params
+	checkpointParams := checkpointContext.CheckpointParams
+
 	checkpointCreationTime := time.Unix(lastCreatedAt, 0)
 	currentTime := time.Now().UTC()
 	timeDiff := currentTime.Sub(checkpointCreationTime)
 	// check if last checkpoint was < NoACK wait time
-	if timeDiff.Seconds() >= helper.GetConfig().NoACKWaitTime.Seconds() && index == 0 {
-		index = math.Floor(timeDiff.Seconds() / helper.GetConfig().NoACKWaitTime.Seconds())
+	if timeDiff.Seconds() >= checkpointParams.CheckpointBufferTime.Seconds() && index == 0 {
+		index = math.Floor(timeDiff.Seconds() / checkpointParams.CheckpointBufferTime.Seconds())
 	}
 
 	if index == 0 {
 		return false, uint64(index)
 	}
-
-	// checkpoint params
-	checkpointParams := checkpointContext.CheckpointParams
 
 	// check if difference between no-ack time and current time
 	lastNoAck := cp.getLastNoAckTime()

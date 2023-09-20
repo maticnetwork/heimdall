@@ -83,7 +83,7 @@ func (suite *KeeperTestSuite) TestValidator() {
 	}
 
 	// Check if Validator matches in state
-	require.Equal(t, valInfo, *validators[valId], "Validators in state doesnt match")
+	require.Equal(t, valInfo, *validators[valId], "Validators in state doesn't match")
 	require.Equal(t, types.HexToHeimdallAddress(mappedSignerAddress.Hex()), validators[0].Signer, "Signer address doesn't match")
 }
 
@@ -391,4 +391,89 @@ func (suite *KeeperTestSuite) TestGetSpanEligibleValidators() {
 
 	validators := keeper.GetSpanEligibleValidators(ctx)
 	require.LessOrEqual(t, len(validators), 4)
+}
+
+func (suite *KeeperTestSuite) TestGetMilestoneProposer() {
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
+	currentValSet1 := keeper.GetMilestoneValidatorSet(ctx)
+	currentMilestoneProposer := keeper.GetMilestoneCurrentProposer(ctx)
+	require.Equal(t, currentValSet1.GetProposer(), currentMilestoneProposer)
+
+	keeper.MilestoneIncrementAccum(ctx, 1)
+
+	currentValSet2 := keeper.GetMilestoneValidatorSet(ctx)
+	currentMilestoneProposer = keeper.GetMilestoneCurrentProposer(ctx)
+	require.NotEqual(t, currentValSet1.GetProposer(), currentMilestoneProposer)
+	require.Equal(t, currentValSet2.GetProposer(), currentMilestoneProposer)
+}
+
+func (suite *KeeperTestSuite) TestMilestoneValidatorSetIncAccumChange() {
+	// create sub test to check if validator remove
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+
+	// load 4 validators to state
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
+
+	initMilestoneValSetProp := keeper.GetMilestoneValidatorSet(ctx).Proposer //Getter for Milestone Validator Set Proposer
+	initCheckpointValSetProp := keeper.GetValidatorSet(ctx).Proposer         //Getter for Checkpoint Validator Set Proposer
+
+	require.Equal(t, initMilestoneValSetProp, initCheckpointValSetProp)
+
+	keeper.IncrementAccum(ctx, 1)
+
+	initMilestoneValSetProp = keeper.GetMilestoneValidatorSet(ctx).Proposer //Getter for Milestone Validator Set Proposer
+	initCheckpointValSetProp = keeper.GetValidatorSet(ctx).Proposer         //Getter for Checkpoint Validator Set Proposer
+
+	require.Equal(t, initMilestoneValSetProp, initCheckpointValSetProp)
+
+	initValSet := keeper.GetMilestoneValidatorSet(ctx)
+
+	keeper.MilestoneIncrementAccum(ctx, 1)
+
+	initValSet.IncrementProposerPriority(1)
+	_proposer := initValSet.Proposer
+
+	currentValSet := keeper.GetMilestoneValidatorSet(ctx)
+	proposer := currentValSet.Proposer
+
+	require.Equal(t, _proposer, proposer)
+}
+
+func (suite *KeeperTestSuite) TestUpdateMilestoneValidatorSetChange() {
+	// create sub test to check if validator remove
+	t, app, ctx := suite.T(), suite.app, suite.ctx
+	keeper := app.StakingKeeper
+
+	// load 4 validators to state
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 10)
+	initValSet := keeper.GetMilestoneValidatorSet(ctx)
+
+	keeper.MilestoneIncrementAccum(ctx, 1)
+
+	prevValSet := initValSet.Copy()
+	currentValSet := keeper.GetMilestoneValidatorSet(ctx)
+
+	valToUpdate := currentValSet.Validators[0]
+	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+
+	err := keeper.UpdateSigner(ctx, newSigner[0].Signer, newSigner[0].PubKey, valToUpdate.Signer)
+	require.NoError(t, err)
+
+	setUpdates := helper.GetUpdatedValidators(&currentValSet, keeper.GetAllValidators(ctx), 5)
+	err = currentValSet.UpdateWithChangeSet(setUpdates)
+	require.NoError(t, err)
+
+	require.Equal(t, len(prevValSet.Validators), len(currentValSet.Validators), "Number of validators should remain same")
+
+	index, _ := currentValSet.GetByAddress(valToUpdate.Signer.Bytes())
+	require.Equal(t, -1, index, "Prev Validator should not be present in CurrentValSet")
+
+	_, newVal := currentValSet.GetByAddress(newSigner[0].Signer.Bytes())
+	require.Equal(t, newSigner[0].Signer, newVal.Signer, "Signer address should change")
+	require.Equal(t, newSigner[0].PubKey, newVal.PubKey, "Signer pubkey should change")
+
+	require.Equal(t, prevValSet.TotalVotingPower(), currentValSet.TotalVotingPower(), "Total VotingPower should not change")
 }

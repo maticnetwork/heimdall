@@ -12,8 +12,9 @@ import (
 
 // Default parameter values
 const (
-	DefaultMainchainTxConfirmations  uint64 = 6
-	DefaultMaticchainTxConfirmations uint64 = 10
+	DefaultMainchainTxConfirmations           uint64 = 6
+	DefaultMaticchainTxConfirmations          uint64 = 10
+	DefaultMaticchainMilestoneTxConfirmations uint64 = 16
 )
 
 var (

@@ -51,7 +51,7 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", fmt.Sprintf("x/%s", types.ModuleName))
 }
 
-// GetValidatorSigningInfo retruns the ValidatorSigningInfo for a specific validator
+// GetValidatorSigningInfo returns the ValidatorSigningInfo for a specific validator
 // ConsAddress
 func (k *Keeper) GetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID) (info hmTypes.ValidatorSigningInfo, found bool) {
 	store := ctx.KVStore(k.storeKey)
@@ -66,7 +66,7 @@ func (k *Keeper) GetValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validato
 }
 
 // HasValidatorSigningInfo returns if a given validator has signing information
-// persited.
+// persisted.
 func (k *Keeper) HasValidatorSigningInfo(ctx sdk.Context, valID hmTypes.ValidatorID) bool {
 	_, ok := k.GetValidatorSigningInfo(ctx, valID)
 	return ok
@@ -402,7 +402,7 @@ func (k *Keeper) FlushTotalSlashedAmount(ctx sdk.Context) {
 	}
 }
 
-// IterateBufferValSlashingInfosAndApplyFn interate ValidatorSlashingInfo and apply the given function.
+// IterateBufferValSlashingInfosAndApplyFn iterate ValidatorSlashingInfo and apply the given function.
 func (k *Keeper) IterateBufferValSlashingInfosAndApplyFn(ctx sdk.Context, f func(slashingInfo hmTypes.ValidatorSlashingInfo) error) error {
 	store := ctx.KVStore(k.storeKey)
 
@@ -518,7 +518,7 @@ func (k *Keeper) CopyBufferValSlashingInfosToTickData(ctx sdk.Context) error {
 	return err
 }
 
-// IterateTickValSlashingInfosAndApplyFn interate ValidatorSlashingInfo and apply the given function.
+// IterateTickValSlashingInfosAndApplyFn iterate ValidatorSlashingInfo and apply the given function.
 func (k *Keeper) IterateTickValSlashingInfosAndApplyFn(ctx sdk.Context, f func(slashingInfo hmTypes.ValidatorSlashingInfo) error) error {
 	store := ctx.KVStore(k.storeKey)
 
@@ -588,7 +588,7 @@ func (k *Keeper) GetSlashingSequences(ctx sdk.Context) (sequences []string) {
 	return
 }
 
-// IterateSlashingSequencesAndApplyFn interate validators and apply the given function.
+// IterateSlashingSequencesAndApplyFn iterate validators and apply the given function.
 func (k *Keeper) IterateSlashingSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(k.storeKey)
 

@@ -32,6 +32,7 @@ const (
 	CodeNoCheckpointBuffer       CodeType = 1511
 	CodeCheckpointBuffer         CodeType = 1512
 	CodeCheckpointAlreadyExists  CodeType = 1513
+	CodeInvalidNoAckProposer     CodeType = 1505
 
 	CodeOldValidator        CodeType = 2500
 	CodeNoValidator         CodeType = 2501
@@ -73,6 +74,15 @@ const (
 	CodeSlashInfoDetails       CodeType = 6503
 	CodeTickNotInContinuity    CodeType = 6504
 	CodeTickAckNotInContinuity CodeType = 6505
+
+	CodeNoMilestone              CodeType = 7501
+	CodeMilestoneNotInContinuity CodeType = 7502
+	CodeMilestoneInvalid         CodeType = 7503
+	CodeOldMilestone             CodeType = 7504
+	CodeInvalidMilestoneTimeout  CodeType = 7505
+	CodeTooManyMilestoneTimeout  CodeType = 7506
+	CodeInvalidMilestoneIndex    CodeType = 7507
+	CodePrevMilestoneInVoting    CodeType = 7508
 )
 
 // -------- Invalid msg
@@ -143,12 +153,49 @@ func ErrInvalidNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeInvalidNoACK, "Invalid No ACK -- Waiting for last checkpoint ACK")
 }
 
+func ErrInvalidNoACKProposer(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidNoAckProposer, "Invalid No ACK Proposer")
+}
+
 func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeTooManyNoAck, "Too many no-acks")
 }
 
 func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
+}
+
+// -----------Milestone Erros
+func ErrNoMilestoneFound(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoMilestone, "Milestone Not Found")
+}
+
+func ErrMilestoneNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeMilestoneNotInContinuity, "Milestone not in continuity")
+}
+
+func ErrMilestoneInvalid(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeMilestoneInvalid, "Milestone Msg Invalid")
+}
+
+func ErrOldMilestone(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeOldMilestone, "Milestone already exists")
+}
+
+func ErrInvalidMilestoneTimeout(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeInvalidMilestoneTimeout, "Invalid Milestone Timeout msg ")
+}
+
+func ErrTooManyMilestoneTimeout(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeTooManyNoAck, "Too many milestone timeout msg")
+}
+
+func ErrInvalidMilestoneIndex(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoMilestone, "Invalid milestone index")
+}
+
+func ErrPrevMilestoneInVoting(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodePrevMilestoneInVoting, "Previous milestone still in voting phase")
 }
 
 // ----------- Staking Errors

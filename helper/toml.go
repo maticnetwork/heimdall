@@ -23,6 +23,9 @@ bor_rpc_url = "{{ .BorRPCUrl }}"
 # RPC endpoint for tendermint
 tendermint_rpc_url = "{{ .TendermintRPCUrl }}"
 
+# Polygon Sub Graph URL for self-heal mechanism (optional)
+sub_graph_url = "{{ .SubGraphUrl }}"
+
 #### Bridge configs ####
 
 # Heimdall REST server endpoint, which is used by bridge
@@ -37,10 +40,12 @@ syncer_poll_interval = "{{ .SyncerPollInterval }}"
 noack_poll_interval = "{{ .NoACKPollInterval }}"
 clerk_poll_interval = "{{ .ClerkPollInterval }}"
 span_poll_interval = "{{ .SpanPollInterval }}"
+milestone_poll_interval = "{{ .MilestonePollInterval }}"
 enable_self_heal = "{{ .EnableSH }}"
 sh_state_synced_interval = "{{ .SHStateSyncedInterval }}"
 sh_stake_update_interval = "{{ .SHStakeUpdateInterval }}"
 sh_max_depth_duration = "{{ .SHMaxDepthDuration }}"
+
 
 #### gas limits ####
 main_chain_gas_limit = "{{ .MainchainGasLimit }}"

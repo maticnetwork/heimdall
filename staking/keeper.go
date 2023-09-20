@@ -19,10 +19,11 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ValidatorsKey          = []byte{0x21} // prefix for each key to a validator
-	ValidatorMapKey        = []byte{0x22} // prefix for each key for validator map
-	CurrentValidatorSetKey = []byte{0x23} // Key to store current validator set
-	StakingSequenceKey     = []byte{0x24} // prefix for each key for staking sequence map
+	ValidatorsKey                   = []byte{0x21} // prefix for each key to a validator
+	ValidatorMapKey                 = []byte{0x22} // prefix for each key for validator map
+	CurrentValidatorSetKey          = []byte{0x23} // Key to store current validator set
+	StakingSequenceKey              = []byte{0x24} // prefix for each key for staking sequence map
+	CurrentMilestoneValidatorSetKey = []byte{0x25} // Key to store current validator set for milestone
 )
 
 // ModuleCommunicator manages different module interaction
@@ -225,7 +226,7 @@ func (k *Keeper) GetAllValidators(ctx sdk.Context) (validators []*hmTypes.Valida
 	return
 }
 
-// IterateValidatorsAndApplyFn interate validators and apply the given function.
+// IterateValidatorsAndApplyFn iterate validators and apply the given function.
 func (k *Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(validator hmTypes.Validator) error) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -249,7 +250,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	// get old validator from state and make power 0
 	validator, err := k.GetValidatorInfo(ctx, prevSigner.Bytes())
 	if err != nil {
-		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store")
 		return err
 	}
 
@@ -288,6 +289,12 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
+
+	//Hard fork changes for milestone
+	//When there is any update in checkpoint validator set, we assign it to milestone validator set too.
+	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+		store.Set(CurrentMilestoneValidatorSetKey, bz)
+	}
 
 	return nil
 }
@@ -425,7 +432,7 @@ func (k *Keeper) GetStakingSequences(ctx sdk.Context) (sequences []string) {
 	return
 }
 
-// IterateStakingSequencesAndApplyFn interate validators and apply the given function.
+// IterateStakingSequencesAndApplyFn iterate validators and apply the given function.
 func (k *Keeper) IterateStakingSequencesAndApplyFn(ctx sdk.Context, f func(sequence string) error) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -456,7 +463,7 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
 	if !found {
-		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store")
 		return errors.New("validator not found")
 	}
 
@@ -489,7 +496,7 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	// get validator from state and make jailed = false
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
-		k.Logger(ctx).Error("Unable to fetch valiator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store")
 		return
 	}
 
@@ -504,4 +511,67 @@ func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
 	if err := k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("Failed to add validator", "Error", err)
 	}
+}
+
+// MilestoneIncrementAccum increments accum for milestone validator set by n times and replace validator set in store
+func (k *Keeper) MilestoneIncrementAccum(ctx sdk.Context, times int) {
+	// get milestone validator set
+	validatorSet := k.GetMilestoneValidatorSet(ctx)
+
+	// increment accum
+	validatorSet.IncrementProposerPriority(times)
+
+	// replace
+
+	if err := k.UpdateMilestoneValidatorSetInStore(ctx, validatorSet); err != nil {
+		k.Logger(ctx).Error("IncrementAccum | UpdateValidatorSetInStore", "error", err)
+	}
+}
+
+// GetMilestoneValidatorSet returns current milestone Validator Set from store
+func (k *Keeper) GetMilestoneValidatorSet(ctx sdk.Context) (validatorSet hmTypes.ValidatorSet) {
+	store := ctx.KVStore(k.storeKey)
+
+	var bz []byte
+
+	if store.Has(CurrentMilestoneValidatorSetKey) {
+		bz = store.Get(CurrentMilestoneValidatorSetKey)
+	} else {
+		bz = store.Get(CurrentValidatorSetKey)
+	}
+
+	// unmarhsall
+
+	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
+		k.Logger(ctx).Error("GetMilestoneValidatorSet | UnmarshalBinaryBare", "error", err)
+	}
+
+	// return validator set
+	return validatorSet
+}
+
+// UpdateMilestoneValidatorSetInStore adds milestone validator set to store
+func (k *Keeper) UpdateMilestoneValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTypes.ValidatorSet) error {
+	// TODO check if we may have to delay this by 1 height to sync with tendermint validator updates
+	store := ctx.KVStore(k.storeKey)
+
+	// marshall validator set
+	bz, err := k.cdc.MarshalBinaryBare(newValidatorSet)
+	if err != nil {
+		return err
+	}
+
+	// set validator set with CurrentMilestoneValidatorSetKey as key in store
+	store.Set(CurrentMilestoneValidatorSetKey, bz)
+
+	return nil
+}
+
+// GetMilestoneCurrentProposer returns current proposer
+func (k *Keeper) GetMilestoneCurrentProposer(ctx sdk.Context) *hmTypes.Validator {
+	// get validator set
+	validatorSet := k.GetMilestoneValidatorSet(ctx)
+
+	// return get proposer
+	return validatorSet.GetProposer()
 }

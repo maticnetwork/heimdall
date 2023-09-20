@@ -402,6 +402,53 @@ func (suite *AnteTestSuite) TestFees() {
 	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeInsufficientFunds)
 }
 
+func (suite *AnteTestSuite) TestMilestoneHardFork() {
+	t, happ, ctx, anteHandler := suite.T(), suite.app, suite.ctx, suite.anteHandler
+	ctx = ctx.WithBlockHeight(1)
+
+	// keys and addresses
+	priv1, _, addr1 := sdkAuth.KeyTestPubAddr()
+
+	// set the accounts
+	acc1 := happ.AccountKeeper.NewAccountWithAddress(ctx, hmTypes.AccAddressToHeimdallAddress(addr1))
+	amt1, _ := sdk.NewIntFromString(authTypes.DefaultTxFees + "0")
+	err := acc1.SetCoins(sdk.NewCoins(sdk.NewCoin(authTypes.FeeToken, amt1)))
+	require.NoError(t, err)
+	happ.AccountKeeper.SetAccount(ctx, acc1)
+	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress()) // get stored account
+
+	var tx sdk.Tx
+
+	// checkpoint msg
+	msg := TestMilestoneMsg{*sdkAuth.NewTestMsg(addr1)}
+	msgTimeout := TestMilestoneTimeoutMsg{*sdkAuth.NewTestMsg(addr1)}
+
+	//Setting block height to -1 t0 check for the hard fork
+	ctx = ctx.WithBlockHeight(int64(-1))
+	// test good tx from one signer
+	tx = types.NewTestTx(ctx, sdk.Msg(&msgTimeout), priv1, acc1.GetAccountNumber(), uint64(0))
+	checkInvalidTx(t, anteHandler, ctx, tx, false, sdk.CodeTxDecode)
+
+	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress())
+	require.Equal(t, amt1, (acc1.GetCoins()).AmountOf(authTypes.FeeToken))
+
+	ctx = ctx.WithBlockHeight(int64(1))
+
+	tx = types.NewTestTx(ctx, sdk.Msg(&msg), priv1, acc1.GetAccountNumber(), uint64(0))
+	checkValidTx(t, anteHandler, ctx, tx, false)
+
+	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress())
+	require.NotEqual(t, amt1, (acc1.GetCoins()).AmountOf(authTypes.FeeToken))
+
+	amt1 = (acc1.GetCoins()).AmountOf(authTypes.FeeToken)
+
+	tx = types.NewTestTx(ctx, sdk.Msg(&msgTimeout), priv1, acc1.GetAccountNumber(), uint64(1))
+	checkValidTx(t, anteHandler, ctx, tx, false)
+
+	acc1 = happ.AccountKeeper.GetAccount(ctx, acc1.GetAddress())
+	require.NotEqual(t, amt1, (acc1.GetCoins()).AmountOf(authTypes.FeeToken))
+}
+
 //
 // utils
 //
@@ -458,3 +505,31 @@ type TestCheckpointMsg struct {
 
 func (msg *TestCheckpointMsg) Route() string { return testCheckpointMsgVal }
 func (msg *TestCheckpointMsg) Type() string  { return testCheckpointMsgVal }
+
+//
+// Test checkpoint
+//
+
+const testMilestoneMsgVal = "milestone"
+
+var _ sdk.Msg = (*TestMilestoneMsg)(nil)
+
+// msg type for testing
+type TestMilestoneMsg struct {
+	sdk.TestMsg
+}
+
+func (msg *TestMilestoneMsg) Route() string { return testMilestoneMsgVal }
+func (msg *TestMilestoneMsg) Type() string  { return testMilestoneMsgVal }
+
+const testMilestoneTimeoutMsgVal = "milestone-timeout"
+
+var _ sdk.Msg = (*TestMilestoneTimeoutMsg)(nil)
+
+// msg type for testing
+type TestMilestoneTimeoutMsg struct {
+	sdk.TestMsg
+}
+
+func (msg *TestMilestoneTimeoutMsg) Route() string { return testMilestoneTimeoutMsgVal }
+func (msg *TestMilestoneTimeoutMsg) Type() string  { return testMilestoneTimeoutMsgVal }

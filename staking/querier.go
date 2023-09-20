@@ -34,6 +34,8 @@ func NewQuerier(keeper Keeper, contractCaller helper.IContractCaller) sdk.Querie
 			return handleQueryStakingSequence(ctx, req, keeper, contractCaller)
 		case types.QueryTotalValidatorPower:
 			return handleQueryTotalValidatorPower(ctx, req, keeper)
+		case types.QueryMilestoneProposer:
+			return handleQueryMilestoneProposer(ctx, req, keeper)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown staking query endpoint")
@@ -155,6 +157,38 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	return bz, nil
 }
 
+func handleQueryMilestoneProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QueryProposerParams
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	// get validator set
+	validatorSet := keeper.GetMilestoneValidatorSet(ctx)
+
+	times := int(params.Times)
+	if times > len(validatorSet.Validators) {
+		times = len(validatorSet.Validators)
+	}
+
+	// init proposers
+	proposers := make([]hmTypes.Validator, times)
+
+	// get proposers
+	for index := 0; index < times; index++ {
+		proposers[index] = *(validatorSet.GetProposer())
+		validatorSet.IncrementProposerPriority(1)
+	}
+
+	// json record
+	bz, err := jsoniter.ConfigFastest.Marshal(proposers)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
+
+	return bz, nil
+}
+
 func handleQueryCurrentProposer(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	proposer := keeper.GetCurrentProposer(ctx)
 
@@ -188,7 +222,7 @@ func handleQueryStakingSequence(ctx sdk.Context, req abci.RequestQuery, keeper K
 
 	// check if incoming tx already exists
 	if !keeper.HasStakingSequence(ctx, sequence.String()) {
-		keeper.Logger(ctx).Error("No staking sequence exist: %s %s", params.TxHash, params.LogIndex)
+		keeper.Logger(ctx).Warn("No staking sequence exist: %s %s", params.TxHash, params.LogIndex)
 		return nil, nil
 	}
 
