@@ -3,5 +3,4 @@
 ###################
 # Remove heimdall installation
 ###################
-sudo rm -rf /var/lib/heimdall/config
 sudo systemctl daemon-reload

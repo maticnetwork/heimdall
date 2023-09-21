@@ -1,6 +1,5 @@
 [Unit]
   Description=heimdalld
-  After=bor.service
   StartLimitIntervalSec=500
   StartLimitBurst=5
 [Service]
