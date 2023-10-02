@@ -39,7 +39,6 @@ require (
 	cloud.google.com/go/iam v0.8.0 // indirect
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/JekaMas/workerpool v1.1.8 // indirect
-	github.com/btcsuite/btcd v0.22.3 // indirect
 	github.com/cenkalti/backoff/v4 v4.1.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/gammazero/deque v0.2.1 // indirect
