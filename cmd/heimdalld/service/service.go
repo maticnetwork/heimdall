@@ -206,8 +206,6 @@ func NewHeimdallService(pCtx context.Context, args []string) {
 		// Note: Handle with #870
 		panic(err)
 	}
-
-	logger.Info("Heimdall services stopped")
 }
 
 func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
@@ -531,6 +529,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		return err
 	}
 
+	logger.Info("Heimdall services stopped")
 	return nil
 }
 
