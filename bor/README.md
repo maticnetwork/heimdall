@@ -1,8 +1,8 @@
 # PRELIMINARY TERMINOLOGY
 
 * A `side-transaction` is a normal heimdall transaction but the data with which the message is composed needs to be voted on by the validators since the data is obscure to the consensus protocol itself and it has no way of validating the data's correctness.
-* A `sprint` comprises of 16 blocks.
-* A `span` comprises of 100 sprints.
+* A `sprint` comprises of 16 bor blocks.
+* A `span` comprises of 100 sprints in bor.
 
 ## OVERVIEW
 
@@ -25,10 +25,10 @@ type Span struct {
 where ,
 
 * `ID` means the id of the span, calculated by monotonically incrementing the ID of the previous span.
-* `StartBlock` corresponds to the block from which the given span would commence.
-* `EndBlock` corresponds to the block at which the given span would conclude.
+* `StartBlock` corresponds to the block in bor from which the given span would commence.
+* `EndBlock` corresponds to the block in bor at which the given span would conclude.
 * `ValidatorSet` defines the set of active validators.
-* `SelectedProducers` are the validators selected to produce blocks from the validator set.
+* `SelectedProducers` are the validators selected to produce blocks in bor from the validator set.
 * `ChainID` corresponds to bor chain ID.
 
 A validator on heimdall can construct a span proposal message:
@@ -85,13 +85,13 @@ return k.AddNewSpan(ctx, newSpan)
 A validator can leverage the CLI to propose a span like so :
 
 ```
-heimdallcli tx bor propose-span --proposer <VALIDATOR ADDRESS> --start-block <START_BLOCK> --span-id <SPAN_ID> --bor-chain-id <BOR_CHAIN_ID>
+heimdallcli tx bor propose-span --proposer <VALIDATOR ADDRESS> --start-block <BOR_START_BLOCK> --span-id <SPAN_ID> --bor-chain-id <BOR_CHAIN_ID>
 ```
 
 Or the rest server : 
 
 ```
-curl -X POST "localhost:1317/bor/propose-span?bor-chain-id=<BOR_CHAIN_ID>&start-block=<START_BLOCK>&span-id=<SPAN_ID>"
+curl -X POST "localhost:1317/bor/propose-span?bor-chain-id=<BOR_CHAIN_ID>&start-block=<BOR_START_BLOCK>&span-id=<SPAN_ID>"
 ```
 
 ## QUERY COMMANDS
@@ -102,12 +102,12 @@ One can run the following query commands from the bor module :
 
 via CLI
 ```
-heimdallcli query bor span --span-id=<span ID here>
+heimdallcli query bor span --span-id=<SPAN_ID>
 ```
 
 via Rest
 ```
-curl localhost:1317/bor/span/1000
+curl localhost:1317/bor/span/<SPAN_ID>
 ```
 
 * `latest span` - Query the latest span : 
@@ -138,7 +138,7 @@ curl localhost:1317/bor/params
 
 via CLI
 ```
-heimdallcli query bor spanlist --page=<page number here> --limit=<limit here>
+heimdallcli query bor spanlist --page=<PAGE_NUM> --limit=<LIMIT>
 ```
 
 * `next-span-seed` - Query the seed for the next span :
@@ -157,10 +157,10 @@ curl localhost:1317/bor/next-span-seed
 
 via CLI
 ```
-heimdallcli query bor propose-span --proposer <VALIDATOR ADDRESS> --start-block <START_BLOCK> --span-id <SPAN_ID> --bor-chain-id <BOR_CHAIN_ID>
+heimdallcli query bor propose-span --proposer <VALIDATOR ADDRESS> --start-block <BOR_START_BLOCK> --span-id <SPAN_ID> --bor-chain-id <BOR_CHAIN_ID>
 ```
 
 via Rest
 ```
-curl "localhost:1317/bor/prepare-next-span?span_id=23&start_block=1000&chain_id="137""
+curl "localhost:1317/bor/prepare-next-span?span_id=<SPAN_ID>&start_block=<BOR_START_BLOCK>&chain_id="<BOR_CHAIN_ID>""
 ```
