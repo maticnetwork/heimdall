@@ -55,7 +55,7 @@ if err != nil {
 }
 ```
 
-`FreezeSet` internally invokes `SelectNextProducers`, which pseudo-randomly picks producers from the validaor set, leaning more towards validators with higher stake:
+`FreezeSet` internally invokes `SelectNextProducers`, which pseudo-randomly picks producers from the validaor set, leaning more towards validators with higher voting power based on stake:
 
 ```
 // select next producers
@@ -88,7 +88,7 @@ A validator can leverage the CLI to propose a span like so :
 heimdallcli tx bor propose-span --proposer <VALIDATOR ADDRESS> --start-block <BOR_START_BLOCK> --span-id <SPAN_ID> --bor-chain-id <BOR_CHAIN_ID>
 ```
 
-Or the rest server : 
+Or the REST server : 
 
 ```
 curl -X POST "localhost:1317/bor/propose-span?bor-chain-id=<BOR_CHAIN_ID>&start-block=<BOR_START_BLOCK>&span-id=<SPAN_ID>"
@@ -105,7 +105,7 @@ via CLI
 heimdallcli query bor span --span-id=<SPAN_ID>
 ```
 
-via Rest
+via REST
 ```
 curl localhost:1317/bor/span/<SPAN_ID>
 ```
@@ -117,7 +117,7 @@ via CLI
 heimdallcli query bor latest-span
 ```
 
-via Rest
+via REST
 ```
 curl localhost:1317/bor/latest-span
 ```
@@ -129,7 +129,7 @@ via CLI
 heimdallcli query bor params
 ```
 
-via Rest
+via REST
 ```
 curl localhost:1317/bor/params
 ```
@@ -148,7 +148,7 @@ via CLI
 heimdallcli query bor next-span-seed
 ```
 
-via Rest 
+via REST
 ```
 curl localhost:1317/bor/next-span-seed
 ```
@@ -160,7 +160,7 @@ via CLI
 heimdallcli query bor propose-span --proposer <VALIDATOR ADDRESS> --start-block <BOR_START_BLOCK> --span-id <SPAN_ID> --bor-chain-id <BOR_CHAIN_ID>
 ```
 
-via Rest
+via REST
 ```
 curl "localhost:1317/bor/prepare-next-span?span_id=<SPAN_ID>&start_block=<BOR_START_BLOCK>&chain_id="<BOR_CHAIN_ID>""
 ```
