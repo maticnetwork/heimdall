@@ -11,7 +11,7 @@
 
 ## Preliminary terminology
 
-* A `StateSender` is a contract deployed on L1 (Ethereum) responsible for emiiting state-sync events.
+* A `StateSender` is a contract deployed on L1 (Ethereum) responsible for emitting state-sync events.
 * A `StateReceiver` is a contract deployed on L2 (Bor) responsible for receiving state-sync events.
 * A `EventRecord` is a record of the state-sync event stored in the heimdall state.
 
