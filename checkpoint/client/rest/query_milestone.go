@@ -32,6 +32,7 @@ func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+			RestLogger.Info("***** Aalborg hardfork not activated yet *****", "url", r.URL)
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
 			return
@@ -65,6 +66,7 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+			RestLogger.Info("***** Aalborg hardfork not activated yet *****", "url", r.URL)
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
 			return
@@ -111,6 +113,7 @@ func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+			RestLogger.Info("***** Aalborg hardfork not activated yet *****", "url", r.URL)
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
 			return
@@ -150,6 +153,7 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+			RestLogger.Info("***** Aalborg hardfork not activated yet *****", "url", r.URL)
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
 			return
@@ -196,6 +200,7 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+			RestLogger.Info("***** Aalborg hardfork not activated yet *****", "url", r.URL)
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
 			return
@@ -242,6 +247,7 @@ func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+			RestLogger.Info("***** Aalborg hardfork not activated yet *****", "url", r.URL)
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
 			return
