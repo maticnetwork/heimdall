@@ -17,11 +17,11 @@
 
 ## Overview
 
-Clerk manages generic event records from Ethereum blockchain related to state-sync events, These are specically designed events that are emitted by the StateSender contract on the L1 chain to notify the L2 nodes (Bor in case of PoS) about the state changes in the L1. Once the events are processed by the bridge, Clerk listens to these events and stores them in the database for further processing.
+Clerk manages generic event records from Ethereum blockchain related to state-sync events, These are specially designed events that are emitted by the StateSender contract on the L1 chain to notify the L2 nodes (Bor in case of PoS) about the state changes in the L1. Once the events are processed by the bridge, Clerk listens to these events and stores them in the database for further processing.
 
 ## State-Sync Mechanism
 
-It's a mechansism for state-management between Ethereum and Bor chain, The events generated are called state-sync events. This is a way to move data from the L1 chain to L2 chain.
+It's a mechanism for state-management between Ethereum and Bor chain, The events generated are called state-sync events. This is a way to move data from the L1 chain to L2 chain.
 
 ![State-Sync Mechanism](state-sync-mechanism.png)
 
@@ -72,7 +72,7 @@ Only when there is a majority of `YES` votes, The event will be processed by `Po
 
 ## How to add an event
 
-A validator can leverage the CLI to add en event to the state in case it's missing and not processed by the bridge, The CLI command is :
+A validator can leverage the CLI to add an event to the state in case it's missing and not processed by the bridge, The CLI command is :
 
 ```
 heimdallcli tx clerk record 
