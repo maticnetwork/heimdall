@@ -1,14 +1,23 @@
-# PRELIMINARY TERMINOLOGY
+# Bor Module
+
+## Table of Contents
+
+* [Preliminary terminology](#preliminary-terminology)
+* [Overview](#overview)
+* [How does it work ?](#how-does-it-work)
+* [How to propose a span ?](#how-to-propose-a-span)
+* [Query commands](#query-commands)
+## Preliminary terminology
 
 * A `side-transaction` is a normal heimdall transaction but the data with which the message is composed needs to be voted on by the validators since the data is obscure to the consensus protocol itself and it has no way of validating the data's correctness.
-* A `sprint` comprises of 16 bor blocks.
-* A `span` comprises of 100 sprints in bor.
+* A `sprint` comprises of 16 bor blocks (configured in [bor](https://github.com/maticnetwork/launch/blob/fe86ba6cd16e5c36067a5ae49c0bad62ce8b1c3f/mainnet-v1/sentry/validator/bor/genesis.json#L26C18-L28)).
+* A `span` comprises of 400 sprints in bor (check heimdall's bor [params](https://heimdall-api.polygon.technology/bor/params) endpoint ).
 
-## OVERVIEW
+## Overview
 
 The validators on bor chain produce blocks in sprints and spans. Hence, it is imperative for the protocol to formalise the validators who will be producers in a range of blocks (`span`). The `bor` module in heimdall facilitates this by pseudo-randomly selecting validators who will producing blocks (producers) from the current validator set. The bor chain fetches and persists this information before the next span begins. `bor` module is a crucial component in heimdall since the PoS chain "liveness" depends on it.
 
-## HOW DOES IT WORK ?
+## How does it work ?
 
 A `Span` is defined by the data structure:
 
@@ -80,7 +89,7 @@ newSpan := hmTypes.NewSpan(
 return k.AddNewSpan(ctx, newSpan)
 ```
 
-## HOW TO PROPOSE A SPAN ?
+## How to propose a span ?
 
 A validator can leverage the CLI to propose a span like so :
 
@@ -94,7 +103,7 @@ Or the REST server :
 curl -X POST "localhost:1317/bor/propose-span?bor-chain-id=<BOR_CHAIN_ID>&start-block=<BOR_START_BLOCK>&span-id=<SPAN_ID>"
 ```
 
-## QUERY COMMANDS
+## Query commands
 
 One can run the following query commands from the bor module :
 
