@@ -1,6 +1,6 @@
 module github.com/maticnetwork/heimdall
 
-go 1.20
+go 1.21
 
 require (
 	github.com/RichardKnop/machinery v1.7.4
@@ -155,7 +155,7 @@ replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v
 
 replace github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.2.0
 
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20231004081539-707dacfd45c1
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20231004115613-901b7765a929
 
 replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.0.4
 
