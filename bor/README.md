@@ -4,8 +4,8 @@
 
 * [Preliminary terminology](#preliminary-terminology)
 * [Overview](#overview)
-* [How does it work ?](#how-does-it-work)
-* [How to propose a span ?](#how-to-propose-a-span)
+* [How does it work](#how-does-it-work)
+* [How to propose a span](#how-to-propose-a-span)
 * [Query commands](#query-commands)
 ## Preliminary terminology
 
@@ -17,7 +17,7 @@
 
 The validators on bor chain produce blocks in sprints and spans. Hence, it is imperative for the protocol to formalise the validators who will be producers in a range of blocks (`span`). The `bor` module in heimdall facilitates this by pseudo-randomly selecting validators who will producing blocks (producers) from the current validator set. The bor chain fetches and persists this information before the next span begins. `bor` module is a crucial component in heimdall since the PoS chain "liveness" depends on it.
 
-## How does it work ?
+## How does it work
 
 A `Span` is defined by the data structure:
 
@@ -89,7 +89,7 @@ newSpan := hmTypes.NewSpan(
 return k.AddNewSpan(ctx, newSpan)
 ```
 
-## How to propose a span ?
+## How to propose a span
 
 A validator can leverage the CLI to propose a span like so :
 
