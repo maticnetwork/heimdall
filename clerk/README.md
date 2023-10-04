@@ -6,6 +6,7 @@
 * [Overview](#overview)
 * [State-Sync Mechanism](#state-sync-mechanism)
 * [How does it work](#how-does-it-work)
+* [How to add an event](#how-to-add-an-event)
 * [Query commands](#query-commands)
 
 ## Preliminary terminology
