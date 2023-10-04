@@ -23,7 +23,7 @@ Clerk manages generic event records from Ethereum blockchain related to state-sy
 
 It's a mechansism for state-management between Ethereum and Bor chain, The events generated are called state-sync events. This is a way to move data from the L1 chain to L2 chain.
 
-![State-Sync Mechanism](state-managment.svg)
+![State-Sync Mechanism](state-sync-mechanism.png)
 
 ## How does it work
 
