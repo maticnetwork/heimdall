@@ -39,9 +39,9 @@ func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		if height < helper.GetAalborgHardForkHeight() {
 			RestLogger.Info("***** Aalborg hardfork not activated yet", "url", r.URL)
 
-			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
+			// hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
-			return
+			// return
 		}
 
 		if err != nil {
