@@ -154,7 +154,7 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone), nil)
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
-		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+		if height < helper.GetAalborgHardForkHeight() {
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
 
 			return
