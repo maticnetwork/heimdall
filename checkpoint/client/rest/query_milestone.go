@@ -10,6 +10,7 @@ import (
 	jsoniter "github.com/json-iterator/go"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
+	"github.com/maticnetwork/heimdall/helper"
 	hmRest "github.com/maticnetwork/heimdall/types/rest"
 )
 
@@ -29,8 +30,16 @@ func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// fetch checkpoint
+		// Fetch latest milestone
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone), nil)
+
+		// Return status code 503 (Service Unavailable) if HF hasn't been activated
+		if height < helper.GetAalborgHardForkHeight() {
+			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
+
+			return
+		}
+
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 
@@ -43,11 +52,11 @@ func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-// swagger:route GET /checkpoints/count checkpoint checkpointCount
-// It returns the checkpoint counts
+// swagger:route GET /milestone/count milestone milestoneCount
+// It returns the milestone count
 // responses:
 //
-//	200: checkpointCountResponse
+//	200: milestoneCountResponse
 func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
@@ -56,6 +65,14 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		countBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCount), nil)
+
+		// Return status code 503 (Service Unavailable) if HF hasn't been activated
+		if height < helper.GetAalborgHardForkHeight() {
+			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
+
+			return
+		}
+
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -106,8 +123,16 @@ func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// query checkpoint
+		// query milestone
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByNumber), queryParams)
+
+		// Return status code 503 (Service Unavailable) if HF hasn't been activated
+		if height < helper.GetAalborgHardForkHeight() {
+			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
+
+			return
+		}
+
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
@@ -126,8 +151,15 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// fetch checkpoint
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone), nil)
+
+		// Return status code 503 (Service Unavailable) if HF hasn't been activated
+		if height < helper.GetAalborgHardForkHeight() {
+			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
+
+			return
+		}
+
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
@@ -176,6 +208,14 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID), queryID)
+
+		// Return status code 503 (Service Unavailable) if HF hasn't been activated
+		if height < helper.GetAalborgHardForkHeight() {
+			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
+
+			return
+		}
+
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return

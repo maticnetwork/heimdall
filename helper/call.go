@@ -313,7 +313,7 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 // GetRootHash get root hash from bor chain
 func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error) {
 	if start > end {
-		return false, errors.New("start is greater than end")
+		return false, errors.New("Start block number is greater than the end block number")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
@@ -321,7 +321,7 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 
 	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	if err != nil {
-		return false, errors.New("could not fetch vote from matic chain")
+		return false, errors.New(fmt.Sprint("Error in fetching vote from matic chain", "err", err))
 	}
 
 	return vote, nil
@@ -497,20 +497,38 @@ func (c *ContractCaller) GetConfirmedTxReceipt(tx common.Hash, requiredConfirmat
 		receipt, _ = receiptCache.(*ethTypes.Receipt)
 	}
 
-	Logger.Debug("Tx included in block", "block", receipt.BlockNumber.Uint64(), "tx", tx)
+	receiptBlockNumber := receipt.BlockNumber.Uint64()
 
-	// get main chain block
-	latestBlk, err := c.GetMainChainBlock(nil)
+	Logger.Debug("Tx included in block", "block", receiptBlockNumber, "tx", tx)
+
+	// fetch the last finalized main chain block (available post-merge)
+	latestFinalizedBlock, err := c.GetMainChainFinalizedBlock()
 	if err != nil {
-		Logger.Error("error getting latest block from main chain", "error", err)
-		return nil, err
+		Logger.Error("error getting latest finalized block from main chain", "error", err)
 	}
 
-	Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64())
+	// If latest finalized block is available, use it to check if receipt is finalized or not.
+	// Else, fallback to the `requiredConfirmations` value
+	if latestFinalizedBlock != nil {
+		Logger.Debug("Latest finalized block on main chain obtained", "Block", latestFinalizedBlock.Number.Uint64(), "receipt block", receiptBlockNumber)
 
-	diff := latestBlk.Number.Uint64() - receipt.BlockNumber.Uint64()
-	if diff < requiredConfirmations {
-		return nil, errors.New("not enough confirmations")
+		if receiptBlockNumber > latestFinalizedBlock.Number.Uint64() {
+			return nil, errors.New("not enough confirmations")
+		}
+	} else {
+		// get current/latest main chain block
+		latestBlk, err := c.GetMainChainBlock(nil)
+		if err != nil {
+			Logger.Error("error getting latest block from main chain", "error", err)
+			return nil, err
+		}
+
+		Logger.Debug("Latest block on main chain obtained", "Block", latestBlk.Number.Uint64(), "receipt block", receiptBlockNumber)
+
+		diff := latestBlk.Number.Uint64() - receiptBlockNumber
+		if diff < requiredConfirmations {
+			return nil, errors.New("not enough confirmations")
+		}
 	}
 
 	return receipt, nil
@@ -812,15 +830,26 @@ func (c *ContractCaller) CurrentStateCounter(stateSenderInstance *statesender.St
 
 // CheckIfBlocksExist - check if the given block exists on local chain
 func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
-	// Get block by number.
-	var block *ethTypes.Header
+	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
+	defer cancel()
 
-	err := c.MaticChainRPC.Call(&block, "eth_getBlockByNumber", fmt.Sprintf("0x%x", end), false)
-	if err != nil {
+	block := c.GetBlockByNumber(ctx, end)
+	if block == nil {
 		return false
 	}
 
-	return end == block.Number.Uint64()
+	return end == block.NumberU64()
+}
+
+// GetBlockByNumber returns blocks by number from child chain (bor)
+func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint64) *ethTypes.Block {
+	block, err := c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	if err != nil {
+		Logger.Error("Unable to fetch block by number from child chain", "block", block, "err", err)
+		return nil
+	}
+
+	return block
 }
 
 //
