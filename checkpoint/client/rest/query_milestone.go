@@ -168,7 +168,7 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		RestLogger.Info("***** fetching latest no-ack milestone", "height", height, "hf", helper.GetAalborgHardForkHeight())
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
-		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
+		if height < helper.GetAalborgHardForkHeight() {
 			RestLogger.Info("***** Aalborg hardfork not activated yet", "url", r.URL)
 
 			hmRest.WriteErrorResponse(w, http.StatusServiceUnavailable, "Aalborg hardfork not activated yet")
