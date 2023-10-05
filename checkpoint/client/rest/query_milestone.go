@@ -33,7 +33,7 @@ func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// Fetch latest milestone
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestMilestone), nil)
 
-		RestLogger.Info("***** fetching latest milestone", "height", height)
+		RestLogger.Info("***** fetching latest milestone", "height", height, "hf", helper.GetAalborgHardForkHeight())
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if height < helper.GetAalborgHardForkHeight() {
@@ -70,7 +70,7 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		countBytes, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryCount), nil)
 
-		RestLogger.Info("***** fetching milestone count", "height", height)
+		RestLogger.Info("***** fetching milestone count", "height", height, "hf", helper.GetAalborgHardForkHeight())
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if height < helper.GetAalborgHardForkHeight() {
@@ -134,7 +134,7 @@ func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// query milestone
 		res, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryMilestoneByNumber), queryParams)
 
-		RestLogger.Info("***** fetching milestone by number", "height", height)
+		RestLogger.Info("***** fetching milestone by number", "height", height, "hf", helper.GetAalborgHardForkHeight())
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if height < helper.GetAalborgHardForkHeight() {
@@ -165,7 +165,7 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryLatestNoAckMilestone), nil)
 
-		RestLogger.Info("***** fetching latest no-ack milestone", "height", height)
+		RestLogger.Info("***** fetching latest no-ack milestone", "height", height, "hf", helper.GetAalborgHardForkHeight())
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
@@ -225,7 +225,7 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 
 		result, height, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNoAckMilestoneByID), queryID)
 
-		RestLogger.Info("***** fetching no-ack milestone by ID", "height", height)
+		RestLogger.Info("***** fetching no-ack milestone by ID", "height", height, "hf", helper.GetAalborgHardForkHeight())
 
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if height < helper.GetAalborgHardForkHeight() {
