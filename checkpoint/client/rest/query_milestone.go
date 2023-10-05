@@ -30,6 +30,8 @@ func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		RestLogger.Info("***** fetching latest milestone", "height", cliCtx.Height)
+
 		// Return status code 503 (Service Unavailable) if HF hasn't been activated
 		if cliCtx.Height < helper.GetAalborgHardForkHeight() {
 			RestLogger.Info("***** Aalborg hardfork not activated yet *****", "url", r.URL)
