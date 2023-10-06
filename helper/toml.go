@@ -23,6 +23,9 @@ bor_rpc_url = "{{ .BorRPCUrl }}"
 # RPC endpoint for tendermint
 tendermint_rpc_url = "{{ .TendermintRPCUrl }}"
 
+# Polygon Sub Graph URL for self-heal mechanism (optional)
+sub_graph_url = "{{ .SubGraphUrl }}"
+
 #### Bridge configs ####
 
 # Heimdall REST server endpoint, which is used by bridge

@@ -20,7 +20,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 	milestoneLength := helper.MilestoneLength
 
 	// logger
-	logger := k.Logger(ctx)
+	logger := k.MilestoneLogger(ctx)
 
 	//Get the milestone count
 	count := k.GetMilestoneCount(ctx)
@@ -72,7 +72,7 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 // PostHandleMsgMilestone handles msg milestone
 func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, sideTxResult abci.SideTxResultType) sdk.Result {
-	logger := k.Logger(ctx)
+	logger := k.MilestoneLogger(ctx)
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// TX bytes
@@ -109,7 +109,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil { // fetch last milestone from store
 		// make sure new milestoen is after tip
 		if lastMilestone.EndBlock > msg.StartBlock {
-			logger.Error(" already exists",
+			logger.Error(" Milestone already exists",
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock,
 			)

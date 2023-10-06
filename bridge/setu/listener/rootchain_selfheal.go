@@ -3,6 +3,7 @@ package listener
 import (
 	"context"
 	"fmt"
+	"net/http"
 	"sync"
 	"time"
 
@@ -11,8 +12,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
-	"github.com/maticnetwork/heimdall/contracts/statesender"
 	"github.com/maticnetwork/heimdall/helper"
 )
 
@@ -32,11 +31,21 @@ var (
 	}, []string{"id", "nonce", "contract_address", "block_number", "tx_hash"})
 )
 
+type subGraphClient struct {
+	graphUrl   string
+	httpClient *http.Client
+}
+
 // startSelfHealing starts self-healing processes for all required events
 func (rl *RootChainListener) startSelfHealing(ctx context.Context) {
-	if !helper.GetConfig().EnableSH {
+	if !helper.GetConfig().EnableSH || helper.GetConfig().SubGraphUrl == "" {
 		rl.Logger.Info("Self-healing disabled")
 		return
+	}
+
+	rl.subGraphClient = &subGraphClient{
+		graphUrl:   helper.GetConfig().SubGraphUrl,
+		httpClient: &http.Client{Timeout: 5 * time.Second},
 	}
 
 	stakeUpdateTicker := time.NewTicker(helper.GetConfig().SHStakeUpdateInterval)
@@ -76,8 +85,14 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 	for _, validator := range validatorSet.Validators {
 		wg.Add(1)
 
-		go func(id, nonce uint64) {
+		go func(id uint64) {
 			defer wg.Done()
+
+			nonce, _, err := util.GetValidatorNonce(rl.cliCtx, id)
+			if err != nil {
+				rl.Logger.Error("Error getting nonce for validator from heimdall", "error", err, "id", id)
+				return
+			}
 
 			var ethereumNonce uint64
 
@@ -95,9 +110,9 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 
 			nonce++
 
-			rl.Logger.Info("Processing stake update for validator", "id", id, "nonce", nonce)
+			rl.Logger.Info("Processing stake update for validator", "id", id, "ethereumNonce", ethereumNonce, "nonce", nonce)
 
-			var stakeUpdate *stakinginfo.StakinginfoStakeUpdate
+			var stakeUpdate *types.Log
 
 			if err = helper.ExponentialBackoff(func() error {
 				stakeUpdate, err = rl.getStakeUpdate(ctx, id, nonce)
@@ -108,19 +123,19 @@ func (rl *RootChainListener) processStakeUpdate(ctx context.Context) {
 			}
 
 			stakeUpdateCounter.WithLabelValues(
-				stakeUpdate.ValidatorId.String(),
-				stakeUpdate.Nonce.String(),
-				stakeUpdate.Raw.Address.String(),
-				fmt.Sprintf("%d", stakeUpdate.Raw.BlockNumber),
-				stakeUpdate.Raw.TxHash.String(),
+				fmt.Sprintf("%d", id),
+				fmt.Sprintf("%d", nonce),
+				stakeUpdate.Address.Hex(),
+				fmt.Sprintf("%d", stakeUpdate.BlockNumber),
+				stakeUpdate.TxHash.Hex(),
 			).Add(1)
 
-			if _, err = rl.processEvent(ctx, stakeUpdate.Raw); err != nil {
+			if _, err = rl.processEvent(ctx, stakeUpdate); err != nil {
 				rl.Logger.Error("Error processing stake update for validator", "error", err, "id", id)
 			} else {
 				rl.Logger.Info("Processed stake update for validator", "id", id, "nonce", nonce)
 			}
-		}(validator.ID.Uint64(), validator.Nonce)
+		}(validator.ID.Uint64())
 	}
 
 	wg.Wait()
@@ -152,7 +167,7 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 
 		rl.Logger.Info("Processing state sync", "id", i)
 
-		var stateSynced *statesender.StatesenderStateSynced
+		var stateSynced *types.Log
 
 		if err = helper.ExponentialBackoff(func() error {
 			stateSynced, err = rl.getStateSync(ctx, i)
@@ -163,13 +178,13 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 		}
 
 		stateSyncedCounter.WithLabelValues(
-			stateSynced.Id.String(),
-			stateSynced.Raw.Address.String(),
-			fmt.Sprintf("%d", stateSynced.Raw.BlockNumber),
-			stateSynced.Raw.TxHash.String(),
+			fmt.Sprintf("%d", i),
+			stateSynced.Address.Hex(),
+			fmt.Sprintf("%d", stateSynced.BlockNumber),
+			stateSynced.TxHash.Hex(),
 		).Add(1)
 
-		ignore, err := rl.processEvent(ctx, stateSynced.Raw)
+		ignore, err := rl.processEvent(ctx, stateSynced)
 		if err != nil {
 			rl.Logger.Error("Unable to update state id on heimdall", "error", err)
 			i--
@@ -199,32 +214,26 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 	}
 }
 
-func (rl *RootChainListener) processEvent(ctx context.Context, event types.Log) (bool, error) {
-	// Check existence of topics beforehand and ignore if no topic exists
-	// (TODO): Identify issue of empty events: See Jira POS-818
-	if len(event.Topics) == 0 {
-		return true, nil
-	}
-
-	blockTime, err := rl.contractConnector.GetMainChainBlockTime(ctx, event.BlockNumber)
+func (rl *RootChainListener) processEvent(ctx context.Context, vLog *types.Log) (bool, error) {
+	blockTime, err := rl.contractConnector.GetMainChainBlockTime(ctx, vLog.BlockNumber)
 	if err != nil {
 		rl.Logger.Error("Unable to get block time", "error", err)
 		return false, err
 	}
 
 	if time.Since(blockTime) < helper.GetConfig().SHMaxDepthDuration {
-		rl.Logger.Info("Block time is less than an hour, skipping state sync")
+		rl.Logger.Info("Block time is less than max time depth, skipping event")
 		return true, err
 	}
 
-	topic := event.Topics[0].Bytes()
+	topic := vLog.Topics[0].Bytes()
 	for _, abiObject := range rl.abis {
 		selectedEvent := helper.EventByID(abiObject, topic)
 		if selectedEvent == nil {
 			continue
 		}
 
-		rl.handleLog(event, selectedEvent)
+		rl.handleLog(*vLog, selectedEvent)
 	}
 
 	return false, nil
