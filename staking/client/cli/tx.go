@@ -199,7 +199,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 
 			nonce := viper.GetUint64(FlagNonce)
 
-			// draf msg
+			// draft msg
 			msg := types.NewMsgValidatorExit(
 				proposer,
 				validator,
