@@ -6,7 +6,7 @@ require (
 	github.com/RichardKnop/machinery v1.7.4
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cosmos/cosmos-sdk v0.47.3
-	github.com/ethereum/go-ethereum v1.10.26
+	github.com/ethereum/go-ethereum v1.13.2
 	github.com/go-kit/log v0.2.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
