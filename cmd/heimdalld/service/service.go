@@ -530,6 +530,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 	}
 
 	logger.Info("Heimdall services stopped")
+
 	return nil
 }
 
