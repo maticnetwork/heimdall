@@ -19,8 +19,6 @@ func (tp *testparams) ParamSetPairs() ParamSetPairs {
 }
 
 func TestKeyTable(t *testing.T) {
-	t.Parallel()
-
 	table := NewKeyTable()
 
 	require.Panics(t, func() { table.RegisterType([]byte(""), nil) })

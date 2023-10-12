@@ -6,10 +6,8 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/maticnetwork/heimdall/params/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/maticnetwork/heimdall/types/rest"
+	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/cosmos/cosmos-sdk/x/params"
 )
 
 type (
@@ -22,49 +20,47 @@ type (
 	ParamChangeJSON struct {
 		Subspace string          `json:"subspace" yaml:"subspace"`
 		Key      string          `json:"key" yaml:"key"`
+		Subkey   string          `json:"subkey,omitempty" yaml:"subkey,omitempty"`
 		Value    json.RawMessage `json:"value" yaml:"value"`
 	}
 
 	// ParamChangeProposalJSON defines a ParameterChangeProposal with a deposit used
 	// to parse parameter change proposals from a JSON file.
 	ParamChangeProposalJSON struct {
-		Title       string              `json:"title" yaml:"title"`
-		Description string              `json:"description" yaml:"description"`
-		Changes     ParamChangesJSON    `json:"changes" yaml:"changes"`
-		Deposit     sdk.Coins           `json:"deposit" yaml:"deposit"`
-		Validator   hmTypes.ValidatorID `json:"validator" yaml:"validator"`
+		Title       string           `json:"title" yaml:"title"`
+		Description string           `json:"description" yaml:"description"`
+		Changes     ParamChangesJSON `json:"changes" yaml:"changes"`
+		Deposit     sdk.Coins        `json:"deposit" yaml:"deposit"`
 	}
 
 	// ParamChangeProposalReq defines a parameter change proposal request body.
 	ParamChangeProposalReq struct {
 		BaseReq rest.BaseReq `json:"base_req" yaml:"base_req"`
 
-		Title       string                  `json:"title" yaml:"title"`
-		Description string                  `json:"description" yaml:"description"`
-		Changes     ParamChangesJSON        `json:"changes" yaml:"changes"`
-		Proposer    hmTypes.HeimdallAddress `json:"proposer" yaml:"proposer"`
-		Deposit     sdk.Coins               `json:"deposit" yaml:"deposit"`
-		Validator   hmTypes.ValidatorID     `json:"validator" yaml:"validator"`
+		Title       string           `json:"title" yaml:"title"`
+		Description string           `json:"description" yaml:"description"`
+		Changes     ParamChangesJSON `json:"changes" yaml:"changes"`
+		Proposer    sdk.AccAddress   `json:"proposer" yaml:"proposer"`
+		Deposit     sdk.Coins        `json:"deposit" yaml:"deposit"`
 	}
 )
 
-func NewParamChangeJSON(subspace string, key string, value json.RawMessage) ParamChangeJSON {
-	return ParamChangeJSON{subspace, key, value}
+func NewParamChangeJSON(subspace, key, subkey string, value json.RawMessage) ParamChangeJSON {
+	return ParamChangeJSON{subspace, key, subkey, value}
 }
 
 // ToParamChange converts a ParamChangeJSON object to ParamChange.
-func (pcj ParamChangeJSON) ToParamChange() types.ParamChange {
-	return types.NewParamChange(pcj.Subspace, pcj.Key, string(pcj.Value))
+func (pcj ParamChangeJSON) ToParamChange() params.ParamChange {
+	return params.NewParamChangeWithSubkey(pcj.Subspace, pcj.Key, pcj.Subkey, string(pcj.Value))
 }
 
 // ToParamChanges converts a slice of ParamChangeJSON objects to a slice of
 // ParamChange.
-func (pcj ParamChangesJSON) ToParamChanges() []types.ParamChange {
-	res := make([]types.ParamChange, len(pcj))
+func (pcj ParamChangesJSON) ToParamChanges() []params.ParamChange {
+	res := make([]params.ParamChange, len(pcj))
 	for i, pc := range pcj {
 		res[i] = pc.ToParamChange()
 	}
-
 	return res
 }
 

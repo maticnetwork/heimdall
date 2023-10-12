@@ -2,374 +2,344 @@ package types
 
 import (
 	"bytes"
+	"encoding/json"
 
-	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/tendermint/tendermint/crypto"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	hmCommon "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
-var cdc = codec.New()
+// ensure Msg interface compliance at compile time
+var (
+	_ sdk.Msg = &MsgCreateValidator{}
+	_ sdk.Msg = &MsgEditValidator{}
+	_ sdk.Msg = &MsgDelegate{}
+	_ sdk.Msg = &MsgUndelegate{}
+	_ sdk.Msg = &MsgBeginRedelegate{}
+)
 
-//
-// Validator Join
-//
+//______________________________________________________________________
 
-var _ sdk.Msg = &MsgValidatorJoin{}
-
-type MsgValidatorJoin struct {
-	From            hmTypes.HeimdallAddress `json:"from"`
-	ID              hmTypes.ValidatorID     `json:"id"`
-	ActivationEpoch uint64                  `json:"activationEpoch"`
-	Amount          sdk.Int                 `json:"amount"`
-	SignerPubKey    hmTypes.PubKey          `json:"pub_key"`
-	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex        uint64                  `json:"log_index"`
-	BlockNumber     uint64                  `json:"block_number"`
-	Nonce           uint64                  `json:"nonce"`
+// MsgCreateValidator - struct for bonding transactions
+type MsgCreateValidator struct {
+	Description       Description     `json:"description" yaml:"description"`
+	Commission        CommissionRates `json:"commission" yaml:"commission"`
+	MinSelfDelegation sdk.Int         `json:"min_self_delegation" yaml:"min_self_delegation"`
+	DelegatorAddress  sdk.AccAddress  `json:"delegator_address" yaml:"delegator_address"`
+	ValidatorAddress  sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
+	PubKey            crypto.PubKey   `json:"pubkey" yaml:"pubkey"`
+	Value             sdk.Coin        `json:"value" yaml:"value"`
 }
 
-// NewMsgValidatorJoin creates new validator-join
-func NewMsgValidatorJoin(
-	from hmTypes.HeimdallAddress,
-	id uint64,
-	activationEpoch uint64,
-	amount sdk.Int,
-	pubkey hmTypes.PubKey,
-	txhash hmTypes.HeimdallHash,
-	logIndex uint64,
-	blockNumber uint64,
-	nonce uint64,
-) MsgValidatorJoin {
-	return MsgValidatorJoin{
-		From:            from,
-		ID:              hmTypes.NewValidatorID(id),
-		ActivationEpoch: activationEpoch,
-		Amount:          amount,
-		SignerPubKey:    pubkey,
-		TxHash:          txhash,
-		LogIndex:        logIndex,
-		BlockNumber:     blockNumber,
-		Nonce:           nonce,
+type msgCreateValidatorJSON struct {
+	Description       Description     `json:"description" yaml:"description"`
+	Commission        CommissionRates `json:"commission" yaml:"commission"`
+	MinSelfDelegation sdk.Int         `json:"min_self_delegation" yaml:"min_self_delegation"`
+	DelegatorAddress  sdk.AccAddress  `json:"delegator_address" yaml:"delegator_address"`
+	ValidatorAddress  sdk.ValAddress  `json:"validator_address" yaml:"validator_address"`
+	PubKey            string          `json:"pubkey" yaml:"pubkey"`
+	Value             sdk.Coin        `json:"value" yaml:"value"`
+}
+
+// Default way to create validator. Delegator address and validator address are the same
+func NewMsgCreateValidator(
+	valAddr sdk.ValAddress, pubKey crypto.PubKey, selfDelegation sdk.Coin,
+	description Description, commission CommissionRates, minSelfDelegation sdk.Int,
+) MsgCreateValidator {
+
+	return MsgCreateValidator{
+		Description:       description,
+		DelegatorAddress:  sdk.AccAddress(valAddr),
+		ValidatorAddress:  valAddr,
+		PubKey:            pubKey,
+		Value:             selfDelegation,
+		Commission:        commission,
+		MinSelfDelegation: minSelfDelegation,
 	}
 }
 
-func (msg MsgValidatorJoin) Type() string {
-	return "validator-join"
+//nolint
+func (msg MsgCreateValidator) Route() string { return RouterKey }
+func (msg MsgCreateValidator) Type() string  { return "create_validator" }
+
+// Return address(es) that must sign over msg.GetSignBytes()
+func (msg MsgCreateValidator) GetSigners() []sdk.AccAddress {
+	// delegator is first signer so delegator pays fees
+	addrs := []sdk.AccAddress{msg.DelegatorAddress}
+
+	if !bytes.Equal(msg.DelegatorAddress.Bytes(), msg.ValidatorAddress.Bytes()) {
+		// if validator addr is not same as delegator addr, validator must sign
+		// msg as well
+		addrs = append(addrs, sdk.AccAddress(msg.ValidatorAddress))
+	}
+	return addrs
 }
 
-func (msg MsgValidatorJoin) Route() string {
-	return RouterKey
+// MarshalJSON implements the json.Marshaler interface to provide custom JSON
+// serialization of the MsgCreateValidator type.
+func (msg MsgCreateValidator) MarshalJSON() ([]byte, error) {
+	return json.Marshal(msgCreateValidatorJSON{
+		Description:       msg.Description,
+		Commission:        msg.Commission,
+		DelegatorAddress:  msg.DelegatorAddress,
+		ValidatorAddress:  msg.ValidatorAddress,
+		PubKey:            sdk.MustBech32ifyConsPub(msg.PubKey),
+		Value:             msg.Value,
+		MinSelfDelegation: msg.MinSelfDelegation,
+	})
 }
 
-func (msg MsgValidatorJoin) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
-}
+// UnmarshalJSON implements the json.Unmarshaler interface to provide custom
+// JSON deserialization of the MsgCreateValidator type.
+func (msg *MsgCreateValidator) UnmarshalJSON(bz []byte) error {
+	var msgCreateValJSON msgCreateValidatorJSON
+	if err := json.Unmarshal(bz, &msgCreateValJSON); err != nil {
+		return err
+	}
 
-func (msg MsgValidatorJoin) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
+	msg.Description = msgCreateValJSON.Description
+	msg.Commission = msgCreateValJSON.Commission
+	msg.DelegatorAddress = msgCreateValJSON.DelegatorAddress
+	msg.ValidatorAddress = msgCreateValJSON.ValidatorAddress
+	var err error
+	msg.PubKey, err = sdk.GetConsPubKeyBech32(msgCreateValJSON.PubKey)
 	if err != nil {
-		panic(err)
+		return err
 	}
+	msg.Value = msgCreateValJSON.Value
+	msg.MinSelfDelegation = msgCreateValJSON.MinSelfDelegation
 
-	return sdk.MustSortJSON(b)
+	return nil
 }
 
-func (msg MsgValidatorJoin) ValidateBasic() sdk.Error {
-	if msg.ID == 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	}
+// GetSignBytes returns the message bytes to sign over.
+func (msg MsgCreateValidator) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
 
-	if bytes.Equal(msg.SignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.SignerPubKey.String())
+// quick validity check
+func (msg MsgCreateValidator) ValidateBasic() sdk.Error {
+	// note that unmarshaling from bech32 ensures either empty or valid
+	if msg.DelegatorAddress.Empty() {
+		return ErrNilDelegatorAddr(DefaultCodespace)
 	}
-
-	if msg.From.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	if msg.ValidatorAddress.Empty() {
+		return ErrNilValidatorAddr(DefaultCodespace)
+	}
+	if !sdk.AccAddress(msg.ValidatorAddress).Equals(msg.DelegatorAddress) {
+		return ErrBadValidatorAddr(DefaultCodespace)
+	}
+	if msg.Value.Amount.LTE(sdk.ZeroInt()) {
+		return ErrBadDelegationAmount(DefaultCodespace)
+	}
+	if msg.Description == (Description{}) {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "description must be included")
+	}
+	if msg.Commission == (CommissionRates{}) {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "commission must be included")
+	}
+	if err := msg.Commission.Validate(); err != nil {
+		return err
+	}
+	if !msg.MinSelfDelegation.GT(sdk.ZeroInt()) {
+		return ErrMinSelfDelegationInvalid(DefaultCodespace)
+	}
+	if msg.Value.Amount.LT(msg.MinSelfDelegation) {
+		return ErrSelfDelegationBelowMinimum(DefaultCodespace)
 	}
 
 	return nil
 }
 
-// GetTxHash Returns tx hash
-func (msg MsgValidatorJoin) GetTxHash() types.HeimdallHash {
-	return msg.TxHash
+// MsgEditValidator - struct for editing a validator
+type MsgEditValidator struct {
+	Description
+	ValidatorAddress sdk.ValAddress `json:"address" yaml:"address"`
+
+	// We pass a reference to the new commission rate and min self delegation as it's not mandatory to
+	// update. If not updated, the deserialized rate will be zero with no way to
+	// distinguish if an update was intended.
+	//
+	// REF: #2373
+	CommissionRate    *sdk.Dec `json:"commission_rate" yaml:"commission_rate"`
+	MinSelfDelegation *sdk.Int `json:"min_self_delegation" yaml:"min_self_delegation"`
 }
 
-// GetLogIndex Returns log index
-func (msg MsgValidatorJoin) GetLogIndex() uint64 {
-	return msg.LogIndex
-}
-
-// GetSideSignBytes returns side sign bytes
-func (msg MsgValidatorJoin) GetSideSignBytes() []byte {
-	return nil
-}
-
-// GetNonce Returns nonce
-func (msg MsgValidatorJoin) GetNonce() uint64 {
-	return msg.Nonce
-}
-
-//
-// Stake update
-//
-
-//
-// validator exit
-//
-
-var _ sdk.Msg = &MsgStakeUpdate{}
-
-// MsgStakeUpdate represents stake update
-type MsgStakeUpdate struct {
-	From        hmTypes.HeimdallAddress `json:"from"`
-	ID          hmTypes.ValidatorID     `json:"id"`
-	NewAmount   sdk.Int                 `json:"amount"`
-	TxHash      hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex    uint64                  `json:"log_index"`
-	BlockNumber uint64                  `json:"block_number"`
-	Nonce       uint64                  `json:"nonce"`
-}
-
-// NewMsgStakeUpdate represents stake update
-func NewMsgStakeUpdate(from hmTypes.HeimdallAddress, id uint64, newAmount sdk.Int, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgStakeUpdate {
-	return MsgStakeUpdate{
-		From:        from,
-		ID:          hmTypes.NewValidatorID(id),
-		NewAmount:   newAmount,
-		TxHash:      txhash,
-		LogIndex:    logIndex,
-		BlockNumber: blockNumber,
-		Nonce:       nonce,
+func NewMsgEditValidator(valAddr sdk.ValAddress, description Description, newRate *sdk.Dec, newMinSelfDelegation *sdk.Int) MsgEditValidator {
+	return MsgEditValidator{
+		Description:       description,
+		CommissionRate:    newRate,
+		ValidatorAddress:  valAddr,
+		MinSelfDelegation: newMinSelfDelegation,
 	}
 }
 
-func (msg MsgStakeUpdate) Type() string {
-	return "validator-stake-update"
+//nolint
+func (msg MsgEditValidator) Route() string { return RouterKey }
+func (msg MsgEditValidator) Type() string  { return "edit_validator" }
+func (msg MsgEditValidator) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{sdk.AccAddress(msg.ValidatorAddress)}
 }
 
-func (msg MsgStakeUpdate) Route() string {
-	return RouterKey
+// get the bytes for the message signer to sign on
+func (msg MsgEditValidator) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
 }
 
-func (msg MsgStakeUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
-}
-
-func (msg MsgStakeUpdate) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
+// quick validity check
+func (msg MsgEditValidator) ValidateBasic() sdk.Error {
+	if msg.ValidatorAddress.Empty() {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "nil validator address")
 	}
 
-	return sdk.MustSortJSON(b)
-}
-
-func (msg MsgStakeUpdate) ValidateBasic() sdk.Error {
-	if msg.ID == 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	if msg.Description == (Description{}) {
+		return sdk.NewError(DefaultCodespace, CodeInvalidInput, "transaction must include some information to modify")
 	}
 
-	if msg.From.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	if msg.MinSelfDelegation != nil && !(*msg.MinSelfDelegation).GT(sdk.ZeroInt()) {
+		return ErrMinSelfDelegationInvalid(DefaultCodespace)
+	}
+
+	if msg.CommissionRate != nil {
+		if msg.CommissionRate.GT(sdk.OneDec()) || msg.CommissionRate.LT(sdk.ZeroDec()) {
+			return sdk.NewError(DefaultCodespace, CodeInvalidInput, "commission rate must be between 0 and 1, inclusive")
+		}
 	}
 
 	return nil
 }
 
-// GetTxHash Returns tx hash
-func (msg MsgStakeUpdate) GetTxHash() types.HeimdallHash {
-	return msg.TxHash
+// MsgDelegate - struct for bonding transactions
+type MsgDelegate struct {
+	DelegatorAddress sdk.AccAddress `json:"delegator_address" yaml:"delegator_address"`
+	ValidatorAddress sdk.ValAddress `json:"validator_address" yaml:"validator_address"`
+	Amount           sdk.Coin       `json:"amount" yaml:"amount"`
 }
 
-// GetLogIndex Returns log index
-func (msg MsgStakeUpdate) GetLogIndex() uint64 {
-	return msg.LogIndex
+func NewMsgDelegate(delAddr sdk.AccAddress, valAddr sdk.ValAddress, amount sdk.Coin) MsgDelegate {
+	return MsgDelegate{
+		DelegatorAddress: delAddr,
+		ValidatorAddress: valAddr,
+		Amount:           amount,
+	}
 }
 
-// GetSideSignBytes returns side sign bytes
-func (msg MsgStakeUpdate) GetSideSignBytes() []byte {
+//nolint
+func (msg MsgDelegate) Route() string { return RouterKey }
+func (msg MsgDelegate) Type() string  { return "delegate" }
+func (msg MsgDelegate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.DelegatorAddress}
+}
+
+// get the bytes for the message signer to sign on
+func (msg MsgDelegate) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// quick validity check
+func (msg MsgDelegate) ValidateBasic() sdk.Error {
+	if msg.DelegatorAddress.Empty() {
+		return ErrNilDelegatorAddr(DefaultCodespace)
+	}
+	if msg.ValidatorAddress.Empty() {
+		return ErrNilValidatorAddr(DefaultCodespace)
+	}
+	if msg.Amount.Amount.LTE(sdk.ZeroInt()) {
+		return ErrBadDelegationAmount(DefaultCodespace)
+	}
 	return nil
 }
 
-// GetNonce Returns nonce
-func (msg MsgStakeUpdate) GetNonce() uint64 {
-	return msg.Nonce
+//______________________________________________________________________
+
+// MsgDelegate - struct for bonding transactions
+type MsgBeginRedelegate struct {
+	DelegatorAddress    sdk.AccAddress `json:"delegator_address" yaml:"delegator_address"`
+	ValidatorSrcAddress sdk.ValAddress `json:"validator_src_address" yaml:"validator_src_address"`
+	ValidatorDstAddress sdk.ValAddress `json:"validator_dst_address" yaml:"validator_dst_address"`
+	Amount              sdk.Coin       `json:"amount" yaml:"amount"`
 }
 
-// validator update
-var _ sdk.Msg = &MsgSignerUpdate{}
+func NewMsgBeginRedelegate(delAddr sdk.AccAddress, valSrcAddr,
+	valDstAddr sdk.ValAddress, amount sdk.Coin) MsgBeginRedelegate {
 
-// MsgSignerUpdate signer update struct
-// TODO add old signer sig check
-type MsgSignerUpdate struct {
-	From            hmTypes.HeimdallAddress `json:"from"`
-	ID              hmTypes.ValidatorID     `json:"id"`
-	NewSignerPubKey hmTypes.PubKey          `json:"pubKey"`
-	TxHash          hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex        uint64                  `json:"log_index"`
-	BlockNumber     uint64                  `json:"block_number"`
-	Nonce           uint64                  `json:"nonce"`
-}
-
-func NewMsgSignerUpdate(
-	from hmTypes.HeimdallAddress,
-	id uint64,
-	pubKey hmTypes.PubKey,
-	txhash hmTypes.HeimdallHash,
-	logIndex uint64,
-	blockNumber uint64,
-	nonce uint64,
-) MsgSignerUpdate {
-	return MsgSignerUpdate{
-		From:            from,
-		ID:              hmTypes.NewValidatorID(id),
-		NewSignerPubKey: pubKey,
-		TxHash:          txhash,
-		LogIndex:        logIndex,
-		BlockNumber:     blockNumber,
-		Nonce:           nonce,
+	return MsgBeginRedelegate{
+		DelegatorAddress:    delAddr,
+		ValidatorSrcAddress: valSrcAddr,
+		ValidatorDstAddress: valDstAddr,
+		Amount:              amount,
 	}
 }
 
-func (msg MsgSignerUpdate) Type() string {
-	return "signer-update"
+//nolint
+func (msg MsgBeginRedelegate) Route() string { return RouterKey }
+func (msg MsgBeginRedelegate) Type() string  { return "begin_redelegate" }
+func (msg MsgBeginRedelegate) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{msg.DelegatorAddress}
 }
 
-func (msg MsgSignerUpdate) Route() string {
-	return RouterKey
+// get the bytes for the message signer to sign on
+func (msg MsgBeginRedelegate) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
 }
 
-func (msg MsgSignerUpdate) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
-}
-
-func (msg MsgSignerUpdate) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
+// quick validity check
+func (msg MsgBeginRedelegate) ValidateBasic() sdk.Error {
+	if msg.DelegatorAddress.Empty() {
+		return ErrNilDelegatorAddr(DefaultCodespace)
 	}
-
-	return sdk.MustSortJSON(b)
-}
-
-func (msg MsgSignerUpdate) ValidateBasic() sdk.Error {
-	if msg.ID == 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
+	if msg.ValidatorSrcAddress.Empty() {
+		return ErrNilValidatorAddr(DefaultCodespace)
 	}
-
-	if msg.From.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
+	if msg.ValidatorDstAddress.Empty() {
+		return ErrNilValidatorAddr(DefaultCodespace)
 	}
-
-	if bytes.Equal(msg.NewSignerPubKey.Bytes(), helper.ZeroPubKey.Bytes()) {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid pub key %v", msg.NewSignerPubKey.String())
+	if msg.Amount.Amount.LTE(sdk.ZeroInt()) {
+		return ErrBadSharesAmount(DefaultCodespace)
 	}
-
 	return nil
 }
 
-// GetTxHash Returns tx hash
-func (msg MsgSignerUpdate) GetTxHash() types.HeimdallHash {
-	return msg.TxHash
+// MsgUndelegate - struct for unbonding transactions
+type MsgUndelegate struct {
+	DelegatorAddress sdk.AccAddress `json:"delegator_address" yaml:"delegator_address"`
+	ValidatorAddress sdk.ValAddress `json:"validator_address" yaml:"validator_address"`
+	Amount           sdk.Coin       `json:"amount" yaml:"amount"`
 }
 
-// GetLogIndex Returns log index
-func (msg MsgSignerUpdate) GetLogIndex() uint64 {
-	return msg.LogIndex
+func NewMsgUndelegate(delAddr sdk.AccAddress, valAddr sdk.ValAddress, amount sdk.Coin) MsgUndelegate {
+	return MsgUndelegate{
+		DelegatorAddress: delAddr,
+		ValidatorAddress: valAddr,
+		Amount:           amount,
+	}
 }
 
-// GetSideSignBytes returns side sign bytes
-func (msg MsgSignerUpdate) GetSideSignBytes() []byte {
+//nolint
+func (msg MsgUndelegate) Route() string                { return RouterKey }
+func (msg MsgUndelegate) Type() string                 { return "begin_unbonding" }
+func (msg MsgUndelegate) GetSigners() []sdk.AccAddress { return []sdk.AccAddress{msg.DelegatorAddress} }
+
+// get the bytes for the message signer to sign on
+func (msg MsgUndelegate) GetSignBytes() []byte {
+	bz := ModuleCdc.MustMarshalJSON(msg)
+	return sdk.MustSortJSON(bz)
+}
+
+// quick validity check
+func (msg MsgUndelegate) ValidateBasic() sdk.Error {
+	if msg.DelegatorAddress.Empty() {
+		return ErrNilDelegatorAddr(DefaultCodespace)
+	}
+	if msg.ValidatorAddress.Empty() {
+		return ErrNilValidatorAddr(DefaultCodespace)
+	}
+	if msg.Amount.Amount.LTE(sdk.ZeroInt()) {
+		return ErrBadSharesAmount(DefaultCodespace)
+	}
 	return nil
-}
-
-// GetNonce Returns nonce
-func (msg MsgSignerUpdate) GetNonce() uint64 {
-	return msg.Nonce
-}
-
-//
-// validator exit
-//
-
-var _ sdk.Msg = &MsgValidatorExit{}
-
-type MsgValidatorExit struct {
-	From              hmTypes.HeimdallAddress `json:"from"`
-	ID                hmTypes.ValidatorID     `json:"id"`
-	DeactivationEpoch uint64                  `json:"deactivationEpoch"`
-	TxHash            hmTypes.HeimdallHash    `json:"tx_hash"`
-	LogIndex          uint64                  `json:"log_index"`
-	BlockNumber       uint64                  `json:"block_number"`
-	Nonce             uint64                  `json:"nonce"`
-}
-
-func NewMsgValidatorExit(from hmTypes.HeimdallAddress, id uint64, deactivationEpoch uint64, txhash hmTypes.HeimdallHash, logIndex uint64, blockNumber uint64, nonce uint64) MsgValidatorExit {
-	return MsgValidatorExit{
-		From:              from,
-		ID:                hmTypes.NewValidatorID(id),
-		DeactivationEpoch: deactivationEpoch,
-		TxHash:            txhash,
-		LogIndex:          logIndex,
-		BlockNumber:       blockNumber,
-		Nonce:             nonce,
-	}
-}
-
-func (msg MsgValidatorExit) Type() string {
-	return "validator-exit"
-}
-
-func (msg MsgValidatorExit) Route() string {
-	return RouterKey
-}
-
-func (msg MsgValidatorExit) GetSigners() []sdk.AccAddress {
-	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(msg.From)}
-}
-
-func (msg MsgValidatorExit) GetSignBytes() []byte {
-	b, err := cdc.MarshalJSON(msg)
-	if err != nil {
-		panic(err)
-	}
-
-	return sdk.MustSortJSON(b)
-}
-
-func (msg MsgValidatorExit) ValidateBasic() sdk.Error {
-	if msg.ID == 0 {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid validator ID %v", msg.ID)
-	}
-
-	if msg.From.Empty() {
-		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.From.String())
-	}
-
-	return nil
-}
-
-// GetTxHash Returns tx hash
-func (msg MsgValidatorExit) GetTxHash() types.HeimdallHash {
-	return msg.TxHash
-}
-
-// GetLogIndex Returns log index
-func (msg MsgValidatorExit) GetLogIndex() uint64 {
-	return msg.LogIndex
-}
-
-// GetSideSignBytes returns side sign bytes
-func (msg MsgValidatorExit) GetSideSignBytes() []byte {
-	return nil
-}
-
-// GetNonce Returns nonce
-func (msg MsgValidatorExit) GetNonce() uint64 {
-	return msg.Nonce
 }

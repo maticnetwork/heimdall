@@ -4,22 +4,18 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/version"
-
-	govTypes "github.com/maticnetwork/heimdall/gov/types"
-	paramscutils "github.com/maticnetwork/heimdall/params/client/utils"
-	"github.com/maticnetwork/heimdall/params/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	paramscutils "github.com/cosmos/cosmos-sdk/x/params/client/utils"
+	"github.com/cosmos/cosmos-sdk/x/params/types"
 )
-
-var logger = helper.Logger.With("module", "params/client/cli")
 
 // GetCmdSubmitProposal implements a command handler for submitting a parameter
 // change proposal transaction.
@@ -58,8 +54,8 @@ Where proposal.json contains:
   ],
   "deposit": [
     {
-      "denom": "matic",
-      "amount": "1000000000000000000" 
+      "denom": "stake",
+      "amount": "10000"
     }
   ]
 }
@@ -68,6 +64,7 @@ Where proposal.json contains:
 			),
 		),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
 			proposal, err := paramscutils.ParseParamChangeProposalJSON(cdc, args[0])
@@ -75,28 +72,16 @@ Where proposal.json contains:
 				return err
 			}
 
-			validatorID := viper.GetUint64(FlagValidatorID)
-			if validatorID == 0 {
-				return fmt.Errorf("Valid validator ID required")
-			}
-
-			from := helper.GetFromAddress(cliCtx)
+			from := cliCtx.GetFromAddress()
 			content := types.NewParameterChangeProposal(proposal.Title, proposal.Description, proposal.Changes.ToParamChanges())
 
-			// create submit proposal
-			msg := govTypes.NewMsgSubmitProposal(content, proposal.Deposit, from, hmTypes.NewValidatorID(validatorID))
+			msg := gov.NewMsgSubmitProposal(content, proposal.Deposit, from)
 			if err := msg.ValidateBasic(); err != nil {
 				return err
 			}
 
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
 		},
-	}
-
-	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
-
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		logger.Error("GetCmdSubmitProposal | MarkFlagRequired | FlagValidatorID", "Error", err)
 	}
 
 	return cmd

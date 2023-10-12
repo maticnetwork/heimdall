@@ -1,76 +1,142 @@
-package staking_test
+package staking
 
 import (
-	"math/rand"
-	"strconv"
+	"fmt"
 	"testing"
-	"time"
+
+	"github.com/tendermint/tendermint/crypto/ed25519"
+
+	"github.com/stretchr/testify/assert"
+
+	"github.com/stretchr/testify/require"
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/app"
-	"github.com/maticnetwork/heimdall/staking"
-	"github.com/maticnetwork/heimdall/staking/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-
-	"github.com/maticnetwork/heimdall/types/simulation"
-	"github.com/stretchr/testify/require"
-	"github.com/stretchr/testify/suite"
+	keep "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// GenesisTestSuite integrate test suite context object
-type GenesisTestSuite struct {
-	suite.Suite
+func TestInitGenesis(t *testing.T) {
+	ctx, accKeeper, keeper, supplyKeeper := keep.CreateTestInput(t, false, 1000)
 
-	app *app.HeimdallApp
-	ctx sdk.Context
-}
+	valTokens := sdk.TokensFromConsensusPower(1)
 
-// SetupTest setup necessary things for genesis test
-func (suite *GenesisTestSuite) SetupTest() {
-	suite.app, suite.ctx, _ = createTestApp(true)
-}
+	params := keeper.GetParams(ctx)
+	validators := make([]Validator, 2)
+	var delegations []Delegation
 
-func TestGenesisTestSuite(t *testing.T) {
-	t.Parallel()
+	// initialize the validators
+	validators[0].OperatorAddress = sdk.ValAddress(keep.Addrs[0])
+	validators[0].ConsPubKey = keep.PKs[0]
+	validators[0].Description = NewDescription("hoop", "", "", "")
+	validators[0].Status = sdk.Bonded
+	validators[0].Tokens = valTokens
+	validators[0].DelegatorShares = valTokens.ToDec()
+	validators[1].OperatorAddress = sdk.ValAddress(keep.Addrs[1])
+	validators[1].ConsPubKey = keep.PKs[1]
+	validators[1].Description = NewDescription("bloop", "", "", "")
+	validators[1].Status = sdk.Bonded
+	validators[1].Tokens = valTokens
+	validators[1].DelegatorShares = valTokens.ToDec()
 
-	suite.Run(t, new(GenesisTestSuite))
-}
+	genesisState := types.NewGenesisState(params, validators, delegations)
+	vals := InitGenesis(ctx, keeper, accKeeper, supplyKeeper, genesisState)
 
-// TestInitExportGenesis test import and export genesis state
-func (suite *GenesisTestSuite) TestInitExportGenesis() {
-	t, app, ctx := suite.T(), suite.app, suite.ctx
-	s1 := rand.NewSource(time.Now().UnixNano())
-	r1 := rand.New(s1)
-	n := 5
+	actualGenesis := ExportGenesis(ctx, keeper)
+	require.Equal(t, genesisState.Params, actualGenesis.Params)
+	require.Equal(t, genesisState.Delegations, actualGenesis.Delegations)
+	require.EqualValues(t, keeper.GetAllValidators(ctx), actualGenesis.Validators)
 
-	stakingSequence := make([]string, n)
-	accounts := simulation.RandomAccounts(r1, n)
+	// now make sure the validators are bonded and intra-tx counters are correct
+	resVal, found := keeper.GetValidator(ctx, sdk.ValAddress(keep.Addrs[0]))
+	require.True(t, found)
+	require.Equal(t, sdk.Bonded, resVal.Status)
 
-	for i := range stakingSequence {
-		stakingSequence[i] = strconv.Itoa(simulation.RandIntBetween(r1, 1000, 100000))
+	resVal, found = keeper.GetValidator(ctx, sdk.ValAddress(keep.Addrs[1]))
+	require.True(t, found)
+	require.Equal(t, sdk.Bonded, resVal.Status)
+
+	abcivals := make([]abci.ValidatorUpdate, len(vals))
+	for i, val := range validators {
+		abcivals[i] = val.ABCIValidatorUpdate()
 	}
 
-	validators := make([]*hmTypes.Validator, n)
-	for i := 0; i < len(validators); i++ {
-		// validator
-		validators[i] = hmTypes.NewValidator(
-			hmTypes.NewValidatorID(uint64(int64(i))),
-			0,
-			0,
-			uint64(i),
-			int64(simulation.RandIntBetween(r1, 10, 100)), // power
-			hmTypes.NewPubKey(accounts[i].PubKey.Bytes()),
-			accounts[i].Address,
-		)
+	require.Equal(t, abcivals, vals)
+}
+
+func TestInitGenesisLargeValidatorSet(t *testing.T) {
+	size := 200
+	require.True(t, size > 100)
+
+	ctx, accKeeper, keeper, supplyKeeper := keep.CreateTestInput(t, false, 1000)
+
+	params := keeper.GetParams(ctx)
+	delegations := []Delegation{}
+	validators := make([]Validator, size)
+
+	for i := range validators {
+		validators[i] = NewValidator(sdk.ValAddress(keep.Addrs[i]),
+			keep.PKs[i], NewDescription(fmt.Sprintf("#%d", i), "", "", ""))
+
+		validators[i].Status = sdk.Bonded
+
+		tokens := sdk.TokensFromConsensusPower(1)
+		if i < 100 {
+			tokens = sdk.TokensFromConsensusPower(2)
+		}
+		validators[i].Tokens = tokens
+		validators[i].DelegatorShares = tokens.ToDec()
 	}
 
-	// validator set
-	validatorSet := hmTypes.NewValidatorSet(validators)
+	genesisState := types.NewGenesisState(params, validators, delegations)
+	vals := InitGenesis(ctx, keeper, accKeeper, supplyKeeper, genesisState)
 
-	genesisState := types.NewGenesisState(validators, *validatorSet, stakingSequence)
-	staking.InitGenesis(ctx, app.StakingKeeper, genesisState)
+	abcivals := make([]abci.ValidatorUpdate, 100)
+	for i, val := range validators[:100] {
+		abcivals[i] = val.ABCIValidatorUpdate()
+	}
 
-	actualParams := staking.ExportGenesis(ctx, app.StakingKeeper)
-	require.NotNil(t, actualParams)
-	require.LessOrEqual(t, 5, len(actualParams.Validators))
+	require.Equal(t, abcivals, vals)
+}
+
+func TestValidateGenesis(t *testing.T) {
+	genValidators1 := make([]types.Validator, 1, 5)
+	pk := ed25519.GenPrivKey().PubKey()
+	genValidators1[0] = types.NewValidator(sdk.ValAddress(pk.Address()), pk, types.NewDescription("", "", "", ""))
+	genValidators1[0].Tokens = sdk.OneInt()
+	genValidators1[0].DelegatorShares = sdk.OneDec()
+
+	tests := []struct {
+		name    string
+		mutate  func(*types.GenesisState)
+		wantErr bool
+	}{
+		{"default", func(*types.GenesisState) {}, false},
+		// validate genesis validators
+		{"duplicate validator", func(data *types.GenesisState) {
+			(*data).Validators = genValidators1
+			(*data).Validators = append((*data).Validators, genValidators1[0])
+		}, true},
+		{"no delegator shares", func(data *types.GenesisState) {
+			(*data).Validators = genValidators1
+			(*data).Validators[0].DelegatorShares = sdk.ZeroDec()
+		}, true},
+		{"jailed and bonded validator", func(data *types.GenesisState) {
+			(*data).Validators = genValidators1
+			(*data).Validators[0].Jailed = true
+			(*data).Validators[0].Status = sdk.Bonded
+		}, true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			genesisState := types.DefaultGenesisState()
+			tt.mutate(&genesisState)
+			if tt.wantErr {
+				assert.Error(t, ValidateGenesis(genesisState))
+			} else {
+				assert.NoError(t, ValidateGenesis(genesisState))
+			}
+		})
+	}
 }

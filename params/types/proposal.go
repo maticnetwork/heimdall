@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	govTypes "github.com/maticnetwork/heimdall/gov/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 )
 
 const (
@@ -14,11 +14,11 @@ const (
 )
 
 // Assert ParameterChangeProposal implements govtypes.Content at compile-time
-var _ govTypes.Content = ParameterChangeProposal{}
+var _ govtypes.Content = ParameterChangeProposal{}
 
 func init() {
-	govTypes.RegisterProposalType(ProposalTypeChange)
-	govTypes.RegisterProposalTypeCodec(ParameterChangeProposal{}, "heimdall/ParameterChangeProposal")
+	govtypes.RegisterProposalType(ProposalTypeChange)
+	govtypes.RegisterProposalTypeCodec(ParameterChangeProposal{}, "cosmos-sdk/ParameterChangeProposal")
 }
 
 // ParameterChangeProposal defines a proposal which contains multiple parameter
@@ -47,7 +47,7 @@ func (pcp ParameterChangeProposal) ProposalType() string { return ProposalTypeCh
 
 // ValidateBasic validates the parameter change proposal
 func (pcp ParameterChangeProposal) ValidateBasic() sdk.Error {
-	err := govTypes.ValidateAbstract(DefaultCodespace, pcp)
+	err := govtypes.ValidateAbstract(DefaultCodespace, pcp)
 	if err != nil {
 		return err
 	}
@@ -69,8 +69,9 @@ func (pcp ParameterChangeProposal) String() string {
 		b.WriteString(fmt.Sprintf(`    Param Change:
       Subspace: %s
       Key:      %s
+      Subkey:   %X
       Value:    %X
-`, pc.Subspace, pc.Key, pc.Value))
+`, pc.Subspace, pc.Key, pc.Subkey, pc.Value))
 	}
 
 	return b.String()
@@ -80,11 +81,16 @@ func (pcp ParameterChangeProposal) String() string {
 type ParamChange struct {
 	Subspace string `json:"subspace" yaml:"subspace"`
 	Key      string `json:"key" yaml:"key"`
+	Subkey   string `json:"subkey,omitempty" yaml:"subkey,omitempty"`
 	Value    string `json:"value" yaml:"value"`
 }
 
 func NewParamChange(subspace, key, value string) ParamChange {
-	return ParamChange{subspace, key, value}
+	return ParamChange{subspace, key, "", value}
+}
+
+func NewParamChangeWithSubkey(subspace, key, subkey, value string) ParamChange {
+	return ParamChange{subspace, key, subkey, value}
 }
 
 // String implements the Stringer interface.
@@ -92,8 +98,9 @@ func (pc ParamChange) String() string {
 	return fmt.Sprintf(`Param Change:
   Subspace: %s
   Key:      %s
+  Subkey:   %X
   Value:    %X
-`, pc.Subspace, pc.Key, pc.Value)
+`, pc.Subspace, pc.Key, pc.Subkey, pc.Value)
 }
 
 // ValidateChange performs basic validation checks over a set of ParamChange. It
@@ -107,11 +114,9 @@ func ValidateChanges(changes []ParamChange) sdk.Error {
 		if len(pc.Subspace) == 0 {
 			return ErrEmptySubspace(DefaultCodespace)
 		}
-
 		if len(pc.Key) == 0 {
 			return ErrEmptyKey(DefaultCodespace)
 		}
-
 		if len(pc.Value) == 0 {
 			return ErrEmptyValue(DefaultCodespace)
 		}

@@ -1,19 +1,21 @@
 package types
 
-// Checkpoint tags
-var (
-	EventTypeNewProposer   = "new-proposer"
-	EventTypeValidatorJoin = "validator-join"
-	EventTypeSignerUpdate  = "signer-update"
-	EventTypeStakeUpdate   = "stake-update"
-	EventTypeValidatorExit = "validator-exit"
+// staking module event types
+const (
+	EventTypeCompleteUnbonding    = "complete_unbonding"
+	EventTypeCompleteRedelegation = "complete_redelegation"
+	EventTypeCreateValidator      = "create_validator"
+	EventTypeEditValidator        = "edit_validator"
+	EventTypeDelegate             = "delegate"
+	EventTypeUnbond               = "unbond"
+	EventTypeRedelegate           = "redelegate"
 
-	AttributeKeySigner            = "signer"
-	AttributeKeyDeactivationEpoch = "deactivation-epoch"
-	AttributeKeyActivationEpoch   = "activation-epoch"
-	AttributeKeyValidatorID       = "validator-id"
-	AttributeKeyValidatorNonce    = "validator-nonce"
-	AttributeKeyUpdatedAt         = "updated-at"
-
-	AttributeValueCategory = ModuleName
+	AttributeKeyValidator         = "validator"
+	AttributeKeyCommissionRate    = "commission_rate"
+	AttributeKeyMinSelfDelegation = "min_self_delegation"
+	AttributeKeySrcValidator      = "source_validator"
+	AttributeKeyDstValidator      = "destination_validator"
+	AttributeKeyDelegator         = "delegator"
+	AttributeKeyCompletionTime    = "completion_time"
+	AttributeValueCategory        = ModuleName
 )

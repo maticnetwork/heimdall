@@ -1,75 +1,98 @@
 package types
 
 import (
-	"github.com/maticnetwork/heimdall/types"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 // query endpoints supported by the staking Querier
 const (
-	QueryCurrentValidatorSet  = "current-validator-set"
-	QuerySigner               = "signer"
-	QueryValidator            = "validator"
-	QueryValidatorStatus      = "validator-status"
-	QueryProposer             = "proposer"
-	QueryTotalValidatorPower  = "total-val-power"
-	QueryCurrentProposer      = "current-proposer"
-	QueryProposerBonusPercent = "proposer-bonus-percent"
-	QueryStakingSequence      = "staking-sequence"
-	QueryMilestoneProposer    = "milestone-proposer"
+	QueryValidators                    = "validators"
+	QueryValidator                     = "validator"
+	QueryDelegatorDelegations          = "delegatorDelegations"
+	QueryDelegatorUnbondingDelegations = "delegatorUnbondingDelegations"
+	QueryRedelegations                 = "redelegations"
+	QueryValidatorDelegations          = "validatorDelegations"
+	QueryValidatorRedelegations        = "validatorRedelegations"
+	QueryValidatorUnbondingDelegations = "validatorUnbondingDelegations"
+	QueryDelegation                    = "delegation"
+	QueryUnbondingDelegation           = "unbondingDelegation"
+	QueryDelegatorValidators           = "delegatorValidators"
+	QueryDelegatorValidator            = "delegatorValidator"
+	QueryPool                          = "pool"
+	QueryParameters                    = "parameters"
 )
 
-// QuerySignerParams defines the params for querying by address
-type QuerySignerParams struct {
-	SignerAddress []byte `json:"signer_address"`
+// defines the params for the following queries:
+// - 'custom/staking/delegatorDelegations'
+// - 'custom/staking/delegatorUnbondingDelegations'
+// - 'custom/staking/delegatorRedelegations'
+// - 'custom/staking/delegatorValidators'
+type QueryDelegatorParams struct {
+	DelegatorAddr sdk.AccAddress
 }
 
-// NewQuerySignerParams creates a new instance of QuerySignerParams.
-func NewQuerySignerParams(signerAddress []byte) QuerySignerParams {
-	return QuerySignerParams{SignerAddress: signerAddress}
+func NewQueryDelegatorParams(delegatorAddr sdk.AccAddress) QueryDelegatorParams {
+	return QueryDelegatorParams{
+		DelegatorAddr: delegatorAddr,
+	}
 }
 
-// QueryValidatorParams defines the params for querying val status.
+// defines the params for the following queries:
+// - 'custom/staking/validator'
+// - 'custom/staking/validatorDelegations'
+// - 'custom/staking/validatorUnbondingDelegations'
+// - 'custom/staking/validatorRedelegations'
 type QueryValidatorParams struct {
-	ValidatorID types.ValidatorID `json:"validator_id"`
+	ValidatorAddr sdk.ValAddress
 }
 
-// NewQueryValidatorParams creates a new instance of QueryValidatorParams.
-func NewQueryValidatorParams(validatorID types.ValidatorID) QueryValidatorParams {
-	return QueryValidatorParams{ValidatorID: validatorID}
+func NewQueryValidatorParams(validatorAddr sdk.ValAddress) QueryValidatorParams {
+	return QueryValidatorParams{
+		ValidatorAddr: validatorAddr,
+	}
 }
 
-// QueryProposerParams defines the params for querying val status.
-type QueryProposerParams struct {
-	Times uint64 `json:"times"`
+// defines the params for the following queries:
+// - 'custom/staking/delegation'
+// - 'custom/staking/unbondingDelegation'
+// - 'custom/staking/delegatorValidator'
+type QueryBondsParams struct {
+	DelegatorAddr sdk.AccAddress
+	ValidatorAddr sdk.ValAddress
 }
 
-// NewQueryProposerParams creates a new instance of QueryProposerParams.
-func NewQueryProposerParams(times uint64) QueryProposerParams {
-	return QueryProposerParams{Times: times}
+func NewQueryBondsParams(delegatorAddr sdk.AccAddress, validatorAddr sdk.ValAddress) QueryBondsParams {
+	return QueryBondsParams{
+		DelegatorAddr: delegatorAddr,
+		ValidatorAddr: validatorAddr,
+	}
 }
 
-// QueryValidatorStatusParams defines the params for querying val status.
-type QueryValidatorStatusParams struct {
-	SignerAddress []byte
+// defines the params for the following queries:
+// - 'custom/staking/redelegation'
+type QueryRedelegationParams struct {
+	DelegatorAddr    sdk.AccAddress
+	SrcValidatorAddr sdk.ValAddress
+	DstValidatorAddr sdk.ValAddress
 }
 
-// QueryStakingSequenceParams defines the params for querying an account Sequence.
-type QueryStakingSequenceParams struct {
-	TxHash   string
-	LogIndex uint64
+func NewQueryRedelegationParams(delegatorAddr sdk.AccAddress,
+	srcValidatorAddr, dstValidatorAddr sdk.ValAddress) QueryRedelegationParams {
+
+	return QueryRedelegationParams{
+		DelegatorAddr:    delegatorAddr,
+		SrcValidatorAddr: srcValidatorAddr,
+		DstValidatorAddr: dstValidatorAddr,
+	}
 }
 
-// // NewQuerySequenceParams creates a new instance of QuerySequenceParams.
-// func NewQuerySequenceParams(txHash string, logIndex uint64) QueryStakingSequenceParams {
-// 	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
-// }
-
-// NewQueryValidatorStatusParams creates a new instance of QueryValidatorStatusParams.
-func NewQueryValidatorStatusParams(signerAddress []byte) QueryValidatorStatusParams {
-	return QueryValidatorStatusParams{SignerAddress: signerAddress}
+// QueryValidatorsParams defines the params for the following queries:
+// - 'custom/staking/validators'
+type QueryValidatorsParams struct {
+	Page, Limit int
+	Status      string
 }
 
-// NewQueryStakingSequenceParams creates a new instance of QueryStakingSequenceParams.
-func NewQueryStakingSequenceParams(txHash string, logIndex uint64) QueryStakingSequenceParams {
-	return QueryStakingSequenceParams{TxHash: txHash, LogIndex: logIndex}
+func NewQueryValidatorsParams(page, limit int, status string) QueryValidatorsParams {
+	return QueryValidatorsParams{page, limit, status}
 }

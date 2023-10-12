@@ -4,7 +4,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// ModuleCdc module codec
+// module codec
 var ModuleCdc *codec.Codec
 
 func init() {
@@ -15,5 +15,5 @@ func init() {
 
 // RegisterCodec registers all necessary param module types with a given codec.
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(ParameterChangeProposal{}, "heimdall/ParameterChangeProposal", nil)
+	cdc.RegisterConcrete(ParameterChangeProposal{}, "cosmos-sdk/ParameterChangeProposal", nil)
 }

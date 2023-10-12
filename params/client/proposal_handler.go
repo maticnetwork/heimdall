@@ -1,9 +1,9 @@
 package client
 
 import (
-	govclient "github.com/maticnetwork/heimdall/gov/client"
-	"github.com/maticnetwork/heimdall/params/client/cli"
-	"github.com/maticnetwork/heimdall/params/client/rest"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	"github.com/cosmos/cosmos-sdk/x/params/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/params/client/rest"
 )
 
 // param change proposal handler

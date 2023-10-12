@@ -1,412 +1,384 @@
 package cli
 
 import (
-	"bytes"
-	"encoding/hex"
-	"errors"
 	"fmt"
+	"os"
+	"strings"
+
+	"github.com/spf13/cobra"
+	flag "github.com/spf13/pflag"
+	"github.com/spf13/viper"
+
+	cfg "github.com/tendermint/tendermint/config"
+	"github.com/tendermint/tendermint/crypto"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/spf13/cobra"
-	"github.com/spf13/viper"
-
-	"github.com/ethereum/go-ethereum/common"
-	"github.com/maticnetwork/heimdall/bridge/setu/util"
-	hmClient "github.com/maticnetwork/heimdall/client"
-	"github.com/maticnetwork/heimdall/contracts/stakinginfo"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/version"
+	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-var logger = helper.Logger.With("module", "staking/client/cli")
-
 // GetTxCmd returns the transaction commands for this module
-func GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	txCmd := &cobra.Command{
+func GetTxCmd(storeKey string, cdc *codec.Codec) *cobra.Command {
+	stakingTxCmd := &cobra.Command{
 		Use:                        types.ModuleName,
 		Short:                      "Staking transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
-		RunE:                       hmClient.ValidateCmd,
+		RunE:                       client.ValidateCmd,
 	}
 
-	txCmd.AddCommand(
-		client.PostCommands(
-			SendValidatorJoinTx(cdc),
-			SendValidatorUpdateTx(cdc),
-			SendValidatorExitTx(cdc),
-			SendValidatorStakeUpdateTx(cdc),
-		)...,
+	stakingTxCmd.AddCommand(client.PostCommands(
+		GetCmdCreateValidator(cdc),
+		GetCmdEditValidator(cdc),
+		GetCmdDelegate(cdc),
+		GetCmdRedelegate(storeKey, cdc),
+		GetCmdUnbond(storeKey, cdc),
+	)...)
+
+	return stakingTxCmd
+}
+
+// GetCmdCreateValidator implements the create validator command handler.
+func GetCmdCreateValidator(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "create-validator",
+		Short: "create new validator initialized with a self-delegation to it",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(utils.GetTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			txBldr, msg, err := BuildCreateValidatorMsg(cliCtx, txBldr)
+			if err != nil {
+				return err
+			}
+
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	cmd.Flags().AddFlagSet(FsPk)
+	cmd.Flags().AddFlagSet(FsAmount)
+	cmd.Flags().AddFlagSet(fsDescriptionCreate)
+	cmd.Flags().AddFlagSet(FsCommissionCreate)
+	cmd.Flags().AddFlagSet(FsMinSelfDelegation)
+
+	cmd.Flags().String(FlagIP, "", fmt.Sprintf("The node's public IP. It takes effect only when used in combination with --%s", client.FlagGenerateOnly))
+	cmd.Flags().String(FlagNodeID, "", "The node's ID")
+
+	cmd.MarkFlagRequired(client.FlagFrom)
+	cmd.MarkFlagRequired(FlagAmount)
+	cmd.MarkFlagRequired(FlagPubKey)
+	cmd.MarkFlagRequired(FlagMoniker)
+
+	return cmd
+}
+
+// GetCmdEditValidator implements the create edit validator command.
+// TODO: add full description
+func GetCmdEditValidator(cdc *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "edit-validator",
+		Short: "edit an existing validator account",
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(auth.DefaultTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			valAddr := cliCtx.GetFromAddress()
+			description := types.Description{
+				Moniker:  viper.GetString(FlagMoniker),
+				Identity: viper.GetString(FlagIdentity),
+				Website:  viper.GetString(FlagWebsite),
+				Details:  viper.GetString(FlagDetails),
+			}
+
+			var newRate *sdk.Dec
+
+			commissionRate := viper.GetString(FlagCommissionRate)
+			if commissionRate != "" {
+				rate, err := sdk.NewDecFromStr(commissionRate)
+				if err != nil {
+					return fmt.Errorf("invalid new commission rate: %v", err)
+				}
+
+				newRate = &rate
+			}
+
+			var newMinSelfDelegation *sdk.Int
+
+			minSelfDelegationString := viper.GetString(FlagMinSelfDelegation)
+			if minSelfDelegationString != "" {
+				msb, ok := sdk.NewIntFromString(minSelfDelegationString)
+				if !ok {
+					return fmt.Errorf(types.ErrMinSelfDelegationInvalid(types.DefaultCodespace).Error())
+				}
+				newMinSelfDelegation = &msb
+			}
+
+			msg := types.NewMsgEditValidator(sdk.ValAddress(valAddr), description, newRate, newMinSelfDelegation)
+
+			// build and sign the transaction, then broadcast to Tendermint
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+
+	cmd.Flags().AddFlagSet(fsDescriptionEdit)
+	cmd.Flags().AddFlagSet(fsCommissionUpdate)
+
+	return cmd
+}
+
+// GetCmdDelegate implements the delegate command.
+func GetCmdDelegate(cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "delegate [validator-addr] [amount]",
+		Args:  cobra.ExactArgs(2),
+		Short: "Delegate liquid tokens to a validator",
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Delegate an amount of liquid coins to a validator from your wallet.
+
+Example:
+$ %s tx staking delegate cosmosvaloper1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 1000stake --from mykey
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(auth.DefaultTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			amount, err := sdk.ParseCoin(args[1])
+			if err != nil {
+				return err
+			}
+
+			delAddr := cliCtx.GetFromAddress()
+			valAddr, err := sdk.ValAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgDelegate(delAddr, valAddr, amount)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+// GetCmdRedelegate the begin redelegation command.
+func GetCmdRedelegate(storeName string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "redelegate [src-validator-addr] [dst-validator-addr] [amount]",
+		Short: "Redelegate illiquid tokens from one validator to another",
+		Args:  cobra.ExactArgs(3),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Redelegate an amount of illiquid staking tokens from one validator to another.
+
+Example:
+$ %s tx staking redelegate cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj cosmosvaloper1l2rsakp388kuv9k8qzq6lrm9taddae7fpx59wm 100stake --from mykey
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(auth.DefaultTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			delAddr := cliCtx.GetFromAddress()
+			valSrcAddr, err := sdk.ValAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			valDstAddr, err := sdk.ValAddressFromBech32(args[1])
+			if err != nil {
+				return err
+			}
+
+			amount, err := sdk.ParseCoin(args[2])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgBeginRedelegate(delAddr, valSrcAddr, valDstAddr, amount)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+// GetCmdUnbond implements the unbond validator command.
+func GetCmdUnbond(storeName string, cdc *codec.Codec) *cobra.Command {
+	return &cobra.Command{
+		Use:   "unbond [validator-addr] [amount]",
+		Short: "Unbond shares from a validator",
+		Args:  cobra.ExactArgs(2),
+		Long: strings.TrimSpace(
+			fmt.Sprintf(`Unbond an amount of bonded shares from a validator.
+
+Example:
+$ %s tx staking unbond cosmosvaloper1gghjut3ccd8ay0zduzj64hwre2fxs9ldmqhffj 100stake --from mykey
+`,
+				version.ClientName,
+			),
+		),
+		RunE: func(cmd *cobra.Command, args []string) error {
+			txBldr := auth.NewTxBuilderFromCLI().WithTxEncoder(auth.DefaultTxEncoder(cdc))
+			cliCtx := context.NewCLIContext().WithCodec(cdc)
+
+			delAddr := cliCtx.GetFromAddress()
+			valAddr, err := sdk.ValAddressFromBech32(args[0])
+			if err != nil {
+				return err
+			}
+
+			amount, err := sdk.ParseCoin(args[1])
+			if err != nil {
+				return err
+			}
+
+			msg := types.NewMsgUndelegate(delAddr, valAddr, amount)
+			return utils.GenerateOrBroadcastMsgs(cliCtx, txBldr, []sdk.Msg{msg})
+		},
+	}
+}
+
+//__________________________________________________________
+
+var (
+	defaultTokens                  = sdk.TokensFromConsensusPower(100)
+	defaultAmount                  = defaultTokens.String() + sdk.DefaultBondDenom
+	defaultCommissionRate          = "0.1"
+	defaultCommissionMaxRate       = "0.2"
+	defaultCommissionMaxChangeRate = "0.01"
+	defaultMinSelfDelegation       = "1"
+)
+
+// Return the flagset, particular flags, and a description of defaults
+// this is anticipated to be used with the gen-tx
+func CreateValidatorMsgHelpers(ipDefault string) (fs *flag.FlagSet, nodeIDFlag, pubkeyFlag, amountFlag, defaultsDesc string) {
+
+	fsCreateValidator := flag.NewFlagSet("", flag.ContinueOnError)
+	fsCreateValidator.String(FlagIP, ipDefault, "The node's public IP")
+	fsCreateValidator.String(FlagNodeID, "", "The node's NodeID")
+	fsCreateValidator.String(FlagWebsite, "", "The validator's (optional) website")
+	fsCreateValidator.String(FlagDetails, "", "The validator's (optional) details")
+	fsCreateValidator.String(FlagIdentity, "", "The (optional) identity signature (ex. UPort or Keybase)")
+	fsCreateValidator.AddFlagSet(FsCommissionCreate)
+	fsCreateValidator.AddFlagSet(FsMinSelfDelegation)
+	fsCreateValidator.AddFlagSet(FsAmount)
+	fsCreateValidator.AddFlagSet(FsPk)
+
+	defaultsDesc = fmt.Sprintf(`
+	delegation amount:           %s
+	commission rate:             %s
+	commission max rate:         %s
+	commission max change rate:  %s
+	minimum self delegation:     %s
+`, defaultAmount, defaultCommissionRate,
+		defaultCommissionMaxRate, defaultCommissionMaxChangeRate,
+		defaultMinSelfDelegation)
+
+	return fsCreateValidator, FlagNodeID, FlagPubKey, FlagAmount, defaultsDesc
+}
+
+// prepare flags in config
+func PrepareFlagsForTxCreateValidator(
+	config *cfg.Config, nodeID, chainID string, valPubKey crypto.PubKey,
+) {
+
+	ip := viper.GetString(FlagIP)
+	if ip == "" {
+		fmt.Fprintf(os.Stderr, "couldn't retrieve an external IP; "+
+			"the tx's memo field will be unset")
+	}
+
+	website := viper.GetString(FlagWebsite)
+	details := viper.GetString(FlagDetails)
+	identity := viper.GetString(FlagIdentity)
+
+	viper.Set(client.FlagChainID, chainID)
+	viper.Set(client.FlagFrom, viper.GetString(client.FlagName))
+	viper.Set(FlagNodeID, nodeID)
+	viper.Set(FlagIP, ip)
+	viper.Set(FlagPubKey, sdk.MustBech32ifyConsPub(valPubKey))
+	viper.Set(FlagMoniker, config.Moniker)
+	viper.Set(FlagWebsite, website)
+	viper.Set(FlagDetails, details)
+	viper.Set(FlagIdentity, identity)
+
+	if config.Moniker == "" {
+		viper.Set(FlagMoniker, viper.GetString(client.FlagName))
+	}
+	if viper.GetString(FlagAmount) == "" {
+		viper.Set(FlagAmount, defaultAmount)
+	}
+	if viper.GetString(FlagCommissionRate) == "" {
+		viper.Set(FlagCommissionRate, defaultCommissionRate)
+	}
+	if viper.GetString(FlagCommissionMaxRate) == "" {
+		viper.Set(FlagCommissionMaxRate, defaultCommissionMaxRate)
+	}
+	if viper.GetString(FlagCommissionMaxChangeRate) == "" {
+		viper.Set(FlagCommissionMaxChangeRate, defaultCommissionMaxChangeRate)
+	}
+	if viper.GetString(FlagMinSelfDelegation) == "" {
+		viper.Set(FlagMinSelfDelegation, defaultMinSelfDelegation)
+	}
+}
+
+// BuildCreateValidatorMsg makes a new MsgCreateValidator.
+func BuildCreateValidatorMsg(cliCtx context.CLIContext, txBldr auth.TxBuilder) (auth.TxBuilder, sdk.Msg, error) {
+	amounstStr := viper.GetString(FlagAmount)
+	amount, err := sdk.ParseCoin(amounstStr)
+	if err != nil {
+		return txBldr, nil, err
+	}
+
+	valAddr := cliCtx.GetFromAddress()
+	pkStr := viper.GetString(FlagPubKey)
+
+	pk, err := sdk.GetConsPubKeyBech32(pkStr)
+	if err != nil {
+		return txBldr, nil, err
+	}
+
+	description := types.NewDescription(
+		viper.GetString(FlagMoniker),
+		viper.GetString(FlagIdentity),
+		viper.GetString(FlagWebsite),
+		viper.GetString(FlagDetails),
 	)
 
-	return txCmd
-}
-
-// SendValidatorJoinTx send validator join transaction
-func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "validator-join",
-		Short: "Join Heimdall as a validator",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			// get proposer
-			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
-			}
-
-			txhash := viper.GetString(FlagTxHash)
-			if txhash == "" {
-				return fmt.Errorf("transaction hash is required")
-			}
-
-			pubkeyStr := viper.GetString(FlagSignerPubkey)
-			if pubkeyStr == "" {
-				return fmt.Errorf("pubkey is required")
-			}
-
-			pubkeyBytes := common.FromHex(pubkeyStr)
-			if len(pubkeyBytes) != 65 {
-				return fmt.Errorf("Invalid public key length")
-			}
-			pubkey := hmTypes.NewPubKey(pubkeyBytes)
-
-			// total stake amount
-			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
-			if !ok {
-				return errors.New("Invalid stake amount")
-			}
-
-			contractCallerObj, err := helper.NewContractCaller()
-			if err != nil {
-				return err
-			}
-
-			chainmanagerParams, err := util.GetChainmanagerParams(cliCtx)
-			if err != nil {
-				return err
-			}
-
-			// get main tx receipt
-			receipt, err := contractCallerObj.GetConfirmedTxReceipt(hmTypes.HexToHeimdallHash(txhash).EthHash(), chainmanagerParams.MainchainTxConfirmations)
-			if err != nil || receipt == nil {
-				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
-			}
-
-			abiObject := &contractCallerObj.StakingInfoABI
-			eventName := "Staked"
-			event := new(stakinginfo.StakinginfoStaked)
-			var logIndex uint64
-			found := false
-			for _, vLog := range receipt.Logs {
-				topic := vLog.Topics[0].Bytes()
-				selectedEvent := helper.EventByID(abiObject, topic)
-				if selectedEvent != nil && selectedEvent.Name == eventName {
-					if err = helper.UnpackLog(abiObject, event, eventName, vLog); err != nil {
-						return err
-					}
-
-					logIndex = uint64(vLog.Index)
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				return fmt.Errorf("Invalid tx for validator join")
-			}
-
-			if !bytes.Equal(event.SignerPubkey, pubkey.Bytes()[1:]) {
-				return fmt.Errorf("Public key mismatch with event log")
-			}
-
-			// msg
-			msg := types.NewMsgValidatorJoin(
-				proposer,
-				event.ValidatorId.Uint64(),
-				viper.GetUint64(FlagActivationEpoch),
-				amount,
-				pubkey,
-				hmTypes.HexToHeimdallHash(txhash),
-				logIndex,
-				viper.GetUint64(FlagBlockNumber),
-				event.Nonce.Uint64(),
-			)
-
-			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
-		},
+	// get the initial validator commission parameters
+	rateStr := viper.GetString(FlagCommissionRate)
+	maxRateStr := viper.GetString(FlagCommissionMaxRate)
+	maxChangeRateStr := viper.GetString(FlagCommissionMaxChangeRate)
+	commissionRates, err := buildCommissionRates(rateStr, maxRateStr, maxChangeRateStr)
+	if err != nil {
+		return txBldr, nil, err
 	}
 
-	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
-	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
-	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
-
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
+	// get the initial validator min self delegation
+	msbStr := viper.GetString(FlagMinSelfDelegation)
+	minSelfDelegation, ok := sdk.NewIntFromString(msbStr)
+	if !ok {
+		return txBldr, nil, fmt.Errorf(types.ErrMinSelfDelegationInvalid(types.DefaultCodespace).Error())
 	}
 
-	if err := cmd.MarkFlagRequired(FlagActivationEpoch); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagActivationEpoch", "Error", err)
+	msg := types.NewMsgCreateValidator(
+		sdk.ValAddress(valAddr), pk, amount, description, commissionRates, minSelfDelegation,
+	)
+
+	if viper.GetBool(client.FlagGenerateOnly) {
+		ip := viper.GetString(FlagIP)
+		nodeID := viper.GetString(FlagNodeID)
+		if nodeID != "" && ip != "" {
+			txBldr = txBldr.WithMemo(fmt.Sprintf("%s@%s:26656", nodeID, ip))
+		}
 	}
 
-	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagAmount", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagSignerPubkey); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagSignerPubkey", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorJoinTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-
-	return cmd
-}
-
-// SendValidatorExitTx sends validator exit transaction
-func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "validator-exit",
-		Short: "Exit heimdall as a validator ",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			// get proposer
-			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
-			}
-
-			validator := viper.GetUint64(FlagValidatorID)
-			if validator == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
-			}
-
-			txhash := viper.GetString(FlagTxHash)
-			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
-			}
-
-			nonce := viper.GetUint64(FlagNonce)
-
-			// draf msg
-			msg := types.NewMsgValidatorExit(
-				proposer,
-				validator,
-				viper.GetUint64(FlagDeactivationEpoch),
-				hmTypes.HexToHeimdallHash(txhash),
-				viper.GetUint64(FlagLogIndex),
-				viper.GetUint64(FlagBlockNumber),
-				nonce,
-			)
-
-			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
-		},
-	}
-
-	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator ID here>")
-	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Uint64(FlagDeactivationEpoch, 0, "--deactivation-epoch=<deactivation-epoch>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
-
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagLogIndex", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
-		logger.Error("SendValidatorExitTx | MarkFlagRequired | FlagNonce", "Error", err)
-	}
-
-	return cmd
-}
-
-// SendValidatorUpdateTx send validator update transaction
-func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "signer-update",
-		Short: "Update signer for a validator",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			// get proposer
-			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
-			}
-
-			validator := viper.GetUint64(FlagValidatorID)
-			if validator == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
-			}
-
-			pubkeyStr := viper.GetString(FlagNewSignerPubkey)
-			if pubkeyStr == "" {
-				return fmt.Errorf("Pubkey has to be supplied")
-			}
-
-			pubkeyBytes, err := hex.DecodeString(pubkeyStr)
-			if err != nil {
-				return err
-			}
-			pubkey := hmTypes.NewPubKey(pubkeyBytes)
-
-			txhash := viper.GetString(FlagTxHash)
-			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
-			}
-
-			msg := types.NewMsgSignerUpdate(
-				proposer,
-				validator,
-				pubkey,
-				hmTypes.HexToHeimdallHash(txhash),
-				viper.GetUint64(FlagLogIndex),
-				viper.GetUint64(FlagBlockNumber),
-				viper.GetUint64(FlagNonce),
-			)
-
-			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
-		},
-	}
-
-	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
-	cmd.Flags().String(FlagNewSignerPubkey, "", "--new-pubkey=<new-signer-pubkey>")
-	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
-
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagNewSignerPubkey); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNewSignerPubkey", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
-		logger.Error("SendValidatorUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
-	}
-
-	return cmd
-}
-
-// SendValidatorStakeUpdateTx send validator stake update transaction
-func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "stake-update",
-		Short: "Update stake for a validator",
-		RunE: func(cmd *cobra.Command, args []string) error {
-			cliCtx := context.NewCLIContext().WithCodec(cdc)
-
-			// get proposer
-			proposer := hmTypes.HexToHeimdallAddress(viper.GetString(FlagProposerAddress))
-			if proposer.Empty() {
-				proposer = helper.GetFromAddress(cliCtx)
-			}
-
-			validator := viper.GetUint64(FlagValidatorID)
-			if validator == 0 {
-				return fmt.Errorf("validator ID cannot be 0")
-			}
-
-			txhash := viper.GetString(FlagTxHash)
-			if txhash == "" {
-				return fmt.Errorf("transaction hash has to be supplied")
-			}
-
-			// total stake amount
-			amount, ok := sdk.NewIntFromString(viper.GetString(FlagAmount))
-			if !ok {
-				return errors.New("Invalid new stake amount")
-			}
-
-			msg := types.NewMsgStakeUpdate(
-				proposer,
-				validator,
-				amount,
-				hmTypes.HexToHeimdallHash(txhash),
-				viper.GetUint64(FlagLogIndex),
-				viper.GetUint64(FlagBlockNumber),
-				viper.GetUint64(FlagNonce),
-			)
-
-			// broadcast messages
-			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
-		},
-	}
-
-	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
-	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
-	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagAmount, "", "--amount=<amount>")
-	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
-	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
-
-	if err := cmd.MarkFlagRequired(FlagTxHash); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagTxHash", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagLogIndex); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagLogIndex", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagValidatorID", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagBlockNumber", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagAmount); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagAmount", "Error", err)
-	}
-
-	if err := cmd.MarkFlagRequired(FlagNonce); err != nil {
-		logger.Error("SendValidatorStakeUpdateTx | MarkFlagRequired | FlagNonce", "Error", err)
-	}
-
-	return cmd
+	return txBldr, msg, nil
 }

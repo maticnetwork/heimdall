@@ -4,21 +4,21 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// TODO we most likely dont need to register to amino as we are using RLP to encode
-
+// Register concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgValidatorJoin{}, "staking/MsgValidatorJoin", nil)
-	cdc.RegisterConcrete(MsgSignerUpdate{}, "staking/MsgSignerUpdate", nil)
-	cdc.RegisterConcrete(MsgValidatorExit{}, "staking/MsgValidatorExit", nil)
-	cdc.RegisterConcrete(MsgStakeUpdate{}, "staking/MsgStakeUpdate", nil)
+	cdc.RegisterConcrete(MsgCreateValidator{}, "cosmos-sdk/MsgCreateValidator", nil)
+	cdc.RegisterConcrete(MsgEditValidator{}, "cosmos-sdk/MsgEditValidator", nil)
+	cdc.RegisterConcrete(MsgDelegate{}, "cosmos-sdk/MsgDelegate", nil)
+	cdc.RegisterConcrete(MsgUndelegate{}, "cosmos-sdk/MsgUndelegate", nil)
+	cdc.RegisterConcrete(MsgBeginRedelegate{}, "cosmos-sdk/MsgBeginRedelegate", nil)
 }
 
-// ModuleCdc generic sealed codec to be used throughout module
+// generic sealed codec to be used throughout this module
 var ModuleCdc *codec.Codec
 
 func init() {
-	cdc := codec.New()
-	codec.RegisterCrypto(cdc)
-	RegisterCodec(cdc)
-	ModuleCdc = cdc.Seal()
+	ModuleCdc = codec.New()
+	RegisterCodec(ModuleCdc)
+	codec.RegisterCrypto(ModuleCdc)
+	ModuleCdc.Seal()
 }

@@ -2,217 +2,136 @@ package slashing
 
 import (
 	"encoding/json"
-	"fmt"
-	"math/rand"
 
 	"github.com/gorilla/mux"
 	"github.com/spf13/cobra"
+
+	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
-	abci "github.com/tendermint/tendermint/abci/types"
-
-	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
-	"github.com/maticnetwork/heimdall/helper"
-	slashingCli "github.com/maticnetwork/heimdall/slashing/client/cli"
-	"github.com/maticnetwork/heimdall/slashing/client/rest"
-	"github.com/maticnetwork/heimdall/slashing/simulation"
-	"github.com/maticnetwork/heimdall/slashing/types"
-	"github.com/maticnetwork/heimdall/staking"
-	hmTypes "github.com/maticnetwork/heimdall/types"
-	hmModule "github.com/maticnetwork/heimdall/types/module"
-	simTypes "github.com/maticnetwork/heimdall/types/simulation"
+	"github.com/cosmos/cosmos-sdk/x/slashing/client/cli"
+	"github.com/cosmos/cosmos-sdk/x/slashing/client/rest"
+	"github.com/cosmos/cosmos-sdk/x/slashing/types"
 )
 
 var (
-	_ module.AppModule             = AppModule{}
-	_ module.AppModuleBasic        = AppModuleBasic{}
-	_ hmModule.HeimdallModuleBasic = AppModule{}
-	_ hmModule.AppModuleSimulation = AppModule{}
+	_ module.AppModule      = AppModule{}
+	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-// AppModuleBasic defines the basic application module used by the slashing module.
+// app module basics object
 type AppModuleBasic struct{}
 
 var _ module.AppModuleBasic = AppModuleBasic{}
 
-// Name returns the slashing module's name.
+// module name
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-// RegisterCodec registers the slashing module's types for the given codec.
+// register module codec
 func (AppModuleBasic) RegisterCodec(cdc *codec.Codec) {
-	types.RegisterCodec(cdc)
+	RegisterCodec(cdc)
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the slashing
-// module.
+// default genesis state
 func (AppModuleBasic) DefaultGenesis() json.RawMessage {
-	return types.ModuleCdc.MustMarshalJSON(types.DefaultGenesisState())
+	return ModuleCdc.MustMarshalJSON(DefaultGenesisState())
 }
 
-// ValidateGenesis performs genesis state validation for the slashing module.
+// module validate genesis
 func (AppModuleBasic) ValidateGenesis(bz json.RawMessage) error {
-	var data types.GenesisState
-	if err := types.ModuleCdc.UnmarshalJSON(bz, &data); err != nil {
-		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
-	}
-
-	return types.ValidateGenesis(data)
-}
-
-// VerifyGenesis performs verification on slashing module state.
-func (AppModuleBasic) VerifyGenesis(bz map[string]json.RawMessage) error {
-	var chainManagertData chainmanagerTypes.GenesisState
-	errcm := chainmanagerTypes.ModuleCdc.UnmarshalJSON(bz[chainmanagerTypes.ModuleName], &chainManagertData)
-	if errcm != nil {
-		return errcm
-	}
-
-	var data types.GenesisState
-	err := types.ModuleCdc.UnmarshalJSON(bz[types.ModuleName], &data)
-
+	var data GenesisState
+	err := ModuleCdc.UnmarshalJSON(bz, &data)
 	if err != nil {
 		return err
 	}
-	return nil
+	return ValidateGenesis(data)
 }
 
-// RegisterRESTRoutes registers the REST routes for the slashing module.
+// register rest routes
 func (AppModuleBasic) RegisterRESTRoutes(ctx context.CLIContext, rtr *mux.Router) {
 	rest.RegisterRoutes(ctx, rtr)
 }
 
-// GetTxCmd returns the root tx command for the slashing module.
+// get the root tx command of this module
 func (AppModuleBasic) GetTxCmd(cdc *codec.Codec) *cobra.Command {
-	return slashingCli.GetTxCmd(cdc)
+	return cli.GetTxCmd(cdc)
 }
 
-// GetQueryCmd returns no root query command for the slashing module.
+// get the root query command of this module
 func (AppModuleBasic) GetQueryCmd(cdc *codec.Codec) *cobra.Command {
-	return slashingCli.GetQueryCmd(cdc)
-
+	return cli.GetQueryCmd(StoreKey, cdc)
 }
 
-//____________________________________________________________________________
-
-// AppModule implements an application module for the slashing module.
+//___________________________
+// app module
 type AppModule struct {
 	AppModuleBasic
-
-	keeper         Keeper
-	stakingKeeper  staking.Keeper
-	contractCaller helper.IContractCaller
+	keeper        Keeper
+	stakingKeeper types.StakingKeeper
 }
 
 // NewAppModule creates a new AppModule object
-func NewAppModule(keeper Keeper, sk staking.Keeper, contractCaller helper.IContractCaller) AppModule {
+func NewAppModule(keeper Keeper, stakingKeeper types.StakingKeeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{},
 		keeper:         keeper,
-		stakingKeeper:  sk,
-		contractCaller: contractCaller,
+		stakingKeeper:  stakingKeeper,
 	}
 }
 
-// Name returns the slashing module's name.
+// module name
 func (AppModule) Name() string {
-	return types.ModuleName
+	return ModuleName
 }
 
-// RegisterInvariants registers the slashing module invariants.
+// register invariants
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// Route returns the message routing key for the slashing module.
+// module message route name
 func (AppModule) Route() string {
-	return types.RouterKey
+	return RouterKey
 }
 
-// NewHandler returns an sdk.Handler for the slashing module.
+// module handler
 func (am AppModule) NewHandler() sdk.Handler {
-	return NewHandler(am.keeper, am.contractCaller)
+	return NewHandler(am.keeper)
 }
 
-// QuerierRoute returns the slashing module's querier route name.
+// module querier route name
 func (AppModule) QuerierRoute() string {
-	return types.QuerierRoute
+	return QuerierRoute
 }
 
-// NewQuerierHandler returns the slashing module sdk.Querier.
+// module querier
 func (am AppModule) NewQuerierHandler() sdk.Querier {
 	return NewQuerier(am.keeper)
 }
 
-// InitGenesis performs genesis initialization for the slashing module. It returns
-// no validator updates.
+// module init-genesis
 func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.ValidatorUpdate {
-	var genesisState types.GenesisState
-	types.ModuleCdc.MustUnmarshalJSON(data, &genesisState)
-	InitGenesis(ctx, am.keeper, genesisState)
+	var genesisState GenesisState
+	ModuleCdc.MustUnmarshalJSON(data, &genesisState)
+	InitGenesis(ctx, am.keeper, am.stakingKeeper, genesisState)
 	return []abci.ValidatorUpdate{}
-
 }
 
-// ExportGenesis returns the exported genesis state as raw bytes for the auth
-// module.
+// module export genesis
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
-	return types.ModuleCdc.MustMarshalJSON(gs)
+	return ModuleCdc.MustMarshalJSON(gs)
 }
 
-// BeginBlock returns the begin blocker for the slashing module.
+// module begin-block
 func (am AppModule) BeginBlock(ctx sdk.Context, req abci.RequestBeginBlock) {
 	BeginBlocker(ctx, req, am.keeper)
 }
 
-// EndBlock returns the end blocker for the slashing module. It returns no validator
-// updates.
+// module end-block
 func (AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate {
 	return []abci.ValidatorUpdate{}
-}
-
-//____________________________________________________________________________
-
-// AppModuleSimulation functions
-
-// GenerateGenesisState creates a randomized GenState of the auth module
-func (AppModule) GenerateGenesisState(simState *hmModule.SimulationState) {
-	simulation.RandomizedGenState(simState)
-}
-
-// ProposalContents doesn't return any content functions for governance proposals.
-func (AppModule) ProposalContents(simState hmModule.SimulationState) []simTypes.WeightedProposalContent {
-	return nil
-}
-
-// RandomizedParams creates randomized auth param changes for the simulator.
-func (AppModule) RandomizedParams(r *rand.Rand) []simTypes.ParamChange {
-	return simulation.ParamChanges(r)
-}
-
-// RegisterStoreDecoder registers a decoder for auth module's types
-func (AppModule) RegisterStoreDecoder(sdr hmModule.StoreDecoderRegistry) {
-	sdr[types.StoreKey] = simulation.DecodeStore
-}
-
-// WeightedOperations doesn't return any auth module operation.
-func (AppModule) WeightedOperations(_ hmModule.SimulationState) []simTypes.WeightedOperation {
-	return nil
-}
-
-//
-// Side module
-//
-
-// NewSideTxHandler side tx handler
-func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
-	return NewSideTxHandler(am.keeper, am.contractCaller)
-}
-
-// NewPostTxHandler side tx handler
-func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
-	return NewPostTxHandler(am.keeper, am.contractCaller)
 }

@@ -1,267 +1,331 @@
 package staking
 
 import (
-	"bytes"
 	"fmt"
-	"math/big"
-	"strconv"
+	"time"
+
+	abci "github.com/tendermint/tendermint/abci/types"
+	"github.com/tendermint/tendermint/libs/common"
+	tmtypes "github.com/tendermint/tendermint/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	hmCommon "github.com/maticnetwork/heimdall/common"
-	"github.com/maticnetwork/heimdall/helper"
-	"github.com/maticnetwork/heimdall/staking/types"
-	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	"github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// NewHandler new handler
-func NewHandler(k Keeper, contractCaller helper.IContractCaller) sdk.Handler {
+////////HANDLER //////////////
+
+func NewHandler(k keeper.Keeper) sdk.Handler {
 	return func(ctx sdk.Context, msg sdk.Msg) sdk.Result {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case types.MsgValidatorJoin:
-			return HandleMsgValidatorJoin(ctx, msg, k, contractCaller)
-		case types.MsgValidatorExit:
-			return HandleMsgValidatorExit(ctx, msg, k, contractCaller)
-		case types.MsgSignerUpdate:
-			return HandleMsgSignerUpdate(ctx, msg, k, contractCaller)
-		case types.MsgStakeUpdate:
-			return HandleMsgStakeUpdate(ctx, msg, k, contractCaller)
+		case types.MsgCreateValidator:
+			return handleMsgCreateValidator(ctx, msg, k)
+
+		case types.MsgEditValidator:
+			return handleMsgEditValidator(ctx, msg, k)
+
+		case types.MsgDelegate:
+			return handleMsgDelegate(ctx, msg, k)
+
+		case types.MsgBeginRedelegate:
+			return handleMsgBeginRedelegate(ctx, msg, k)
+
+		case types.MsgUndelegate:
+			return handleMsgUndelegate(ctx, msg, k)
+
 		default:
-			return sdk.ErrTxDecode("Invalid message in staking module").Result()
+			errMsg := fmt.Sprintf("unrecognized staking message type: %T", msg)
+			return sdk.ErrUnknownRequest(errMsg).Result()
 		}
 	}
 }
 
-// HandleMsgValidatorJoin msg validator join
-func HandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("✅ Validating validator join msg",
-		"validatorId", msg.ID,
-		"activationEpoch", msg.ActivationEpoch,
-		"amount", msg.Amount,
-		"SignerPubkey", msg.SignerPubKey.String(),
-		"txHash", msg.TxHash,
-		"logIndex", msg.LogIndex,
-		"blockNumber", msg.BlockNumber,
+// Called every block, update validator set
+func EndBlocker(ctx sdk.Context, k keeper.Keeper) []abci.ValidatorUpdate {
+	// Calculate validator set changes.
+	//
+	// NOTE: ApplyAndReturnValidatorSetUpdates has to come before
+	// UnbondAllMatureValidatorQueue.
+	// This fixes a bug when the unbonding period is instant (is the case in
+	// some of the tests). The test expected the validator to be completely
+	// unbonded after the Endblocker (go from Bonded -> Unbonding during
+	// ApplyAndReturnValidatorSetUpdates and then Unbonding -> Unbonded during
+	// UnbondAllMatureValidatorQueue).
+	validatorUpdates := k.ApplyAndReturnValidatorSetUpdates(ctx)
+
+	// Unbond all mature validators from the unbonding queue.
+	k.UnbondAllMatureValidatorQueue(ctx)
+
+	// Remove all mature unbonding delegations from the ubd queue.
+	matureUnbonds := k.DequeueAllMatureUBDQueue(ctx, ctx.BlockHeader().Time)
+	for _, dvPair := range matureUnbonds {
+		err := k.CompleteUnbonding(ctx, dvPair.DelegatorAddress, dvPair.ValidatorAddress)
+		if err != nil {
+			continue
+		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeCompleteUnbonding,
+				sdk.NewAttribute(types.AttributeKeyValidator, dvPair.ValidatorAddress.String()),
+				sdk.NewAttribute(types.AttributeKeyDelegator, dvPair.DelegatorAddress.String()),
+			),
+		)
+	}
+
+	// Remove all mature redelegations from the red queue.
+	matureRedelegations := k.DequeueAllMatureRedelegationQueue(ctx, ctx.BlockHeader().Time)
+	for _, dvvTriplet := range matureRedelegations {
+		err := k.CompleteRedelegation(ctx, dvvTriplet.DelegatorAddress,
+			dvvTriplet.ValidatorSrcAddress, dvvTriplet.ValidatorDstAddress)
+		if err != nil {
+			continue
+		}
+
+		ctx.EventManager().EmitEvent(
+			sdk.NewEvent(
+				types.EventTypeCompleteRedelegation,
+				sdk.NewAttribute(types.AttributeKeyDelegator, dvvTriplet.DelegatorAddress.String()),
+				sdk.NewAttribute(types.AttributeKeySrcValidator, dvvTriplet.ValidatorSrcAddress.String()),
+				sdk.NewAttribute(types.AttributeKeyDstValidator, dvvTriplet.ValidatorDstAddress.String()),
+			),
+		)
+	}
+
+	return validatorUpdates
+}
+
+// These functions assume everything has been authenticated,
+// now we just perform action and save
+
+func handleMsgCreateValidator(ctx sdk.Context, msg types.MsgCreateValidator, k keeper.Keeper) sdk.Result {
+	// check to see if the pubkey or sender has been registered before
+	if _, found := k.GetValidator(ctx, msg.ValidatorAddress); found {
+		return ErrValidatorOwnerExists(k.Codespace()).Result()
+	}
+
+	if _, found := k.GetValidatorByConsAddr(ctx, sdk.GetConsAddress(msg.PubKey)); found {
+		return ErrValidatorPubKeyExists(k.Codespace()).Result()
+	}
+
+	if msg.Value.Denom != k.BondDenom(ctx) {
+		return ErrBadDenom(k.Codespace()).Result()
+	}
+
+	if _, err := msg.Description.EnsureLength(); err != nil {
+		return err.Result()
+	}
+
+	if ctx.ConsensusParams() != nil {
+		tmPubKey := tmtypes.TM2PB.PubKey(msg.PubKey)
+		if !common.StringInSlice(tmPubKey.Type, ctx.ConsensusParams().Validator.PubKeyTypes) {
+			return ErrValidatorPubKeyTypeNotSupported(k.Codespace(),
+				tmPubKey.Type,
+				ctx.ConsensusParams().Validator.PubKeyTypes).Result()
+		}
+	}
+
+	validator := NewValidator(msg.ValidatorAddress, msg.PubKey, msg.Description)
+	commission := NewCommissionWithTime(
+		msg.Commission.Rate, msg.Commission.MaxRate,
+		msg.Commission.MaxChangeRate, ctx.BlockHeader().Time,
 	)
-
-	// Generate PubKey from Pubkey in message and signer
-	pubkey := msg.SignerPubKey
-	signer := pubkey.Address()
-
-	// Check if validator has been validator before
-	if _, ok := k.GetSignerFromValidatorID(ctx, msg.ID); ok {
-		k.Logger(ctx).Error("Validator has been validator before, cannot join with same ID", "validatorId", msg.ID)
-		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace()).Result()
-	}
-
-	// get validator by signer
-	checkVal, err := k.GetValidatorInfo(ctx, signer.Bytes())
-	if err == nil || bytes.Equal(checkVal.Signer.Bytes(), signer.Bytes()) {
-		return hmCommon.ErrValidatorAlreadyJoined(k.Codespace()).Result()
-	}
-
-	// validate voting power
-	_, err = helper.GetPowerFromAmount(msg.Amount.BigInt())
+	validator, err := validator.SetInitialCommission(commission)
 	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid amount %v for validator %v", msg.Amount, msg.ID)).Result()
+		return err.Result()
 	}
 
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
+	validator.MinSelfDelegation = msg.MinSelfDelegation
 
-	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
-		return hmCommon.ErrOldTx(k.Codespace()).Result()
-	}
+	k.SetValidator(ctx, validator)
+	k.SetValidatorByConsAddr(ctx, validator)
+	k.SetNewValidatorByPowerIndex(ctx, validator)
 
-	// Emit event join
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeValidatorJoin,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(msg.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
-		),
-	})
+	// call the after-creation hook
+	k.AfterValidatorCreated(ctx, validator.OperatorAddress)
 
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}
-}
-
-// HandleMsgStakeUpdate handles stake update message
-func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("✅ Validating stake update msg",
-		"validatorID", msg.ID,
-		"newAmount", msg.NewAmount,
-		"txHash", msg.TxHash,
-		"logIndex", msg.LogIndex,
-		"blockNumber", msg.BlockNumber,
-	)
-
-	// pull validator from store
-	_, ok := k.GetValidatorFromValID(ctx, msg.ID)
-	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
-
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
-
-	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
-		return hmCommon.ErrOldTx(k.Codespace()).Result()
-	}
-
-	// pull validator from store
-	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
-	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
-
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
-	}
-
-	// set validator amount
-	_, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
+	// move coins from the msg.Address account to a (self-delegation) delegator account
+	// the validator account and global shares are updated within here
+	// NOTE source will always be from a wallet which are unbonded
+	_, err = k.Delegate(ctx, msg.DelegatorAddress, msg.Value.Amount, sdk.Unbonded, validator, true)
 	if err != nil {
-		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid newamount %v for validator %v", msg.NewAmount, msg.ID)).Result()
+		return err.Result()
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeStakeUpdate,
+			types.EventTypeCreateValidator,
+			sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Value.Amount.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
 		),
 	})
 
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}
+	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-// HandleMsgSignerUpdate handles signer update message
-func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("✅ Validating signer update msg",
-		"validatorID", msg.ID,
-		"NewSignerPubkey", msg.NewSignerPubKey.String(),
-		"txHash", msg.TxHash,
-		"logIndex", msg.LogIndex,
-		"blockNumber", msg.BlockNumber,
-	)
-
-	newPubKey := msg.NewSignerPubKey
-	newSigner := newPubKey.Address()
-
-	// pull validator from store
-	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
-	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+func handleMsgEditValidator(ctx sdk.Context, msg types.MsgEditValidator, k keeper.Keeper) sdk.Result {
+	// validator must already be registered
+	validator, found := k.GetValidator(ctx, msg.ValidatorAddress)
+	if !found {
+		return ErrNoValidatorFound(k.Codespace()).Result()
 	}
 
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
-
-	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
-		return hmCommon.ErrOldTx(k.Codespace()).Result()
+	// replace all editable fields (clients should autofill existing values)
+	description, err := validator.Description.UpdateDescription(msg.Description)
+	if err != nil {
+		return err.Result()
 	}
 
-	// check if new signer address is same as existing signer
-	if bytes.Equal(newSigner.Bytes(), validator.Signer.Bytes()) {
-		// No signer change
-		k.Logger(ctx).Error("NewSigner same as OldSigner.")
-		return hmCommon.ErrNoSignerChange(k.Codespace()).Result()
+	validator.Description = description
+
+	if msg.CommissionRate != nil {
+		commission, err := k.UpdateValidatorCommission(ctx, validator, *msg.CommissionRate)
+		if err != nil {
+			return err.Result()
+		}
+
+		// call the before-modification hook since we're about to update the commission
+		k.BeforeValidatorModified(ctx, msg.ValidatorAddress)
+
+		validator.Commission = commission
 	}
 
-	// check nonce validity
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
+	if msg.MinSelfDelegation != nil {
+		if !(*msg.MinSelfDelegation).GT(validator.MinSelfDelegation) {
+			return ErrMinSelfDelegationDecreased(k.Codespace()).Result()
+		}
+		if (*msg.MinSelfDelegation).GT(validator.Tokens) {
+			return ErrSelfDelegationBelowMinimum(k.Codespace()).Result()
+		}
+		validator.MinSelfDelegation = (*msg.MinSelfDelegation)
 	}
+
+	k.SetValidator(ctx, validator)
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeSignerUpdate,
+			types.EventTypeEditValidator,
+			sdk.NewAttribute(types.AttributeKeyCommissionRate, validator.Commission.String()),
+			sdk.NewAttribute(types.AttributeKeyMinSelfDelegation, validator.MinSelfDelegation.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.ValidatorAddress.String()),
 		),
 	})
 
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}
+	return sdk.Result{Events: ctx.EventManager().Events()}
 }
 
-// HandleMsgValidatorExit handle msg validator exit
-func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keeper, contractCaller helper.IContractCaller) sdk.Result {
-	k.Logger(ctx).Debug("✅ Validating validator exit msg",
-		"validatorID", msg.ID,
-		"deactivatonEpoch", msg.DeactivationEpoch,
-		"txHash", msg.TxHash,
-		"logIndex", msg.LogIndex,
-		"blockNumber", msg.BlockNumber,
-	)
-
-	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
-	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
+func handleMsgDelegate(ctx sdk.Context, msg types.MsgDelegate, k keeper.Keeper) sdk.Result {
+	validator, found := k.GetValidator(ctx, msg.ValidatorAddress)
+	if !found {
+		return ErrNoValidatorFound(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("validator in store", "validator", validator)
-	// check if validator deactivation period is set
-	if validator.EndEpoch != 0 {
-		k.Logger(ctx).Error("Validator already unbonded")
-		return hmCommon.ErrValUnbonded(k.Codespace()).Result()
+	if msg.Amount.Denom != k.BondDenom(ctx) {
+		return ErrBadDenom(k.Codespace()).Result()
 	}
 
-	// sequence id
-	blockNumber := new(big.Int).SetUint64(msg.BlockNumber)
-	sequence := new(big.Int).Mul(blockNumber, big.NewInt(hmTypes.DefaultLogIndexUnit))
-	sequence.Add(sequence, new(big.Int).SetUint64(msg.LogIndex))
-
-	// check if incoming tx is older
-	if k.HasStakingSequence(ctx, sequence.String()) {
-		k.Logger(ctx).Error("Older invalid tx found")
-		return hmCommon.ErrOldTx(k.Codespace()).Result()
-	}
-
-	// check nonce validity
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
+	// NOTE: source funds are always unbonded
+	_, err := k.Delegate(ctx, msg.DelegatorAddress, msg.Amount.Amount, sdk.Unbonded, validator, true)
+	if err != nil {
+		return err.Result()
 	}
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
-			types.EventTypeValidatorExit,
+			types.EventTypeDelegate,
+			sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
 		),
 	})
 
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
+	return sdk.Result{Events: ctx.EventManager().Events()}
+}
+
+func handleMsgUndelegate(ctx sdk.Context, msg types.MsgUndelegate, k keeper.Keeper) sdk.Result {
+	shares, err := k.ValidateUnbondAmount(
+		ctx, msg.DelegatorAddress, msg.ValidatorAddress, msg.Amount.Amount,
+	)
+	if err != nil {
+		return err.Result()
 	}
+
+	if msg.Amount.Denom != k.BondDenom(ctx) {
+		return ErrBadDenom(k.Codespace()).Result()
+	}
+
+	completionTime, err := k.Undelegate(ctx, msg.DelegatorAddress, msg.ValidatorAddress, shares)
+	if err != nil {
+		return err.Result()
+	}
+
+	completionTimeBz := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(completionTime)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeUnbond,
+			sdk.NewAttribute(types.AttributeKeyValidator, msg.ValidatorAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+		),
+	})
+
+	return sdk.Result{Data: completionTimeBz, Events: ctx.EventManager().Events()}
+}
+
+func handleMsgBeginRedelegate(ctx sdk.Context, msg types.MsgBeginRedelegate, k keeper.Keeper) sdk.Result {
+	shares, err := k.ValidateUnbondAmount(
+		ctx, msg.DelegatorAddress, msg.ValidatorSrcAddress, msg.Amount.Amount,
+	)
+	if err != nil {
+		return err.Result()
+	}
+
+	if msg.Amount.Denom != k.BondDenom(ctx) {
+		return ErrBadDenom(k.Codespace()).Result()
+	}
+
+	completionTime, err := k.BeginRedelegation(
+		ctx, msg.DelegatorAddress, msg.ValidatorSrcAddress, msg.ValidatorDstAddress, shares,
+	)
+	if err != nil {
+		return err.Result()
+	}
+
+	completionTimeBz := types.ModuleCdc.MustMarshalBinaryLengthPrefixed(completionTime)
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeRedelegate,
+			sdk.NewAttribute(types.AttributeKeySrcValidator, msg.ValidatorSrcAddress.String()),
+			sdk.NewAttribute(types.AttributeKeyDstValidator, msg.ValidatorDstAddress.String()),
+			sdk.NewAttribute(sdk.AttributeKeyAmount, msg.Amount.Amount.String()),
+			sdk.NewAttribute(types.AttributeKeyCompletionTime, completionTime.Format(time.RFC3339)),
+		),
+		sdk.NewEvent(
+			sdk.EventTypeMessage,
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(sdk.AttributeKeySender, msg.DelegatorAddress.String()),
+		),
+	})
+
+	return sdk.Result{Data: completionTimeBz, Events: ctx.EventManager().Events()}
 }

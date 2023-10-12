@@ -5,19 +5,18 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	restClient "github.com/maticnetwork/heimdall/client/rest"
-	govRest "github.com/maticnetwork/heimdall/gov/client/rest"
-	govTypes "github.com/maticnetwork/heimdall/gov/types"
-	paramsUtils "github.com/maticnetwork/heimdall/params/client/utils"
-	paramsTypes "github.com/maticnetwork/heimdall/params/types"
-	"github.com/maticnetwork/heimdall/types/rest"
+	"github.com/cosmos/cosmos-sdk/types/rest"
+	"github.com/cosmos/cosmos-sdk/x/auth/client/utils"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	govrest "github.com/cosmos/cosmos-sdk/x/gov/client/rest"
+	"github.com/cosmos/cosmos-sdk/x/params"
+	paramscutils "github.com/cosmos/cosmos-sdk/x/params/client/utils"
 )
 
 // ProposalRESTHandler returns a ProposalRESTHandler that exposes the param
 // change REST handler with a given sub-route.
-func ProposalRESTHandler(cliCtx context.CLIContext) govRest.ProposalRESTHandler {
-	return govRest.ProposalRESTHandler{
+func ProposalRESTHandler(cliCtx context.CLIContext) govrest.ProposalRESTHandler {
+	return govrest.ProposalRESTHandler{
 		SubRoute: "param_change",
 		Handler:  postProposalHandlerFn(cliCtx),
 	}
@@ -25,7 +24,7 @@ func ProposalRESTHandler(cliCtx context.CLIContext) govRest.ProposalRESTHandler 
 
 func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var req paramsUtils.ParamChangeProposalReq
+		var req paramscutils.ParamChangeProposalReq
 		if !rest.ReadRESTReq(w, r, cliCtx.Codec, &req) {
 			return
 		}
@@ -35,14 +34,14 @@ func postProposalHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		content := paramsTypes.NewParameterChangeProposal(req.Title, req.Description, req.Changes.ToParamChanges())
+		content := params.NewParameterChangeProposal(req.Title, req.Description, req.Changes.ToParamChanges())
 
-		msg := govTypes.NewMsgSubmitProposal(content, req.Deposit, req.Proposer, req.Validator)
+		msg := gov.NewMsgSubmitProposal(content, req.Deposit, req.Proposer)
 		if err := msg.ValidateBasic(); err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
+		utils.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
 	}
 }

@@ -4,16 +4,13 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/cosmos/cosmos-sdk/store/prefix"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-	subspace "github.com/maticnetwork/heimdall/params/subspace"
+	"github.com/cosmos/cosmos-sdk/store/prefix"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 func TestKeeper(t *testing.T) {
-	t.Parallel()
-
 	kvs := []struct {
 		key   string
 		param int64
@@ -27,7 +24,7 @@ func TestKeeper(t *testing.T) {
 		{"key7", 9058701},
 	}
 
-	table := subspace.NewKeyTable(
+	table := NewKeyTable(
 		[]byte("key1"), int64(0),
 		[]byte("key2"), int64(0),
 		[]byte("key3"), int64(0),
@@ -106,18 +103,6 @@ func indirect(ptr interface{}) interface{} {
 	return reflect.ValueOf(ptr).Elem().Interface()
 }
 
-func TestSubspaceCreation(t *testing.T) {
-	_, _, _, _, keeper := testComponents()
-	require.Panics(t, func() { keeper.Subspace("") }, "creating subspace with empty should panic")
-
-	// create keeper
-	_ = keeper.Subspace("test")
-	require.Panics(t, func() { keeper.Subspace("test") }, "creating subspace with same key should panic")
-
-	_, ok := keeper.GetSubspace("test1")
-	require.False(t, ok, "getting subspace with no key not return not-ok result")
-}
-
 func TestSubspace(t *testing.T) {
 	cdc, ctx, key, _, keeper := testComponents()
 
@@ -141,7 +126,7 @@ func TestSubspace(t *testing.T) {
 		{"struct", s{1}, s{0}, new(s)},
 	}
 
-	table := subspace.NewKeyTable(
+	table := NewKeyTable(
 		[]byte("string"), string(""),
 		[]byte("bool"), bool(false),
 		[]byte("int16"), int16(0),
@@ -205,27 +190,23 @@ func TestJSONUpdate(t *testing.T) {
 
 	key := []byte("key")
 
-	space := keeper.Subspace("test").WithKeyTable(subspace.NewKeyTable(key, paramJSON{}))
+	space := keeper.Subspace("test").WithKeyTable(NewKeyTable(key, paramJSON{}))
 
 	var param paramJSON
 
-	err := space.Update(ctx, key, []byte(`{"param1": "10241024"}`))
-	require.NoError(t, err)
+	space.Update(ctx, key, []byte(`{"param1": "10241024"}`))
 	space.Get(ctx, key, &param)
 	require.Equal(t, paramJSON{10241024, ""}, param)
 
-	err = space.Update(ctx, key, []byte(`{"param2": "helloworld"}`))
-	require.NoError(t, err)
+	space.Update(ctx, key, []byte(`{"param2": "helloworld"}`))
 	space.Get(ctx, key, &param)
 	require.Equal(t, paramJSON{10241024, "helloworld"}, param)
 
-	err = space.Update(ctx, key, []byte(`{"param1": "20482048"}`))
-	require.NoError(t, err)
+	space.Update(ctx, key, []byte(`{"param1": "20482048"}`))
 	space.Get(ctx, key, &param)
 	require.Equal(t, paramJSON{20482048, "helloworld"}, param)
 
-	err = space.Update(ctx, key, []byte(`{"param1": "40964096", "param2": "goodbyeworld"}`))
-	require.NoError(t, err)
+	space.Update(ctx, key, []byte(`{"param1": "40964096", "param2": "goodbyeworld"}`))
 	space.Get(ctx, key, &param)
 	require.Equal(t, paramJSON{40964096, "goodbyeworld"}, param)
 }

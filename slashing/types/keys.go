@@ -2,10 +2,12 @@ package types
 
 import (
 	"encoding/binary"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 const (
-	// ModuleName is the name of the module
+	// module name
 	ModuleName = "slashing"
 
 	// StoreKey is the store key string for slashing
@@ -18,6 +20,13 @@ const (
 	QuerierRoute = ModuleName
 )
 
+// Query endpoints supported by the slashing querier
+const (
+	QueryParameters   = "parameters"
+	QuerySigningInfo  = "signingInfo"
+	QuerySigningInfos = "signingInfos"
+)
+
 // Keys for slashing store
 // Items are stored with the following key: values
 //
@@ -27,44 +36,38 @@ const (
 //
 // - 0x03<accAddr_Bytes>: crypto.PubKey
 var (
-	DefaultValue = []byte{0x01} // Value to store for slashing sequence
-
 	ValidatorSigningInfoKey         = []byte{0x01} // Prefix for signing info
 	ValidatorMissedBlockBitArrayKey = []byte{0x02} // Prefix for missed block bit array
-	TotalSlashedAmountKey           = []byte{0x04} // Prefix for total slashed amount stored in buffer
-	BufferValSlashingInfoKey        = []byte{0x05} // Prefix for Slashing Info stored in buffer
-	TickValSlashingInfoKey          = []byte{0x06} // Prefix for Slashing Info stored after tick tx
-	SlashingSequenceKey             = []byte{0x07} // prefix for each key for slashing sequence map
-	TickCountKey                    = []byte{0x08} // key to store Tick counts
+	AddrPubkeyRelationKey           = []byte{0x03} // Prefix for address-pubkey relation
 )
 
-// GetValidatorSigningInfoKey - stored by *valID*
-func GetValidatorSigningInfoKey(valID []byte) []byte {
-	return append(ValidatorSigningInfoKey, valID...)
+// stored by *Consensus* address (not operator address)
+func GetValidatorSigningInfoKey(v sdk.ConsAddress) []byte {
+	return append(ValidatorSigningInfoKey, v.Bytes()...)
 }
 
-// GetValidatorMissedBlockBitArrayPrefixKey - stored by *Consensus* address (not operator address)
-func GetValidatorMissedBlockBitArrayPrefixKey(valID []byte) []byte {
-	return append(ValidatorMissedBlockBitArrayKey, valID...)
+// extract the address from a validator signing info key
+func GetValidatorSigningInfoAddress(key []byte) (v sdk.ConsAddress) {
+	addr := key[1:]
+	if len(addr) != sdk.AddrLen {
+		panic("unexpected key length")
+	}
+	return sdk.ConsAddress(addr)
 }
 
-// GetValidatorMissedBlockBitArrayKey - stored by *Consensus* address (not operator address)
-func GetValidatorMissedBlockBitArrayKey(valID []byte, i int64) []byte {
+// stored by *Consensus* address (not operator address)
+func GetValidatorMissedBlockBitArrayPrefixKey(v sdk.ConsAddress) []byte {
+	return append(ValidatorMissedBlockBitArrayKey, v.Bytes()...)
+}
+
+// stored by *Consensus* address (not operator address)
+func GetValidatorMissedBlockBitArrayKey(v sdk.ConsAddress, i int64) []byte {
 	b := make([]byte, 8)
 	binary.LittleEndian.PutUint64(b, uint64(i))
-	return append(GetValidatorMissedBlockBitArrayPrefixKey(valID), b...)
+	return append(GetValidatorMissedBlockBitArrayPrefixKey(v), b...)
 }
 
-// GetBufferValSlashingInfoKey - gets buffer val slashing info key
-func GetBufferValSlashingInfoKey(id []byte) []byte {
-	return append(BufferValSlashingInfoKey, id...)
-}
-
-func GetTickValSlashingInfoKey(id []byte) []byte {
-	return append(TickValSlashingInfoKey, id...)
-}
-
-// GetSlashingSequenceKey returns slashing sequence key
-func GetSlashingSequenceKey(sequence string) []byte {
-	return append(SlashingSequenceKey, []byte(sequence)...)
+// get pubkey relation key used to get the pubkey from the address
+func GetAddrPubkeyRelationKey(address []byte) []byte {
+	return append(AddrPubkeyRelationKey, address...)
 }

@@ -4,20 +4,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 )
 
-// RegisterCodec registers concrete types on codec
+// Register concrete types on codec codec
 func RegisterCodec(cdc *codec.Codec) {
-	cdc.RegisterConcrete(MsgUnjail{}, "slashing/MsgUnjail", nil)
-	cdc.RegisterConcrete(MsgTick{}, "slashing/MsgTick", nil)
-	cdc.RegisterConcrete(MsgTickAck{}, "slashing/MsgTickAck", nil)
-
+	cdc.RegisterConcrete(MsgUnjail{}, "cosmos-sdk/MsgUnjail", nil)
 }
 
-// ModuleCdc generic sealed codec to be used throughout module
+// module codec
 var ModuleCdc *codec.Codec
 
 func init() {
-	cdc := codec.New()
-	codec.RegisterCrypto(cdc)
-	RegisterCodec(cdc)
-	ModuleCdc = cdc.Seal()
+	ModuleCdc = codec.New()
+	RegisterCodec(ModuleCdc)
+	codec.RegisterCrypto(ModuleCdc)
+	ModuleCdc.Seal()
 }
