@@ -5,18 +5,18 @@
 * [Preliminary terminology](#preliminary-terminology)
 * [Overview](#overview)
 * [How does one join the network as a validator](#how-does-one-join-the-network-as-a-validator)
-* [How to propose a MsgValidatorJoin transaction](#how-to-propose-a-msgvalidatorjoin-transaction)
+** [How to propose a MsgValidatorJoin transaction](#how-to-propose-a-msgvalidatorjoin-transaction)
 * [How does an existing validator exit the network](#how-does-an-existing-validator-exit-the-network)
-* [How to propose a MsgValidatorExit transaction](#how-to-propose-a-msgvalidatorexit-transaction)
+** [How to propose a MsgValidatorExit transaction](#how-to-propose-a-msgvalidatorexit-transaction)
 * [How does a validator update its stake](#how-does-a-validator-update-its-stake)
-* [How to propose a MsgStakeUpdate transaction](#how-to-propose-a-msgstakeupdate-transaction)
+** [How to propose a MsgStakeUpdate transaction](#how-to-propose-a-msgstakeupdate-transaction)
 * [How does a validator update its signer address](#how-does-a-validator-update-its-signer-address)
-* [How to propose a MsgSignerUpdate transaction](#how-to-propose-a-msgsignerupdate-transaction)
+** [How to propose a MsgSignerUpdate transaction](#how-to-propose-a-msgsignerupdate-transaction)
 * [Query commands](#query-commands)
 
 ## Preliminary terminology
 
-* An `epoch` represents the period till a checkpoint is submitted on Ethereum, i.e one `epoch` ends when a checkpoint is committed on Ethereum and the next one begins.
+* An `epoch` represents the period until a checkpoint is submitted on Ethereum (i.e. one `epoch` ends when a checkpoint is committed on Ethereum and the next one begins).
 
 ## Overview
 
@@ -29,7 +29,7 @@ The `staking` module in Heimdall is responsible for a validator's stake related 
 
 ## How does one join the network as a validator
 
-The node that wants to be a validator stakes its tokens by invoking the `stakeFor` method on the `StakeManager` contract on L1(Ethereum), which emits a `Staked` event:
+The node that wants to be a validator stakes its tokens by invoking the `stakeFor` method on the `StakeManager` contract on L1 (Ethereum), which emits a `Staked` event:
 
 ```
 /// @param signer validator address.
@@ -65,7 +65,7 @@ type MsgValidatorJoin struct {
 	Nonce           uint64                  `json:"nonce"`
 }
 ```
-where ,
+where
 
 * `From` represents the address of the validator that initiated the `MsgValidatorJoin` transaction on heimdall.
 * `ID` represents the id of the new validator.
@@ -75,11 +75,11 @@ where ,
 * `TxHash` is the hash of the staking transaction on L1.
 * `LogIndex` is the index of the `Staked` log in the staking transaction receipt.
 * `BlockNumber` is the L1 block number in which the staking transaction was included.
-* `Nonce` is the the count representing all the staking related transactions performed from the new validator's account. This is to meant keep Heimdall and L1 in sync.
+* `Nonce` is the the count representing all the staking related transactions performed from the new validator's account. This is meant to keep Heimdall and L1 in sync.
 
 Upon broadcasting the message, it goes through `HandleMsgValidatorJoin` handler which checks the basic sanity of the transaction (verifying the validator isn't already existing, voting power, etc.).
 
-The `SideHandleMsgValidatorJoin` side-handler in all the existing (honest) validators then ensures the authenticity of staking transaction on L1. It fetches transaction receipt from L1 contract and validates it with the data provided in the `MsgValidatorJoin` transaction. Upon successful validation, `YES` is voted.
+The `SideHandleMsgValidatorJoin` side-handler in all the existing (honest) validators then ensures the authenticity of staking transaction on L1. It fetches the transaction receipt from L1 contract and validates it with the data provided in the `MsgValidatorJoin` transaction. Upon successful validation, `YES` is voted.
 
 The `PostHandleMsgValidatorJoin` post-handler then initializes the new validator and persists in the state via the keeper:
 
@@ -145,7 +145,7 @@ if len(setUpdates) > 0 {
 	}
 ```
 
-## How to propose a MsgValidatorJoin transaction
+### How to propose a MsgValidatorJoin transaction
 
 The `bridge` service in an existing validator's heimdall process polls for `Staked` event periodically and generates and broadcasts the transaction once it detects and parses the event. An existing validator on the network can also leverage the CLI to send the transaction:
 
@@ -191,7 +191,7 @@ type MsgValidatorExit struct {
 	Nonce             uint64                  `json:"nonce"`
 }
 ```
-where ,
+where
 
 * `From` represents the address of the validator that initiated the `MsgValidatorExit` transaction on heimdall.
 * `ID` represents the id of the validator to be unstaked.
@@ -232,7 +232,7 @@ if err := k.AddValidator(ctx, validator); err != nil {
 
 The `EndBlocker` hook then updates the validator set once deactivation epoch is completed.
 
-## How to propose a MsgValidatorExit transaction
+### How to propose a MsgValidatorExit transaction
 
 The `bridge` service in an existing validator's heimdall process polls for `UnstakeInit` event periodically and generates and broadcasts the transaction once it detects and parses the event. An existing validator on the network can also leverage the CLI to send the transaction:
 
@@ -274,7 +274,7 @@ type MsgStakeUpdate struct {
 	Nonce       uint64                  `json:"nonce"`
 }
 ```
-where ,
+where
 
 * `From` represents the address of the validator that initiated the `MsgStakeUpdate` transaction on heimdall.
 * `ID` represents the id of the validator whose stake is to be updated.
@@ -309,7 +309,7 @@ if err != nil {
 
 The `EndBlocker` hook then updates the changes in the validator set.
 
-## How to propose a MsgStakeUpdate transaction
+### How to propose a MsgStakeUpdate transaction
 
 The `bridge` service in an existing validator's heimdall process polls for `StakeUpdate` event periodically and generates and broadcasts the transaction once it detects and parses the event. An existing validator on the network can also leverage the CLI to send the transaction:
 
@@ -355,7 +355,7 @@ type MsgSignerUpdate struct {
 	Nonce           uint64                  `json:"nonce"`
 }
 ```
-where ,
+where
 
 * `From` represents the address of the validator that initiated the `MsgSignerUpdate` transaction on heimdall.
 * `ID` represents the id of the validator whose signer address is to be updated.
@@ -416,7 +416,7 @@ if err != nil {
 
 The `EndBlocker` hook then updates the validator set upon completion of the epoch.
 
-## How to propose a MsgSignerUpdate transaction
+### How to propose a MsgSignerUpdate transaction
 
 The `bridge` service in an existing validator's heimdall process polls for `SignerChange` event periodically and generates and broadcasts the transaction once it detects and parses the event. An existing validator on the network can also leverage the CLI to send the transaction:
 
