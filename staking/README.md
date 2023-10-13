@@ -5,13 +5,13 @@
 * [Preliminary terminology](#preliminary-terminology)
 * [Overview](#overview)
 * [How does one join the network as a validator](#how-does-one-join-the-network-as-a-validator)
-** [How to propose a MsgValidatorJoin transaction](#how-to-propose-a-msgvalidatorjoin-transaction)
+* [How to propose a MsgValidatorJoin transaction](#how-to-propose-a-msgvalidatorjoin-transaction)
 * [How does an existing validator exit the network](#how-does-an-existing-validator-exit-the-network)
-** [How to propose a MsgValidatorExit transaction](#how-to-propose-a-msgvalidatorexit-transaction)
+* [How to propose a MsgValidatorExit transaction](#how-to-propose-a-msgvalidatorexit-transaction)
 * [How does a validator update its stake](#how-does-a-validator-update-its-stake)
-** [How to propose a MsgStakeUpdate transaction](#how-to-propose-a-msgstakeupdate-transaction)
+* [How to propose a MsgStakeUpdate transaction](#how-to-propose-a-msgstakeupdate-transaction)
 * [How does a validator update its signer address](#how-does-a-validator-update-its-signer-address)
-** [How to propose a MsgSignerUpdate transaction](#how-to-propose-a-msgsignerupdate-transaction)
+* [How to propose a MsgSignerUpdate transaction](#how-to-propose-a-msgsignerupdate-transaction)
 * [Query commands](#query-commands)
 
 ## Preliminary terminology
