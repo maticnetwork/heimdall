@@ -179,7 +179,6 @@ func (app *HeimdallApp) DeliverSideTxHandler(ctx sdk.Context, tx sdk.Tx, req abc
 
 				break
 			}
-			//TEST
 
 			// Each message result's Data must be length prefixed in order to separate
 			// each result.
