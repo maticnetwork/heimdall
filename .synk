@@ -1,9 +1,0 @@
-# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
-version: v1.25.0
-# ignores vulnerabilities until expiry date; change duration by modifying expiry date
-ignore:
-  'SNYK-GOLANG-GOLANGORGXNETHTTP2-3160322':
-    - '*':
-        reason: 'grpc working on a release to fix the issue'
-        created: 2022-12-12T06:50:00.000Z
-patch: {}
