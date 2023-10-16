@@ -39,6 +39,7 @@ require (
 	cloud.google.com/go/iam v1.1.1 // indirect
 	github.com/BurntSushi/toml v1.2.0 // indirect
 	github.com/JekaMas/workerpool v1.1.8 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/etcd-io/bbolt v1.3.3 // indirect
@@ -151,13 +152,13 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20231005133805-2bb6a831bb2e
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.33.0
 
 replace github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.2.0
 
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20231005133937-b1eb1f90feb7
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.4
 
-replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.0.4
+replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.0.6
 
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.5.1
 
