@@ -2,13 +2,10 @@
 
 ## Table of Contents
 
-- [Preliminary Terminology](#preliminary-terminology)
 - [Overview](#overview)
 - [Listner](#listner)
 - [Processor](#processor)
 - [How to start bridge](#how-to-start-bridge)
-
-## Preliminary Terminology
 
 ## Overview
 
