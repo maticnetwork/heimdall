@@ -6,6 +6,8 @@
 - [Listner](#listner)
 - [Processor](#processor)
 - [How to start bridge](#how-to-start-bridge)
+- [Reset](#reset)
+- [Common Issues (FAQ)](#common-issues-faq)
 
 ## Overview
 
@@ -51,7 +53,7 @@ To use specific services :
 ./heimdalld start --bridge --only=clerk,staking
 ```
 
-## Reset Tasks
+## Reset
 
 > :warning: Do this only when you are advised so and you understand the impact of this command. 
 
@@ -61,12 +63,7 @@ If you want to reset the bridge server data, you can use the following command:
 ./heimdalld unsafe-reset-all
 ```
 
-
-
-
-
-    
-
+## Common Issues (FAQ)
 
 
 
