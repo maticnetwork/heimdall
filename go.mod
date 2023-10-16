@@ -6,7 +6,7 @@ require (
 	github.com/RichardKnop/machinery v1.7.4
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cosmos/cosmos-sdk v0.47.3
-	github.com/ethereum/go-ethereum v1.10.26
+	github.com/ethereum/go-ethereum v1.13.2
 	github.com/go-kit/log v0.2.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
@@ -139,11 +139,11 @@ require (
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace/otlptracegrpc v1.19.0
 	go.opentelemetry.io/otel/sdk v1.19.0
 	go.opentelemetry.io/otel/trace v1.19.0
-	golang.org/x/crypto v0.11.0 // indirect
-	golang.org/x/net v0.12.0 // indirect
+	golang.org/x/crypto v0.14.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 	golang.org/x/oauth2 v0.10.0 // indirect
-	golang.org/x/sys v0.12.0 // indirect
-	golang.org/x/text v0.11.0 // indirect
+	golang.org/x/sys v0.13.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 	google.golang.org/api v0.126.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20230711160842-782d3b101e98 // indirect
