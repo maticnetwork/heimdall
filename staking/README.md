@@ -434,9 +434,16 @@ curl -X POST "localhost:1317/staking/signer-update?proposer=<PROPOSER_ADDRESS>&i
 
 One can run the following query commands from the staking module :
 
-* `validator-info` - Query validator information via validator id or validator address:
+* `validator-info` - Query validator information via validator id or validator address.
+* `current-validator-set` - Query the current validator set.
+* `staking-power` - Query the current staking power.
+* `validator-status` - Query the validator status by validator address.
+* `proposer` - Fetch the first `<TIMES>` validators from the validator set, sorted by priority as a checkpoint proposer.
+* `current-proposer` - Fetch the validator info selected as proposer of the current checkpoint.
+* `is-old-tx` - Check whether the staking transaction is old.
 
-via CLI
+### CLI commands
+
 ```
 heimdallcli query staking validator-info --id=<VALIDATOR_ID>
 
@@ -445,7 +452,33 @@ OR
 heimdallcli query staking validator-info --validator=<VALIDATOR_ADDRESS>
 ```
 
-via REST
+```
+heimdallcli query staking current-validator-set
+```
+
+```
+heimdallcli query staking staking-power
+```
+
+```
+heimdallcli query staking validator-status --validator=<VALIDATOR_ADDRESS>
+```
+
+```
+heimdallcli query staking proposer --times=<TIMES>
+```
+
+```
+heimdallcli query staking current-proposer 
+```
+
+```
+heimdallcli query staking is-old-tx --tx-hash=<ETH_TX_HASH> --log-index=<LOG_INDEX>
+```
+
+
+### REST endpoints
+
 ```
 curl localhost:1317/staking/validator/<VALIDATOR_ID>
 
@@ -454,74 +487,26 @@ OR
 curl localhost:1317/staking/validator/<VALIDATOR_ADDRESS>
 ```
 
-* `current-validator-set` - Query the current validator set:
-
-via CLI
-```
-heimdallcli query staking current-validator-set
-```
-
-via REST
 ```
 curl localhost:1317/staking/validator-set
 ```
 
-* `staking-power` - Query the current staking power :
-
-via CLI
-```
-heimdallcli query staking staking-power
-```
-
-via REST
 ```
 curl localhost:1317/staking/totalpower
 ```
 
-* `validator-status` - Query the validator status by validator address :
-
-via CLI
-```
-heimdallcli query staking validator-status --validator=<VALIDATOR_ADDRESS>
-```
-
-via REST
 ```
 curl localhost:1317/staking/validator-status/<VALIDATOR_ADDRESS>
 ```
 
-* `proposer` - Fetch the first `<TIMES>` validators from the validator set, sorted by priority as a checkpoint proposer:
-
-via CLI
-```
-heimdallcli query staking proposer --times=<TIMES>
-```
-
-via REST
 ```
 curl localhost:1317/staking/proposer/<TIMES>
 ```
 
-* `current-proposer` - Fetch the validator info selected as proposer of the current checkpoint:
-
-via CLI
-```
-heimdallcli query staking current-proposer 
-```
-
-via REST
 ```
 curl "localhost:1317/staking/current-proposer
 ```
 
-* `is-old-tx` - Check whether the staking transaction is old:
-
-via CLI
-```
-heimdallcli query staking is-old-tx --tx-hash=<ETH_TX_HASH> --log-index=<LOG_INDEX>
-```
-
-via REST
 ```
 curl localhost:1317/staking/isoldtx?tx-hash=<ETH_TX_HASH>&log-index=<LOG_INDEX>
 ```
