@@ -12,7 +12,7 @@ provides a pattern for modules to hold/interact with Coins, and introduces the i
 
 ## Query commands
 
-One can run the following query commands from the clerk module :
+One can run the following query commands from the bank module :
 
 * `total` - Query for a total supply of the chain with different coins. Takes params for checking the total supply of a particular coin
 
