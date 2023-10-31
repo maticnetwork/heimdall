@@ -4,8 +4,8 @@
 
 * [Overview](#overview)
 * [How does it work](#how-does-it-work)
+* [How to send coins](#how-to-send-coins)
 * [Query commands](#query-commands)
-* [Transaction commands](#transaction-commands)
 
 ## Overview
 
@@ -23,7 +23,44 @@ type MsgSend struct {
 
 [Handler](handler.go) for this transaction validates whether send is enabled or not
 
-Once the event is validated by the Handler, It will go send coins a particular amount of coins to the sender
+Once the event is validated by the Handler, it will send a particular amount of coins to the sender
+
+## How to send coins
+
+One can run the following transactions commands from the bank module :
+
+* `send` - Send coin to an address.
+
+### CLI commands
+
+```
+heimdallcli tx bank send [TO_ADDRESS] [AMOUNT] --chain-id <CHAIN_ID>
+```
+
+### REST endpoints
+
+Rest endpoint creates a message which needs to be written to a file. Then the sender needs to sign and broadcast a transaction
+
+```
+curl -X POST http://localhost:1317/bank/accounts/<TO_ADDRESS>/transfers \
+  -H 'Content-Type: application/json' \
+  -d '{
+	"base_req": {
+		"chain_id": <CHAIN_ID>,
+		"from": <FROM_ADDRESS>
+	},
+	"amount": [
+		{
+			"denom": "matic",
+			"amount": <AMOUNT>
+		}
+	]
+}' > <FILE>.json
+
+heimdallcli tx sign <FILE>.json --chain-id <CHAIN_ID> > <FILE2>.json
+
+heimdallcli tx broadcast <FILE2>.json
+```
 
 ## Query commands
 
@@ -34,29 +71,11 @@ One can run the following query commands from the bank module :
 ### CLI commands
 
 ```
-heimdallcli query bank balance [address]
+heimdallcli query bank balance [ADDRESS]
 ```
 
 ### REST endpoints
 
 ```
-curl -X GET "localhost:1317/bank/balances/{address}"
-```
-
-## Transaction commands
-
-One can run the following transactions commands from the bank module :
-
-* `send` - Send coin to an address.
-
-### CLI commands
-
-```
-heimdallcli tx bank send [to_address] [amount]
-```
-
-### REST endpoints
-
-```
-curl -X POST "localhost:1317/bank/accounts/{address}/transfers"
+curl -X GET "localhost:1317/bank/balances/{ADDRESS}"
 ```
