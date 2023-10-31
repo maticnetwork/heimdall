@@ -8,7 +8,7 @@
 ## Overview
 
 The supply functionality passively tracks the total supply of coins within a chain,
-provides a pattern for modules to hold/interact with Coins, and introduces the invariant check to verify a chain's total supply. The total Supply of the network is equal to the sum of all coins from the account.
+provides a pattern for modules to hold/interact with coins, and introduces the invariant check to verify a chain's total supply. The total supply of the network is equal to the sum of all coins from the account.
 
 ## Query commands
 
