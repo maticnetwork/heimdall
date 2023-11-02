@@ -11,7 +11,7 @@
 
 ## Overview
 
-Bridge module is responsible for listening to multiple chains and processing the events emitted by them.It converts the emitted data into heimdall messages and send them to the heimdall chain. There are `listener` and `processor` components in the bridge module which are responsible for listening and processing the events respectively as per their module. For example `listner/rootchain.go` is responsible for listening to events coming from rootchain OR L1 i.e Ethereum chain in our case and `listner/maticchain.go` is responsible for listening to events coming from maticchain or L2 i.e Bor chain in our case.
+Bridge module is responsible for listening to multiple chains and processing the events emitted by them.It converts the emitted data into heimdall messages and send them to the heimdall chain. There are `listener` and `processor` components in the bridge module which are responsible for listening and processing the events respectively as per their module. For example `listener/rootchain.go` is responsible for listening to events coming from rootchain OR L1 i.e Ethereum chain in our case and `listener/maticchain.go` is responsible for listening to events coming from maticchain or L2 i.e Bor chain in our case.
 
 In order to process the events emitted by the chains, bridge module uses `processor` component, which is responsible for processing the events emitted by the chains. For example `processor/clerk.go` is responsible for processing the events related to clerk module, `processor/staking.go` is responsible for processing the events related to staking module and so on.
 
