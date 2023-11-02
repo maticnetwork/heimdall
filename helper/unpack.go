@@ -21,6 +21,12 @@ var (
 
 // UnpackLog unpacks log
 func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log) error {
+	selectedEvent := EventByID(abiObject, log.Topics[0].Bytes())
+
+	if selectedEvent == nil || selectedEvent.Name != event {
+		return errors.New("topic event mismatch")
+	}
+
 	if len(log.Data) > 0 {
 		if err := abiObject.UnpackIntoInterface(out, event, log.Data); err != nil {
 			return err
