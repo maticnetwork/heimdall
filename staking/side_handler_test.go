@@ -1,6 +1,8 @@
 package staking_test
 
 import (
+	"encoding/json"
+	"errors"
 	"math/big"
 	"math/rand"
 	"testing"
@@ -22,6 +24,7 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/simulation"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
@@ -1353,4 +1356,171 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 		require.NoError(t, err)
 		require.Equal(t, acctualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", newAmount.Uint64())
 	})
+}
+
+func TestEventCheck(t *testing.T) {
+	t.Parallel()
+
+	eventLogs := []string{
+		`{
+		"type": "0x2",
+		"root": "0x",
+		"status": "0x1",
+		"cumulativeGasUsed": "0x155957",
+		"logsBloom": "0x20000000000000000000000000800008000000000000000000001000000000000200000040000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000200001000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000010000000000000000000000000000000200000000000000004000000000",
+		"logs": [
+		  {
+				"address": "0xa59c847bd5ac0172ff4fe912c5d29e5a71a7512b",
+				"topics": [
+				  "0x086044c0612a8c965d4cccd907f0d588e40ad68438bd4c1274cac60f4c3a9d1f",
+				  "0x0000000000000000000000000000000000000000000000000000000000000013",
+				  "0x00000000000000000000000072f93a2740e00112d5f2cef404c0aa16fae21fa4",
+				  "0x0000000000000000000000003a5f70ac0551d5fae2b2379c6e558f6b7efa6a0d"
+				],
+				"data": "0x000000000000000000000000000000000000000000000000000000000000039400000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000040c8df79b1015f5bc235c9242bee499f2a5e25ad2c33b70561c2ba67118a00a1fe024dccfb65960ab91dfcd30b521fa1aa692b21ca251ec8063b2fc0a343a1b0bc",
+				"blockNumber": "0x116fbce",
+				"transactionHash": "0x496c8a0b022c3aa582f275f1f84424c679155b120fc09e7ec8051334e653ef64",
+				"transactionIndex": "0x10",
+				"blockHash": "0x1377ba799fa1f4d3924297f951e3a8095735334d1ff8099aae9467947164213f",
+				"logIndex": "0x14",
+				"removed": false
+		  }
+		],
+		"transactionHash": "0x496c8a0b022c3aa582f275f1f84424c679155b120fc09e7ec8051334e653ef64",
+		"contractAddress": "0x0000000000000000000000000000000000000000",
+		"gasUsed": "0x75a65",
+		"effectiveGasPrice": "0x20fb31dfe",
+		"blockHash": "0x1377ba799fa1f4d3924297f951e3a8095735334d1ff8099aae9467947164213f",
+		"blockNumber": "0x116fbce",
+		"transactionIndex": "0x10"
+	  }`,
+		`{
+		"type": "0x2",
+		"root": "0x",
+		"status": "0x1",
+		"cumulativeGasUsed": "0x155957",
+		"logsBloom": "0x20000000000000000000000000800008000000000000000000001000000000000200000040000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000000000100000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000040000000000000000000000000000200001000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000010000000000000000000000000000000200000000000000004000000000",
+		"logs": [
+			{
+				"address": "0xa59c847bd5ac0172ff4fe912c5d29e5a71a7512b",
+				"topics": [
+					"0x35af9eea1f0e7b300b0a14fae90139a072470e44daa3f14b5069bebbc1265bda",
+					"0x0000000000000000000000000000000000000000000000000000000000000013",
+					"0x00000000000000000000000072f93a2740e00112d5f2cef404c0aa16fae21fa4",
+					"0x0000000000000000000000003a5f70ac0551d5fae2b2379c6e558f6b7efa6a0d"
+				],
+				"data": "0x000000000000000000000000000000000000000000000000000000000000039400000000000000000000000000000000000000000000000000000000000000400000000000000000000000000000000000000000000000000000000000000040c8df79b1015f5bc235c9242bee499f2a5e25ad2c33b70561c2ba67118a00a1fe024dccfb65960ab91dfcd30b521fa1aa692b21ca251ec8063b2fc0a343a1b0bc",
+				"blockNumber": "0x116fbce",
+				"transactionHash": "0x496c8a0b022c3aa582f275f1f84424c679155b120fc09e7ec8051334e653ef64",
+				"transactionIndex": "0x10",
+				"blockHash": "0x1377ba799fa1f4d3924297f951e3a8095735334d1ff8099aae9467947164213f",
+				"logIndex": "0x14",
+				"removed": false
+			}
+			],
+			"transactionHash": "0x496c8a0b022c3aa582f275f1f84424c679155b120fc09e7ec8051334e653ef64",
+			"contractAddress": "0x0000000000000000000000000000000000000000",
+			"gasUsed": "0x75a65",
+			"effectiveGasPrice": "0x20fb31dfe",
+			"blockHash": "0x1377ba799fa1f4d3924297f951e3a8095735334d1ff8099aae9467947164213f",
+			"blockNumber": "0x116fbce",
+			"transactionIndex": "0x10"
+		}`,
+	}
+
+	testCases := []struct {
+		actualEventLog    string
+		disguisedEventLog string
+		decodeEventName   string
+		expectedErr       error
+	}{
+		{
+			actualEventLog:    eventLogs[1],
+			disguisedEventLog: eventLogs[0],
+			decodeEventName:   "DecodeValidatorStakeUpdateEvent",
+			expectedErr:       errors.New("topic event mismatch"),
+		},
+		{
+			actualEventLog:    eventLogs[0],
+			disguisedEventLog: eventLogs[1],
+			decodeEventName:   "DecodeSignerUpdateEvent",
+			expectedErr:       errors.New("topic event mismatch"),
+		},
+	}
+
+	receipt := ethTypes.Receipt{}
+
+	for _, tc := range testCases {
+		err := json.Unmarshal([]byte(tc.disguisedEventLog), &receipt)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err = decodeEvent(t, tc.decodeEventName, receipt)
+		if err == nil {
+			t.Error(err)
+			return
+		}
+
+		assert.EqualError(t, err, tc.expectedErr.Error())
+
+		err = json.Unmarshal([]byte(tc.actualEventLog), &receipt)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		err = decodeEvent(t, tc.decodeEventName, receipt)
+		if err != nil {
+			t.Error(err)
+			return
+		}
+
+		assert.NoError(t, err)
+	}
+}
+
+func decodeEvent(t *testing.T, eventName string, receipt ethTypes.Receipt) error {
+	t.Helper()
+
+	var err error
+	contractCaller, err := helper.NewContractCaller()
+	if err != nil {
+		t.Error("Error creating contract caller")
+	}
+	switch eventName {
+	case "DecodeNewHeaderBlockEvent":
+		_, err = contractCaller.DecodeNewHeaderBlockEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeValidatorStakeUpdateEvent":
+		_, err = contractCaller.DecodeValidatorStakeUpdateEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeSignerUpdateEvent":
+		_, err = contractCaller.DecodeSignerUpdateEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeValidatorTopupFeesEvent":
+		_, err = contractCaller.DecodeValidatorTopupFeesEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeValidatorJoinEvent":
+		_, err = contractCaller.DecodeValidatorJoinEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeValidatorExitEvent":
+		_, err = contractCaller.DecodeValidatorExitEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeStateSyncedEvent":
+		_, err = contractCaller.DecodeStateSyncedEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeSlashedEvent":
+		_, err = contractCaller.DecodeSlashedEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	case "DecodeUnJailedEvent":
+		_, err = contractCaller.DecodeUnJailedEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
+
+	default:
+		return errors.New("Unrecognized event")
+
+	}
+
+	return err
 }
