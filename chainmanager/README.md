@@ -14,9 +14,6 @@ The chainmanager module is responsible for fetching the chainmanager params. The
 One can run the following query commands from the chainmanager module :
 
 * `params` - Fetch the parameters associated to chainmanager module.
-* `spanlist` - Fetch span list.
-* `next-span-seed` - Query the seed for the next span.
-* `propose-span` - Print the `propose-span` command.
 
 ### CLI commands
 
