@@ -1486,9 +1486,11 @@ func decodeEvent(t *testing.T, eventName string, receipt ethTypes.Receipt) error
 
 	var err error
 	contractCaller, err := helper.NewContractCaller()
+
 	if err != nil {
 		t.Error("Error creating contract caller")
 	}
+
 	switch eventName {
 	case "DecodeNewHeaderBlockEvent":
 		_, err = contractCaller.DecodeNewHeaderBlockEvent(receipt.Logs[0].Address, &receipt, uint64(receipt.Logs[0].Index))
@@ -1519,7 +1521,6 @@ func decodeEvent(t *testing.T, eventName string, receipt ethTypes.Receipt) error
 
 	default:
 		return errors.New("Unrecognized event")
-
 	}
 
 	return err
