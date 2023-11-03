@@ -1,0 +1,31 @@
+# Chainmanager Module
+
+## Table of Contents
+
+* [Overview](#overview)
+* [Query commands](#query-commands)
+
+## Overview
+
+The chainmanager module is responsible for fetching the chainmanager params. These params include contract address of mainchain and maticchain, chain ids, mainchain and maticchain confirmation blocks
+
+## Query commands
+
+One can run the following query commands from the chainmanager module :
+
+* `params` - Fetch the parameters associated to chainmanager module.
+* `spanlist` - Fetch span list.
+* `next-span-seed` - Query the seed for the next span.
+* `propose-span` - Print the `propose-span` command.
+
+### CLI commands
+
+```
+heimdallcli query chainmanager params
+```
+
+### REST endpoints
+
+```
+curl localhost:1317/chainmanager/params
+```
