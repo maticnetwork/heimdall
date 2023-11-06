@@ -7,7 +7,7 @@
 
 ## Overview
 
-The chainmanager module is responsible for fetching the chainmanager params. These params include contract address of mainchain and maticchain, chain ids, mainchain and maticchain confirmation blocks
+The chainmanager module is responsible for fetching the chainmanager params. These params include contract address of mainchain (Ethereum) and maticchain (Bor), chain ids, mainchain and maticchain confirmation blocks
 
 ## Query commands
 
