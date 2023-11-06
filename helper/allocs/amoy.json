@@ -109,13 +109,13 @@
         "mainchain_tx_confirmations": "6",
         "maticchain_tx_confirmations": "10",
         "chain_params": {
-          "bor_chain_id": "8996",
-          "matic_token_address": "0x3d2Ac007183264A398f52C0BAb31D225A6F0F876",
-          "staking_manager_address": "0xCDb3d45f2a7374de01f8b2a31Ed044858740ccB8",
-          "slash_manager_address": "0x0000000000000000000000000000000000000000",
-          "root_chain_address": "0x69961975edDb61Eae88b93a80eC3d0df60ecAE41",
-          "staking_info_address": "0x037c633a9Ba6793Be88CDc2F8FFB3909093b62E1",
-          "state_sender_address": "0x1EBf192f14679C22Ae03Ec936FF29E5B0C8acBDc",
+          "bor_chain_id": "80002",
+          "matic_token_address": "0x6b5e227C28e28c2Bd2CAb0a39a296c47f9e3e4d6",
+          "staking_manager_address": "0x53b44E120Ae178437316538A2D8d1260879Ac750",
+          "slash_manager_address": "0x26D0CD635d8B68574193036CF10572bdac3C0A1A",
+          "root_chain_address": "0x4e079a7182BF805aa6b72aCbcc2f0524e0B53285",
+          "staking_info_address": "0x47e04a2AE4d28a765a4ccD92AeC65156058f715E",
+          "state_sender_address": "0x5Abc521b9c610463f8a34f3D90b3540a9b21Bc29",
           "state_receiver_address": "0x0000000000000000000000000000000000001001",
           "validator_set_address": "0x0000000000000000000000000000000000001000"
         }
