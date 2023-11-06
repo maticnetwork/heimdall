@@ -42,6 +42,7 @@ const (
 
 	MainChain   = "mainnet"
 	MumbaiChain = "mumbai"
+	AmoyChain   = "amoy"
 	LocalChain  = "local"
 
 	// heimdall-config flags
@@ -244,6 +245,7 @@ type ChainManagerAddressMigration struct {
 var chainManagerAddressMigrations = map[string]map[int64]ChainManagerAddressMigration{
 	MainChain:   {},
 	MumbaiChain: {},
+	AmoyChain:   {},
 	"default":   {},
 }
 
@@ -402,6 +404,11 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
 		aalborgHeight = 18035772
+	case AmoyChain:
+		newSelectionAlgoHeight = 0
+		spanOverrideHeight = 0
+		newHexToStringAlgoHeight = 0
+		aalborgHeight = 0
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
@@ -513,7 +520,7 @@ func GetAddress() []byte {
 
 // GetValidChains returns all the valid chains
 func GetValidChains() []string {
-	return []string{"mainnet", "mumbai", "local"}
+	return []string{"mainnet", "mumbai", "amoy", "local"}
 }
 
 // GetNewSelectionAlgoHeight returns newSelectionAlgoHeight
@@ -962,6 +969,8 @@ func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 		case MumbaiChain:
 			tendermintConfig.P2P.Seeds = DefaultTestnetSeeds
 		}
+
+		// TODO : 0xSharma : add amoy Seeds
 	}
 }
 
