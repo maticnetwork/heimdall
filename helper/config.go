@@ -954,6 +954,7 @@ func DecorateWithTendermintFlags(cmd *cobra.Command, v *viper.Viper, loggerInsta
 	}
 }
 
+// TODO : 0xSharma : add amoy Seeds
 // UpdateTendermintConfig updates tenedermint config with flags and default values if needed
 func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 	// update tendermintConfig.P2P.Seeds
@@ -969,8 +970,6 @@ func UpdateTendermintConfig(tendermintConfig *cfg.Config, v *viper.Viper) {
 		case MumbaiChain:
 			tendermintConfig.P2P.Seeds = DefaultTestnetSeeds
 		}
-
-		// TODO : 0xSharma : add amoy Seeds
 	}
 }
 
