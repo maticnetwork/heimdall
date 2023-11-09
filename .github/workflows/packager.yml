@@ -95,6 +95,37 @@ jobs:
         env:
           ARCH: amd64
           NODE: sentry
+          NETWORK: amoy      
+      - name: Copying over the postinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.amoy packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-amoy-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying profile control file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: sentry
+          NETWORK: amoy
+
+      - name: Setting up heimdalld for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: sentry
           NETWORK: mainnet
       - name: Copying over the postinst file for for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
@@ -157,6 +188,43 @@ jobs:
           ARCH: amd64
           NODE: validator
           NETWORK: mumbai
+
+      - name: Setting heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: amoy
+      - name: Prepping control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.validator packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: amoy
+      - name: Prepping postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.amoy packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: amoy
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-amoy-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: amoy
+      - name: Copying profile control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.amd64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: amoy
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+          NODE: validator
+          NETWORK: amoy
 
       - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
@@ -278,6 +346,37 @@ jobs:
           NODE: validator
           NETWORK: mumbai
 
+      - name: Setting heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: amoy
+      - name: Copying over the postinst file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.amoy packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN//postinst
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: amoy
+      - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.validator.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: amoy
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-amoy-validator.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: amoy
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: validator
+          NETWORK: amoy
+
       - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
         env:
@@ -351,6 +450,43 @@ jobs:
           ARCH: arm64
           NODE: sentry
           NETWORK: mumbai
+
+      - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying control for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying postinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-amoy-sentry.service packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying arm64 control file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/control.profile.arm64 packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/control
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: amoy
+      - name: Building heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+          NODE: sentry
+          NETWORK: amoy
 
       - name: Setting up heimdalld for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/deb/heimdalld packaging/deb/heimdalld-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
