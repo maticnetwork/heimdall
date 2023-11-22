@@ -265,8 +265,9 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 		handler := app.sideRouter.GetRoute(msgRoute)
 		if handler != nil && handler.PostTxHandler != nil && isSideTxMsg {
 			msgResult := handler.PostTxHandler(ctx, msg, sideTxResult)
-			logger.Info(">>>>>>>>>> 6. side_tx_processor", "msgResult", msgResult)
-
+			if msgResult.Events[0].Type == "record" {
+				logger.Info(">>>>>>>>>> 6. side_tx_processor", "msgResult", msgResult)
+			}
 			// Each message result's Data must be length prefixed in order to separate
 			// each result.
 			data = append(data, msgResult.Data...)
