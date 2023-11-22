@@ -103,9 +103,11 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 				logger.Debug("[sidechannel] Approved side-tx", "txHash", hex.EncodeToString(tx.Hash()))
 
 				// execute tx with `yes`
-				logger.Info(">>>>>>>>>> 1. side_tx_processor", "txHash", tx.Hash())
+				logger.Info(">>>>>>>>>> 1. side_tx_processor", "txHash", tx.String())
 				result = app.runTx(ctx, tx, abci.SideTxResultType_Yes)
-				logger.Info(">>>>>>>>>> 2. side_tx_processor", "result", result)
+				if result.Events[0].Type == "record" {
+					logger.Info(">>>>>>>>>> 2. side_tx_processor", "result", result)
+				}
 			} else if signedPower[abci.SideTxResultType_No] >= (totalPower*2/3 + 1) {
 				// rejected
 				logger.Debug("[sidechannel] Rejected side-tx", "txHash", hex.EncodeToString(tx.Hash()))
@@ -228,9 +230,11 @@ func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
-	logger.Info(">>>>>>>>>> 3. side_tx_processor", "txHash", tx.GetMsgs())
+	logger.Info(">>>>>>>>>> 3. side_tx_processor", "tx.GetMsgs()", tx.GetMsgs())
 	result = app.runMsgs(runMsgCtx, tx.GetMsgs(), sideTxResult)
-	logger.Info(">>>>>>>>>> 4. side_tx_processor", "result", result)
+	if result.Events[0].Type == "record" {
+		logger.Info(">>>>>>>>>> 4. side_tx_processor", "result", result)
+	}
 	// only update state if all messages pass
 	logger.Info(">>>>>>>>>> 5. side_tx_processor", "resultIsOk", result.IsOK())
 	if result.IsOK() {
