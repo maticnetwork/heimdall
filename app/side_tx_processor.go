@@ -105,7 +105,7 @@ func (app *HeimdallApp) BeginSideBlocker(ctx sdk.Context, req abci.RequestBeginS
 				// execute tx with `yes`
 				logger.Info(">>>>>>>>>> 1. side_tx_processor", "txHash", tx.String())
 				result = app.runTx(ctx, tx, abci.SideTxResultType_Yes)
-				if result.Events[0].Type == "record" {
+				if result.Events != nil && result.Events[0].Type == "record" {
 					logger.Info(">>>>>>>>>> 2. side_tx_processor", "result", result)
 				}
 			} else if signedPower[abci.SideTxResultType_No] >= (totalPower*2/3 + 1) {
@@ -230,9 +230,11 @@ func (app *HeimdallApp) runTx(ctx sdk.Context, txBytes []byte, sideTxResult abci
 	// Create a new context based off of the existing context with a cache wrapped
 	// multi-store in case message processing fails.
 	runMsgCtx, msCache := app.cacheTxContext(ctx, txBytes)
-	logger.Info(">>>>>>>>>> 3. side_tx_processor", "tx.GetMsgs()", tx.GetMsgs())
+	if tx != nil && tx.GetMsgs() != nil {
+		logger.Info(">>>>>>>>>> 3. side_tx_processor", "tx.GetMsgs()", tx.GetMsgs())
+	}
 	result = app.runMsgs(runMsgCtx, tx.GetMsgs(), sideTxResult)
-	if result.Events[0].Type == "record" {
+	if result.Events != nil && result.Events[0].Type == "record" {
 		logger.Info(">>>>>>>>>> 4. side_tx_processor", "result", result)
 	}
 	// only update state if all messages pass
@@ -265,7 +267,7 @@ func (app *HeimdallApp) runMsgs(ctx sdk.Context, msgs []sdk.Msg, sideTxResult ab
 		handler := app.sideRouter.GetRoute(msgRoute)
 		if handler != nil && handler.PostTxHandler != nil && isSideTxMsg {
 			msgResult := handler.PostTxHandler(ctx, msg, sideTxResult)
-			if msgResult.Events[0].Type == "record" {
+			if msgResult.Events != nil && msgResult.Events[0].Type == "record" {
 				logger.Info(">>>>>>>>>> 6. side_tx_processor", "msgResult", msgResult)
 			}
 			// Each message result's Data must be length prefixed in order to separate
