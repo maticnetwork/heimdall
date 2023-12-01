@@ -1,7 +1,6 @@
 package clerk
 
 import (
-	"bytes"
 	"math/big"
 	"strconv"
 
@@ -51,67 +50,67 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 		"blockNumber", msg.BlockNumber,
 	)
 
-	// chainManager params
-	params := k.chainKeeper.GetParams(ctx)
-	chainParams := params.ChainParams
+	// // chainManager params
+	// params := k.chainKeeper.GetParams(ctx)
+	// chainParams := params.ChainParams
 
-	// get confirmed tx receipt
-	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
-	if receipt == nil || err != nil {
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeWaitFrConfirmation)
-	}
+	// // get confirmed tx receipt
+	// receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
+	// if receipt == nil || err != nil {
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeWaitFrConfirmation)
+	// }
 
-	// get event log for topup
-	eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress.EthAddress(), receipt, msg.LogIndex)
-	if err != nil || eventLog == nil {
-		k.Logger(ctx).Error("Error fetching log from txhash")
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
-	}
+	// // get event log for topup
+	// eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress.EthAddress(), receipt, msg.LogIndex)
+	// if err != nil || eventLog == nil {
+	// 	k.Logger(ctx).Error("Error fetching log from txhash")
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeErrDecodeEvent)
+	// }
 
-	if receipt.BlockNumber.Uint64() != msg.BlockNumber {
-		k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64())
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
+	// if receipt.BlockNumber.Uint64() != msg.BlockNumber {
+	// 	k.Logger(ctx).Error("BlockNumber in message doesn't match blocknumber in receipt", "MsgBlockNumber", msg.BlockNumber, "ReceiptBlockNumber", receipt.BlockNumber.Uint64())
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// }
 
-	// check if message and event log matches
-	if eventLog.Id.Uint64() != msg.ID {
-		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "stateIdFromTx", eventLog.Id)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
+	// // check if message and event log matches
+	// if eventLog.Id.Uint64() != msg.ID {
+	// 	k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "stateIdFromTx", eventLog.Id)
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// }
 
-	if !bytes.Equal(eventLog.ContractAddress.Bytes(), msg.ContractAddress.Bytes()) {
-		k.Logger(ctx).Error(
-			"ContractAddress from event does not match with Msg ContractAddress",
-			"EventContractAddress", eventLog.ContractAddress.String(),
-			"MsgContractAddress", msg.ContractAddress.String(),
-		)
+	// if !bytes.Equal(eventLog.ContractAddress.Bytes(), msg.ContractAddress.Bytes()) {
+	// 	k.Logger(ctx).Error(
+	// 		"ContractAddress from event does not match with Msg ContractAddress",
+	// 		"EventContractAddress", eventLog.ContractAddress.String(),
+	// 		"MsgContractAddress", msg.ContractAddress.String(),
+	// 	)
 
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-	}
+	// 	return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// }
 
-	if !bytes.Equal(eventLog.Data, msg.Data) {
-		if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
-			if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
-				k.Logger(ctx).Error(
-					"Data from event does not match with Msg Data",
-					"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
-					"MsgData", hmTypes.BytesToHexBytes(msg.Data),
-				)
+	// if !bytes.Equal(eventLog.Data, msg.Data) {
+	// 	if ctx.BlockHeight() > helper.GetSpanOverrideHeight() {
+	// 		if !(len(eventLog.Data) > helper.MaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
+	// 			k.Logger(ctx).Error(
+	// 				"Data from event does not match with Msg Data",
+	// 				"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
+	// 				"MsgData", hmTypes.BytesToHexBytes(msg.Data),
+	// 			)
 
-				return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-			}
-		} else {
-			if !(len(eventLog.Data) > helper.LegacyMaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
-				k.Logger(ctx).Error(
-					"Data from event does not match with Msg Data",
-					"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
-					"MsgData", hmTypes.BytesToHexBytes(msg.Data),
-				)
+	// 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// 		}
+	// 	} else {
+	// 		if !(len(eventLog.Data) > helper.LegacyMaxStateSyncSize && bytes.Equal(msg.Data, hmTypes.HexToHexBytes(""))) {
+	// 			k.Logger(ctx).Error(
+	// 				"Data from event does not match with Msg Data",
+	// 				"EventData", hmTypes.BytesToHexBytes(eventLog.Data),
+	// 				"MsgData", hmTypes.BytesToHexBytes(msg.Data),
+	// 			)
 
-				return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
-			}
-		}
-	}
+	// 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	// 		}
+	// 	}
+	// }
 
 	result.Result = abci.SideTxResultType_Yes
 
