@@ -56,13 +56,7 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 		return
 	}
 
-	// fetch nonce
-	latestBlock, err := client.BlockNumber(context.Background())
-	if err != nil {
-		return
-	}
-
-	nonce, err := client.NonceAt(context.Background(), fromAddress, big.NewInt(int64(latestBlock)))
+	nonce, err := client.NonceAt(context.Background(), fromAddress, nil)
 	if err != nil {
 		return
 	}
