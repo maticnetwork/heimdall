@@ -123,7 +123,7 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 
 		// check if new milestone's start block start from current tip
 		if lastMilestone.EndBlock+1 != msg.StartBlock {
-			logger.Error("milestone not in countinuity",
+			logger.Error("milestone not in continuity",
 				"currentTip", lastMilestone.EndBlock,
 				"startBlock", msg.StartBlock)
 

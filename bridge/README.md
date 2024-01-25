@@ -15,7 +15,7 @@ Bridge module is responsible for listening to multiple chains and processing the
 
 In order to process the events emitted by the chains, bridge module uses `processor` component, which is responsible for processing the events emitted by the chains. For example `processor/clerk.go` is responsible for processing the events related to clerk module, `processor/staking.go` is responsible for processing the events related to staking module and so on.
 
-Other components of the bridge module includes `queue` which is used for queuing the messages between listner and processors, `broadcaster` which is responsible for broadcasting the messages to the heimdall chain.
+Other components of the bridge module includes `queue` which is used for queuing the messages between listener and processors, `broadcaster` which is responsible for broadcasting the messages to the heimdall chain.
 
 Polygon PoS bridge provides a bridging mechanism that is near-instant, low-cost, and quite flexible.
 
@@ -25,9 +25,9 @@ There is no change to the circulating supply of your token when it crosses the b
 
 ## Listener
 
-The bridge module has a `BaseListner` which is extended by `RootChainListener`, `MaticChainListener` and `HeimdallListener`. It has all the methods required to start polling, listening to incoming headers(blocks) and stopping the process if required. All the 3 listneres uses these properties with their individual implementations on how to handle the incoming header once received.
+The bridge module has a `BaseListener` which is extended by `RootChainListener`, `MaticChainListener` and `HeimdallListener`. It has all the methods required to start polling, listening to incoming headers(blocks) and stopping the process if required. All the 3 listeners uses these properties with their individual implementations on how to handle the incoming header once received.
 
-For example in `RootChainListner` the incoming header is used to determine the current height of root chain and calculate the `from` and `to` block numbers using which the events are fetched from the root chain. These events are then sent to `handleLog` where based on their event signature they are added to queue as tasks for further processing by their respective processors.
+For example in `RootChainListener` the incoming header is used to determine the current height of root chain and calculate the `from` and `to` block numbers using which the events are fetched from the root chain. These events are then sent to `handleLog` where based on their event signature they are added to queue as tasks for further processing by their respective processors.
 
 ## Processor
 

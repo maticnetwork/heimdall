@@ -75,7 +75,7 @@ func SortHeaders(headers []Checkpoint) []Checkpoint {
 	return headers
 }
 
-// String returns human redable string
+// String returns human readable string
 func (m Checkpoint) String() string {
 	return fmt.Sprintf(
 		"Checkpoint {%v (%d:%d) %v %v %v}",
@@ -88,7 +88,7 @@ func (m Checkpoint) String() string {
 	)
 }
 
-// String returns human redable string
+// String returns human readable string
 func (m Milestone) String() string {
 	return fmt.Sprintf(
 		"Milestone {%v (%d:%d) %v %v %v %v}",

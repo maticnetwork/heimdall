@@ -154,7 +154,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	ctx = ctx.WithBlockHeight(int64(6))
 
 	//Test5- When milestone is not in continuity
-	suite.Run("Milestone not in countinuity", func() {
+	suite.Run("Milestone not in continuity", func() {
 
 		err := keeper.AddMilestone(ctx, header)
 		require.NoError(t, err)
@@ -186,7 +186,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	header.Proposer = stakingKeeper.GetMilestoneValidatorSet(ctx).Proposer.Signer
 
 	//Test6- When milestone is not in continuity
-	suite.Run("Milestone not in countinuity", func() {
+	suite.Run("Milestone not in continuity", func() {
 
 		_, err = keeper.GetLastMilestone(ctx)
 		require.NoError(t, err)

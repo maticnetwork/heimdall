@@ -19,7 +19,7 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 
 	// Check if blocks+confirmations  exist locally
 	if !contractCaller.CheckIfBlocksExist(end + confirmations) {
-		return false, errors.New(fmt.Sprint("End block number with confirmation is not availbale in the Bor chain", "EndBlock", end, "Confirmation", confirmations))
+		return false, errors.New(fmt.Sprint("End block number with confirmation is not available in the Bor chain", "EndBlock", end, "Confirmation", confirmations))
 	}
 
 	//Get the vote on hash of milestone from Bor

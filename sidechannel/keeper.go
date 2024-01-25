@@ -109,7 +109,7 @@ func (keeper Keeper) SetValidators(ctx sdk.Context, height int64, validators []a
 	return nil
 }
 
-// GetValidators returnss all validators
+// GetValidators returns all validators
 func (keeper Keeper) GetValidators(ctx sdk.Context, height int64) (validators []abci.Validator) {
 	store := ctx.KVStore(keeper.key)
 
@@ -139,7 +139,7 @@ func (keeper Keeper) RemoveValidators(ctx sdk.Context, height int64) {
 // Iterators
 //
 
-// IterateTxAndApplyFn interate tx and apply the given function.
+// IterateTxAndApplyFn iterate tx and apply the given function.
 func (keeper Keeper) IterateTxAndApplyFn(ctx sdk.Context, height int64, f func(tmTypes.Tx) error) {
 	store := ctx.KVStore(keeper.key)
 
@@ -158,7 +158,7 @@ func (keeper Keeper) IterateTxAndApplyFn(ctx sdk.Context, height int64, f func(t
 	}
 }
 
-// IterateTxsAndApplyFn interate all txs and apply the given function.
+// IterateTxsAndApplyFn iterate all txs and apply the given function.
 func (keeper Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmTypes.Tx) error) {
 	store := ctx.KVStore(keeper.key)
 
@@ -184,7 +184,7 @@ func (keeper Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmTypes
 	}
 }
 
-// IterateValidatorsAndApplyFn interate all validators and apply the given function.
+// IterateValidatorsAndApplyFn iterate all validators and apply the given function.
 func (keeper Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(int64, []abci.Validator) error) {
 	store := ctx.KVStore(keeper.key)
 
