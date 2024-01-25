@@ -407,7 +407,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 
 	// initialize heimdall if needed (do not force!)
 	initConfig := &initHeimdallConfig{
-		chainID:     "", // chain id should be auto generated if chain flag is not set to mumbai or mainnet
+		chainID:     "", // chain id should be auto generated if chain flag is not set to mumbai, amoy or mainnet
 		chain:       viper.GetString(helper.ChainFlag),
 		validatorID: 1, // default id for validator
 		clientHome:  viper.GetString(helper.FlagClientHome),
