@@ -20,7 +20,7 @@ To start the server, run the following command
 heimdalld start-server
 ```
 
-The `start-server` command is added into the heimdall binary and takes folowing flags
+The `start-server` command is added into the heimdall binary and takes following flags
 
 ```bash
       --chain-id string            The chain ID to connect to
