@@ -66,7 +66,7 @@ if err != nil {
 }
 ```
 
-`FreezeSet` internally invokes `SelectNextProducers`, which pseudo-randomly picks producers from the validaor set, leaning more towards validators with higher voting power based on stake:
+`FreezeSet` internally invokes `SelectNextProducers`, which pseudo-randomly picks producers from the validator set, leaning more towards validators with higher voting power based on stake:
 
 ```
 // select next producers
@@ -76,7 +76,7 @@ if err != nil {
 }
 ```
 
-and then intialises and stores the span:
+and then initialises and stores the span:
 
 ```
 newSpan := hmTypes.NewSpan(
