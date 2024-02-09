@@ -18,6 +18,7 @@ $ make install
 $ heimdalld init
 $ heimdalld init --chain=mainnet        Will init with genesis.json for mainnet
 $ heimdalld init --chain=mumbai         Will init with genesis.json for mumbai
+$ heimdalld init --chain=amoy           Will init with genesis.json for amoy
 ```
 ### Run-heimdall 
 ```bash 
@@ -28,6 +29,7 @@ $ heimdalld start
 $ heimdalld start                       Will start for mainnet by default
 $ heimdalld start --chain=mainnet       Will start for mainnet
 $ heimdalld start --chain=mumbai        Will start for mumbai
+$ heimdalld start --chain=amoy          Will start for amoy
 $ heimdalld start --chain=local         Will start for local with NewSelectionAlgoHeight = 0
 ```
 

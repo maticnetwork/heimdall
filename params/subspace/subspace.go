@@ -59,7 +59,7 @@ func (s Subspace) WithKeyTable(table KeyTable) Subspace {
 		s.table.m[k] = v
 	}
 
-	// Allocate additional capicity for Subspace.name
+	// Allocate additional capacity for Subspace.name
 	// So we don't have to allocate extra space each time appending to the key
 	name := s.name
 	s.name = make([]byte, len(name), len(name)+table.maxKeyLength())
