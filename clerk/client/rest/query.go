@@ -215,21 +215,6 @@ func recordListHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 				return
 			}
 
-			node, err := cliCtx.GetNode()
-			if err != nil {
-				return
-			}
-
-			status, err := node.Status()
-			if err != nil {
-				return
-			}
-
-			time := status.SyncInfo.LatestBlockTime
-			if toTime > time.Unix() {
-				return
-			}
-
 			logger.Info("Serving event record list", "from-id", fromID, "to-time", toTime)
 
 			// get result by till time-range query
