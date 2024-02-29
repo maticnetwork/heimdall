@@ -149,10 +149,10 @@ $ %s query gov proposals --status (DepositPeriod|VotingPeriod|Passed|Rejected)
 		},
 	}
 
-	cmd.Flags().String(flagNumLimit, "", "(optional) limit to latest [number] proposals. Defaults to all proposals")
-	cmd.Flags().Uint64(flagDepositor, 0, "(optional) filter by proposals deposited on by depositor's validator id")
-	cmd.Flags().Uint64(flagVoter, 0, "(optional) filter by proposals voted on by voter's validator id")
-	cmd.Flags().String(flagStatus, "", "(optional) filter proposals by proposal status, status: deposit_period/voting_period/passed/rejected")
+	cmd.Flags().String(flagNumLimit, "", "(optional) Mimit to latest [number] proposals. Defaults to all proposals")
+	cmd.Flags().Uint64(flagDepositor, 0, "(optional) Filter by proposals deposited on by depositor's validator id")
+	cmd.Flags().Uint64(flagVoter, 0, "(optional) Filter by proposals voted on by voter's validator id")
+	cmd.Flags().String(flagStatus, "", "(optional) Filter proposals by proposal status, status: deposit_period/voting_period/passed/rejected")
 
 	return cmd
 }

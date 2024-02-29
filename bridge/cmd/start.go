@@ -239,13 +239,13 @@ func GetStartCmd() *cobra.Command {
 		logger.Error("GetStartCmd | BindPFlag | logLevel", "Error", err)
 	}
 
-	startCmd.Flags().Bool("all", false, "start all bridge services")
+	startCmd.Flags().Bool("all", false, "Start all bridge services")
 
 	if err := viper.BindPFlag("all", startCmd.Flags().Lookup("all")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | all", "Error", err)
 	}
 
-	startCmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
+	startCmd.Flags().StringSlice("only", []string{}, "Comma separated bridge services to start")
 
 	if err := viper.BindPFlag("only", startCmd.Flags().Lookup("only")); err != nil {
 		logger.Error("GetStartCmd | BindPFlag | only", "Error", err)
