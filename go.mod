@@ -1,12 +1,12 @@
 module github.com/maticnetwork/heimdall
 
-go 1.21
+go 1.22
 
 require (
 	github.com/RichardKnop/machinery v1.7.4
 	github.com/cbergoon/merkletree v0.2.0
-	github.com/cosmos/cosmos-sdk v0.47.3
-	github.com/ethereum/go-ethereum v1.13.2
+	github.com/cosmos/cosmos-sdk v0.50.4
+	github.com/ethereum/go-ethereum v1.13.14
 	github.com/go-kit/log v0.2.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
@@ -26,7 +26,7 @@ require (
 	github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
 	github.com/tendermint/crypto v0.0.0-20191022145703-50d29ede1e15
 	github.com/tendermint/go-amino v0.16.0
-	github.com/tendermint/tendermint v0.34.21
+	github.com/tendermint/tendermint v0.34.24
 	github.com/tendermint/tm-db v0.6.7
 	golang.org/x/sync v0.3.0
 	google.golang.org/grpc v1.58.3
@@ -53,12 +53,13 @@ require (
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
 	github.com/holiman/uint256 v1.2.3 // indirect
+	github.com/montanaflynn/stats v0.0.0-20171201202039-1bf9dbcd8cbe // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/stumble/gorocksdb v0.0.3 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
-	github.com/xdg-go/scram v1.0.2 // indirect
-	github.com/xdg-go/stringprep v1.0.2 // indirect
+	github.com/xdg-go/scram v1.1.2 // indirect
+	github.com/xdg-go/stringprep v1.0.4 // indirect
 	github.com/youmark/pkcs8 v0.0.0-20181117223130-1be2e3e5546d // indirect
 	github.com/zondax/ledger-go v0.14.1 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
@@ -134,7 +135,7 @@ require (
 	github.com/tklauser/go-sysconf v0.3.10 // indirect
 	github.com/tklauser/numcpus v0.4.0 // indirect
 	github.com/zondax/hid v0.9.1 // indirect
-	go.mongodb.org/mongo-driver v1.3.0 // indirect
+	go.mongodb.org/mongo-driver v1.14.0 // indirect
 	go.opencensus.io v0.24.0 // indirect
 	go.opentelemetry.io/otel v1.19.0
 	go.opentelemetry.io/otel/exporters/otlp/otlptrace v1.19.0
@@ -161,6 +162,6 @@ replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38
 
 replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.2.6-beta
 
-replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.5.1
+replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.14.0
 
 replace github.com/libp2p/go-buffer-pool => github.com/libp2p/go-buffer-pool v0.1.0
