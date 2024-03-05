@@ -18,21 +18,21 @@ const (
 	CodeInvalidMsg CodeType = 1400
 	CodeOldTx      CodeType = 1401
 
-	CodeInvalidProposerInput     CodeType = 1500
-	CodeInvalidBlockInput        CodeType = 1501
-	CodeInvalidACK               CodeType = 1502
-	CodeNoACK                    CodeType = 1503
-	CodeBadTimeStamp             CodeType = 1504
-	CodeInvalidNoACK             CodeType = 1505
-	CodeTooManyNoAck             CodeType = 1506
-	CodeLowBal                   CodeType = 1507
-	CodeNoCheckpoint             CodeType = 1508
-	CodeOldCheckpoint            CodeType = 1509
-	CodeDisCountinuousCheckpoint CodeType = 1510
-	CodeNoCheckpointBuffer       CodeType = 1511
-	CodeCheckpointBuffer         CodeType = 1512
-	CodeCheckpointAlreadyExists  CodeType = 1513
-	CodeInvalidNoAckProposer     CodeType = 1505
+	CodeInvalidProposerInput    CodeType = 1500
+	CodeInvalidBlockInput       CodeType = 1501
+	CodeInvalidACK              CodeType = 1502
+	CodeNoACK                   CodeType = 1503
+	CodeBadTimeStamp            CodeType = 1504
+	CodeInvalidNoACK            CodeType = 1505
+	CodeTooManyNoAck            CodeType = 1506
+	CodeLowBal                  CodeType = 1507
+	CodeNoCheckpoint            CodeType = 1508
+	CodeOldCheckpoint           CodeType = 1509
+	CodeDisContinuousCheckpoint CodeType = 1510
+	CodeNoCheckpointBuffer      CodeType = 1511
+	CodeCheckpointBuffer        CodeType = 1512
+	CodeCheckpointAlreadyExists CodeType = 1513
+	CodeInvalidNoAckProposer    CodeType = 1505
 
 	CodeOldValidator        CodeType = 2500
 	CodeNoValidator         CodeType = 2501
@@ -50,7 +50,7 @@ const (
 	CodeNoSignerChangeError CodeType = 2513
 	CodeNonce               CodeType = 2514
 
-	CodeSpanNotCountinuous  CodeType = 3501
+	CodeSpanNotContinuous   CodeType = 3501
 	CodeUnableToFreezeSet   CodeType = 3502
 	CodeSpanNotFound        CodeType = 3503
 	CodeValSetMisMatch      CodeType = 3504
@@ -121,8 +121,8 @@ func ErrOldCheckpoint(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeOldCheckpoint, "Checkpoint already received for given start and end block")
 }
 
-func ErrDisCountinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeDisCountinuousCheckpoint, "Checkpoint not in continuity")
+func ErrDisContinuousCheckpoint(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeDisContinuousCheckpoint, "Checkpoint not in continuity")
 }
 
 func ErrNoACK(codespace sdk.CodespaceType, expiresAt uint64) sdk.Error {
@@ -165,7 +165,7 @@ func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
 }
 
-// -----------Milestone Erros
+// -----------Milestone Errors
 func ErrNoMilestoneFound(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeNoMilestone, "Milestone Not Found")
 }
@@ -263,7 +263,7 @@ func ErrInvalidBorChainID(codespace sdk.CodespaceType) sdk.Error {
 }
 
 func ErrSpanNotInContinuity(codespace sdk.CodespaceType) sdk.Error {
-	return newError(codespace, CodeSpanNotCountinuous, "Span not countinuous")
+	return newError(codespace, CodeSpanNotContinuous, "Span not continuous")
 }
 
 func ErrInvalidSpanDuration(codespace sdk.CodespaceType) sdk.Error {
@@ -333,7 +333,7 @@ func CodeToDefaultMsg(code CodeType) string {
 		return "Checkpoint Not Found"
 	case CodeOldCheckpoint:
 		return "Checkpoint already received for given start and end block"
-	case CodeDisCountinuousCheckpoint:
+	case CodeDisContinuousCheckpoint:
 		return "Checkpoint not in continuity"
 	case CodeNoCheckpointBuffer:
 		return "Checkpoint buffer Not Found"
@@ -361,8 +361,8 @@ func CodeToDefaultMsg(code CodeType) string {
 		return "wait for confirmation time before sending transaction"
 	case CodeValPubkeyMismatch:
 		return "Signer Pubkey mismatch between event and msg"
-	case CodeSpanNotCountinuous:
-		return "Span not countinuous"
+	case CodeSpanNotContinuous:
+		return "Span not continuous"
 	case CodeUnableToFreezeSet:
 		return "Unable to freeze validator set for next span"
 	case CodeSpanNotFound:

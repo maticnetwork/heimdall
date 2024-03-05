@@ -140,7 +140,7 @@ func handleQueryLatestSpan(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) 
 		return bz, nil
 	}
 
-	// explcitly fetch the last span
+	// explicitly fetch the last span
 	span, err := keeper.GetLastSpan(ctx)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not get span", err.Error()))

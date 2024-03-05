@@ -21,7 +21,7 @@ const (
 
 // SetupSimulation creates the config, db (levelDB), temporary directory and logger for
 // the simulation tests. If `FlagEnabledValue` is false it skips the current test.
-// Returns error on an invalid db intantiation or temp dir creation.
+// Returns error on an invalid db instantiation or temp dir creation.
 func SetupSimulation(dirPrefix, dbName string) (simTypes.Config, dbm.DB, string, log.Logger, bool, error) {
 	config := NewConfigFromFlags()
 	config.ChainID = SimAppChainID

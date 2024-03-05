@@ -1,0 +1,17 @@
+[Unit]
+  Description=heimdalld
+  StartLimitIntervalSec=500
+  StartLimitBurst=5
+[Service]
+  Restart=on-failure
+  RestartSec=5s
+  WorkingDirectory=/usr/bin
+  ExecStart=/usr/bin/heimdalld start --home "/var/lib/heimdall" \
+		--bridge --all \
+    --chain=amoy \
+    --rest-server
+  Type=simple
+  LimitNOFILE=65536
+  User=heimdall
+[Install]
+  WantedBy=multi-user.target

@@ -5,8 +5,10 @@
 * [Preliminary terminology](#preliminary-terminology)
 * [Overview](#overview)
 * [How does it work](#how-does-it-work)
-* [How to propose a span](#how-to-propose-a-span)
+	* [How to propose a span](#how-to-propose-a-span)
 * [Query commands](#query-commands)
+
+
 ## Preliminary terminology
 
 * A `side-transaction` is a normal heimdall transaction but the data with which the message is composed needs to be voted on by the validators since the data is obscure to the consensus protocol itself and it has no way of validating the data's correctness.
@@ -64,7 +66,7 @@ if err != nil {
 }
 ```
 
-`FreezeSet` internally invokes `SelectNextProducers`, which pseudo-randomly picks producers from the validaor set, leaning more towards validators with higher voting power based on stake:
+`FreezeSet` internally invokes `SelectNextProducers`, which pseudo-randomly picks producers from the validator set, leaning more towards validators with higher voting power based on stake:
 
 ```
 // select next producers
@@ -74,7 +76,7 @@ if err != nil {
 }
 ```
 
-and then intialises and stores the span:
+and then initialises and stores the span:
 
 ```
 newSpan := hmTypes.NewSpan(
@@ -89,7 +91,7 @@ newSpan := hmTypes.NewSpan(
 return k.AddNewSpan(ctx, newSpan)
 ```
 
-## How to propose a span
+### How to propose a span
 
 A validator can leverage the CLI to propose a span like so :
 
@@ -107,69 +109,57 @@ curl -X POST "localhost:1317/bor/propose-span?bor-chain-id=<BOR_CHAIN_ID>&start-
 
 One can run the following query commands from the bor module :
 
-* `span` - Query the span corresponding to the given span id:
+* `span` - Query the span corresponding to the given span id.
+* `latest span` - Query the latest span.
+* `params` - Fetch the parameters associated to bor module.
+* `spanlist` - Fetch span list.
+* `next-span-seed` - Query the seed for the next span.
+* `propose-span` - Print the `propose-span` command.
 
-via CLI
+### CLI commands
+
 ```
 heimdallcli query bor span --span-id=<SPAN_ID>
 ```
 
-via REST
-```
-curl localhost:1317/bor/span/<SPAN_ID>
-```
-
-* `latest span` - Query the latest span : 
-
-via CLI
 ```
 heimdallcli query bor latest-span
 ```
 
-via REST
-```
-curl localhost:1317/bor/latest-span
-```
-
-* `params` - Fetch the parameters associated to bor module :
-
-via CLI
 ```
 heimdallcli query bor params
 ```
 
-via REST
-```
-curl localhost:1317/bor/params
-```
-
-* `spanlist` - Fetch span list :
-
-via CLI
 ```
 heimdallcli query bor spanlist --page=<PAGE_NUM> --limit=<LIMIT>
 ```
 
-* `next-span-seed` - Query the seed for the next span :
-
-via CLI
 ```
 heimdallcli query bor next-span-seed
 ```
 
-via REST
-```
-curl localhost:1317/bor/next-span-seed
-```
-
-* `propose-span` - Print the `propose-span` command :
-
-via CLI
 ```
 heimdallcli query bor propose-span --proposer <VALIDATOR ADDRESS> --start-block <BOR_START_BLOCK> --span-id <SPAN_ID> --bor-chain-id <BOR_CHAIN_ID>
 ```
 
-via REST
+### REST endpoints
+
+```
+curl localhost:1317/bor/span/<SPAN_ID>
+```
+
+```
+curl localhost:1317/bor/latest-span
+```
+
+```
+curl localhost:1317/bor/params
+```
+
+```
+curl localhost:1317/bor/next-span-seed
+```
+
 ```
 curl "localhost:1317/bor/prepare-next-span?span_id=<SPAN_ID>&start_block=<BOR_START_BLOCK>&chain_id="<BOR_CHAIN_ID>""
 ```

@@ -37,8 +37,9 @@ require (
 	cloud.google.com/go/compute v1.21.0 // indirect
 	cloud.google.com/go/compute/metadata v0.2.3 // indirect
 	cloud.google.com/go/iam v1.1.1 // indirect
-	github.com/BurntSushi/toml v1.2.0 // indirect
+	github.com/BurntSushi/toml v1.2.1 // indirect
 	github.com/JekaMas/workerpool v1.1.8 // indirect
+	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/deckarep/golang-set/v2 v2.1.0 // indirect
 	github.com/etcd-io/bbolt v1.3.3 // indirect
@@ -51,7 +52,7 @@ require (
 	github.com/google/s2a-go v0.1.4 // indirect
 	github.com/googleapis/enterprise-certificate-proxy v0.2.3 // indirect
 	github.com/grpc-ecosystem/grpc-gateway/v2 v2.16.0 // indirect
-	github.com/holiman/uint256 v1.2.2-0.20230321075855-87b91420868c // indirect
+	github.com/holiman/uint256 v1.2.3 // indirect
 	github.com/pelletier/go-toml/v2 v2.0.5 // indirect
 	github.com/stumble/gorocksdb v0.0.3 // indirect
 	github.com/subosito/gotenv v1.4.1 // indirect
@@ -62,6 +63,7 @@ require (
 	github.com/zondax/ledger-go v0.14.1 // indirect
 	go.opentelemetry.io/otel/metric v1.19.0 // indirect
 	go.opentelemetry.io/proto/otlp v1.0.0 // indirect
+	golang.org/x/exp v0.0.0-20230810033253-352e893a4cad // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20230711160842-782d3b101e98 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20230711160842-782d3b101e98 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
@@ -151,13 +153,13 @@ require (
 	gopkg.in/yaml.v3 v3.0.1
 )
 
-replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.26.0-dev0.0.20231005133805-2bb6a831bb2e
+replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v0.33.1
 
 replace github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.2.0
 
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.37.5-0.20231005133937-b1eb1f90feb7
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.4
 
-replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.0.4
+replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.2.7
 
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.5.1
 

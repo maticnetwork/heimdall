@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package tx
 
 import (
@@ -73,7 +73,7 @@ func BroadcastTxRequest(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		// brodcast tx
+		// broadcast tx
 		res, err := helper.BroadcastTx(cliCtx, req.Tx, req.Mode)
 		if err != nil {
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -104,7 +104,7 @@ $ gaiacli tx broadcast ./mytxn.json
 				return err
 			}
 
-			// brodcast tx
+			// broadcast tx
 			res, err := helper.BroadcastTx(cliCtx, stdTx, "")
 			if err != nil {
 				return err

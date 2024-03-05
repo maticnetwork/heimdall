@@ -206,8 +206,6 @@ func NewHeimdallService(pCtx context.Context, args []string) {
 		// Note: Handle with #870
 		panic(err)
 	}
-
-	logger.Info("Heimdall services stopped")
 }
 
 func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, storeTracer io.Writer) abci.Application {
@@ -253,6 +251,13 @@ For profiling and benchmarking purposes, CPU profiling can be enabled via the '-
 which accepts a path for the resulting pprof file.
 `,
 		RunE: func(cmd *cobra.Command, args []string) error {
+			for _, arg := range args {
+				if !strings.HasPrefix(arg, "--") {
+					return fmt.Errorf(
+						"\tinvalid argument: %s \n\tall flags must start with --",
+						arg)
+				}
+			}
 			LogsWriterFile := viper.GetString(helper.LogsWriterFileFlag)
 			if LogsWriterFile != "" {
 				logWriter := helper.GetLogsWriter(LogsWriterFile)
@@ -402,7 +407,7 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 
 	// initialize heimdall if needed (do not force!)
 	initConfig := &initHeimdallConfig{
-		chainID:     "", // chain id should be auto generated if chain flag is not set to mumbai or mainnet
+		chainID:     "", // chain id should be auto generated if chain flag is not set to mumbai, amoy or mainnet
 		chain:       viper.GetString(helper.ChainFlag),
 		validatorID: 1, // default id for validator
 		clientHome:  viper.GetString(helper.FlagClientHome),
@@ -530,6 +535,8 @@ func startInProcess(cmd *cobra.Command, shutdownCtx context.Context, ctx *server
 		ctx.Logger.Error("Error shutting down services", "Error", err)
 		return err
 	}
+
+	logger.Info("Heimdall services stopped")
 
 	return nil
 }

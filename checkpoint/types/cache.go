@@ -7,6 +7,10 @@ import (
 var milestoneId atomic.Value
 
 func GetMilestoneID() string {
+	if milestoneId.Load() == nil {
+		return ""
+	}
+
 	return milestoneId.Load().(string)
 }
 

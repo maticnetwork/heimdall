@@ -147,7 +147,7 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().String(FlagSignerPubkey, "", "--signer-pubkey=<signer pubkey here>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
-	cmd.Flags().String(FlagAmount, "0", "--amount=<amount>")
+	cmd.Flags().String(FlagAmount, "0", "--staked-amount=<amount>")
 	cmd.Flags().Uint64(FlagActivationEpoch, 0, "--activation-epoch=<activation-epoch>")
 
 	if err := cmd.MarkFlagRequired(FlagBlockNumber); err != nil {
@@ -199,7 +199,7 @@ func SendValidatorExitTx(cdc *codec.Codec) *cobra.Command {
 
 			nonce := viper.GetUint64(FlagNonce)
 
-			// draf msg
+			// draft msg
 			msg := types.NewMsgValidatorExit(
 				proposer,
 				validator,
@@ -379,7 +379,7 @@ func SendValidatorStakeUpdateTx(cdc *codec.Codec) *cobra.Command {
 	cmd.Flags().StringP(FlagProposerAddress, "p", "", "--proposer=<proposer-address>")
 	cmd.Flags().Uint64(FlagValidatorID, 0, "--id=<validator-id>")
 	cmd.Flags().String(FlagTxHash, "", "--tx-hash=<transaction-hash>")
-	cmd.Flags().String(FlagAmount, "", "--amount=<amount>")
+	cmd.Flags().String(FlagAmount, "", "--staked-amount=<amount>")
 	cmd.Flags().Uint64(FlagLogIndex, 0, "--log-index=<log-index>")
 	cmd.Flags().Uint64(FlagBlockNumber, 0, "--block-number=<block-number>")
 	cmd.Flags().Int(FlagNonce, 0, "--nonce=<nonce>")
