@@ -160,7 +160,7 @@ replace github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.2.0
 
 replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.4
 
-replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.2.6-beta
+replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.2.7
 
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.14.0
 
