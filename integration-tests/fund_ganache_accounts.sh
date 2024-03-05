@@ -5,7 +5,7 @@ machine0='localhost'
 
 echo "📍Transferring funds from ganache account[0] to others..."
 
-src="${machine0}:~/matic-cli/devnet/devnet/signer-dump.json"
+src="matic-cli/devnet/devnet/signer-dump.json"
 
 signerDump=$(cat $src | jq -c '.')
 
