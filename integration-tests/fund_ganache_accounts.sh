@@ -2,7 +2,7 @@
 
 host='localhost'
 
-echo "Transferring funds from ganache account[0] to others..."
+echo "Transferring 1 ETH from ganache account[0] to all others..."
 
 signersFile="matic-cli/devnet/devnet/signer-dump.json"
 signersDump=$(jq . $signersFile)
