@@ -127,7 +127,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/validator-status/{address}",
-		validatorStatusByAddreesHandlerFn(cliCtx),
+		validatorStatusByAddressHandlerFn(cliCtx),
 	).Methods("GET")
 	r.HandleFunc(
 		"/staking/validator/{id}",
@@ -206,7 +206,7 @@ func getTotalValidatorPower(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 //swagger:parameters stakingSignerByAddress
-type signerAddrees struct {
+type signerAddress struct {
 
 	//Address of the signer
 	//required:true
@@ -258,7 +258,7 @@ func validatorByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 }
 
 //swagger:parameters stakingValidatorStatus
-type validatorAddrees struct {
+type validatorAddress struct {
 
 	//Address of the validator
 	//required:true
@@ -271,7 +271,7 @@ type validatorAddrees struct {
 // responses:
 //
 //	200: stakingValidatorStatusResponse
-func validatorStatusByAddreesHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func validatorStatusByAddressHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		signerAddress := common.HexToAddress(vars["address"])

@@ -404,7 +404,7 @@ func PostHandleMsgCheckpointAck(ctx sdk.Context, k Keeper, msg types.MsgCheckpoi
 			"endExpected", checkpointObj.EndBlock,
 			"endReceived", msg.StartBlock,
 			"rootExpected", checkpointObj.RootHash.String(),
-			"rootRecieved", msg.RootHash.String(),
+			"rootReceived", msg.RootHash.String(),
 		)
 
 		return common.ErrBadAck(k.Codespace()).Result()

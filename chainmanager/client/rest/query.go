@@ -32,7 +32,7 @@ type chainManager struct {
 }
 
 type ContractAddresses struct {
-	BorChainId             string `josn:"bor_chain_id"`
+	BorChainId             string `json:"bor_chain_id"`
 	MaticChainAddress      string `json:"matic_token_address"`
 	StalkingManagerAddress string `json:"staking_manager_address"`
 	SlashManagerAddress    string `json:"slash_manager_address"`

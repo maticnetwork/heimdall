@@ -23,7 +23,7 @@ import (
 	httpClient "github.com/tendermint/tendermint/rpc/client"
 )
 
-// Listener defines a block header listerner for Rootchain, Maticchain, Heimdall
+// Listener defines a block header listener for Rootchain, Maticchain, Heimdall
 type Listener interface {
 	Start() error
 

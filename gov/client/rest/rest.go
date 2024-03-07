@@ -110,7 +110,7 @@ type value struct {
 }
 
 type change struct {
-	Subspace string `josn:"subspace"`
+	Subspace string `json:"subspace"`
 	Key      string `json:"key"`
 	Value    string `json:"value"`
 }
