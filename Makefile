@@ -82,7 +82,7 @@ build-docker-develop:
 .PHONY: contracts build
 
 PACKAGE_NAME          := github.com/maticnetwork/heimdall
-GOLANG_CROSS_VERSION  ?= v1.22.0
+GOLANG_CROSS_VERSION  ?= v1.22.1
 
 .PHONY: release-dry-run
 release-dry-run:
