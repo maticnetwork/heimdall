@@ -52,7 +52,6 @@ linters:
     - tparallel
     - unconvert
     - unparam
-    - wsl
     #- errorlint causes stack overflow. TODO: recheck after each golangci update
 
 linters-settings:
