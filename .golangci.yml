@@ -1,7 +1,7 @@
 # This file configures github.com/golangci/golangci-lint.
 
 run:
-  go: '1.20'
+  go: '1.22'
   timeout: 20m
   tests: true
   # default is true. Enables skipping of directories:
@@ -52,7 +52,6 @@ linters:
     - tparallel
     - unconvert
     - unparam
-    - wsl
     #- errorlint causes stack overflow. TODO: recheck after each golangci update
 
 linters-settings:

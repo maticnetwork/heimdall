@@ -10,6 +10,8 @@ import (
 	"github.com/maticnetwork/heimdall/sidechannel/types"
 )
 
+const validator = "validator"
+
 // RandomPastCommits returns random past commits value
 func RandomPastCommits(r *rand.Rand, n int, txsN int, validatorsN int) []types.PastCommit {
 	result := make([]types.PastCommit, n)
@@ -25,7 +27,7 @@ func RandomPastCommits(r *rand.Rand, n int, txsN int, validatorsN int) []types.P
 		validators := make([]abci.Validator, validatorsN)
 		for j := 0; j < validatorsN; j++ {
 			validators[j] = abci.Validator{
-				Address: []byte("validator" + fmt.Sprintf("%d", j)),
+				Address: []byte(validator + fmt.Sprintf("%d", j)),
 				Power:   r.Int63n(100000),
 			}
 		}
@@ -46,7 +48,7 @@ func RandomLastCommitInfo(r *rand.Rand, votesN int) abci.LastCommitInfo {
 	for i := 0; i < votesN; i++ {
 		votes[i] = abci.VoteInfo{
 			Validator: abci.Validator{
-				Address: []byte("validator" + fmt.Sprintf("%d", i+1)),
+				Address: []byte(validator + fmt.Sprintf("%d", i+1)),
 				Power:   r.Int63n(100000),
 			},
 			SignedLastBlock: r.Int()%2 == 0,
