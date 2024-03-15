@@ -8,14 +8,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	gogotypes "github.com/gogo/protobuf/types"
 	"github.com/maticnetwork/heimdall/slashing/types"
-	hmTpyes "github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // DecodeStore unmarshals the KVPair's Value to the corresponding slashing type
 func DecodeStore(cdc *codec.Codec, kvA, kvB sdk.KVPair) string {
 	switch {
 	case bytes.Equal(kvA.Key[:1], types.ValidatorSigningInfoKey):
-		var infoA, infoB hmTpyes.ValidatorSigningInfo
+		var infoA, infoB hmTypes.ValidatorSigningInfo
 		cdc.MustUnmarshalBinaryBare(kvA.Value, &infoA)
 		cdc.MustUnmarshalBinaryBare(kvB.Value, &infoB)
 		return fmt.Sprintf("%v\n%v", infoA, infoB)

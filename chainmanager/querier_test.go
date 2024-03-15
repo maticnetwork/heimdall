@@ -24,7 +24,7 @@ type QuerierTestSuite struct {
 	querier sdk.Querier
 }
 
-// SetupTest setup all necessary things for querier tesing
+// SetupTest setup all necessary things for querier testing
 func (suite *QuerierTestSuite) SetupTest() {
 	suite.app, suite.ctx = createTestApp(false)
 	suite.querier = chainmanager.NewQuerier(suite.app.ChainKeeper)

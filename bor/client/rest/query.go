@@ -117,8 +117,8 @@ type spanParams struct {
 
 // It represents the next span seed
 //
-//swagger:response borNextSpanSeedRespose
-type borNextSpanSeedRespose struct {
+//swagger:response borNextSpanSeedResponse
+type borNextSpanSeedResponse struct {
 	//in:body
 	Output spanSeed `json:"output"`
 }
@@ -142,7 +142,7 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 // swagger:route GET /bor/next-span-seed bor borNextSpanSeed
 // It returns the seed for the next span
 // responses:
-//   200: borNextSpanSeedRespose
+//   200: borNextSpanSeedResponse
 
 func fetchNextSpanSeedHandlerFn(
 	cliCtx context.CLIContext,
