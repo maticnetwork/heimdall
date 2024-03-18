@@ -64,6 +64,10 @@ func (rl *RootChainListener) handleStakedLog(vLog types.Log, selectedEvent *abi.
 		rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 	}
 
+	if !util.IsPubKeyFirstByteValid(pubkey[0:1]) {
+		rl.Logger.Error("public key first byte mismatch", "expected", "0x04", "received", pubkey[0:1])
+	}
+
 	if bytes.Equal(event.SignerPubkey, pubkey[1:]) {
 		// topup has to be processed first before validator join. so adding delay.
 		delay := util.TaskDelayBetweenEachVal
@@ -106,7 +110,7 @@ func (rl *RootChainListener) handleSignerChangeLog(vLog types.Log, selectedEvent
 		rl.Logger.Error("Error while parsing event", "name", selectedEvent.Name, "error", err)
 	}
 
-	if bytes.Equal(event.SignerPubkey, pubkey[1:]) {
+	if bytes.Equal(event.SignerPubkey, pubkey[1:]) && util.IsPubKeyFirstByteValid(pubkey[0:1]) {
 		rl.SendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, 0, event)
 	} else if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, event); isCurrentValidator {
 		rl.SendTaskWithDelay("sendSignerChangeToHeimdall", selectedEvent.Name, logBytes, delay, event)
