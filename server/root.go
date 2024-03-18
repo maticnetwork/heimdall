@@ -10,7 +10,6 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/context"
-	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/go-kit/log"
@@ -76,7 +75,7 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 	logger.Info(
 		fmt.Sprintf(
 			"Starting application REST service (chain-id: %q)...",
-			viper.GetString(flags.FlagChainID),
+			viper.GetString("chain"),
 		),
 	)
 
