@@ -709,5 +709,6 @@ func LogElapsedTimeForStateSyncedEvent(event interface{}, functionName string, s
 func IsPubKeyFirstByteValid(pubKey []byte) bool {
 	prefix := make([]byte, 1)
 	prefix[0] = byte(0x04)
+
 	return bytes.Equal(prefix, pubKey[0:1])
 }

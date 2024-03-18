@@ -157,9 +157,10 @@ func (c *ContractCaller) SendTick(signedData []byte, sigs []byte, slashManagerAd
 // StakeFor stakes for a validator
 func (c *ContractCaller) StakeFor(val common.Address, stakeAmount *big.Int, feeAmount *big.Int, acceptDelegation bool, stakeManagerAddress common.Address, stakeManagerInstance *stakemanager.Stakemanager) error {
 	signerPubkey := GetPubKey()
-	
+
 	prefix := make([]byte, 1)
 	prefix[0] = byte(0x04)
+
 	if !bytes.Equal(prefix, signerPubkey[0:1]) {
 		Logger.Error("public key first byte mismatch", "expected", "0x04", "received", signerPubkey[0:1])
 		return errors.New("public key first byte mismatch")
