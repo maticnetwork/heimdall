@@ -121,6 +121,10 @@ func SendValidatorJoinTx(cdc *codec.Codec) *cobra.Command {
 				return fmt.Errorf("Invalid tx for validator join")
 			}
 
+			if !util.IsPubKeyFirstByteValid(pubkey.Bytes()[0:1]) {
+				return fmt.Errorf("public key first byte mismatch")
+			}
+
 			if !bytes.Equal(event.SignerPubkey, pubkey.Bytes()[1:]) {
 				return fmt.Errorf("Public key mismatch with event log")
 			}
@@ -275,6 +279,10 @@ func SendValidatorUpdateTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 			pubkey := hmTypes.NewPubKey(pubkeyBytes)
+
+			if !util.IsPubKeyFirstByteValid(pubkey.Bytes()[0:1]) {
+				return fmt.Errorf("public key first byte mismatch")
+			}
 
 			txhash := viper.GetString(FlagTxHash)
 			if txhash == "" {
