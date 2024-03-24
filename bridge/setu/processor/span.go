@@ -87,10 +87,7 @@ func (sp *SpanProcessor) checkAndPropose() {
 		return
 	}
 
-	// check if current user is among next span producers
-	if sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
-		go sp.propose(lastSpan, nextSpanMsg)
-	}
+	go sp.propose(lastSpan, nextSpanMsg)
 }
 
 // propose producers for next span if needed
