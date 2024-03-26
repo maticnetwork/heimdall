@@ -125,7 +125,7 @@ func (br BaseReq) ValidateBasic(w http.ResponseWriter) bool {
 	return true
 }
 
-// ReadRESTReq reads and unmarshals a Request's body to the the BaseReq struct.
+// ReadRESTReq reads and unmarshals a Request's body to the BaseReq struct.
 // Writes an error response to ResponseWriter and returns true if errors occurred.
 func ReadRESTReq(w http.ResponseWriter, r *http.Request, cdc *codec.Codec, req interface{}) bool {
 	body, err := io.ReadAll(r.Body)
