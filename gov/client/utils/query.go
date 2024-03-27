@@ -14,6 +14,7 @@ import (
 const (
 	defaultPage  = 1
 	defaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	maxPerPage   = 100
 )
 
 // Proposer contains metadata of a governance proposal used for querying a
@@ -86,27 +87,35 @@ func QueryVotesByTxQuery(cliCtx context.CLIContext, params types.QueryProposalPa
 		fmt.Sprintf("%s.%s='%s'", types.EventTypeProposalVote, types.AttributeKeyProposalID, []byte(fmt.Sprintf("%d", params.ProposalID))),
 	}
 
-	// NOTE: SearchTxs is used to facilitate the txs query which does not currently
-	// support configurable pagination.
-	searchResult, err := helper.QueryTxsByEvents(cliCtx, events, defaultPage, defaultLimit)
-	if err != nil {
-		return nil, err
-	}
-
 	var votes []types.Vote
+	var currentPage int = 1
+	var lastPage int = 1
 
-	for _, info := range searchResult.Txs {
-		for _, msg := range info.Tx.GetMsgs() {
-			if msg.Type() == types.TypeMsgVote {
-				voteMsg := msg.(types.MsgVote)
+	for currentPage <= lastPage {
+		// NOTE: SearchTxs is used to facilitate the txs query which does not currently
+		// support configurable pagination.
+		searchResult, err := helper.QueryTxsByEvents(cliCtx, events, currentPage, maxPerPage)
+		if err != nil {
+			return nil, err
+		}
 
-				votes = append(votes, types.Vote{
-					Voter:      voteMsg.Validator,
-					ProposalID: params.ProposalID,
-					Option:     voteMsg.Option,
-				})
+		lastPage = searchResult.PageTotal
+
+		for _, info := range searchResult.Txs {
+			for _, msg := range info.Tx.GetMsgs() {
+				if msg.Type() == types.TypeMsgVote {
+					voteMsg := msg.(types.MsgVote)
+
+					votes = append(votes, types.Vote{
+						Voter:      voteMsg.Validator,
+						ProposalID: params.ProposalID,
+						Option:     voteMsg.Option,
+					})
+				}
 			}
 		}
+
+		currentPage++
 	}
 
 	if cliCtx.Indent {
