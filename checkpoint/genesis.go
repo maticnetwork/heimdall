@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"errors"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -43,6 +44,10 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		if err := keeper.SetCheckpointBuffer(ctx, *data.BufferedCheckpoint); err != nil {
 			keeper.Logger(ctx).Error("InitGenesis | SetCheckpointBuffer", "error", err)
 		}
+	}
+
+	if err := keeper.MigrateCheckpointKeyV2(ctx); err != nil {
+		panic(fmt.Errorf("checkpoint key v2 migration failed: %w", err))
 	}
 
 	// Set initial ack count
