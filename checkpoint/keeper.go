@@ -19,10 +19,11 @@ import (
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
-	ACKCountKey         = []byte{0x11} // key to store ACK count
-	BufferCheckpointKey = []byte{0x12} // Key to store checkpoint in buffer
-	CheckpointKey       = []byte{0x13} // prefix key for when storing checkpoint after ACK
-	LastNoACKKey        = []byte{0x14} // key to store last no-ack
+	ACKCountKey             = []byte{0x11} // key to store ACK count
+	BufferCheckpointKey     = []byte{0x12} // Key to store checkpoint in buffer
+	CheckpointKeyDeprecated = []byte{0x13} // use CheckpointKey instead
+	LastNoACKKey            = []byte{0x14} // key to store last no-ack
+	CheckpointKey           = []byte{0x15} // prefix key for when storing checkpoint after ACK
 )
 
 // ModuleCommunicator manages different module interaction
@@ -191,7 +192,7 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) 
 
 // GetCheckpointKey appends prefix to checkpointNumber
 func GetCheckpointKey(checkpointNumber uint64) []byte {
-	checkpointNumberBytes := []byte(strconv.FormatUint(checkpointNumber, 10))
+	checkpointNumberBytes := sdk.Uint64ToBigEndian(checkpointNumber)
 	return append(CheckpointKey, checkpointNumberBytes...)
 }
 
@@ -326,4 +327,44 @@ func (k Keeper) SetParams(ctx sdk.Context, params types.Params) {
 func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	k.paramSpace.GetParamSet(ctx, &params)
 	return
+}
+
+// MigrateCheckpointKeyV2 is used to migrate:
+//   - from old checkpoint keys that were incorrectly stored as string versions of uint64 which leads
+//     to incorrect lexicographical ordering to keys that are
+//   - to new checkpoint keys that are marshalled uint64s to a bigendian byte slices, so that they can be sorted
+//     numerically
+//
+// Note: this migration is guaranteed to be performed only once since all the old keys are migrated, then deleted and
+// never written again.
+func (k Keeper) MigrateCheckpointKeyV2(ctx sdk.Context) error {
+	store := ctx.KVStore(k.storeKey)
+
+	iterator := sdk.KVStorePrefixIterator(store, CheckpointKeyDeprecated)
+	defer iterator.Close()
+
+	if iterator.Valid() {
+		k.Logger(ctx).Info("performing migration from lexicographically to numerically sorted checkpoint keys")
+	}
+
+	for ; iterator.Valid(); iterator.Next() {
+		var checkpoint hmTypes.Checkpoint
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err != nil {
+			return err
+		}
+
+		key := iterator.Key()
+		checkpointNumber, err := strconv.ParseUint(string(key[len(CheckpointKeyDeprecated):]), 10, 64)
+		if err != nil {
+			return err
+		}
+
+		if err := k.AddCheckpoint(ctx, checkpointNumber, checkpoint); err != nil {
+			return err
+		}
+
+		store.Delete(key)
+	}
+
+	return nil
 }
