@@ -2,7 +2,9 @@ package checkpoint
 
 import (
 	"errors"
+	"fmt"
 	"strconv"
+	"sync"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -24,6 +26,9 @@ var (
 	CheckpointKeyDeprecated = []byte{0x13} // use CheckpointKey instead
 	LastNoACKKey            = []byte{0x14} // key to store last no-ack
 	CheckpointKey           = []byte{0x15} // prefix key for when storing checkpoint after ACK
+
+	checkpointKeyV2MigrationMu  = sync.Mutex{}
+	checkpointKeyV2MigrationKey = []byte{0x2}
 )
 
 // ModuleCommunicator manages different module interaction
@@ -122,6 +127,10 @@ func (k *Keeper) addCheckpoint(ctx sdk.Context, key []byte, checkpoint hmTypes.C
 
 // GetCheckpointByNumber to get checkpoint by checkpoint number
 func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.Checkpoint, error) {
+	if err := k.MigrateOnceCheckpointKeyV2(ctx); err != nil {
+		return hmTypes.Checkpoint{}, err
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	checkpointKey := GetCheckpointKey(number)
 
@@ -140,6 +149,10 @@ func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.
 
 // GetCheckpointList returns all checkpoints with params like page and limit
 func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.Checkpoint, error) {
+	if err := k.MigrateOnceCheckpointKeyV2(ctx); err != nil {
+		return nil, err
+	}
+
 	store := ctx.KVStore(k.storeKey)
 
 	// create headers
@@ -166,6 +179,10 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 
 // GetLastCheckpoint gets last checkpoint, checkpoint number = TotalACKs
 func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) {
+	if err := k.MigrateOnceCheckpointKeyV2(ctx); err != nil {
+		return hmTypes.Checkpoint{}, err
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	acksCount := k.GetACKCount(ctx)
 
@@ -250,6 +267,10 @@ func (k *Keeper) GetLastNoAck(ctx sdk.Context) uint64 {
 
 // GetCheckpoints get checkpoint all checkpoints
 func (k *Keeper) GetCheckpoints(ctx sdk.Context) []hmTypes.Checkpoint {
+	if err := k.MigrateOnceCheckpointKeyV2(ctx); err != nil {
+		panic(fmt.Errorf("issue while performing checkpoint key v2 migration: %w", err))
+	}
+
 	store := ctx.KVStore(k.storeKey)
 	// get checkpoint header iterator
 	iterator := sdk.KVStorePrefixIterator(store, CheckpointKey)
@@ -329,7 +350,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 	return
 }
 
-// MigrateCheckpointKeyV2 is used to migrate:
+// MigrateOnceCheckpointKeyV2 is used to migrate:
 //   - from old checkpoint keys that were incorrectly stored as string versions of uint64 which leads
 //     to incorrect lexicographical ordering to keys that are
 //   - to new checkpoint keys that are marshalled uint64s to a bigendian byte slices, so that they can be sorted
@@ -337,16 +358,29 @@ func (k Keeper) GetParams(ctx sdk.Context) (params types.Params) {
 //
 // Note: this migration is guaranteed to be performed only once since all the old keys are migrated, then deleted and
 // never written again.
-func (k Keeper) MigrateCheckpointKeyV2(ctx sdk.Context) error {
+func (k *Keeper) MigrateOnceCheckpointKeyV2(ctx sdk.Context) error {
 	store := ctx.KVStore(k.storeKey)
+	if store.Has(checkpointKeyV2MigrationKey) {
+		// check first before acquiring mutex
+		// if migration already done, no need to use a mutex
+		return nil
+	}
+
+	checkpointKeyV2MigrationMu.Lock()
+	defer checkpointKeyV2MigrationMu.Unlock()
+
+	if store.Has(checkpointKeyV2MigrationKey) {
+		// while waiting on the mutex maybe another goroutine
+		// has already performed the migration -> double check
+		return nil
+	}
 
 	iterator := sdk.KVStorePrefixIterator(store, CheckpointKeyDeprecated)
 	defer iterator.Close()
 
-	if iterator.Valid() {
-		k.Logger(ctx).Info("performing migration from lexicographically to numerically sorted checkpoint keys")
-	}
+	k.Logger(ctx).Info("performing migration from lexicographically to numerically sorted checkpoint keys")
 
+	var oldKeys [][]byte
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err != nil {
@@ -363,8 +397,14 @@ func (k Keeper) MigrateCheckpointKeyV2(ctx sdk.Context) error {
 			return err
 		}
 
-		store.Delete(key)
+		oldKeys = append(oldKeys, key)
 	}
+
+	for _, oldKey := range oldKeys {
+		store.Delete(oldKey)
+	}
+
+	store.Set(checkpointKeyV2MigrationKey, []byte{1})
 
 	return nil
 }
