@@ -1604,8 +1604,8 @@ github.com/maticnetwork/crand v1.0.2/go.mod h1:/NRNL3bj2eYdqpWmoIP5puxndTpi0XRxp
 github.com/maticnetwork/heimdall v0.3.1-0.20230227104835-81bd1055b0bc/go.mod h1:P2DoKhovYP9G9Kj2EH/zHaiRJF1jNU7ZJOyelG4UCa8=
 github.com/maticnetwork/polyproto v0.0.3-0.20230216113155-340ea926ca53 h1:PjYV+lghs106JKkrYgOnrsfDLoTc11BxZd4rUa4Rus4=
 github.com/maticnetwork/polyproto v0.0.3-0.20230216113155-340ea926ca53/go.mod h1:e1mU2EXSwEpn5jM7GfNwu3AupsV6WAGoPFFfswXOF0o=
-github.com/maticnetwork/tendermint v0.33.1 h1:o3hEm5hi3aIaZT5Kc8Exn2wbUM9cd5N4JxQ6skx5T+4=
-github.com/maticnetwork/tendermint v0.33.1/go.mod h1:D2fcnxGk6bje+LoPwImuKSSYLiK7/G06IynGNDSEcJk=
+github.com/maticnetwork/tendermint v0.33.2 h1:R9M7jgAmON8K/LbzMvtWPDhtPkNcqzkUUHp1ict/h3s=
+github.com/maticnetwork/tendermint v0.33.2/go.mod h1:D2fcnxGk6bje+LoPwImuKSSYLiK7/G06IynGNDSEcJk=
 github.com/matryer/moq v0.0.0-20190312154309-6cfb0558e1bd/go.mod h1:9ELz6aaclSIGnZBoaSLZ3NAl1VTufbOrXBPvtcy6WiQ=
 github.com/matryer/try v0.0.0-20161228173917-9ac251b645a2/go.mod h1:0KeJpeMD6o+O4hW7qJOT7vyQPKrWmj26uf5wMc/IiIs=
 github.com/mattn/go-colorable v0.0.9/go.mod h1:9vuHe8Xs5qXnSaW/c/ABM9alt+Vo+STaOChaDxuIBZU=
