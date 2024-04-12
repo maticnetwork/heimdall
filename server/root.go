@@ -250,7 +250,7 @@ func DecorateWithRestFlags(cmd *cobra.Command) {
 	cmd.Flags().Uint(FlagRPCReadHeaderTimeout, 10, "The RPC header read timeout (in seconds)")
 	cmd.Flags().Uint(client.FlagRPCWriteTimeout, 10, "The RPC write timeout (in seconds)")
 	// heimdall specific flags for rest server start
-	cmd.Flags().String(client.FlagChainID, "", "The chain ID to connect to")
+	cmd.Flags().String(client.FlagChain, "", "The chain to connect to")
 	cmd.Flags().String(client.FlagNode, helper.DefaultTendermintNode, "Address of the node to connect to")
 	// heimdall specific flags for gRPC server start
 	cmd.Flags().String(FlagGrpcAddr, "0.0.0.0:3132", "The address for the gRPC server to listen on")

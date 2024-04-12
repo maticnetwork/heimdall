@@ -46,7 +46,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 			outDir := viper.GetString(flagOutputDir)
 
 			// create chain id
-			chainID := viper.GetString(client.FlagChainID)
+			chainID := viper.GetString(client.FlagChain)
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
@@ -239,7 +239,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 	cmd.Flags().String(flagNodeHostPrefix, "node",
 		"Hostname prefix (node results in persistent peers list ID0@node0:26656, ID1@node1:26656, ...)")
 
-	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(client.FlagChain, "", "Genesis file chain, if left blank will be randomly created")
 	cmd.Flags().Bool("signer-dump", true, "Dumps all signer information in a json file")
 
 	return cmd
