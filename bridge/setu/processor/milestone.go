@@ -258,7 +258,7 @@ func (mp *MilestoneProcessor) checkAndProposeMilestoneTimeout() (err error) {
 	return nil
 }
 
-// sendMilestoneTimoutToHeimdall - creates milestone-timeout msg and broadcasts to heimdall
+// sendMilestoneTimeoutToHeimdall - creates milestone-timeout msg and broadcasts to heimdall
 func (mp *MilestoneProcessor) createAndSendMilestoneTimeoutToHeimdall() error {
 	mp.Logger.Debug("Initiating milestone timeout to Heimdall")
 

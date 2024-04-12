@@ -33,7 +33,7 @@ type QuerierTestSuite struct {
 	contractCaller mocks.IContractCaller
 }
 
-// SetupTest setup all necessary things for querier tesing
+// SetupTest setup all necessary things for querier testing
 func (suite *QuerierTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 	suite.contractCaller = mocks.IContractCaller{}

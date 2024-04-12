@@ -50,9 +50,9 @@ application.
 		},
 	}
 
-	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "node's home directory")
-	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
-	cmd.Flags().String(client.FlagChainID, "", "genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "Node's home directory")
+	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "Client's home directory")
+	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
 	cmd.Flags().Int(stakingcli.FlagValidatorID, 1, "--id=<validator ID here>, if left blank will be assigned 1")
 
 	return cmd

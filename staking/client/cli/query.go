@@ -35,7 +35,7 @@ func GetQueryCmd(cdc *codec.Codec) *cobra.Command {
 			GetTotalStakingPower(cdc),
 			GetValidatorStatus(cdc),
 			GetProposer(cdc),
-			GetCurentProposer(cdc),
+			GetCurrentProposer(cdc),
 			IsOldTx(cdc),
 		)...,
 	)
@@ -244,7 +244,7 @@ func GetProposer(cdc *codec.Codec) *cobra.Command {
 }
 
 // Get Current proposer
-func GetCurentProposer(cdc *codec.Codec) *cobra.Command {
+func GetCurrentProposer(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "current-proposer",
 		Short: "show the current proposer",

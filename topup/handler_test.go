@@ -35,7 +35,7 @@ type HandlerTestSuite struct {
 	chainParams    chainTypes.Params
 }
 
-// SetupTest setup all necessary things for querier tesing
+// SetupTest setup all necessary things for querier testing
 func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx, suite.cliCtx = createTestApp(false)
 

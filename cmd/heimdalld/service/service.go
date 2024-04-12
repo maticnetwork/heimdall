@@ -310,8 +310,8 @@ which accepts a path for the resulting pprof file.
 	}
 
 	// bridge flags =  start flags (all, only) + root bridge cmd flags
-	cmd.Flags().Bool("all", false, "start all bridge services")
-	cmd.Flags().StringSlice("only", []string{}, "comma separated bridge services to start")
+	cmd.Flags().Bool("all", false, "Start all bridge services")
+	cmd.Flags().StringSlice("only", []string{}, "Comma separated bridge services to start")
 	bridgeCmd.DecorateWithBridgeRootFlags(cmd, viper.GetViper(), logger, "main")
 
 	// rest server flags
@@ -328,9 +328,9 @@ which accepts a path for the resulting pprof file.
 	cmd.Flags().Uint64(FlagHaltHeight, 0, "Height at which to gracefully halt the chain and shutdown the node")
 	cmd.Flags().Uint64(FlagHaltTime, 0, "Minimum block time (in Unix seconds) at which to gracefully halt the chain and shutdown the node")
 	cmd.Flags().String(flagCPUProfile, "", "Enable CPU profiling and write to the provided file")
-	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "client's home directory")
+	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "Client's home directory")
 
-	cmd.Flags().Bool(FlagOpenTracing, false, "start open tracing")
+	cmd.Flags().Bool(FlagOpenTracing, false, "Start open tracing")
 	cmd.Flags().String(FlagOpenCollectorEndpoint, helper.DefaultOpenCollectorEndpoint, "Default OpenTelemetry Collector Endpoint")
 
 	// add support for all Tendermint-specific command line options
