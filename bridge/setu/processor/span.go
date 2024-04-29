@@ -3,6 +3,7 @@ package processor
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -36,6 +37,7 @@ func (sp *SpanProcessor) Start() error {
 
 	// start polling for span
 	sp.Logger.Info("Start polling for span", "pollInterval", helper.GetConfig().SpanPollInterval)
+	fmt.Print("AS:Polling Start")
 
 	go sp.startPolling(spanCtx, helper.GetConfig().SpanPollInterval)
 
@@ -57,6 +59,7 @@ func (sp *SpanProcessor) startPolling(ctx context.Context, interval time.Duratio
 		select {
 		case <-ticker.C:
 			// nolint: contextcheck
+			fmt.Print("AS:Check n Propose")
 			sp.checkAndPropose()
 		case <-ctx.Done():
 			sp.Logger.Info("Polling stopped")
@@ -81,14 +84,17 @@ func (sp *SpanProcessor) checkAndPropose() {
 
 	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 
+	fmt.Print("AS:Fetching next span detail")
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
 	if err != nil {
+		fmt.Print("AS:Error in getting next span msg")
 		sp.Logger.Error("Unable to fetch next span details", "error", err, "lastSpanId", lastSpan.ID)
 		return
 	}
 
 	// check if current user is among next span producers
 	if sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
+		fmt.Print("AS:Current node is span proposer")
 		go sp.propose(lastSpan, nextSpanMsg)
 	}
 }
@@ -97,20 +103,29 @@ func (sp *SpanProcessor) checkAndPropose() {
 func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) {
 	// call with last span on record + new span duration and see if it has been proposed
 	currentBlock, err := sp.getCurrentChildBlock()
+
 	if err != nil {
+		fmt.Print("AS:error in fetching current block")
 		sp.Logger.Error("Unable to fetch current block", "error", err)
 		return
 	}
 
+	fmt.Print("AS:current block", currentBlock)
+
 	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
+		fmt.Print("AS:Entered line no 116 ")
+
 		// log new span
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
 		seed, err := sp.fetchNextSpanSeed()
 		if err != nil {
+			fmt.Print("AS:error in fetching current seed", seed)
 			sp.Logger.Info("Error while fetching next span seed from HeimdallServer", "err", err)
 			return
 		}
+
+		fmt.Print("AS:current block seed", seed)
 
 		// broadcast to heimdall
 		msg := borTypes.MsgProposeSpan{
@@ -124,9 +139,12 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+			fmt.Print("AS:error in broadcasting to Heimdall")
 			sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
 			return
 		}
+
+		fmt.Print("AS:Tx broadcasted")
 	}
 }
 
