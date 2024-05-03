@@ -9,6 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/common"
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -87,6 +88,11 @@ func SideHandleMsgValidatorJoin(ctx sdk.Context, msg types.MsgValidatorJoin, k K
 	// Generate PubKey from Pubkey in message and signer
 	pubkey := msg.SignerPubKey
 	signer := pubkey.Address()
+
+	if !util.IsPubKeyFirstByteValid(pubkey[0:1]) {
+		k.Logger(ctx).Error("public key first byte mismatch", "expected", "0x04", "received", pubkey[0:1])
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
 
 	// check signer pubkey in message corresponds
 	if !bytes.Equal(pubkey.Bytes()[1:], eventLog.SignerPubkey) {
@@ -234,6 +240,11 @@ func SideHandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Kee
 
 	if eventLog.ValidatorId.Uint64() != msg.ID.Uint64() {
 		k.Logger(ctx).Error("ID in message doesn't match with id in log", "msgId", msg.ID, "validatorIdFromTx", eventLog.ValidatorId)
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
+
+	if !util.IsPubKeyFirstByteValid(newPubKey.Bytes()[0:1]) {
+		k.Logger(ctx).Error("public key first byte mismatch", "expected", "0x04", "received", newPubKey.Bytes()[0:1])
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 

@@ -12,6 +12,7 @@ import (
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chSim "github.com/maticnetwork/heimdall/checkpoint/simulation"
 	"github.com/maticnetwork/heimdall/common"
 	errs "github.com/maticnetwork/heimdall/common"
@@ -89,7 +90,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 	amount, _ := big.NewInt(0).SetString("1000000000000000000", 10)
 
 	privKey1 := secp256k1.GenPrivKey()
-	pubkey := hmTypes.NewPubKey(privKey1.PubKey().Bytes())
+	pubkey := hmTypes.NewPubKey(util.AppendPrefix(privKey1.PubKey().Bytes()))
 	address := pubkey.Address()
 
 	chainParams := app.ChainKeeper.GetParams(ctx)
