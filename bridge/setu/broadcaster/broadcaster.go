@@ -98,7 +98,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	txHash := txResponse.TxHash
 
 	tb.logger.Info("Tx sent on heimdall", "txHash", txHash, "accSeq", tb.lastSeqNo, "accNum", tb.accNum)
-	tb.logger.Debug("Tx successful on heimdall", "txResponse", txResponse)
+	tb.logger.Info("Tx successful on heimdall", "txResponse", txResponse, "mode", tb.CliCtx.BroadcastMode)
 	// increment account sequence
 	tb.lastSeqNo += 1
 
