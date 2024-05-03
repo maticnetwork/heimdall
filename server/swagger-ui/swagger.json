@@ -5236,7 +5236,7 @@
                 "$ref": "#/definitions/output"
             }
         },
-        "borNextSpanSeedRespose": {
+        "borNextSpanSeedResponse": {
             "description": "It represents the next span seed",
             "schema": {
                 "$ref": "#/definitions/spanSeed"

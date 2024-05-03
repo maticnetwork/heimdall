@@ -353,7 +353,7 @@ func TestTallyOnlyValidatorsNonVoter(t *testing.T) {
 	require.False(t, tallyResults.Equals(EmptyTallyResult()))
 }
 
-func TestTallyDelgatorOverride(t *testing.T) {
+func TestTallyDelegatorOverride(t *testing.T) {
 	input := getMockApp(t, 10, GenesisState{}, nil)
 
 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
@@ -399,7 +399,7 @@ func TestTallyDelgatorOverride(t *testing.T) {
 	require.False(t, tallyResults.Equals(EmptyTallyResult()))
 }
 
-func TestTallyDelgatorInherit(t *testing.T) {
+func TestTallyDelegatorInherit(t *testing.T) {
 	input := getMockApp(t, 10, GenesisState{}, nil)
 
 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
@@ -443,7 +443,7 @@ func TestTallyDelgatorInherit(t *testing.T) {
 	require.False(t, tallyResults.Equals(EmptyTallyResult()))
 }
 
-func TestTallyDelgatorMultipleOverride(t *testing.T) {
+func TestTallyDelegatorMultipleOverride(t *testing.T) {
 	input := getMockApp(t, 10, GenesisState{}, nil)
 
 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}
@@ -491,7 +491,7 @@ func TestTallyDelgatorMultipleOverride(t *testing.T) {
 	require.False(t, tallyResults.Equals(EmptyTallyResult()))
 }
 
-func TestTallyDelgatorMultipleInherit(t *testing.T) {
+func TestTallyDelegatorMultipleInherit(t *testing.T) {
 	input := getMockApp(t, 10, GenesisState{}, nil)
 
 	header := abci.Header{Height: input.mApp.LastBlockHeight() + 1}

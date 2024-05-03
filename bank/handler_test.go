@@ -23,7 +23,7 @@ type HandlerTestSuite struct {
 	contractCaller mocks.IContractCaller
 }
 
-// SetupTest setup all necessary things for querier tesing
+// SetupTest setup all necessary things for querier testing
 func (suite *HandlerTestSuite) SetupTest() {
 	suite.app, suite.ctx = createTestApp(false)
 

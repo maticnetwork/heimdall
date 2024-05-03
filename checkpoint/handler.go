@@ -221,7 +221,7 @@ func handleMsgCheckpointAck(ctx sdk.Context, msg types.MsgCheckpointAck, k Keepe
 			"endExpected", headerBlock.EndBlock,
 			"endReceived", msg.StartBlock,
 			"rootExpected", headerBlock.RootHash.String(),
-			"rootRecieved", msg.RootHash.String(),
+			"rootReceived", msg.RootHash.String(),
 		)
 
 		return common.ErrBadAck(k.Codespace()).Result()
@@ -264,7 +264,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 		return common.ErrInvalidNoACK(k.Codespace()).Result()
 	}
 
-	//Hardfork to check the validaty of the NoAckProposer
+	//Hardfork to check the validity of the NoAckProposer
 	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
 		timeDiff := currentTime.Sub(lastCheckpointTime)
 
