@@ -502,7 +502,7 @@ func GetLatestCheckpoint(cliCtx cliContext.CLIContext) (*hmtypes.Checkpoint, err
 	)
 
 	if err != nil {
-		logger.Debug("Error fetching latest checkpoint", "err", err)
+		logger.Error("Error fetching latest checkpoint", "err", err)
 		return nil, err
 	}
 

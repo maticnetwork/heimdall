@@ -289,6 +289,10 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 			return nil
 		}
 
+		if err != nil {
+			cp.Logger.Error("Error fetching latest checkpoint", "error", err)
+		}
+
 		// create msg checkpoint ack message
 		msg := checkpointTypes.NewMsgCheckpointAck(
 			helper.GetFromAddress(cp.cliCtx),
