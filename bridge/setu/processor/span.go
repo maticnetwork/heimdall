@@ -110,7 +110,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		return
 	}
 
-	fmt.Println("AS:current block", currentBlock)
+	fmt.Println("AS:current block", currentBlock, "lastSpan.StartBlock", lastSpan.StartBlock, "lastSpan.EndBlock", lastSpan.EndBlock)
 
 	if lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock {
 		fmt.Println("AS:Entered line no 116 ")
