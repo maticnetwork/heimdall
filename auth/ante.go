@@ -237,12 +237,14 @@ func processSig(
 
 		p, err := authTypes.RecoverPubkey(signBytes, sig.Bytes())
 		if err != nil {
+			fmt.Println("Error while recovering pubkey", err)
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
 		copy(pk[:], p[:])
 
 		if !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
+			fmt.Println("Address mismatch", acc.GetAddress().String(), pk.Address().String())
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
