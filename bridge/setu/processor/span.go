@@ -209,6 +209,8 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 	q.Add("proposer", helper.GetFromAddress(sp.cliCtx).String())
 	req.URL.RawQuery = q.Encode()
 
+	fmt.Println("AS: fetch next span details -- ", req.URL.String())
+
 	// fetch next span details
 	result, err := helper.FetchFromAPI(sp.cliCtx, req.URL.String())
 	if err != nil {
