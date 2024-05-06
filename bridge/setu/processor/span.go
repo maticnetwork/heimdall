@@ -82,7 +82,7 @@ func (sp *SpanProcessor) checkAndPropose() {
 		return
 	}
 
-	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
+	fmt.Println("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 
 	fmt.Println("AS:Fetching next span detail")
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
