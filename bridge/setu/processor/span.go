@@ -51,7 +51,7 @@ func (sp *SpanProcessor) RegisterTasks() {
 
 // startPolling - polls heimdall and checks if new span needs to be proposed
 func (sp *SpanProcessor) startPolling(ctx context.Context, interval time.Duration) {
-	ticker := time.NewTicker(interval)
+	ticker := time.NewTicker(30 * time.Second)
 	// stop ticker when everything done
 	defer ticker.Stop()
 
@@ -95,8 +95,10 @@ func (sp *SpanProcessor) checkAndPropose() {
 	// check if current user is among next span producers
 	if sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
 		fmt.Println("AS:Current node is span proposer")
-		go sp.propose(lastSpan, nextSpanMsg)
 	}
+
+	fmt.Println("AS:Going to propose the span")
+	go sp.propose(lastSpan, nextSpanMsg)
 }
 
 // propose producers for next span if needed
@@ -140,6 +142,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		// return broadcast to heimdall
 		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 			fmt.Println("AS:error in broadcasting to Heimdall")
+			fmt.Print("Error", err)
 			sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
 			return
 		}
