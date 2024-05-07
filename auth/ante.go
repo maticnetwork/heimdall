@@ -176,7 +176,7 @@ func NewAnteHandler(
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(ctx, newCtx.ChainID(), stdTx, signerAcc, isGenesis)
 
-		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer)
+		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer, stdTx, ak)
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
@@ -227,6 +227,8 @@ func processSig(
 	simulate bool,
 	params authTypes.Params,
 	sigGasConsumer SignatureVerificationGasConsumer,
+	stdTx authTypes.StdTx,
+	ak AccountKeeper,
 ) (updatedAcc authTypes.Account, res sdk.Result) {
 	if res := sigGasConsumer(ctx.GasMeter(), sig, params); !res.IsOK() {
 		return nil, res
@@ -244,7 +246,14 @@ func processSig(
 		copy(pk[:], p[:])
 
 		if !bytes.Equal(acc.GetAddress().Bytes(), pk.Address().Bytes()) {
-			fmt.Println("Address mismatch", acc.GetAddress().String(), pk.Address().String())
+			milestoneTimeoutMsg, ok := stdTx.Msg.(checkpointTypes.MsgMilestoneTimeout)
+			if !ok {
+				fmt.Println("Not a milestone timeout message for which address mismatch occurred", "msg type", stdTx.Msg.Type())
+			}
+
+			fromAddr, acc := milestoneTimeoutMsg.From, ak.GetAccount(ctx, milestoneTimeoutMsg.From)
+			fmt.Println("Address mismatch", acc.GetAddress().String(), pk.Address().String(), "msg type", stdTx.Msg.Type(), "fromAddr", fromAddr.String(), "acc", acc.String())
+			fmt.Println("Pub key recovered", pk.String())
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
