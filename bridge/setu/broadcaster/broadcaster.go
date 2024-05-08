@@ -63,10 +63,18 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	defer tb.heimdallMutex.Unlock()
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "BroadcastToHeimdall", time.Now())
 
+	address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
+
+	account, err := util.GetAccount(tb.CliCtx, address)
+	if err != nil {
+		panic("Error connecting to rest-server, please start server before bridge.")
+	}
 	// tx encoder
 	txEncoder := helper.GetTxEncoder(tb.CliCtx.Codec)
 	// chain id
 	chainID := helper.GetGenesisDoc().ChainID
+
+	fmt.Println("Building tx with sequence: ", tb.lastSeqNo, "acc seq from db", account.GetSequence(), " msg type: ", msg.Type())
 
 	// get account number and sequence
 	txBldr := authTypes.NewTxBuilderFromCLI().
@@ -76,7 +84,8 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 		WithChainID(chainID)
 
 	txResponse, err := helper.BuildAndBroadcastMsgs(tb.CliCtx, txBldr, []sdk.Msg{msg})
-	if err != nil {
+	fmt.Println("TXRESPONSE CODE: ", txResponse.Code)
+	if err != nil || txResponse.Code != uint32(sdk.CodeOK) {
 		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
 
 		// current address
@@ -102,6 +111,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	// increment account sequence
 	tb.lastSeqNo += 1
 
+	fmt.Println("Sequence updated to: ", tb.lastSeqNo, "acc seq from db", account.GetSequence(), "msg type: ", msg.Type())
 	return nil
 }
 

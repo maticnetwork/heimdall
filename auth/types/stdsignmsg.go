@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -25,6 +26,10 @@ type StdSignDoc struct {
 func StdSignBytes(chainID string, accnum uint64, sequence uint64, msg sdk.Msg, memo string) []byte {
 	msgsBytes := json.RawMessage(msg.GetSignBytes())
 
+	switch msg.Type() {
+	case "milestone", "milestone-timeout", "propose-span":
+		fmt.Println("Msg in StdSignBytes: ", msg, "Type: ", msg.Type(), "signBytes: ", msg.GetSignBytes())
+	}
 	bz, err := ModuleCdc.MarshalJSON(StdSignDoc{
 		AccountNumber: accnum,
 		ChainID:       chainID,

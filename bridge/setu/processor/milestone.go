@@ -269,6 +269,8 @@ func (mp *MilestoneProcessor) createAndSendMilestoneTimeoutToHeimdall() error {
 		hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
 	)
 
+	fmt.Println("CREATED Milestone Timeout", "msg", msg, "sign bytes", msg.GetSignBytes(), "from", msg.From, "fromAddr bytes", msg.From.Bytes())
+
 	// return broadcast to heimdall
 	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
 		mp.Logger.Error("Error while broadcasting milestone timeout to heimdall", "error", err)

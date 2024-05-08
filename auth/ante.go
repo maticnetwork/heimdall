@@ -176,7 +176,7 @@ func NewAnteHandler(
 		// check signature, return account with incremented nonce
 		signBytes := GetSignBytes(ctx, newCtx.ChainID(), stdTx, signerAcc, isGenesis)
 
-		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer, stdTx, ak)
+		signerAcc, res = processSig(newCtx, signerAcc, stdSigs[0], signBytes, simulate, params, sigGasConsumer, stdTx)
 		if !res.IsOK() {
 			return newCtx, res, true
 		}
@@ -228,7 +228,6 @@ func processSig(
 	params authTypes.Params,
 	sigGasConsumer SignatureVerificationGasConsumer,
 	stdTx authTypes.StdTx,
-	ak AccountKeeper,
 ) (updatedAcc authTypes.Account, res sdk.Result) {
 	if res := sigGasConsumer(ctx.GasMeter(), sig, params); !res.IsOK() {
 		return nil, res
@@ -251,9 +250,10 @@ func processSig(
 				fmt.Println("Not a milestone timeout message for which address mismatch occurred", "msg type", stdTx.Msg.Type())
 			}
 
-			fromAddr, acc := milestoneTimeoutMsg.From, ak.GetAccount(ctx, milestoneTimeoutMsg.From)
+			fromAddr := milestoneTimeoutMsg.From
 			fmt.Println("Address mismatch", acc.GetAddress().String(), pk.Address().String(), "msg type", stdTx.Msg.Type(), "fromAddr", fromAddr.String(), "acc", acc.String())
-			fmt.Println("Pub key recovered", pk.String())
+			fmt.Println("Acc address bytes", acc.GetAddress().Bytes(), "from addr bytes", fromAddr.Bytes())
+			fmt.Println("Pub key recovered", pk.String(), "plen", len(p), "pklen", len(pk))
 			return nil, sdk.ErrUnauthorized("signature verification failed; verify correct account sequence and chain-id").Result()
 		}
 
@@ -269,6 +269,10 @@ func processSig(
 		return nil, sdk.ErrUnauthorized("error while updating account sequence").Result()
 	}
 
+	addr := acc.GetAddress()
+	if bytes.Equal(addr[:], helper.GetAddress()) {
+		fmt.Println("ACC SEQ of own address", acc.GetSequence())
+	}
 	return acc, res
 }
 
@@ -337,6 +341,7 @@ func GetSignBytes(ctx sdk.Context, chainID string, stdTx authTypes.StdTx, acc au
 		accNum = acc.GetAccountNumber()
 	}
 
+	fmt.Println("Account sequence while invoking StdSignBytes", "seq", acc.GetSequence(), "msg type", stdTx.Msg.Type(), "chain id", chainID, "acc", acc.String())
 	signBytes := authTypes.StdSignBytes(chainID, accNum, acc.GetSequence(), stdTx.Msg, stdTx.Memo)
 
 	if ctx.BlockHeight() > helper.GetNewHexToStringAlgoHeight() {
