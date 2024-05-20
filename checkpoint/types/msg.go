@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -173,7 +174,7 @@ func (msg MsgCheckpoint) GetSideSignBytes() []byte {
 		msg.AccountRootHash.Bytes(),
 		new(big.Int).SetUint64(borChainID).Bytes(),
 	)
-	fmt.Println("MsgCheckpoint GetSideSignBytes", x)
+	fmt.Println("MsgCheckpoint GetSideSignBytes", x, hex.EncodeToString(x))
 	return x
 }
 

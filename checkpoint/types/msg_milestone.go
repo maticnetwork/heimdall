@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+	"encoding/hex"
 	"fmt"
 	"math/big"
 	"strconv"
@@ -96,7 +97,7 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 		new(big.Int).SetUint64(borChainID).Bytes(),
 		[]byte(msg.MilestoneID),
 	)
-	fmt.Println("MsgMilestone GetSideSignBytes", x)
+	fmt.Println("MsgMilestone GetSideSignBytes", x, hex.EncodeToString(x))
 	return x
 }
 
