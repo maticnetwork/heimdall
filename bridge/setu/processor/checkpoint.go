@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -519,11 +520,13 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 
 	// side-tx data
 	sideTxData := sideMsg.GetSideSignBytes()
-
+	sideTxData, err = hex.DecodeString("0000000000000000000000005d736c001202a3a84b827ce26183d47a6131b1690000000000000000000000000000000000000000000000000000000000000361000000000000000000000000000000000000000000000000000000000000036dc33e5ddde457e74bb20422e33f4e442c38d47624a1ac4dd3149aa06160d610a400000000000000000000000000000000000000000000000000000000000027320000000000000000000000000000000000000000000000000000000000000000")
+	fmt.Println("--------- over here ---------")
 	// get sigs
 	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
 	if err != nil {
 		cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
+		fmt.Println("err - ", err)
 		return err
 	}
 
