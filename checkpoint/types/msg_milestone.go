@@ -95,7 +95,7 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 		new(big.Int).SetUint64(borChainID).Bytes(),
 		[]byte(msg.MilestoneID),
 	)
-	fmt.Println("side sign bytes", x)
+	fmt.Println("MsgMilestone GetSideSignBytes", x)
 	return x
 }
 
