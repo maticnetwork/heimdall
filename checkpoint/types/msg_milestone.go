@@ -87,7 +87,7 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
 	borChainID, _ := strconv.ParseUint(msg.BorChainID, 10, 64)
 
-	return appendBytes32(
+	x := appendBytes32(
 		msg.Proposer.Bytes(),
 		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
@@ -95,6 +95,8 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 		new(big.Int).SetUint64(borChainID).Bytes(),
 		[]byte(msg.MilestoneID),
 	)
+	fmt.Println("side sign bytes", x)
+	return x
 }
 
 var _ sdk.Msg = &MsgMilestoneTimeout{}

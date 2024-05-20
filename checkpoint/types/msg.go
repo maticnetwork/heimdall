@@ -164,7 +164,7 @@ func (msg MsgCheckpoint) GetSideSignBytes() []byte {
 	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
 	borChainID, _ := strconv.ParseUint(msg.BorChainID, 10, 64)
 
-	return appendBytes32(
+	x:=  appendBytes32(
 		msg.Proposer.Bytes(),
 		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
@@ -172,6 +172,8 @@ func (msg MsgCheckpoint) GetSideSignBytes() []byte {
 		msg.AccountRootHash.Bytes(),
 		new(big.Int).SetUint64(borChainID).Bytes(),
 	)
+	fmt.Println("MsgCheckpoint GetSideSignBytes", x)
+	return x
 }
 
 //
