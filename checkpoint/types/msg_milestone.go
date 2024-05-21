@@ -41,7 +41,7 @@ func NewMsgMilestoneBlock(
 		EndBlock:    endBlock,
 		Hash:        hash,
 		BorChainID:  borChainID,
-		MilestoneID: "'2",
+		MilestoneID: milestoneID,
 	}
 }
 
@@ -95,7 +95,7 @@ func (msg MsgMilestone) GetSideSignBytes() []byte {
 		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
 		msg.Hash.Bytes(),
 		new(big.Int).SetUint64(borChainID).Bytes(),
-		[]byte(msg.MilestoneID),
+		new(big.Int).SetUint64(borChainID).Bytes(),
 	)
 
 	fmt.Println("MsgMilestone GetSideSignBytes", x, hex.EncodeToString(x))

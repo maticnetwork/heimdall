@@ -495,7 +495,10 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointContext *CheckpointContext, start uint64, end uint64, height int64, txHash []byte) error {
 	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
 	// proof
+	// txHash = ""
+	// height = 0
 	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
+
 	if err != nil {
 		cp.Logger.Error("Error querying checkpoint tx proof", "txHash", txHash)
 		return err
@@ -521,8 +524,8 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 	// side-tx data
 	sideTxData := sideMsg.GetSideSignBytes()
 
-	sideTxData, err = hex.DecodeString("0000000000000000000000005d736c001202a3a84b827ce26183d47a6131b1690000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002fac7996bdfe973fbf1df9e692fe75f105f951c6bebd046e02ecec8fe7036aad3600000000000000000000000000000000000000000000000000000000000027320000000000000000000000000000000000000000000000000000000000002732")
-	fmt.Println("--------- over here ---------")
+	// sideTxData, err = hex.DecodeString("0000000000000000000000005d736c001202a3a84b827ce26183d47a6131b1690000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002fac7996bdfe973fbf1df9e692fe75f105f951c6bebd046e02ecec8fe7036aad3600000000000000000000000000000000000000000000000000000000000027320000000000000000000000000000000000000000000000000000000000002732")
+	// fmt.Println("--------- over here ---------")
 
 	// get sigs
 	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
