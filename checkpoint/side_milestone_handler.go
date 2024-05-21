@@ -31,6 +31,10 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
+	// if msg.BorChainID == msg.MilestoneID {
+	// 	return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
+	// }
+
 	if count != uint64(0) && msg.StartBlock != lastMilestone.EndBlock+1 {
 		logger.Error("Milestone is not in continuity to last stored milestone",
 			"startBlock", msg.StartBlock,
