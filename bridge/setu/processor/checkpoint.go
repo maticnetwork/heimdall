@@ -208,7 +208,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	var (
 		startBlock uint64
 		endBlock   uint64
-		txHash     string
+		// txHash     string
 	)
 
 	for _, attr := range event.Attributes {
@@ -221,7 +221,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 		}
 
 		if attr.Key == hmTypes.AttributeKeyTxHash {
-			txHash = attr.Value
+			// txHash = attr.Value
 		}
 	}
 
@@ -236,8 +236,8 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	}
 
 	if shouldSend && isCurrentProposer {
-		txHash := common.FromHex(txHash)
-		// txHash := common.FromHex("7940C5A6604445782190A11287E59841366F8E1F97B93F57118B7EA73BC903F7")
+		// txHash := common.FromHex(txHash)
+		txHash := common.FromHex("7FDDCAAB2AA64715969EAA231C0076792E2246A94282BEB179FF31C3867ABD79")
 		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, blockHeight, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
 			return err
@@ -496,7 +496,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointContext *CheckpointContext, start uint64, end uint64, height int64, txHash []byte) error {
 	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
 	// proof
-	// height = 30
+	height = 30
 	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
 
 	if err != nil {
@@ -524,19 +524,19 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 	// side-tx data
 	sideTxData := sideMsg.GetSideSignBytes()
 
-	// sideTxData, err = hex.DecodeString("000000000000000000000000fc32c0f49eba6346e74d7f4bb9ed11ad9311ae7000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000014f9ad9bb0fc1150a1a3646a173db3ad864766f63aa5f5d28c5c0d9081de9455dc000000000000000000000000000000000000000000000000000000000000188b000000000000000000000000000000000000000000000000000000000000188b")
-	// fmt.Println("--------- over here ---------", tx.Tx.Hash())
-	// fmt.Println("--------- over here ---------", height)
-	// fmt.Println("--------- over here ---------", sideTxData)
+	sideTxData, err = hex.DecodeString("000000000000000000000000fc32c0f49eba6346e74d7f4bb9ed11ad9311ae70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000121a111e3e9be2b9c9eed59067c3c9215134963ad73b0db708f84daa587e6d0553000000000000000000000000000000000000000000000000000000000000188b000000000000000000000000000000000000000000000000000000000000188b")
+	fmt.Println("--------- over here ---------", tx.Tx.Hash())
+	fmt.Println("--------- over here ---------", height)
+	fmt.Println("--------- over here ---------", sideTxData)
 
 	// get sigs
-	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
+	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height+2, tx.Tx.Hash(), sideTxData)
 	if err != nil {
 		cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
 		fmt.Println("err - ", err)
 		return err
 	}
-	fmt.Println("----------------height sigs ", sigs)
+	fmt.Println("----------------height+2 sigs ", sigs)
 
 	// // get sigs
 	// sigs, err = helper.FetchSideTxSigs(cp.httpClient, height+1, tx.Tx.Hash(), sideTxData)
