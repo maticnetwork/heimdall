@@ -41,7 +41,7 @@ func NewMsgMilestoneBlock(
 		EndBlock:    endBlock,
 		Hash:        hash,
 		BorChainID:  borChainID,
-		MilestoneID: milestoneID,
+		MilestoneID: "10034",
 	}
 }
 
