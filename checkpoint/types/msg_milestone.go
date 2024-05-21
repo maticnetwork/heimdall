@@ -37,11 +37,11 @@ func NewMsgMilestoneBlock(
 ) MsgMilestone {
 	return MsgMilestone{
 		Proposer:    proposer,
-		StartBlock:  startBlock,
+		StartBlock:  0,
 		EndBlock:    endBlock,
 		Hash:        hash,
 		BorChainID:  borChainID,
-		MilestoneID: "10034",
+		MilestoneID: milestoneID,
 	}
 }
 

@@ -12,7 +12,6 @@ import (
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	milestoneTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/helper"
-	"github.com/pborman/uuid"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
@@ -164,7 +163,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 
 	endHash := block.ParentHash
 
-	milestoneId := fmt.Sprintf("%s - %s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String())
+	milestoneId := "10034"
 
 	mp.Logger.Info("End block hash", hmTypes.BytesToHeimdallHash(endHash[:]))
 
