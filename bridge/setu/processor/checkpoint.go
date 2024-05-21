@@ -495,8 +495,8 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointContext *CheckpointContext, start uint64, end uint64, height int64, txHash []byte) error {
 	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
 	// proof
-	// txHash = ""
-	// height = 0
+	txHash = []byte("29F111FBBAB02461D031C84F46896A308C47A82BB3D95EA94119CB2524E15E3D")
+	height = 30
 	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
 
 	if err != nil {
@@ -524,8 +524,8 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 	// side-tx data
 	sideTxData := sideMsg.GetSideSignBytes()
 
-	// sideTxData, err = hex.DecodeString("0000000000000000000000005d736c001202a3a84b827ce26183d47a6131b1690000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002fac7996bdfe973fbf1df9e692fe75f105f951c6bebd046e02ecec8fe7036aad3600000000000000000000000000000000000000000000000000000000000027320000000000000000000000000000000000000000000000000000000000002732")
-	// fmt.Println("--------- over here ---------")
+	sideTxData, err = hex.DecodeString("000000000000000000000000fc32c0f49eba6346e74d7f4bb9ed11ad9311ae70000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000137a6feb581e43dc466b4365026f9fdb83fe4990fffd6e0c90149c4478428dacce000000000000000000000000000000000000000000000000000000000000188b000000000000000000000000000000000000000000000000000000000000188b")
+	fmt.Println("--------- over here ---------")
 
 	// get sigs
 	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
@@ -534,6 +534,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 		fmt.Println("err - ", err)
 		return err
 	}
+	fmt.Println("---------------- sigs ", sigs)
 
 	shouldSend, err := cp.shouldSendCheckpoint(checkpointContext, start, end)
 	if err != nil {
