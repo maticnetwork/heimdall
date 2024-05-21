@@ -208,7 +208,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	var (
 		startBlock uint64
 		endBlock   uint64
-		// txHash     string
+		txHash     string
 	)
 
 	for _, attr := range event.Attributes {
@@ -221,7 +221,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 		}
 
 		if attr.Key == hmTypes.AttributeKeyTxHash {
-			// txHash = attr.Value
+			txHash = attr.Value
 		}
 	}
 
@@ -236,7 +236,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	}
 
 	if shouldSend && isCurrentProposer {
-		txHash := common.FromHex("CA9119E755F313F1A9A887B9FD2158B78600B0A303831526E38C754EE9F9317B")
+		txHash := common.FromHex(txHash)
 		// txHash := common.FromHex("29F111FBBAB02461D031C84F46896A308C47A82BB3D95EA94119CB2524E15E3D")
 		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, blockHeight, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
@@ -524,8 +524,10 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 	// side-tx data
 	sideTxData := sideMsg.GetSideSignBytes()
 
-	sideTxData, err = hex.DecodeString("000000000000000000000000fc32c0f49eba6346e74d7f4bb9ed11ad9311ae700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001b5efcecd4354a14cf4c3873acb9adaf193d4e25db76d009ee4e66bafef66ac680000000000000000000000000000000000000000000000000000000000000188b000000000000000000000000000000000000000000000000000000000000188b")
-	fmt.Println("--------- over here ---------")
+	// sideTxData, err = hex.DecodeString("000000000000000000000000fc32c0f49eba6346e74d7f4bb9ed11ad9311ae700000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000001b5efcecd4354a14cf4c3873acb9adaf193d4e25db76d009ee4e66bafef66ac680000000000000000000000000000000000000000000000000000000000000188b000000000000000000000000000000000000000000000000000000000000188b")
+	// fmt.Println("--------- over here ---------", tx.Tx.Hash())
+	// fmt.Println("--------- over here ---------", height)
+	// fmt.Println("--------- over here ---------", sideTxData)
 
 	// get sigs
 	sigs, err := helper.FetchSideTxSigs(cp.httpClient, height, tx.Tx.Hash(), sideTxData)
@@ -535,6 +537,33 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointCont
 		return err
 	}
 	fmt.Println("---------------- sigs ", sigs)
+
+	// get sigs
+	// sigs, err = helper.FetchSideTxSigs(cp.httpClient, height+1, tx.Tx.Hash(), sideTxData)
+	// if err != nil {
+	// 	cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
+	// 	fmt.Println("err - ", err)
+	// 	return err
+	// }
+	// fmt.Println("---------------- sigs ", sigs)
+
+	// // get sigs
+	// sigs, err = helper.FetchSideTxSigs(cp.httpClient, height+2, tx.Tx.Hash(), sideTxData)
+	// if err != nil {
+	// 	cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
+	// 	fmt.Println("err - ", err)
+	// 	return err
+	// }
+	// fmt.Println("---------------- sigs ", sigs)
+
+	// // get sigs
+	// sigs, err = helper.FetchSideTxSigs(cp.httpClient, height+3, tx.Tx.Hash(), sideTxData)
+	// if err != nil {
+	// 	cp.Logger.Error("Error fetching votes for checkpoint tx", "height", height)
+	// 	fmt.Println("err - ", err)
+	// 	return err
+	// }
+	// fmt.Println("---------------- sigs ", sigs)
 
 	shouldSend, err := cp.shouldSendCheckpoint(checkpointContext, start, end)
 	if err != nil {
