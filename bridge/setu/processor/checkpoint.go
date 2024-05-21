@@ -208,7 +208,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	var (
 		startBlock uint64
 		endBlock   uint64
-		txHash     string
+		// txHash     string
 	)
 
 	for _, attr := range event.Attributes {
@@ -221,7 +221,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 		}
 
 		if attr.Key == hmTypes.AttributeKeyTxHash {
-			txHash = attr.Value
+			// txHash = attr.Value
 		}
 	}
 
@@ -236,7 +236,7 @@ func (cp *CheckpointProcessor) sendCheckpointToRootchain(eventBytes string, bloc
 	}
 
 	if shouldSend && isCurrentProposer {
-		txHash := common.FromHex(txHash)
+		txHash := common.FromHex("CA9119E755F313F1A9A887B9FD2158B78600B0A303831526E38C754EE9F9317B")
 		// txHash := common.FromHex("29F111FBBAB02461D031C84F46896A308C47A82BB3D95EA94119CB2524E15E3D")
 		if err := cp.createAndSendCheckpointToRootchain(checkpointContext, startBlock, endBlock, blockHeight, txHash); err != nil {
 			cp.Logger.Error("Error sending checkpoint to rootchain", "error", err)
@@ -496,7 +496,7 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 func (cp *CheckpointProcessor) createAndSendCheckpointToRootchain(checkpointContext *CheckpointContext, start uint64, end uint64, height int64, txHash []byte) error {
 	cp.Logger.Info("Preparing checkpoint to be pushed on chain", "height", height, "txHash", hmTypes.BytesToHeimdallHash(txHash), "start", start, "end", end)
 	// proof
-	// height = 30
+	height = 18
 	tx, err := helper.QueryTxWithProof(cp.cliCtx, txHash)
 
 	if err != nil {
