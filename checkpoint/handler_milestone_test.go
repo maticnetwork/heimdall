@@ -252,8 +252,8 @@ func (suite *HandlerTestSuite) SendMilestone(header hmTypes.Milestone) (res sdk.
 
 	// keeper := app.MilestoneKeeper
 
-	borChainId := "1234"
-	milestoneID := "00000"
+	borChainId := header.BorChainID
+	milestoneID := header.MilestoneID
 	// create milestone msg
 	msgMilestone := types.NewMsgMilestoneBlock(
 		header.Proposer,
