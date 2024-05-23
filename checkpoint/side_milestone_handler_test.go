@@ -104,6 +104,56 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgMilestone() {
 		require.Equal(t, uint32(common.CodeInvalidBlockInput), result.Code)
 	})
 
+	suite.Run("invalid milestone uuid", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		milestone.MilestoneID = "0-0a18-41a8-ab7e-59d8002f027b - 0x901a64406d97a3fa9b87b320cbeb86b3c62328f5"
+
+		// create milestone msg
+		msgMilestone := types.NewMsgMilestoneBlock(
+			milestone.Proposer,
+			milestone.StartBlock,
+			milestone.EndBlock-1,
+			milestone.Hash,
+			borChainId,
+			milestone.MilestoneID,
+		)
+
+		msgMilestone.BorChainID = msgMilestone.MilestoneID
+
+		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock+cmTypes.DefaultMaticchainMilestoneTxConfirmations).Return(true)
+		suite.contractCaller.On("GetVoteOnHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.Hash.String(), milestone.MilestoneID).Return(true, nil)
+
+		result := suite.sideHandler(ctx, msgMilestone)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, uint32(common.CodeInvalidBlockInput), result.Code)
+	})
+
+	suite.Run("invalid milestone proposer", func() {
+		suite.contractCaller = mocks.IContractCaller{}
+
+		milestone.MilestoneID = "17ce48fe-0a18-41a8-ab7e-59d8002f027b - 0xz01a64406d97a3fa9b87b320cbeb86b3c62328f5"
+
+		// create milestone msg
+		msgMilestone := types.NewMsgMilestoneBlock(
+			milestone.Proposer,
+			milestone.StartBlock,
+			milestone.EndBlock-1,
+			milestone.Hash,
+			borChainId,
+			milestone.MilestoneID,
+		)
+
+		msgMilestone.BorChainID = msgMilestone.MilestoneID
+
+		suite.contractCaller.On("CheckIfBlocksExist", milestone.EndBlock+cmTypes.DefaultMaticchainMilestoneTxConfirmations).Return(true)
+		suite.contractCaller.On("GetVoteOnHash", milestone.StartBlock, milestone.EndBlock, milestoneLength, milestone.Hash.String(), milestone.MilestoneID).Return(true, nil)
+
+		result := suite.sideHandler(ctx, msgMilestone)
+		require.NotEqual(t, uint32(sdk.CodeOK), result.Code, "Side tx handler should fail")
+		require.Equal(t, uint32(common.CodeInvalidBlockInput), result.Code)
+	})
+
 	suite.Run("Not in continuity", func() {
 		suite.contractCaller = mocks.IContractCaller{}
 		err := keeper.AddMilestone(ctx, milestone)
