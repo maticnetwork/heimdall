@@ -2,6 +2,7 @@ package types
 
 import (
 	"bytes"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	hmCommon "github.com/maticnetwork/heimdall/common"
