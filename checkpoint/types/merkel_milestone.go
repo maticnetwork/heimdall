@@ -37,10 +37,12 @@ func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, 
 	if len(splitMilestoneID) != 2 {
 		return false, errors.New(fmt.Sprint("invalid milestoneID, it should be composed by `UUID - HexAddressOfTheProposer`", "milestoneID", milestoneID))
 	}
+
 	_, err = uuid.Parse(splitMilestoneID[0])
 	if err != nil {
 		return false, errors.New(fmt.Sprint("invalid milestoneID, the UUID is not correct", "milestoneID", milestoneID))
 	}
+
 	if !common.IsHexAddress(splitMilestoneID[1]) {
 		return false, errors.New(fmt.Sprint("invalid milestoneID, the proposer address is not correct", "milestoneID", milestoneID))
 	}
