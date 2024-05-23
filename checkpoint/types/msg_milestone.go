@@ -2,8 +2,6 @@ package types
 
 import (
 	"bytes"
-	"math/big"
-	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -84,17 +82,7 @@ func (msg MsgMilestone) ValidateBasic() sdk.Error {
 
 // GetSideSignBytes returns side sign bytes
 func (msg MsgMilestone) GetSideSignBytes() []byte {
-	// keccak256(abi.encoded(proposer, startBlock, endBlock, rootHash, accountRootHash, bor chain id))
-	borChainID, _ := strconv.ParseUint(msg.BorChainID, 10, 64)
-
-	return appendBytes32(
-		msg.Proposer.Bytes(),
-		new(big.Int).SetUint64(msg.StartBlock).Bytes(),
-		new(big.Int).SetUint64(msg.EndBlock).Bytes(),
-		msg.Hash.Bytes(),
-		new(big.Int).SetUint64(borChainID).Bytes(),
-		[]byte(msg.MilestoneID),
-	)
+	return nil
 }
 
 var _ sdk.Msg = &MsgMilestoneTimeout{}
