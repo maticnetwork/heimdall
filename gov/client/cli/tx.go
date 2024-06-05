@@ -139,11 +139,11 @@ $ %s tx gov submit-proposal --title="Test Proposal" --description="My awesome pr
 		},
 	}
 
-	cmd.Flags().String(FlagTitle, "", "title of proposal")
-	cmd.Flags().String(FlagDescription, "", "description of proposal")
-	cmd.Flags().String(flagProposalType, "", "proposalType of proposal, types: text/parameter_change/software_upgrade")
-	cmd.Flags().String(FlagDeposit, "", "deposit of proposal")
-	cmd.Flags().String(FlagProposal, "", "proposal file path (if this path is given, other proposal flags are ignored)")
+	cmd.Flags().String(FlagTitle, "", "Title of proposal")
+	cmd.Flags().String(FlagDescription, "", "Description of proposal")
+	cmd.Flags().String(flagProposalType, "", "Type of proposal, types: text/parameter_change/software_upgrade")
+	cmd.Flags().String(FlagDeposit, "", "Deposit of proposal")
+	cmd.Flags().String(FlagProposal, "", "Proposal file path (if this path is given, other proposal flags are ignored)")
 	cmd.Flags().Int(FlagValidatorID, 0, "--validator-id=<validator ID here>")
 	if err := cmd.MarkFlagRequired(FlagValidatorID); err != nil {
 		logger.Error("GetCmdSubmitProposal | MarkFlagRequired | FlagValidatorID", "Error", err)

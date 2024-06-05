@@ -23,7 +23,7 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 )
 
-// Processor defines a block header listerner for Rootchain, Maticchain, Heimdall
+// Processor defines a block header listener for Rootchain, Maticchain, Heimdall
 type Processor interface {
 	Start() error
 

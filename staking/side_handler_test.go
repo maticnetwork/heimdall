@@ -1332,9 +1332,9 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 		updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 		require.Empty(t, err, "unable to fetch validator info %v-", err)
 
-		acctualPower, err := helper.GetPowerFromAmount(newAmount)
+		actualPower, err := helper.GetPowerFromAmount(newAmount)
 		require.NoError(t, err)
-		require.NotEqual(t, acctualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", newAmount.Uint64())
+		require.NotEqual(t, actualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", newAmount.Uint64())
 	})
 
 	suite.Run("Success", func() {
@@ -1353,9 +1353,9 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 		updatedVal, err := keeper.GetValidatorInfo(ctx, oldVal.Signer.Bytes())
 		require.Empty(t, err, "unable to fetch validator info %v-", err)
 
-		acctualPower, err := helper.GetPowerFromAmount(new(big.Int).SetInt64(2000000000000000000))
+		actualPower, err := helper.GetPowerFromAmount(new(big.Int).SetInt64(2000000000000000000))
 		require.NoError(t, err)
-		require.Equal(t, acctualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", newAmount.Uint64())
+		require.Equal(t, actualPower.Int64(), updatedVal.VotingPower, "Validator VotingPower should be updated to %v", newAmount.Uint64())
 	})
 }
 

@@ -16,6 +16,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+const maxCheckpointListLimit = 10_000 // a checkpoint is ~100 bytes => can fit 10k in 1 MB response
+
 var (
 	DefaultValue = []byte{0x01} // Value to store in CacheCheckpoint and CacheCheckpointACK & ValidatorSetChange Flag
 
@@ -145,8 +147,8 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	var checkpoints []hmTypes.Checkpoint
 
 	// have max limit
-	if limit > 20 {
-		limit = 20
+	if limit > maxCheckpointListLimit {
+		limit = maxCheckpointListLimit
 	}
 
 	// get paginated iterator
