@@ -87,7 +87,7 @@ func main() {
 	// with the cdc.
 
 	// chain id
-	rootCmd.PersistentFlags().String(client.FlagChainID, "", "Chain ID of tendermint node")
+	rootCmd.PersistentFlags().String(client.FlagChain, "", "Chain of tendermint node")
 
 	helper.DecorateWithHeimdallFlags(rootCmd, viper.GetViper(), logger, "main")
 
@@ -207,7 +207,7 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 
 			// create chain id
-			chainID := viper.GetString(client.FlagChainID)
+			chainID := viper.GetString(client.FlagChain)
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 			}
@@ -234,7 +234,7 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	}
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "Node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "Client's home directory")
-	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(client.FlagChain, "", "Genesis file chain, if left blank will be randomly created")
 
 	return cmd
 }
