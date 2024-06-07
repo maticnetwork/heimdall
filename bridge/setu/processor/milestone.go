@@ -8,6 +8,7 @@ import (
 	"math/big"
 	"time"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	chainmanagerTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 	milestoneTypes "github.com/maticnetwork/heimdall/checkpoint/types"
@@ -189,11 +190,17 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	)
 
 	//broadcast to heimdall
-	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+	txRes, err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil)
+	if err != nil {
 		mp.Logger.Error("Error while broadcasting milestone to heimdall", "error", err)
 		return err
 	}
 
+	if txRes.Code != uint32(sdk.CodeOK) {
+		mp.Logger.Error("milestone tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+		return fmt.Errorf("milestone tx failed, tx response code: %v", txRes.Code)
+
+	}
 	return nil
 }
 
@@ -270,9 +277,15 @@ func (mp *MilestoneProcessor) createAndSendMilestoneTimeoutToHeimdall() error {
 	)
 
 	// return broadcast to heimdall
-	if err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+	txRes, err := mp.txBroadcaster.BroadcastToHeimdall(msg, nil)
+	if err != nil {
 		mp.Logger.Error("Error while broadcasting milestone timeout to heimdall", "error", err)
 		return err
+	}
+
+	if txRes.Code != uint32(sdk.CodeOK) {
+		mp.Logger.Error("milestone timeout tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+		return fmt.Errorf("milestone timeout tx failed, tx response code: %v", txRes.Code)
 	}
 
 	return nil

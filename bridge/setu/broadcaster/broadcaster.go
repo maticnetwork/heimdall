@@ -58,7 +58,7 @@ func NewTxBroadcaster(cdc *codec.Codec) *TxBroadcaster {
 }
 
 // BroadcastToHeimdall broadcast to heimdall
-func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) error {
+func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}, testOpts ...*helper.TestOpts) (sdk.TxResponse, error) {
 	tb.heimdallMutex.Lock()
 	defer tb.heimdallMutex.Unlock()
 	defer util.LogElapsedTimeForStateSyncedEvent(event, "BroadcastToHeimdall", time.Now())
@@ -75,9 +75,9 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 		WithSequence(tb.lastSeqNo).
 		WithChainID(chainID)
 
-	txResponse, err := helper.BuildAndBroadcastMsgs(tb.CliCtx, txBldr, []sdk.Msg{msg})
-	if err != nil {
-		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err)
+	txResponse, err := helper.BuildAndBroadcastMsgs(tb.CliCtx, txBldr, []sdk.Msg{msg}, testOpts...)
+	if err != nil || txResponse.Code != uint32(sdk.CodeOK) {
+		tb.logger.Error("Error while broadcasting the heimdall transaction", "error", err, "txResponse", txResponse.Code)
 
 		// current address
 		address := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
@@ -86,13 +86,13 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 		account, errAcc := util.GetAccount(tb.CliCtx, address)
 		if errAcc != nil {
 			tb.logger.Error("Error fetching account from rest-api", "url", helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.AccountDetailsURL, helper.GetAddress())))
-			return errAcc
+			return txResponse, errAcc
 		}
 
 		// update seqNo for safety
 		tb.lastSeqNo = account.GetSequence()
 
-		return err
+		return txResponse, err
 	}
 
 	txHash := txResponse.TxHash
@@ -102,7 +102,7 @@ func (tb *TxBroadcaster) BroadcastToHeimdall(msg sdk.Msg, event interface{}) err
 	// increment account sequence
 	tb.lastSeqNo += 1
 
-	return nil
+	return txResponse, nil
 }
 
 // BroadcastToMatic broadcast to matic
