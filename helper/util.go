@@ -368,7 +368,7 @@ func GetSignedTxBytes(cliCtx context.CLIContext,
 		if len(testOpts) == 0 || testOpts[0].chainId == "" {
 			return nil, nil
 		}
-		txBldr := txBldr.WithChainID(testOpts[0].chainId)
+		txBldr = txBldr.WithChainID(testOpts[0].chainId)
 		return txBldr.BuildAndSign(GetPrivKey(), msgs)
 	}
 

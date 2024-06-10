@@ -29,6 +29,7 @@ var (
 	privKey                = secp256k1.GenPrivKey()
 	pubKey                 = privKey.PubKey()
 	address                = pubKey.Address()
+	heimdallAddress        = hmTypes.BytesToHeimdallAddress([]byte(address))
 	defaultBalance         = sdk.NewIntFromBigInt(big.NewInt(10).Exp(big.NewInt(10), big.NewInt(18), nil))
 	testChainId            = "testChainId"
 	dummyTenderMintNodeUrl = "http://localhost:26657"
@@ -84,7 +85,7 @@ var (
 
 	msgs = []sdk.Msg{
 		checkpointTypes.NewMsgCheckpointBlock(
-			hmTypes.BytesToHeimdallAddress([]byte(address)),
+			heimdallAddress,
 			0,
 			63,
 			hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"),
@@ -92,7 +93,7 @@ var (
 			"borChainID",
 		),
 		checkpointTypes.NewMsgMilestoneBlock(
-			hmTypes.BytesToHeimdallAddress([]byte(address)),
+			heimdallAddress,
 			0,
 			63,
 			hmTypes.HexToHeimdallHash("0x5bd83f679c8ce7c48d6fa52ce41532fcacfbbd99d5dab415585f397bf44a0b6e"),
@@ -100,11 +101,11 @@ var (
 			"testMilestoneID",
 		),
 		checkpointTypes.NewMsgMilestoneTimeout(
-			hmTypes.BytesToHeimdallAddress([]byte(address)),
+			heimdallAddress,
 		),
 		borTypes.NewMsgProposeSpan(
 			1,
-			hmTypes.BytesToHeimdallAddress([]byte(address)),
+			heimdallAddress,
 			0,
 			63,
 			"testBorChainID",
@@ -155,7 +156,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 			name: "failed broadcast (insufficient funds for fees)",
 			msg:  msgs[1],
 			op: func(hApp *app.HeimdallApp) error {
-				acc := hApp.AccountKeeper.GetAccount(sdkCtx, hmTypes.BytesToHeimdallAddress([]byte(address)))
+				acc := hApp.AccountKeeper.GetAccount(sdkCtx, heimdallAddress)
 				// reduce account balance to 0
 				if err := acc.SetCoins(sdk.Coins{}); err != nil {
 					return err
@@ -166,7 +167,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 			expResCode: 5,
 			expErr:     true,
 			tearDown: func(hApp *app.HeimdallApp) error {
-				acc := hApp.AccountKeeper.GetAccount(sdkCtx, hmTypes.BytesToHeimdallAddress([]byte(address)))
+				acc := hApp.AccountKeeper.GetAccount(sdkCtx, heimdallAddress)
 				// reset account balance
 				if err := acc.SetCoins(sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: defaultBalance}}); err != nil {
 					return err
@@ -179,7 +180,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 			name: "failed broadcast (invalid sequence number)",
 			msg:  msgs[2],
 			op: func(hApp *app.HeimdallApp) error {
-				acc := hApp.AccountKeeper.GetAccount(sdkCtx, hmTypes.BytesToHeimdallAddress([]byte(address)))
+				acc := hApp.AccountKeeper.GetAccount(sdkCtx, heimdallAddress)
 				txBroadcaster.lastSeqNo = acc.GetSequence() + 1
 				return nil
 			},
@@ -188,6 +189,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 		},
 	}
 
+	//nolint:paralleltest
 	for _, tc := range testCases {
 		if tc.expErr {
 			updateMockData(t)
@@ -200,7 +202,7 @@ func TestBroadcastToHeimdall(t *testing.T) {
 			txRes, err := txBroadcaster.BroadcastToHeimdall(tc.msg, nil, testOpts)
 			require.NoError(t, err)
 			require.Equal(t, tc.expResCode, txRes.Code)
-			accSeq, err := heimdallApp.AccountKeeper.GetSequence(sdkCtx, hmTypes.BytesToHeimdallAddress([]byte(address)))
+			accSeq, err := heimdallApp.AccountKeeper.GetSequence(sdkCtx, heimdallAddress)
 			require.NoError(t, err)
 			require.Equal(t, txBroadcaster.lastSeqNo, accSeq)
 
@@ -213,22 +215,22 @@ func TestBroadcastToHeimdall(t *testing.T) {
 }
 
 func createTestApp(isCheckTx bool, testOpts *helper.TestOpts) (*app.HeimdallApp, sdk.Context, cosmosCtx.CLIContext) {
-	app := app.Setup(isCheckTx, testOpts)
-	ctx := app.BaseApp.NewContext(true, abci.Header{ChainID: testOpts.GetChainId()})
-	app.BankKeeper.SetSendEnabled(ctx, true)
-	app.AccountKeeper.SetParams(ctx, authTypes.DefaultParams())
-	app.CheckpointKeeper.SetParams(ctx, checkpointTypes.DefaultParams())
-	app.BorKeeper.SetParams(ctx, borTypes.DefaultParams())
+	hApp := app.Setup(isCheckTx, testOpts)
+	ctx := hApp.BaseApp.NewContext(true, abci.Header{ChainID: testOpts.GetChainId()})
+	hApp.BankKeeper.SetSendEnabled(ctx, true)
+	hApp.AccountKeeper.SetParams(ctx, authTypes.DefaultParams())
+	hApp.CheckpointKeeper.SetParams(ctx, checkpointTypes.DefaultParams())
+	hApp.BorKeeper.SetParams(ctx, borTypes.DefaultParams())
 
 	coins := sdk.Coins{sdk.Coin{Denom: authTypes.FeeToken, Amount: defaultBalance}}
-	acc := authTypes.NewBaseAccount(hmTypes.BytesToHeimdallAddress([]byte(address)),
+	acc := authTypes.NewBaseAccount(heimdallAddress,
 		coins,
 		pubKey,
 		0,
 		0)
 
-	app.AccountKeeper.SetAccount(ctx, acc)
-	return app, ctx, cosmosCtx.NewCLIContext().WithCodec(app.Codec())
+	hApp.AccountKeeper.SetAccount(ctx, acc)
+	return hApp, ctx, cosmosCtx.NewCLIContext().WithCodec(hApp.Codec())
 }
 
 func prepareMockData(t *testing.T) *gomock.Controller {
@@ -237,7 +239,9 @@ func prepareMockData(t *testing.T) *gomock.Controller {
 	mockCtrl := gomock.NewController(t)
 
 	mockHttpClient := helperMocks.NewMockHTTPClient(mockCtrl)
-	mockHttpClient.EXPECT().Get(getAccountUrl).Return(prepareResponse(getAccountResponse), nil).AnyTimes()
+	res := prepareResponse(getAccountResponse)
+	defer res.Body.Close()
+	mockHttpClient.EXPECT().Get(getAccountUrl).Return(res, nil).AnyTimes()
 	helper.Client = mockHttpClient
 	return mockCtrl
 }
@@ -248,7 +252,9 @@ func updateMockData(t *testing.T) *gomock.Controller {
 	mockCtrl := gomock.NewController(t)
 
 	mockHttpClient := helperMocks.NewMockHTTPClient(mockCtrl)
-	mockHttpClient.EXPECT().Get(getAccountUrl).Return(prepareResponse(getAccountUpdatedResponse), nil).AnyTimes()
+	res := prepareResponse(getAccountUpdatedResponse)
+	defer res.Body.Close()
+	mockHttpClient.EXPECT().Get(getAccountUrl).Return(res, nil).AnyTimes()
 	helper.Client = mockHttpClient
 	return mockCtrl
 }
