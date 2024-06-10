@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"errors"
+	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
@@ -107,11 +108,17 @@ func (sp *SlashingProcessor) sendTickToHeimdall(eventBytes string, blockHeight i
 	)
 
 	// return broadcast to heimdall
-	if err = sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+	txRes, err := sp.txBroadcaster.BroadcastToHeimdall(msg, event)
+	if err != nil {
 		sp.Logger.Error("Error while broadcasting Tick msg to heimdall", "error", err)
 		return err
 	}
 
+	if txRes.Code != uint32(sdk.CodeOK) {
+		sp.Logger.Error("tick tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+		return fmt.Errorf("tick tx failed, tx response code: %v", txRes.Code)
+
+	}
 	return nil
 }
 
@@ -230,9 +237,16 @@ func (sp *SlashingProcessor) sendTickAckToHeimdall(eventName string, logBytes st
 		msg := slashingTypes.NewMsgTickAck(helper.GetFromAddress(sp.cliCtx), event.Nonce.Uint64(), event.Amount.Uint64(), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
-		if err = sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		txRes, err := sp.txBroadcaster.BroadcastToHeimdall(msg, event)
+		if err != nil {
 			sp.Logger.Error("Error while broadcasting tick-ack to heimdall", "error", err)
 			return err
+		}
+
+		if txRes.Code != uint32(sdk.CodeOK) {
+			sp.Logger.Error("tick-ack tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+			return fmt.Errorf("tick-ack tx failed, tx response code: %v", txRes.Code)
+
 		}
 	}
 
@@ -285,9 +299,16 @@ func (sp *SlashingProcessor) sendUnjailToHeimdall(eventName string, logBytes str
 		)
 
 		// return broadcast to heimdall
-		if err := sp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		txRes, err := sp.txBroadcaster.BroadcastToHeimdall(msg, event)
+		if err != nil {
 			sp.Logger.Error("Error while broadcasting unjail to heimdall", "error", err)
 			return err
+		}
+
+		if txRes.Code != uint32(sdk.CodeOK) {
+			sp.Logger.Error("unjail tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+			return fmt.Errorf("unjail tx failed, tx response code: %v", txRes.Code)
+
 		}
 	}
 

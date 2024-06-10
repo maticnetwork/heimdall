@@ -470,6 +470,18 @@ func SetTestConfig(_conf Configuration) {
 	conf = _conf
 }
 
+// TEST PURPOSE ONLY
+// SetTestPrivPubKey sets test priv and pub key for testing
+func SetTestPrivPubKey(privKey secp256k1.PrivKeySecp256k1) {
+	privObject = privKey
+	privObject.PubKey()
+	pubKey, ok := privObject.PubKey().(secp256k1.PubKeySecp256k1)
+	if !ok {
+		panic("pub key is not of type secp256k1.PubKeySecp256k1")
+	}
+	pubObject = pubKey
+}
+
 //
 // Get main/matic clients
 //

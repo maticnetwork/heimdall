@@ -7,12 +7,13 @@ import (
 	dbm "github.com/tendermint/tm-db"
 
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
+	"github.com/maticnetwork/heimdall/helper"
 
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // Setup initializes a new App. A Nop logger is set in App.
-func Setup(isCheckTx bool) *HeimdallApp {
+func Setup(isCheckTx bool, testOpts ...*helper.TestOpts) *HeimdallApp {
 	db := dbm.NewMemDB()
 	app := NewHeimdallApp(log.NewNopLogger(), db)
 
@@ -26,12 +27,15 @@ func Setup(isCheckTx bool) *HeimdallApp {
 		}
 
 		// Initialize the chain
-		app.InitChain(
-			abci.RequestInitChain{
-				Validators:    []abci.ValidatorUpdate{},
-				AppStateBytes: stateBytes,
-			},
-		)
+		req := abci.RequestInitChain{
+			Validators:    []abci.ValidatorUpdate{},
+			AppStateBytes: stateBytes,
+		}
+
+		if len(testOpts) > 0 && testOpts[0] != nil {
+			req.ChainId = testOpts[0].GetChainId()
+		}
+		app.InitChain(req)
 	}
 
 	return app
