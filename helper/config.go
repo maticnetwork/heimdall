@@ -48,6 +48,7 @@ const (
 	// heimdall-config flags
 	MainRPCUrlFlag               = "eth_rpc_url"
 	BorRPCUrlFlag                = "bor_rpc_url"
+	BorGRPCUrlFlag               = "bor_grpc_url"
 	TendermintNodeURLFlag        = "tendermint_rpc_url"
 	HeimdallServerURLFlag        = "heimdall_rest_server"
 	AmqpURLFlag                  = "amqp_url"
@@ -81,6 +82,7 @@ const (
 	// RPC Endpoints
 	DefaultMainRPCUrl = "http://localhost:9545"
 	DefaultBorRPCUrl  = "http://localhost:8545"
+	DefaultBorGRPCUrl = "http://localhost:3131"
 
 	// RPC Timeouts
 	DefaultEthRPCTimeout = 5 * time.Second
@@ -168,6 +170,7 @@ func init() {
 type Configuration struct {
 	EthRPCUrl        string `mapstructure:"eth_rpc_url"`        // RPC endpoint for main chain
 	BorRPCUrl        string `mapstructure:"bor_rpc_url"`        // RPC endpoint for bor chain
+	BorGRPCUrl       string `mapstructure:"bor_grpc_url"`       // gRPC endpoint for bor chain
 	TendermintRPCUrl string `mapstructure:"tendermint_rpc_url"` // tendemint node url
 	SubGraphUrl      string `mapstructure:"sub_graph_url"`      // sub graph url
 
@@ -275,7 +278,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		return
 	}
 
-	if strings.Compare(conf.BorRPCUrl, "") != 0 {
+	if strings.Compare(conf.BorRPCUrl, "") != 0 || strings.Compare(conf.BorGRPCUrl, "") != 0 {
 		return
 	}
 
@@ -424,6 +427,7 @@ func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
 		BorRPCUrl:        DefaultBorRPCUrl,
+		BorGRPCUrl:       DefaultBorGRPCUrl,
 		TendermintRPCUrl: DefaultTendermintNodeURL,
 
 		EthRPCTimeout: DefaultEthRPCTimeout,
@@ -608,6 +612,17 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorRPCUrlFlag), "Error", err)
 	}
 
+	// add BorGRPCUrlFlag flag
+	cmd.PersistentFlags().String(
+		BorGRPCUrlFlag,
+		"",
+		"Set gRPC endpoint for bor chain",
+	)
+
+	if err := v.BindPFlag(BorGRPCUrlFlag, cmd.PersistentFlags().Lookup(BorGRPCUrlFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorGRPCUrlFlag), "Error", err)
+	}
+
 	// add TendermintNodeURLFlag flag
 	cmd.PersistentFlags().String(
 		TendermintNodeURLFlag,
@@ -778,6 +793,12 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		c.BorRPCUrl = stringConfgValue
 	}
 
+	// get endpoint for bor chain from viper/cobra
+	stringConfgValue = v.GetString(BorGRPCUrlFlag)
+	if stringConfgValue != "" {
+		c.BorGRPCUrl = stringConfgValue
+	}
+
 	// get endpoint for tendermint from viper/cobra
 	stringConfgValue = v.GetString(TendermintNodeURLFlag)
 	if stringConfgValue != "" {
@@ -895,6 +916,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.BorRPCUrl != "" {
 		c.BorRPCUrl = cc.BorRPCUrl
+	}
+
+	if cc.BorGRPCUrl != "" {
+		c.BorGRPCUrl = cc.BorGRPCUrl
 	}
 
 	if cc.TendermintRPCUrl != "" {

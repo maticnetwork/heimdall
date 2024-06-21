@@ -15,6 +15,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	lru "github.com/hashicorp/golang-lru"
+	"github.com/maticnetwork/heimdall/bor/client/grpc"
 
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
@@ -100,11 +101,15 @@ type IContractCaller interface {
 
 // ContractCaller contract caller
 type ContractCaller struct {
-	MainChainClient   *ethclient.Client
-	MainChainRPC      *rpc.Client
-	MainChainTimeout  time.Duration
-	MaticChainClient  *ethclient.Client
-	MaticChainRPC     *rpc.Client
+	MainChainClient  *ethclient.Client
+	MainChainRPC     *rpc.Client
+	MainChainTimeout time.Duration
+
+	MaticChainClient *ethclient.Client
+	MaticChainRPC    *rpc.Client
+
+	MaticGrpcClient *grpc.BorGRPCClient
+
 	MaticChainTimeout time.Duration
 
 	RootChainABI     abi.ABI
@@ -300,7 +305,15 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	rootHash, err := c.MaticChainClient.GetRootHash(ctx, start, end)
+	var rootHash string
+	var err error
+
+	// Both MainChainClient and MaticChainClient cannot be nil, check it while initializing
+	if c.MainChainClient != nil {
+		rootHash, err = c.MaticChainClient.GetRootHash(ctx, start, end)
+	} else {
+		rootHash, err = c.MaticGrpcClient.GetRootHash(ctx, start, end)
+	}
 
 	if err != nil {
 		Logger.Error("Could not fetch rootHash from matic chain", "error", err)
@@ -319,7 +332,15 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	var vote bool
+	var err error
+
+	if c.MainChainClient != nil {
+		vote, err = c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	} else {
+		vote, err = c.MaticGrpcClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	}
+
 	if err != nil {
 		return false, errors.New(fmt.Sprint("Error in fetching vote from matic chain", "err", err))
 	}
@@ -436,7 +457,14 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	latestBlock, err := c.MaticChainClient.HeaderByNumber(ctx, blockNum)
+	var latestBlock *ethTypes.Header
+
+	if c.MainChainClient != nil {
+		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
+	} else {
+		latestBlock, err = c.MaticGrpcClient.GetHeaderByNumber(ctx, blockNum.Uint64())
+	}
+
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "error", err)
 		return
@@ -843,7 +871,15 @@ func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
 
 // GetBlockByNumber returns blocks by number from child chain (bor)
 func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint64) *ethTypes.Block {
-	block, err := c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	var block *ethTypes.Block
+	var err error
+
+	if c.MainChainClient != nil {
+		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	} else {
+		block, err = c.MaticGrpcClient.GetBlockByNumber(ctx, blockNumber)
+	}
+
 	if err != nil {
 		Logger.Error("Unable to fetch block by number from child chain", "block", block, "err", err)
 		return nil

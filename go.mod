@@ -6,12 +6,13 @@ require (
 	github.com/RichardKnop/machinery v1.10.6
 	github.com/cbergoon/merkletree v0.2.0
 	github.com/cosmos/cosmos-sdk v0.50.4
-	github.com/ethereum/go-ethereum v1.14.3
+	github.com/ethereum/go-ethereum v1.14.5
 	github.com/go-kit/log v0.2.1
 	github.com/gogo/protobuf v1.3.2
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
+	github.com/grpc-ecosystem/go-grpc-middleware v1.3.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/json-iterator/go v1.1.12
 	github.com/maticnetwork/polyproto v0.0.3-0.20230216113155-340ea926ca53
@@ -40,7 +41,7 @@ require (
 	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/JekaMas/workerpool v1.1.8 // indirect
 	github.com/Microsoft/go-winio v0.6.1 // indirect
-	github.com/bits-and-blooms/bitset v1.7.0 // indirect
+	github.com/bits-and-blooms/bitset v1.10.0 // indirect
 	github.com/btcsuite/btcd/chaincfg/chainhash v1.0.2 // indirect
 	github.com/cenkalti/backoff/v4 v4.2.1 // indirect
 	github.com/consensys/bavard v0.1.13 // indirect
@@ -116,7 +117,6 @@ require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/go-logfmt/logfmt v0.5.1 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
-	github.com/go-stack/stack v1.8.1 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
 	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golang/snappy v0.0.5-0.20220116011046-fa5810519dcb // indirect
@@ -179,8 +179,12 @@ replace github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.2.0
 
 replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.4
 
-replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.3.2
+// replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.3.2
 
 replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.14.0
 
 replace github.com/libp2p/go-buffer-pool => github.com/libp2p/go-buffer-pool v0.1.0
+
+replace github.com/ethereum/go-ethereum => /Users/ashukla/polygon/bor
+
+replace github.com/maticnetwork/polyproto => /Users/ashukla/polygon/polyproto
