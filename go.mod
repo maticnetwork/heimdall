@@ -187,4 +187,4 @@ replace github.com/libp2p/go-buffer-pool => github.com/libp2p/go-buffer-pool v0.
 
 replace github.com/ethereum/go-ethereum => /Users/ashukla/polygon/bor
 
-replace github.com/maticnetwork/polyproto => /Users/ashukla/polygon/polyproto
+replace github.com/maticnetwork/polyproto => github.com/anshalshukla/polyproto v0.0.0-20240621120311-ddd84287b14e
