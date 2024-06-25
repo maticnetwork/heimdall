@@ -185,6 +185,4 @@ replace go.mongodb.org/mongo-driver => go.mongodb.org/mongo-driver v1.14.0
 
 replace github.com/libp2p/go-buffer-pool => github.com/libp2p/go-buffer-pool v0.1.0
 
-replace github.com/ethereum/go-ethereum => /Users/ashukla/polygon/bor
-
 replace github.com/maticnetwork/polyproto => github.com/anshalshukla/polyproto v0.0.0-20240621120311-ddd84287b14e
