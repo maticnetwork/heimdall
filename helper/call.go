@@ -318,6 +318,7 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 		fmt.Println("Anshal -- bor called via grpc client -- get root hash")
 		rootHash, err = c.MaticGrpcClient.GetRootHash(ctx, start, end)
 	} else {
+		fmt.Println("XXXX -- bor called via rpc client -- get root hash")
 		rootHash, err = c.MaticChainClient.GetRootHash(ctx, start, end)
 	}
 
@@ -345,6 +346,7 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 		fmt.Println("Anshal -- bor called via grpc client -- get vote on hash")
 		vote, err = c.MaticGrpcClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	} else {
+		fmt.Println("XXXX -- bor called via rpc client -- get vote on hash")
 		vote, err = c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	}
 
@@ -470,6 +472,8 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 		fmt.Println("Anshal -- bor called via grpc client -- get matic chain block")
 		latestBlock, err = c.MaticGrpcClient.GetHeaderByNumber(ctx, blockNum.Uint64())
 	} else {
+		fmt.Println("XXXX -- bor called via rpc client -- get matic chain block")
+
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	}
 
@@ -886,6 +890,8 @@ func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint6
 		fmt.Println("Anshal -- bor called via grpc client -- get block by number")
 		block, err = c.MaticGrpcClient.GetBlockByNumber(ctx, blockNumber)
 	} else {
+		fmt.Println("XXXX -- bor called via rpc client -- get block by number")
+
 		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
 	}
 
@@ -918,6 +924,8 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 		fmt.Println("Anshal -- bor called via grpc client -- get matic tx receipt")
 		return c.getTxReceipt(ctx, nil, c.MaticGrpcClient, txHash)
 	}
+
+	fmt.Println("XXXX -- bor called via rpc client -- get matic tx receipt")
 	return c.getTxReceipt(ctx, c.MaticChainClient, nil, txHash)
 }
 
