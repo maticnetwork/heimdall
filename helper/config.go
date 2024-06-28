@@ -387,7 +387,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	maticClient = ethclient.NewClient(maticRPCClient)
 
 	maticGRPCClient = borgrpc.NewBorGRPCClient(conf.BorGRPCUrl)
-
+	fmt.Println("Anshal ---- xxx ---- ", maticGRPCClient)
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
 	if err != nil {
