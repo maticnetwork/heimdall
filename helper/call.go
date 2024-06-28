@@ -472,9 +472,9 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 		fmt.Println("Anshal -- bor called via grpc client -- get matic chain block")
 		fmt.Println("Anshal --- ggggg 000 --- ", c.MaticGrpcClient)
 		latestBlock, err = c.MaticGrpcClient.GetHeaderByNumber(ctx, blockNum.Uint64())
+		fmt.Println("Anshal -- fffff 111 --- ", latestBlock)
 	} else {
 		fmt.Println("XXXX -- bor called via rpc client -- get matic chain block")
-
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	}
 
