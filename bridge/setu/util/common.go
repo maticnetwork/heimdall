@@ -36,6 +36,7 @@ import (
 type BridgeEvent string
 
 const (
+	StatusURL               = "/status"
 	AccountDetailsURL       = "/auth/accounts/%v"
 	LastNoAckURL            = "/checkpoints/last-no-ack"
 	CheckpointParamsURL     = "/checkpoints/params"
