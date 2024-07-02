@@ -201,13 +201,12 @@ func statusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		status, height, err := cliCtx.Query("/status")
+		status, err := cliCtx.Client.Status()
 		if err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
 			return
 		}
 
-		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, status)
 	}
 }
