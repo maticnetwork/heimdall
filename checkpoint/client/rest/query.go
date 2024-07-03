@@ -171,8 +171,6 @@ type validator struct {
 }
 
 func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
-	r.HandleFunc("/status", statusHandlerFn(cliCtx)).Methods("GET")
-
 	r.HandleFunc("/checkpoints/params", paramsHandlerFn(cliCtx)).Methods("GET")
 
 	r.HandleFunc("/overview", overviewHandlerFn(cliCtx)).Methods("GET")
@@ -192,23 +190,6 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/checkpoints/{number}", checkpointByNumberHandlerFunc(cliCtx)).Methods("GET")
 
 	registerQueryMilestoneRoutes(cliCtx, r)
-}
-
-func statusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		status, err := cliCtx.Client.Status()
-		if err != nil {
-			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		rest.PostProcessResponse(w, cliCtx, status)
-	}
 }
 
 // swagger:route GET /checkpoints/params checkpoint checkpointParams
