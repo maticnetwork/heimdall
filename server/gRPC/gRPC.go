@@ -18,7 +18,7 @@ const (
 	eventRecordList         = "/clerk/event-record/list"
 	fetchCheckpointCount    = "/checkpoints/count"
 	fetchCheckpoint         = "/checkpoints/%s"
-	fetchMilestoneCount     = "/checkpoints/count"
+	fetchMilestoneCount     = "/milestone/count"
 	fetchMilestone          = "/milestone/latest"
 	fetchMilestoneNoAck     = "/milestone/noAck/%s"
 	fetchLastNoAckMilestone = "/milestone/lastNoAck"
