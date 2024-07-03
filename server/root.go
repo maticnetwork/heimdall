@@ -299,6 +299,6 @@ func statusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		rest.PostProcessResponse(w, cliCtx, status)
+		rest.PostProcessResponse(w, cliCtx, status.SyncInfo)
 	}
 }
