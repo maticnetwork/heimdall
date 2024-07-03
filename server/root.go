@@ -266,8 +266,8 @@ func RegisterRoutes(ctx client.CLIContext, mux *mux.Router) {
 	rpc.RegisterRPCRoutes(ctx, mux)
 	tx.RegisterRoutes(ctx, mux)
 
-	// Register the status endpoint here (as it's generic)
-	mux.HandleFunc("/status", statusHandlerFn(ctx)).Methods("GET")
+	// Register the sync info endpoint here (as it's generic)
+	mux.HandleFunc("/sync_info", syncInfoHandlerFn(ctx)).Methods("GET")
 
 	// auth.RegisterRoutes(rs.CliCtx, rs.Mux)
 	// bank.RegisterRoutes(rs.CliCtx, rs.Mux)
@@ -291,7 +291,7 @@ func registerSwaggerUI(mux *mux.Router) {
 	mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
 }
 
-func statusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func syncInfoHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		status, err := cliCtx.Client.Status()
 		if err != nil {
