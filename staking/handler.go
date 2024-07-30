@@ -247,10 +247,10 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 	}
 
 	// check nonce validity
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
-	}
+	// if msg.Nonce != validator.Nonce+1 {
+	// 	k.Logger(ctx).Error("Incorrect validator nonce")
+	// 	return hmCommon.ErrNonce(k.Codespace()).Result()
+	// }
 
 	ctx.EventManager().EmitEvents(sdk.Events{
 		sdk.NewEvent(
