@@ -167,16 +167,16 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			return nil
 		}
 
-		validNonce, nonceDelay, err := sp.checkValidNonce(event.ValidatorId.Uint64(), event.Nonce.Uint64())
-		if err != nil {
-			sp.Logger.Error("Error while validating nonce for the validator", "error", err)
-			return err
-		}
+		// validNonce, nonceDelay, err := sp.checkValidNonce(event.ValidatorId.Uint64(), event.Nonce.Uint64())
+		// if err != nil {
+		// 	sp.Logger.Error("Error while validating nonce for the validator", "error", err)
+		// 	return err
+		// }
 
-		if !validNonce {
-			sp.Logger.Info("Ignoring task to send unstake-init to heimdall as nonce is out of order")
-			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
-		}
+		// if !validNonce {
+		// 	sp.Logger.Info("Ignoring task to send unstake-init to heimdall as nonce is out of order")
+		// 	return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
+		// }
 
 		sp.Logger.Info(
 			"✅ Received task to send unstake-init to heimdall",
