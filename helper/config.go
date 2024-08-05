@@ -233,6 +233,8 @@ var milestoneBorBlockHeight uint64 = 0
 
 var aalborgHeight int64 = 0
 
+var nonceSkipCheckHeight int64 = 0
+
 var newHexToStringAlgoHeight int64 = 0
 
 type ChainManagerAddressMigration struct {
@@ -401,21 +403,25 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
 		aalborgHeight = 15950759
+		nonceSkipCheckHeight = -1
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
 		aalborgHeight = 18035772
+		nonceSkipCheckHeight = 0 // FILL ME
 	case AmoyChain:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
+		nonceSkipCheckHeight = -1
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
+		nonceSkipCheckHeight = -1
 	}
 }
 
@@ -538,6 +544,10 @@ func GetSpanOverrideHeight() int64 {
 // GetAalborgHardForkHeight returns AalborgHardForkHeight
 func GetAalborgHardForkHeight() int64 {
 	return aalborgHeight
+}
+
+func GetNonceSkipCheckHeight() int64 {
+	return nonceSkipCheckHeight
 }
 
 // GetMilestoneBorBlockHeight returns milestoneBorBlockHeight
