@@ -175,7 +175,6 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		}
 	}
 
-	fromBlock = 20000000 // hardcoding to fetch previous events
 	return fromBlock, toBlock, err
 }
 
