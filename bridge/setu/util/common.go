@@ -208,7 +208,7 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	return false, nil
 }
 
-// IsInProposerList checks if we are in current proposer
+// IsInMilestoneProposerList checks if we are in current proposer
 func IsInMilestoneProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
 
@@ -452,7 +452,7 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	return &params, nil
 }
 
-// GetCheckpointParams return params
+// GetMilestoneParams return params
 func GetMilestoneParams(cliCtx cliContext.CLIContext) (*milestoneTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,

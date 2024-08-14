@@ -116,7 +116,7 @@ func (k *Keeper) SetMilestoneCount(ctx sdk.Context, number uint64) {
 	store.Set(CountKey, value)
 }
 
-// GetCount returns milestone count
+// GetMilestoneCount returns milestone count
 func (k *Keeper) GetMilestoneCount(ctx sdk.Context) uint64 {
 	store := ctx.KVStore(k.storeKey)
 	// check if count is there
