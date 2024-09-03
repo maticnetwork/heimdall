@@ -19,6 +19,8 @@ import (
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+const maxSpanListLimit = 150 // a span is ~6 KB => we can fit 150 spans in 1 MB response
+
 var (
 	LastSpanIDKey         = []byte{0x35} // Key to store last span start block
 	SpanPrefixKey         = []byte{0x36} // prefix key to store span
@@ -153,8 +155,8 @@ func (k *Keeper) GetSpanList(ctx sdk.Context, page uint64, limit uint64) ([]hmTy
 	store := ctx.KVStore(k.storeKey)
 
 	// have max limit
-	if limit > 20 {
-		limit = 20
+	if limit > maxSpanListLimit {
+		limit = maxSpanListLimit
 	}
 
 	// get paginated iterator
