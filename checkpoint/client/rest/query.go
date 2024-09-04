@@ -640,7 +640,7 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		checkpointWithID := &CheckpointWithID{
+		checkpointWithID := &hmTypes.CheckpointWithID{
 			ID:         ackCount,
 			Proposer:   checkpointUnmarshal.Proposer,
 			StartBlock: checkpointUnmarshal.StartBlock,
@@ -663,17 +663,6 @@ func latestCheckpointHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 		cliCtx = cliCtx.WithHeight(height)
 		rest.PostProcessResponse(w, cliCtx, resWithID)
 	}
-}
-
-// Temporary Checkpoint struct to store the Checkpoint ID
-type CheckpointWithID struct {
-	ID         uint64                  `json:"id"`
-	Proposer   hmTypes.HeimdallAddress `json:"proposer"`
-	StartBlock uint64                  `json:"start_block"`
-	EndBlock   uint64                  `json:"end_block"`
-	RootHash   hmTypes.HeimdallHash    `json:"root_hash"`
-	BorChainID string                  `json:"bor_chain_id"`
-	TimeStamp  uint64                  `json:"timestamp"`
 }
 
 //swagger:parameters checkpointById
@@ -726,7 +715,7 @@ func checkpointByNumberHandlerFunc(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		checkpointWithID := &CheckpointWithID{
+		checkpointWithID := &hmTypes.CheckpointWithID{
 			ID:         number,
 			Proposer:   checkpointUnmarshal.Proposer,
 			StartBlock: checkpointUnmarshal.StartBlock,
