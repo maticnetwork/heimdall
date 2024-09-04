@@ -158,13 +158,13 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {
-			id, err := strconv.Atoi(string(iterator.Key()[1:]))
+			id, err := strconv.ParseUint(string(iterator.Key()[1:]), 10, 64)
 			if err != nil {
 				continue
 			}
 
 			checkpointWithID := hmTypes.CheckpointWithID{
-				ID:         uint64(id),
+				ID:         id,
 				Proposer:   checkpoint.Proposer,
 				StartBlock: checkpoint.StartBlock,
 				EndBlock:   checkpoint.EndBlock,
