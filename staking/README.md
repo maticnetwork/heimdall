@@ -23,7 +23,7 @@
 The `staking` module in Heimdall is responsible for a validator's stake related operations. It primarily aids in
 
 * A node joining the protocol as a validator.
-* An node leaving the protocol as a validator.
+* A node leaving the protocol as a validator.
 * Updating an existing validator's stake in the network.
 * Updating the signer address of an existing validator.
 
@@ -75,7 +75,7 @@ where
 * `TxHash` is the hash of the staking transaction on L1.
 * `LogIndex` is the index of the `Staked` log in the staking transaction receipt.
 * `BlockNumber` is the L1 block number in which the staking transaction was included.
-* `Nonce` is the the count representing all the staking related transactions performed from the new validator's account. This is meant to keep Heimdall and L1 in sync.
+* `Nonce` is the count representing all the staking related transactions performed from the new validator's account. This is meant to keep Heimdall and L1 in sync.
 
 Upon broadcasting the message, it goes through `HandleMsgValidatorJoin` handler which checks the basic sanity of the transaction (verifying the validator isn't already existing, voting power, etc.).
 
@@ -199,7 +199,7 @@ where
 * `TxHash` is the hash of the unstake transaction on L1.
 * `LogIndex` is the index of the `UnstakeInit` log in the unstake transaction receipt.
 * `BlockNumber` is the L1 block number in which the unstake transaction was included.
-* `Nonce` is the the count representing all the staking related transactions performed from the validator's account.
+* `Nonce` is the count representing all the staking related transactions performed from the validator's account.
 
 Upon broadcasting the message, it goes through `HandleMsgValidatorExit` handler which checks the basic sanity of the data in the transaction.
 
@@ -282,7 +282,7 @@ where
 * `TxHash` is the hash of the stake update transaction on L1.
 * `LogIndex` is the index of the `StakeUpdate` log in the stake update transaction receipt.
 * `BlockNumber` is the L1 block number in which the stake update transaction was included.
-* `Nonce` is the the count representing all the staking related transactions performed from the validator's account.
+* `Nonce` is the count representing all the staking related transactions performed from the validator's account.
 
 Upon broadcasting the message, it goes through `HandleMsgStakeUpdate` handler which checks the basic sanity of the data in the transaction.
 
@@ -325,7 +325,7 @@ curl -X POST "localhost:1317/staking/stake-update?proposer=<PROPOSER_ADDRESS>&id
 
 ## How does a validator update its signer address
 
-A validator can update its signer address in the network by invoking the the `updateSigner` function on the `StakeManager` contract on L1, which emits an `SignerChange` event:
+A validator can update its signer address in the network by invoking the `updateSigner` function on the `StakeManager` contract on L1, which emits an `SignerChange` event:
 
 ```
 /// @param validatorId unique integer to identify a validator.
@@ -363,7 +363,7 @@ where
 * `TxHash` is the hash of the signer update transaction on L1.
 * `LogIndex` is the index of the `SignerChange` log in the signer update transaction receipt.
 * `BlockNumber` is the L1 block number in which the signer update transaction was included.
-* `Nonce` is the the count representing all the staking related transactions performed from the validator's account.
+* `Nonce` is the count representing all the staking related transactions performed from the validator's account.
 
 Upon broadcasting the message, it goes through `HandleMsgSignerUpdate` handler which checks the basic sanity of the data in the transaction.
 
