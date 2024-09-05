@@ -58,6 +58,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 	// get confirmed tx receipt
 	receipt, err := contractCaller.GetConfirmedTxReceipt(msg.TxHash.EthHash(), params.MainchainTxConfirmations)
 	if receipt == nil || err != nil {
+		k.Logger(ctx).Error("Error fetching receipt from txhash", "txHash", msg.TxHash.Hex())
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeWaitFrConfirmation)
 	}
 
