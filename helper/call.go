@@ -703,7 +703,9 @@ func (c *ContractCaller) DecodeStateSyncedEvent(contractAddress common.Address, 
 		if uint64(vLog.Index) == logIndex && bytes.Equal(vLog.Address.Bytes(), contractAddress.Bytes()) {
 			found = true
 
+			fmt.Println("--- calling unpack log ---", event, stateSyncedEvent, vLog)
 			if err := UnpackLog(&c.StateSenderABI, event, stateSyncedEvent, vLog); err != nil {
+				fmt.Println("--- error in unpack log ---", err)
 				return nil, err
 			}
 

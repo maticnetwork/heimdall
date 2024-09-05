@@ -24,11 +24,13 @@ func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log
 	selectedEvent := EventByID(abiObject, log.Topics[0].Bytes())
 
 	if selectedEvent == nil || selectedEvent.Name != event {
+		fmt.Println("topic event mismatch")
 		return errors.New("topic event mismatch")
 	}
 
 	if len(log.Data) > 0 {
 		if err := abiObject.UnpackIntoInterface(out, event, log.Data); err != nil {
+			fmt.Println("failed to unpact to interface")
 			return err
 		}
 	}
@@ -41,7 +43,9 @@ func UnpackLog(abiObject *abi.ABI, out interface{}, event string, log *types.Log
 		}
 	}
 
-	return parseTopics(out, indexed, log.Topics[1:])
+	err := parseTopics(out, indexed, log.Topics[1:])
+	fmt.Println("parseTopics error", err)
+	return err
 }
 
 // parseTopics converts the indexed topic fields into actual log field values.

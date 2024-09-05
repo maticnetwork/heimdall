@@ -2,6 +2,7 @@ package clerk
 
 import (
 	"bytes"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -45,7 +46,7 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 }
 
 func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecord, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	k.Logger(ctx).Debug("✅ Validating External call for clerk msg",
+	k.Logger(ctx).Info("✅ Validating External call for clerk msg",
 		"txHash", hmTypes.BytesToHeimdallHash(msg.TxHash.Bytes()),
 		"logIndex", msg.LogIndex,
 		"blockNumber", msg.BlockNumber,
@@ -63,6 +64,7 @@ func SideHandleMsgEventRecord(ctx sdk.Context, k Keeper, msg types.MsgEventRecor
 	}
 
 	// get event log for topup
+	fmt.Println("--- inputs", chainParams.StateSenderAddress.EthAddress(), receipt, msg.LogIndex)
 	eventLog, err := contractCaller.DecodeStateSyncedEvent(chainParams.StateSenderAddress.EthAddress(), receipt, msg.LogIndex)
 	if err != nil || eventLog == nil {
 		k.Logger(ctx).Error("Error fetching log from txhash", err, eventLog)
