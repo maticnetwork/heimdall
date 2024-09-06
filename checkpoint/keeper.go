@@ -158,7 +158,7 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {
-			id, err := strconv.ParseUint(string(iterator.Key()[1:]), 10, 64)
+			id, err := GetCheckpointIDFromKey(iterator.Key())
 			if err != nil {
 				continue
 			}
@@ -210,6 +210,11 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) 
 func GetCheckpointKey(checkpointNumber uint64) []byte {
 	checkpointNumberBytes := []byte(strconv.FormatUint(checkpointNumber, 10))
 	return append(CheckpointKey, checkpointNumberBytes...)
+}
+
+// GetCheckpointIDFromKey get the checkpoint ID from the DB key
+func GetCheckpointIDFromKey(key []byte) (uint64, error) {
+	return strconv.ParseUint(string(key[1:]), 10, 64)
 }
 
 // HasStoreValue check if value exists in store or not
