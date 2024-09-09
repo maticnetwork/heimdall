@@ -50,14 +50,14 @@ func (h *BorGRPCClient) GetVoteOnHash(ctx context.Context, startBlock uint64, en
 	return res.Response, nil
 }
 
-func (h *BorGRPCClient) GetHeaderByNumber(ctx context.Context, blockID uint64) (*ethTypes.Header, error) {
+func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*ethTypes.Header, error) {
 	req := &proto.GetHeaderByNumberRequest{
 		Number: blockID,
 	}
 
 	log.Info("Fetching header by number")
 
-	res, err := h.client.GetHeaderByNumber(ctx, req)
+	res, err := h.client.HeaderByNumber(ctx, req)
 	if err != nil {
 		return &ethTypes.Header{}, err
 	}
@@ -71,14 +71,14 @@ func (h *BorGRPCClient) GetHeaderByNumber(ctx context.Context, blockID uint64) (
 	}, nil
 }
 
-func (h *BorGRPCClient) GetBlockByNumber(ctx context.Context, blockID uint64) (*ethTypes.Block, error) {
+func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID uint64) (*ethTypes.Block, error) {
 	req := &proto.GetBlockByNumberRequest{
 		Number: blockID,
 	}
 
 	log.Info("Fetching block by number")
 
-	res, err := h.client.GetBlockByNumber(ctx, req)
+	res, err := h.client.BlockByNumber(ctx, req)
 	if err != nil {
 		return &ethTypes.Block{}, err
 	}
@@ -100,7 +100,7 @@ func (h *BorGRPCClient) GetTransactionReceipt(ctx context.Context, txHash common
 
 	log.Info("Fetching transaction receipt")
 
-	res, err := h.client.GetTransactionReceipt(ctx, req)
+	res, err := h.client.TransactionReceipt(ctx, req)
 	if err != nil {
 		return &ethTypes.Receipt{}, err
 	}
@@ -117,7 +117,7 @@ func (h *BorGRPCClient) GetBorBlockReceipt(ctx context.Context, txHash common.Ha
 
 	log.Info("Fetching bor block receipt")
 
-	res, err := h.client.GetBorBlockReceipt(ctx, req)
+	res, err := h.client.BorBlockReceipt(ctx, req)
 	if err != nil {
 		return &ethTypes.Receipt{}, err
 	}

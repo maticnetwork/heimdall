@@ -465,7 +465,7 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	var latestBlock *ethTypes.Header
 
 	if c.MaticGrpcFlag {
-		latestBlock, err = c.MaticGrpcClient.GetHeaderByNumber(ctx, blockNum.Uint64())
+		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
 	} else {
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	}
@@ -880,7 +880,7 @@ func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint6
 	var err error
 
 	if c.MaticGrpcFlag {
-		block, err = c.MaticGrpcClient.GetBlockByNumber(ctx, blockNumber)
+		block, err = c.MaticGrpcClient.BlockByNumber(ctx, blockNumber)
 	} else {
 		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
 	}
