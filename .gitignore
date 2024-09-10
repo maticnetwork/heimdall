@@ -19,3 +19,5 @@ data/
 dist/
 
 .dccache
+.idea/
+.idea*

@@ -1,0 +1,131 @@
+name: packager_deb
+
+on:
+  push:
+    branches:
+      - 'main'
+    paths:
+      - '**'
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
+
+jobs:
+  build:
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@master
+        with:
+          go-version: 1.20.x
+     # Variables
+      - name: Adding TAG to ENV
+        run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
+      - name: adding version
+        run: |
+          NUMERIC_VERSION=$( echo ${{ env.GIT_TAG }} | sed 's/[^0-9.]//g' ) 
+          echo "VERSION=$NUMERIC_VERSION" >> $GITHUB_ENV
+
+      - name: Cleaning repo
+        run: make clean
+      - name: Building for amd64
+        run: make build
+
+      - name: Making directory structure
+        run: mkdir -p packaging/deb/heimdalld/usr/bin
+      - name: Copying necessary heimdalld files
+        run: cp -rp build/heimdalld packaging/deb/heimdalld/usr/bin/
+      - name: copying necessary heimdallcli
+        run: cp -rp build/heimdallcli packaging/deb/heimdalld/usr/bin/
+
+      # Control file creation
+      - name: create control file
+        run: |
+          touch packaging/deb/heimdalld/DEBIAN/control
+          echo "Package: heimdall" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Version: ${{ env.VERSION }}" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Section: base" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Priority: optional" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Architecture: amd64" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Maintainer: devops@polygon.technology" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Description: heimdall binary package" >> packaging/deb/heimdalld/DEBIAN/control
+
+      - name: Creating package for binary for heimdall ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+
+      - name: Running package build
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: amd64
+
+      - name: Cleaning build directory for arm64 build
+        run: make clean
+
+      - name: Updating the apt-get
+        run: sudo apt-get update -y
+
+      - name: Adding requirements for cross compile
+        run: sudo apt-get install g++-aarch64-linux-gnu gcc-aarch64-linux-gnu
+
+      - name: delete amd64 control file
+        run: rm -rf packaging/deb/heimdalld/DEBIAN/control
+
+      - name: Building heimdall for arm64
+        run: make build-arm
+
+      # Control file creation
+      - name: create control file
+        run: |
+          touch packaging/deb/heimdalld/DEBIAN/control
+          echo "Package: heimdall" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Version: ${{ env.VERSION }}" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Section: base" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Priority: optional" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Architecture: arm64" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Maintainer: devops@polygon.technology" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Description: heimdall binary package" >> packaging/deb/heimdalld/DEBIAN/control
+
+      - name: Copying necessary heimdalldfiles
+        run: cp -rp build/heimdalld packaging/deb/heimdalld/usr/bin/
+      - name: copying necessary heimdallcli
+        run: cp -rp build/heimdallcli packaging/deb/heimdalld/usr/bin/
+          
+
+      - name: Creating package for binary for heimdall ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+
+      - name: Running package build
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: arm64
+
+    # Shasum
+      - name: shasum the heimdall debian package
+        run: cd packaging/deb/ && sha256sum heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb > heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb.checksum
+        env:
+           ARCH: amd64
+
+      - name: shasum the heimdall debian package
+        run: cd packaging/deb/ && sha256sum heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb > heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}.deb.checksum
+        env:
+          ARCH: arm64
+
+      - name: Release heimdall Packages
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.GIT_TAG }}
+          prerelease: true
+          files: |
+            packaging/deb/heimdall**.deb
+            packaging/deb/heimdall**.deb.checksum
