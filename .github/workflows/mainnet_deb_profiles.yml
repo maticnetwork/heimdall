@@ -165,14 +165,3 @@ jobs:
           files: |
             packaging/deb/heimdall-mainnet-**.deb
             packaging/deb/heimdall-mainnet-**.deb.checksum
-
-
-
-
-
-
-
-
-
-
-
