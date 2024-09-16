@@ -2049,6 +2049,7 @@ github.com/maticnetwork/bor v1.3.2 h1:aNqkVFojcNaSV+Ajoio9oTKE6LAmn2YgeQrhDKJiVH
 github.com/maticnetwork/bor v1.3.2/go.mod h1:AM85jUjwEw0Yk69TTFZ+sQMB506tDMG/4XAwQ4RcRqI=
 github.com/maticnetwork/cosmos-sdk v0.38.5-0.20240912045332-6439f398748a h1:t+NdQ72cmzAkUVE4fVbjLPpOGztJlBqrUiqTDbp5e3U=
 github.com/maticnetwork/cosmos-sdk v0.38.5-0.20240912045332-6439f398748a/go.mod h1:UO5jPHn0McJyQYW2PxCN+GlryBQjWmbOGQilS2wMNKw=
+github.com/maticnetwork/cosmos-sdk v0.38.5-0.20240916044833-512fcf59c930/go.mod h1:UO5jPHn0McJyQYW2PxCN+GlryBQjWmbOGQilS2wMNKw=
 github.com/maticnetwork/crand v1.0.2 h1:Af0tAivC8zrxXDpGWNWVT/0s1fOz8w0eRbahZgURS8I=
 github.com/maticnetwork/crand v1.0.2/go.mod h1:/NRNL3bj2eYdqpWmoIP5puxndTpi0XRxpj5ZKxfHjyg=
 github.com/maticnetwork/heimdall v1.0.4/go.mod h1:Xh7KFvtbs/SVNjOI8IgYmk6JdzYx89eU/XUwH0AgHLs=
