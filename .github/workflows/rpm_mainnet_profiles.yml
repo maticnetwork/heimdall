@@ -66,7 +66,7 @@ jobs:
           echo "%install" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           echo "mkdir -p %{buildroot}/var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
-          echo "cp /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/templates/systemd/heimdalld-mainnet-sentry.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-mainnet-sentry.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           
           echo "%files" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
@@ -77,7 +77,7 @@ jobs:
 
       - name: Build Mainnet Sentry Node profile RPM
         run: |
-          rpmbuild --define "_topdir /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build" \
+          rpmbuild --define "_topdir /home/runner/work/heimdall/heimdall/packaging/rpm_build" \
            --define "_builddir %{_topdir}/BUILD" \
            --define "_rpmdir %{_topdir}/RPMS" \
            --define "_srcrpmdir %{_topdir}/SRPMS" \
@@ -107,7 +107,7 @@ jobs:
           echo "%install" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           echo "mkdir -p %{buildroot}/var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
-          echo "cp /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/templates/systemd/heimdalld-mainnet-validator.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-mainnet-validator.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           
           echo "%files" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
@@ -119,7 +119,7 @@ jobs:
 
       - name: Build Mainnet Validator Node profile RPM
         run: |
-          rpmbuild --define "_topdir /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build" \
+          rpmbuild --define "_topdir /home/runner/work/heimdall/heimdall/packaging/rpm_build" \
            --define "_builddir %{_topdir}/BUILD" \
            --define "_rpmdir %{_topdir}/RPMS" \
            --define "_srcrpmdir %{_topdir}/SRPMS" \
@@ -128,14 +128,14 @@ jobs:
 
 
       - name: rename packages due to rpm dist rules mainnet validator
-        run:  mv /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}-1.noarch.rpm /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm
+        run:  mv /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}-1.noarch.rpm /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm
       - name: rename packages due to rpm dist rules mainnet sentry
-        run: mv /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}-1.noarch.rpm /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm
+        run: mv /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}-1.noarch.rpm /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm
 
       - name: shasum a package mainnet validator
-        run: shasum  /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm > /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm.checksum
+        run: shasum  /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm > /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm.checksum
       - name: shasum a package mainnet sentry
-        run: shasum  /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm > /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm.checksum
+        run: shasum  /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm > /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm.checksum
 
       - name: Release heimdall Packages
         uses: softprops/action-gh-release@v2

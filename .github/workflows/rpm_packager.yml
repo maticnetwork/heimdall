@@ -62,8 +62,8 @@ jobs:
           
           echo "%install" >> packaging/rpm/SPECS/heimdall.spec
           echo "mkdir -p %{buildroot}/usr/bin" >> packaging/rpm/SPECS/heimdall.spec
-          echo "cp /home/runner/work/heimdall-dontuse/heimdall-dontuse/build/heimdalld %{buildroot}/usr/bin/" >> packaging/rpm/SPECS/heimdall.spec
-          echo "cp /home/runner/work/heimdall-dontuse/heimdall-dontuse/build/heimdallcli %{buildroot}/usr/bin/" >> packaging/rpm/SPECS/heimdall.spec
+          echo "cp /home/runner/work/heimdall/heimdall/build/heimdalld %{buildroot}/usr/bin/" >> packaging/rpm/SPECS/heimdall.spec
+          echo "cp /home/runner/work/heimdall/heimdall/build/heimdallcli %{buildroot}/usr/bin/" >> packaging/rpm/SPECS/heimdall.spec
           
           echo "%files" >> packaging/rpm/SPECS/heimdall.spec
           
@@ -72,7 +72,7 @@ jobs:
 
       - name: construct rpm package
         run: |
-          rpmbuild --define "_topdir /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build" \
+          rpmbuild --define "_topdir /home/runner/work/heimdall/heimdall/packaging/rpm_build" \
                    --define "_builddir %{_topdir}/BUILD" \
                    --define "_rpmdir %{_topdir}/RPMS" \
                    --define "_srcrpmdir %{_topdir}/SRPMS" \
@@ -81,10 +81,10 @@ jobs:
           
 
       - name: rename packages due to rpm dist rules
-        run: mv /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}-1.x86_64.rpm /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}.x86_64.rpm
+        run: mv /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}-1.x86_64.rpm /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}.x86_64.rpm
 
       - name: shasum a package
-        run: shasum  /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}.x86_64.rpm > /home/runner/work/heimdall-dontuse/heimdall-dontuse/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}.x86_64.rpm.checksum
+        run: shasum  /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}.x86_64.rpm > /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/x86_64/heimdall-${{ env.GIT_TAG1 }}.x86_64.rpm.checksum
 
       - name: Release heimdall Packages
         uses: softprops/action-gh-release@v2
