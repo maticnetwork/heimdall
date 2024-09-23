@@ -100,6 +100,10 @@ func (suite *KeeperTestSuite) TestGetCheckpointList() {
 	result, err := keeper.GetCheckpointList(ctx, uint64(1), uint64(20))
 	require.NoError(t, err)
 	require.LessOrEqual(t, count, len(result))
+
+	for i := range count {
+		require.Equal(t, uint64(i+1), result[i].ID)
+	}
 }
 
 func (suite *KeeperTestSuite) TestHasStoreValue() {
