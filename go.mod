@@ -74,7 +74,6 @@ require (
 	github.com/stumble/gorocksdb v0.0.3 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/supranational/blst v0.3.11 // indirect
-	github.com/tendermint/btcd v0.1.1 // indirect
 	github.com/xdg-go/pbkdf2 v1.0.0 // indirect
 	github.com/xdg-go/scram v1.1.2 // indirect
 	github.com/xdg-go/stringprep v1.0.4 // indirect
@@ -176,7 +175,7 @@ replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v
 
 replace github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.2.0
 
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.4
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.5-0.20240912045332-6439f398748a
 
 replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.3.2
 
