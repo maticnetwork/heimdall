@@ -3,11 +3,11 @@ Section: develop
 Priority: Testing
 Maintainer: Polygon <team@polygon.technology>
 Build-Depends: debhelper-compat (= 13)
-Standards-Version: v1.0.7
+Standards-Version: v1.0.9-beta
 Homepage: https://polygon.technology
 Rules-Requires-Root: no
 Package: heimdalld-profile
-Version: 1.0.7
+Version: 1.0.9-beta
 Architecture: arm64
 Multi-Arch: foreign
 Depends: rabbitmq-server
