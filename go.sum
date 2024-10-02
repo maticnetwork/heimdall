@@ -1591,8 +1591,8 @@ github.com/mailgun/raymond/v2 v2.0.48/go.mod h1:lsgvL50kgt1ylcFJYZiULi5fjPBkkhNf
 github.com/mailru/easyjson v0.7.7/go.mod h1:xzfreul335JAWq5oZzymOObrkdz5UnU4kGfJJLY9Nlc=
 github.com/maticnetwork/bor v1.3.2 h1:aNqkVFojcNaSV+Ajoio9oTKE6LAmn2YgeQrhDKJiVHQ=
 github.com/maticnetwork/bor v1.3.2/go.mod h1:AM85jUjwEw0Yk69TTFZ+sQMB506tDMG/4XAwQ4RcRqI=
-github.com/maticnetwork/cosmos-sdk v0.38.4 h1:PAfkMXzHDHJoAf4bXQL4UWgwbu/U3yYuXoXxPhXdpBw=
-github.com/maticnetwork/cosmos-sdk v0.38.4/go.mod h1:NbuVdUoqlRF6RrFJp27hpbqSoRB8cJJfUxCzUJWtaLA=
+github.com/maticnetwork/cosmos-sdk v0.38.7-0.20241002063113-515c8a63bd29 h1:rxZIY5KfL+F3/WxWfpuWCzxn/VEDMR2tLxkDRLixXzg=
+github.com/maticnetwork/cosmos-sdk v0.38.7-0.20241002063113-515c8a63bd29/go.mod h1:mMWon3wDWZW/7UGgwUhc1XTJPojVJf9Hb3ch6cG+E3k=
 github.com/maticnetwork/crand v1.0.2 h1:Af0tAivC8zrxXDpGWNWVT/0s1fOz8w0eRbahZgURS8I=
 github.com/maticnetwork/crand v1.0.2/go.mod h1:/NRNL3bj2eYdqpWmoIP5puxndTpi0XRxpj5ZKxfHjyg=
 github.com/maticnetwork/heimdall v1.0.4/go.mod h1:Xh7KFvtbs/SVNjOI8IgYmk6JdzYx89eU/XUwH0AgHLs=

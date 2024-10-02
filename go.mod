@@ -178,7 +178,7 @@ replace github.com/tendermint/tendermint => github.com/maticnetwork/tendermint v
 replace github.com/tendermint/tm-db => github.com/tendermint/tm-db v0.2.0
 
 // TODO this will change
-replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.4
+replace github.com/cosmos/cosmos-sdk => github.com/maticnetwork/cosmos-sdk v0.38.7-0.20241002063113-515c8a63bd29
 
 replace github.com/ethereum/go-ethereum => github.com/maticnetwork/bor v1.3.2
 
