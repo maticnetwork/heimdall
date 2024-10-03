@@ -11,7 +11,7 @@
 
 ## Overview
 
-Bridge module is responsible for listening to multiple chains and processing the events emitted by them.It converts the emitted data into heimdall messages and send them to the heimdall chain. There are `listener` and `processor` components in the bridge module which are responsible for listening and processing the events respectively as per their module. For example `listener/rootchain.go` is responsible for listening to events coming from rootchain OR L1 i.e Ethereum chain in our case and `listener/maticchain.go` is responsible for listening to events coming from maticchain or L2 i.e Bor chain in our case.
+Bridge module is responsible for listening to multiple chains and processing the events emitted by them. It converts the emitted data into heimdall messages and sends them to the heimdall chain. There are `listener` and `processor` components in the bridge module which are responsible for listening and processing the events respectively as per their module. For example `listener/rootchain.go` is responsible for listening to events coming from rootchain OR L1 i.e Ethereum chain in our case and `listener/maticchain.go` is responsible for listening to events coming from maticchain or L2 i.e Bor chain in our case.
 
 In order to process the events emitted by the chains, bridge module uses `processor` component, which is responsible for processing the events emitted by the chains. For example `processor/clerk.go` is responsible for processing the events related to clerk module, `processor/staking.go` is responsible for processing the events related to staking module and so on.
 
@@ -25,13 +25,13 @@ There is no change to the circulating supply of your token when it crosses the b
 
 ## Listener
 
-The bridge module has a `BaseListener` which is extended by `RootChainListener`, `MaticChainListener` and `HeimdallListener`. It has all the methods required to start polling, listening to incoming headers(blocks) and stopping the process if required. All the 3 listneres uses these properties with their individual implementations on how to handle the incoming header once received.
+The bridge module has a `BaseListener` which is extended by `RootChainListener`, `MaticChainListener` and `HeimdallListener`. It has all the methods required to start polling, listening to incoming headers(blocks) and stopping the process if required. All the 3 listeners use these properties with their individual implementations on how to handle the incoming header once received.
 
 For example in `RootChainListener` the incoming header is used to determine the current height of root chain and calculate the `from` and `to` block numbers using which the events are fetched from the root chain. These events are then sent to `handleLog` where based on their event signature they are added to queue as tasks for further processing by their respective processors.
 
 ## Processor
 
-There is a `BaseProcessor` which is extended by every processor in the processor package. It has all the methods required to start processing the events, registering for the tasks which are there in the queue and stopping the process if required. All the processors uses these properties with their individual implementations on how to handle the incoming events once received.
+There is a `BaseProcessor` which is extended by every processor in the processor package. It has all the methods required to start processing the events, registering for the tasks which are there in the queue and stopping the process if required. All the processors use these properties with their individual implementations on how to handle the incoming events once received.
 
 Once the event is added to the queue by the `Listener`, the `Processor` takes over and processes the events which are added into the queue based on their event signature. Each processor has `RegisterTasks` method using which they register to process specific tasks added to the queue based on the module they serve. For example `StakingProcessor` registers for `Staking` related tasks, `ClerkProcessor` registers for `Clerk` related tasks and so on. You can look into each processor to check which tasks they are registered for.
 

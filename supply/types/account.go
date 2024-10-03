@@ -75,7 +75,7 @@ func (ma *ModuleAccount) AddPermissions(permissions ...string) {
 }
 
 // RemovePermission removes the permission from the list of granted permissions
-// or returns an error if the permission is has not been granted.
+// or returns an error if the permission has not been granted.
 func (ma *ModuleAccount) RemovePermission(permission string) error {
 	for i, perm := range ma.Permissions {
 		if perm == permission {
@@ -98,7 +98,7 @@ func (ma ModuleAccount) HasPermission(permission string) bool {
 	return false
 }
 
-// GetName returns the the name of the holder's module
+// GetName returns the name of the holder's module
 func (ma ModuleAccount) GetName() string {
 	return ma.Name
 }

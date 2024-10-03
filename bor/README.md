@@ -33,7 +33,7 @@ type Span struct {
 	ChainID           string       `json:"bor_chain_id" yaml:"bor_chain_id"`
 }
 ```
-where ,
+where,
 
 * `ID` means the id of the span, calculated by monotonically incrementing the ID of the previous span.
 * `StartBlock` corresponds to the block in bor from which the given span would commence.
