@@ -31,7 +31,7 @@ jobs:
 
 
       - name: Making directory structure for yaml
-        run: mkdir -p packaging/deb/heimdalld/var/lib/heimdall
+        run: mkdir -p packaging/deb/heimdalld/var/lib/heimdall/config
       - name: making directory structure for the systemd
         run: mkdir -p packaging/deb/heimdalld/lib/systemd/system
       - name: delete old control file
@@ -58,6 +58,24 @@ jobs:
           NETWORK: amoy
       - name: Copying postinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/package_scripts/postinst.profile packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying preinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.${{ env.NETWORK }} packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/heimdall-config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
         env:
           ARCH: all
           NODE: sentry
@@ -99,6 +117,24 @@ jobs:
         env:
           ARCH: all
           NODE: validator
+          NETWORK: amoy
+      - name: Copying preinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.${{ env.NETWORK }} packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/heimdall-config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: amoy
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: all
+          NODE: sentry
           NETWORK: amoy
       - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
         run: cp -rp packaging/templates/systemd/heimdalld-amoy-validator.service packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
