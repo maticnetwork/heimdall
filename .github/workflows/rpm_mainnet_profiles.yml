@@ -67,9 +67,13 @@ jobs:
           echo "mkdir -p %{buildroot}/var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-mainnet-sentry.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/config.toml %{buildroot}/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/heimdall-config.toml %{buildroot}/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           
           echo "%files" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           
           echo "%attr(0755, heimdall, heimdall) /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
           echo "%post" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
@@ -108,9 +112,13 @@ jobs:
           echo "mkdir -p %{buildroot}/var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-mainnet-validator.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/config.toml %{buildroot}/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/heimdall-config.toml %{buildroot}/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           
           echo "%files" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           
           echo "%attr(0755, heimdall, heimdall) /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
           echo "%post" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
