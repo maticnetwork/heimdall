@@ -3,7 +3,7 @@ name: packager_arm_rpm
 on:
   push:
     branches:
-      - 'main'
+      - 'master'
     paths:
       - '**'
     tags:

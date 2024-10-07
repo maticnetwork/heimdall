@@ -3,7 +3,7 @@ name: packager_rpm
 on:
   push:
     branches:
-      - 'main'
+      - 'master'
     paths:
       - '**'
     tags:
