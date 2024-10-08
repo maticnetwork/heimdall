@@ -1,7 +1,0 @@
-#!/bin/bash
-#
-#
-##################
-# Stops existing for upgrade
-#################
-#sudo systemctl stop heimdalld.service
