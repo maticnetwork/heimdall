@@ -1,6 +1,8 @@
 package processor
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
 
@@ -79,9 +81,15 @@ func (fp *FeeProcessor) sendTopUpFeeToHeimdall(eventName string, logBytes string
 		msg := topupTypes.NewMsgTopup(helper.GetFromAddress(fp.cliCtx), hmTypes.BytesToHeimdallAddress(event.User.Bytes()), sdk.NewIntFromBigInt(event.Fee), hmTypes.BytesToHeimdallHash(vLog.TxHash.Bytes()), uint64(vLog.Index), vLog.BlockNumber)
 
 		// return broadcast to heimdall
-		if err = fp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		txRes, err := fp.txBroadcaster.BroadcastToHeimdall(msg, event)
+		if err != nil {
 			fp.Logger.Error("Error while broadcasting TopupFee msg to heimdall", "msg", msg, "error", err)
 			return err
+		}
+
+		if txRes.Code != uint32(sdk.CodeOK) {
+			fp.Logger.Error("topup tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+			return fmt.Errorf("topup tx failed, tx response code: %v", txRes.Code)
 		}
 	}
 

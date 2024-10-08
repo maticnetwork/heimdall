@@ -196,7 +196,7 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 			time.Sleep(1 * time.Second)
 
 			var statusCheck int
-			for statusCheck = 0; statusCheck > 15; statusCheck++ {
+			for statusCheck = 0; statusCheck < 15; statusCheck++ {
 				if _, err = util.GetClerkEventRecord(rl.cliCtx, i); err == nil {
 					rl.Logger.Info("State found on heimdall", "id", i)
 					break
@@ -206,7 +206,7 @@ func (rl *RootChainListener) processStateSynced(ctx context.Context) {
 				time.Sleep(1 * time.Second)
 			}
 
-			if statusCheck > 15 {
+			if statusCheck >= 15 {
 				i--
 				continue
 			}

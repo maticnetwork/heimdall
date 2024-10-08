@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/hex"
 	"errors"
+	"fmt"
 	"math"
 	"math/big"
 	"strconv"
@@ -302,9 +303,16 @@ func (cp *CheckpointProcessor) sendCheckpointAckToHeimdall(eventName string, che
 		)
 
 		// return broadcast to heimdall
-		if err = cp.txBroadcaster.BroadcastToHeimdall(msg, event); err != nil {
+		txRes, err := cp.txBroadcaster.BroadcastToHeimdall(msg, event)
+		if err != nil {
 			cp.Logger.Error("Error while broadcasting checkpoint-ack to heimdall", "error", err)
 			return err
+		}
+
+		if txRes.Code != uint32(sdk.CodeOK) {
+			cp.Logger.Error("checkpoint-ack tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+			return fmt.Errorf("checkpoint-ack tx failed, tx response code: %d", txRes.Code)
+
 		}
 	}
 
@@ -481,9 +489,15 @@ func (cp *CheckpointProcessor) createAndSendCheckpointToHeimdall(checkpointConte
 	)
 
 	// return broadcast to heimdall
-	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+	txRes, err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil)
+	if err != nil {
 		cp.Logger.Error("Error while broadcasting checkpoint to heimdall", "error", err)
 		return err
+	}
+
+	if txRes.Code != uint32(sdk.CodeOK) {
+		cp.Logger.Error("Checkpoint tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+		return fmt.Errorf("checkpoint tx failed, tx response code: %d", txRes.Code)
 	}
 
 	return nil
@@ -661,9 +675,16 @@ func (cp *CheckpointProcessor) proposeCheckpointNoAck() (err error) {
 	)
 
 	// return broadcast to heimdall
-	if err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil); err != nil {
+	txRes, err := cp.txBroadcaster.BroadcastToHeimdall(msg, nil)
+	if err != nil {
 		cp.Logger.Error("Error while broadcasting checkpoint-no-ack to heimdall", "msg", msg, "error", err)
 		return err
+	}
+
+	if txRes.Code != uint32(sdk.CodeOK) {
+		cp.Logger.Error("Checkpoint No-Ack tx failed on heimdall", "txHash", txRes.TxHash, "code", txRes.Code)
+		return fmt.Errorf("checkpoint-no-ack tx failed, tx response code: %d", txRes.Code)
+
 	}
 
 	cp.Logger.Info("No-ack transaction sent successfully")

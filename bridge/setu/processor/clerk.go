@@ -157,7 +157,7 @@ func (cp *ClerkProcessor) sendStateSyncedToHeimdall(eventName string, logBytes s
 
 		_, BroadcastToHeimdallSpan := tracing.StartSpan(sendStateSyncedToHeimdallCtx, "BroadcastToHeimdall")
 		// return broadcast to heimdall
-		err = cp.txBroadcaster.BroadcastToHeimdall(msg, event)
+		_, err = cp.txBroadcaster.BroadcastToHeimdall(msg, event)
 		tracing.EndSpan(BroadcastToHeimdallSpan)
 
 		if err != nil {

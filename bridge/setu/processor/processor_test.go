@@ -86,7 +86,7 @@ func TestBroadcastWhenTxInMempool(t *testing.T) {
 			assert.Equal(t, inMempool, expectedStatus[index])
 			if !inMempool {
 				t.Log("Tx not in mempool, broadcasting")
-				err = _txBroadcaster.BroadcastToHeimdall(tx, nil)
+				_, err := _txBroadcaster.BroadcastToHeimdall(tx, nil)
 				assert.Empty(t, err, "Error broadcasting tx to heimdall", err)
 			} else {
 				t.Log("Tx is already in mempool, not broadcasting")

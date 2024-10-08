@@ -15,6 +15,16 @@ type Checkpoint struct {
 	TimeStamp  uint64          `json:"timestamp"`
 }
 
+type CheckpointWithID struct {
+	ID         uint64          `json:"id"`
+	Proposer   HeimdallAddress `json:"proposer"`
+	StartBlock uint64          `json:"start_block"`
+	EndBlock   uint64          `json:"end_block"`
+	RootHash   HeimdallHash    `json:"root_hash"`
+	BorChainID string          `json:"bor_chain_id"`
+	TimeStamp  uint64          `json:"timestamp"`
+}
+
 // Milestone block header struct
 type Milestone struct {
 	Proposer    HeimdallAddress `json:"proposer"`
