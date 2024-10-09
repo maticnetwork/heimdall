@@ -24,7 +24,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@master
         with:
-          go-version: 1.20.x
+          go-version: 1.22.x
      # Variables
       - name: Adding TAG to ENV
         run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
@@ -98,7 +98,7 @@ jobs:
         run: cp -rp build/heimdalld packaging/deb/heimdalld/usr/bin/
       - name: copying necessary heimdallcli
         run: cp -rp build/heimdallcli packaging/deb/heimdalld/usr/bin/
-          
+
 
       - name: Creating package for binary for heimdall ${{ env.ARCH }}
         run: cp -rp packaging/deb/heimdalld packaging/deb/heimdall-${{ env.GIT_TAG }}-${{ env.ARCH }}
