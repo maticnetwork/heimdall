@@ -1,11 +1,13 @@
 #!/bin/bash
 # This is a postinstallation script so the service can be configured and started when requested
 #
+export HEIMDALL_DIR=/var/lib/heimdall
 sudo adduser --disabled-password --disabled-login --shell /usr/sbin/nologin --quiet --system --no-create-home --home /nonexistent heimdall
-if [ -d "/var/lib/heimdall" ]
+if [ -d "$HEIMDALL_DIR" ]
 then
-    echo "Directory /var/lib/heimdall exists."
+    echo "Directory $HEIMDALL_DIR exists."
+    sudo chown -R heimdall $HEIMDALL_DIR
 else
-    mkdir -p /var/lib/heimdall
-    sudo chown -R heimdall /var/lib/heimdall
+    mkdir -p $HEIMDALL_DIR
+    sudo chown -R heimdall $HEIMDALL_DIR
 fi

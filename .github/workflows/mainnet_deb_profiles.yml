@@ -1,0 +1,191 @@
+name: mainnet_deb_profiles
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - '**'
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
+
+jobs:
+  build:
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      # Variables
+      - name: Adding TAG to ENV
+        run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
+      - name: adding version
+        run: |
+          NUMERIC_VERSION=$( echo ${{ env.GIT_TAG }} | sed 's/[^0-9.]//g' ) 
+          echo "VERSION=$NUMERIC_VERSION" >> $GITHUB_ENV
+
+
+      - name: Making directory structure for yaml
+        run: mkdir -p packaging/deb/heimdalld/var/lib/heimdall/config
+      - name: making directory structure for the systemd
+        run: mkdir -p packaging/deb/heimdalld/lib/systemd/system
+      - name: delete old control file
+        run: rm -rf packaging/deb/heimdalld/DEBIAN/control
+
+      # Control file creation
+      - name: create control file
+        run: |
+          touch packaging/deb/heimdalld/DEBIAN/control
+          echo "Package: heimdall-profile" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Version: ${{ env.VERSION }}" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Section: base" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Priority: optional" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Architecture: all" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Maintainer: devops@polygon.technology" >> packaging/deb/heimdalld/DEBIAN/control
+          echo "Description: heimdall profile package" >> packaging/deb/heimdalld/DEBIAN/control
+
+#### Sentry Profiles ####
+      - name: Setting up ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying the postinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying preinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.${{ env.NETWORK }} packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/heimdall-config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying the prerm for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/prerm packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/prerm
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying the postrm for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postrm.profile packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postrm
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-sentry.service packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Building ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+
+### Validator Profiles ###
+      - name: Prepping heimdall ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/deb/heimdalld packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: all
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying Postinstall script for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postinst.profile.mainnet packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postinst
+        env:
+          ARCH: all
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying the prerm for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/prerm packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/prerm
+        env:
+          ARCH: all
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying preinst for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/preinst.${{ env.NETWORK }} packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/preinst
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/heimdall-config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/heimdall-config.toml
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying config for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/config/${{ env.NETWORK }}/config.toml packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/var/lib/heimdall/config/config.toml
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+      - name: Copying the postrm for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/package_scripts/postrm.profile packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/DEBIAN/postrm
+        env:
+          ARCH: all
+          NODE: validator
+          NETWORK: mainnet
+      - name: Copying systemd file for ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }}
+        run: cp -rp packaging/templates/systemd/heimdalld-mainnet-validator.service packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}/lib/systemd/system/heimdalld.service
+        env:
+          ARCH: all
+          NODE: validator
+          NETWORK: mainnet
+      - name: Building heimdall ${{ env.NODE }} on ${{ env.NETWORK }} on ${{ env.ARCH }} profile
+        run: dpkg-deb --build --root-owner-group packaging/deb/heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}
+        env:
+          ARCH: all
+          NODE: validator
+          NETWORK: mainnet
+
+      # Shasum
+      - name: shasum the heimdall debian profile package
+        run: cd packaging/deb/ && sha256sum heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}.deb > heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}.deb.checksum
+        env:
+          ARCH: all
+          NODE: validator
+          NETWORK: mainnet
+
+      - name: shasum the heimdall debian profile package
+        run: cd packaging/deb/ && sha256sum heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}.deb > heimdall-${{ env.NETWORK }}-${{ env.NODE }}-config_${{ env.GIT_TAG }}-${{ env.ARCH }}.deb.checksum
+        env:
+          ARCH: all
+          NODE: sentry
+          NETWORK: mainnet
+
+
+      ############ Check and Upload ##########################
+      - name: Confirming package built
+        run: ls -ltr packaging/deb/ | grep heimdall
+
+      - name: Release heimdall Packages
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.GIT_TAG }}
+          prerelease: true
+          files: |
+            packaging/deb/heimdall-mainnet-**.deb
+            packaging/deb/heimdall-mainnet-**.deb.checksum
