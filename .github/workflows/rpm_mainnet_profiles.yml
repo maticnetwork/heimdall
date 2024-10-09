@@ -1,0 +1,155 @@
+name: packager_mainnet_rpm_profiles
+
+on:
+  push:
+    branches:
+      - 'master'
+    paths:
+      - '**'
+    tags:
+      - 'v*.*.*'
+      - 'v*.*.*-*'
+
+jobs:
+  build:
+    permissions:
+      id-token: write
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Adding TAG to ENV
+        run: echo "GIT_TAG=`echo $(git describe --tags --abbrev=0)`" >> $GITHUB_ENV
+
+      - name: Adding TAG1 to ENV
+        run: echo "GIT_TAG1=`echo $(git describe --tags --abbrev=0)`" | sed 's/-/./g' >> $GITHUB_ENV
+
+      - name: Installing some dependencies
+        run: sudo apt-get update && sudo apt-get install -y rpm
+
+      - name: echo some tags
+        run: echo ${{ env.GIT_TAG1 }} and ${{ env.GIT_TAG }}
+
+      - name: Setup rpm package directories
+        run: |
+          mkdir -p packaging/rpm/SPECS
+          mkdir -p packaging/rpm/BUILD
+          mkdir -p packaging/rpm/RPMS
+          mkdir -p packaging/rpm/SRPMS
+
+      - name: Starting Mainnet Builds
+        run: echo "##########################################################################"
+
+      - name: Start tasks needed for Mainnet Sentry node
+        run: echo "#########################################################################"
+
+      - name: Setting up Mainnet Sentry Node Spec files
+        run: |
+          touch packaging/rpm/heimdall-mainnet-sentry.spec 
+          echo "Name: heimdall-mainnet-sentry-config" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "Version: ${{ env.GIT_TAG1 }}" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "Release: 1" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "License: GPL/AGPL" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "BuildArch: noarch" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "Summary: heimdall mainnet sentry config rpm package" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+
+          echo "%description" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "heimdall Mainnet Sentry rpm package" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          
+          echo "" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "%pre" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "sudo -u heimdall heimdalld init --chain=mainnet --home /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "%install" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "mkdir -p %{buildroot}/var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-mainnet-sentry.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/config.toml %{buildroot}/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/heimdall-config.toml %{buildroot}/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          
+          echo "%files" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          
+          echo "%attr(0755, heimdall, heimdall) /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "%post" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+          echo "/bin/systemctl daemon-reload" >> packaging/rpm/SPECS/heimdall-mainnet-sentry.spec
+
+      - name: Build Mainnet Sentry Node profile RPM
+        run: |
+          rpmbuild --define "_topdir /home/runner/work/heimdall/heimdall/packaging/rpm_build" \
+           --define "_builddir %{_topdir}/BUILD" \
+           --define "_rpmdir %{_topdir}/RPMS" \
+           --define "_srcrpmdir %{_topdir}/SRPMS" \
+           --define "__spec_install_post /bin/true" \
+           -bb packaging/rpm/SPECS/heimdall-mainnet-sentry.spec 
+
+      - name: Setting up Mainnet Validator Node node
+        run: echo "#########################################################################"
+
+      - name: Setting up Mainnet Validator Node Spec files
+        run: |
+          touch packaging/rpm/heimdall-mainnet-validator.spec 
+          echo "Name: heimdall-mainnet-validator-config" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "Version: ${{ env.GIT_TAG1 }}" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "Release: 1%{?dist}" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "License: GPL/AGPL" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "BuildArch: noarch" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "Summary: heimdall mainnet validator config rpm package" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+
+          echo "%description" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "heimdall Mainnet Validator rpm package" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          
+          echo "" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "%pre" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "sudo -u heimdall heimdalld init --chain=mainnet --home /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "%install" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "mkdir -p %{buildroot}/var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-mainnet-validator.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/config.toml %{buildroot}/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/mainnet/heimdall-config.toml %{buildroot}/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          
+          echo "%files" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          echo "/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          
+          echo "%attr(0755, heimdall, heimdall) /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "%post" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+          echo "/bin/systemctl daemon-reload" >> packaging/rpm/SPECS/heimdall-mainnet-validator.spec
+
+
+      - name: Build Mainnet Validator Node profile RPM
+        run: |
+          rpmbuild --define "_topdir /home/runner/work/heimdall/heimdall/packaging/rpm_build" \
+           --define "_builddir %{_topdir}/BUILD" \
+           --define "_rpmdir %{_topdir}/RPMS" \
+           --define "_srcrpmdir %{_topdir}/SRPMS" \
+           --define "__spec_install_post /bin/true" \
+           -bb packaging/rpm/SPECS/heimdall-mainnet-validator.spec   
+
+
+      - name: rename packages due to rpm dist rules mainnet validator
+        run:  mv /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}-1.noarch.rpm /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm
+      - name: rename packages due to rpm dist rules mainnet sentry
+        run: mv /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}-1.noarch.rpm /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm
+
+      - name: shasum a package mainnet validator
+        run: shasum  /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm > /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm.checksum
+      - name: shasum a package mainnet sentry
+        run: shasum  /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm > /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-mainnet-sentry-config-${{ env.GIT_TAG1 }}.noarch.rpm.checksum
+
+      - name: Release heimdall Packages
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ env.GIT_TAG }}
+          prerelease: true
+          files: |
+            packaging/rpm_build/RPMS/noarch/heimdall-mainnet**.rpm
+            packaging/rpm_build/RPMS/noarch/heimdall-mainnet**.rpm.checksum
