@@ -223,14 +223,28 @@ func GetSpanList(cdc *codec.Codec) *cobra.Command {
 
 // GetNextSpanSeed implements the next span seed.
 func GetNextSpanSeed(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "next-span-seed",
-		Args:  cobra.NoArgs,
 		Short: "show the next span seed",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			spanIDStr := viper.GetString(FlagSpanId)
+			if spanIDStr == "" {
+				return fmt.Errorf("span id cannot be empty")
+			}
+
+			spanID, err := strconv.ParseUint(spanIDStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 			if err != nil {
 
 				fmt.Println("Error while fetching the span seed")
@@ -247,6 +261,14 @@ func GetNextSpanSeed(cdc *codec.Codec) *cobra.Command {
 
 		},
 	}
+
+	cmd.Flags().String(FlagSpanId, "", "--span-id=<span-id>")
+
+	if err := cmd.MarkFlagRequired(FlagSpanId); err != nil {
+		cliLogger.Error("GetNextSpanSeed | MarkFlagRequired | FlagSpanId", "Error", err)
+	}
+
+	return cmd
 }
 
 // PostSendProposeSpanTx send propose span transaction
@@ -309,7 +331,12 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+			if err != nil {
+				return err
+			}
+
+			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 			if err != nil {
 				return err
 			}

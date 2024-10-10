@@ -149,8 +149,13 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(req.ID))
+		if err != nil {
+			return
+		}
+
 		// fetch seed
-		res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+		res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 		if err != nil {
 			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())

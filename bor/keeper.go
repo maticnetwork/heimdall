@@ -1,6 +1,7 @@
 package bor
 
 import (
+	"bytes"
 	"errors"
 	"math/big"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	"github.com/tendermint/tendermint/libs/log"
 
 	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/chainmanager"
@@ -25,6 +27,7 @@ var (
 	LastSpanIDKey         = []byte{0x35} // Key to store last span start block
 	SpanPrefixKey         = []byte{0x36} // prefix key to store span
 	LastProcessedEthBlock = []byte{0x38} // key to store last processed eth block for seed
+	SpanLastProducerKey   = []byte{0x39} // key to store last producer of the span
 )
 
 // Keeper stores all related data
@@ -77,6 +80,11 @@ func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 // GetSpanKey appends prefix to start block
 func GetSpanKey(id uint64) []byte {
 	return append(SpanPrefixKey, []byte(strconv.FormatUint(id, 10))...)
+}
+
+func GetSpanLastProducerKey(id uint64) []byte {
+	idBytes := sdk.Uint64ToBigEndian(id)
+	return append(SpanLastProducerKey, idBytes...)
 }
 
 // AddNewSpan adds new span for bor to store
@@ -194,14 +202,60 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
-	// select next producers
-	newProducers, err := k.SelectNextProducers(ctx, seed)
-	if err != nil {
-		return err
-	}
+	var newProducers []hmTypes.Validator
+	if ctx.BlockHeight() < helper.GetNeedANameHeight() {
+		var err error
+		newProducers, err = k.SelectNextProducers(ctx, seed, nil)
+		if err != nil {
+			return err
+		}
 
-	// increment last eth block
-	k.IncrementLastEthBlock(ctx)
+		// increment last eth block
+		k.IncrementLastEthBlock(ctx)
+	} else {
+		// TODO: handle case when HF height is 0 (devnets)
+		// fetch span(id - 2)
+		secondLastSpan, err := k.GetSpan(ctx, id-2)
+		if err != nil {
+			return err
+		}
+
+		vals := make([]hmTypes.Validator, 0, len(secondLastSpan.ValidatorSet.Validators))
+		for _, val := range secondLastSpan.ValidatorSet.Validators {
+			vals = append(vals, *val)
+		}
+
+		// get last producer of the last span
+		lastProd, err := k.GetSpanLastProducer(ctx, id-1)
+		if err != nil {
+			return err
+		}
+
+		// select next producers
+		newProducers, err = k.SelectNextProducers(ctx, seed, vals)
+		if err != nil {
+			return err
+		}
+
+		prods := make([]*hmTypes.Validator, 0, len(newProducers))
+		for _, val := range newProducers {
+			prods = append(prods, &val)
+		}
+
+		borParams := k.GetParams(ctx)
+		valSet := hmTypes.NewValidatorSet(prods)
+		valSet.IncrementProposerPriority(int(borParams.SprintDuration))
+
+		if bytes.Equal(lastProd.Bytes(), valSet.GetProposer().Bytes()) {
+			// if last producer is the same, then rotate proposer
+			valSet.IncrementProposerPriority(1)
+			prods = valSet.Validators
+
+			for i, val := range prods {
+				newProducers[i] = *val
+			}
+		}
+	}
 
 	// generate new span
 	newSpan := hmTypes.NewSpan(
@@ -217,7 +271,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 }
 
 // SelectNextProducers selects producers for next span
-func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []hmTypes.Validator, err error) {
+func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash, prevVals []hmTypes.Validator) (vals []hmTypes.Validator, err error) {
 	// spanEligibleVals are current validators who are not getting deactivated in between next span
 	spanEligibleVals := k.sk.GetSpanEligibleValidators(ctx)
 	producerCount := k.GetParams(ctx).ProducerCount
@@ -227,8 +281,13 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash) (vals []
 		return spanEligibleVals, nil
 	}
 
-	// TODO remove old selection algorigthm
-	// select next producers using seed as blockheader hash
+	if prevVals != nil {
+		// rollback voting powers for the selection algorithm
+		spanEligibleVals = k.updateVotingPowers(spanEligibleVals, prevVals)
+	}
+
+	// TODO remove old selection algorithm
+	// select next producers using seed as block header hash
 	fn := SelectNextProducers
 	if ctx.BlockHeight() < helper.GetNewSelectionAlgoHeight() {
 		fn = XXXSelectNextProducers
@@ -293,18 +352,35 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
-func (k Keeper) GetNextSpanSeed(ctx sdk.Context) (common.Hash, error) {
-	lastEthBlock := k.GetLastEthBlock(ctx)
+func (k Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error) {
+	var blockHeader *ethTypes.Header
 
-	// increment last processed header block number
-	newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
-	k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
+	if ctx.BlockHeader().Height < helper.GetNeedANameHeight() {
+		lastEthBlock := k.GetLastEthBlock(ctx)
+		// increment last processed header block number
+		newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
+		k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
 
-	// fetch block header from mainchain
-	blockHeader, err := k.contractCaller.GetMainChainBlock(newEthBlock)
-	if err != nil {
-		k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
-		return common.Hash{}, err
+		// fetch block header from mainchain
+		var err error
+		blockHeader, err = k.contractCaller.GetMainChainBlock(newEthBlock)
+		if err != nil {
+			k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
+			return common.Hash{}, err
+		}
+	} else {
+		// get end block of the span(id - 2)
+		span, err := k.GetSpan(ctx, id-2)
+		if err != nil {
+			k.Logger(ctx).Error("Error fetching span while calculating next span seed", "error", err)
+			return common.Hash{}, err
+		}
+
+		blockHeader, err = k.contractCaller.GetMaticChainBlock(big.NewInt(int64(span.EndBlock)))
+		if err != nil {
+			k.Logger(ctx).Error("Error fetching block header from bor chain while calculating next span seed", "error", err)
+			return common.Hash{}, err
+		}
 	}
 
 	return blockHeader.Hash(), nil
@@ -348,4 +424,50 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 			return
 		}
 	}
+}
+
+// GetSpanLastProducer gets producer of the last sprint of the given span
+func (k *Keeper) GetSpanLastProducer(ctx sdk.Context, id uint64) (hmTypes.Validator, error) {
+	store := ctx.KVStore(k.storeKey)
+	lastProdKey := GetSpanLastProducerKey(id)
+
+	// If we are starting from 0 there will be no lastProdKey present
+	// if !store.Has(lastProdKey) {
+	// 	return hmTypes.Validator{}, errors.New("last producer not found for the span id")
+	// }
+
+	var producer hmTypes.Validator
+	if err := k.cdc.UnmarshalBinaryBare(store.Get(lastProdKey), &producer); err != nil {
+		return hmTypes.Validator{}, err
+	}
+
+	return hmTypes.Validator{}, nil
+
+}
+
+// StoreSpanLastProducer stores producer of the last sprint of the given span
+func (k *Keeper) StoreSpanLastProducer(ctx sdk.Context, id uint64, producer hmTypes.Validator) error {
+	store := ctx.KVStore(k.storeKey)
+
+	out, err := k.cdc.MarshalBinaryBare(producer)
+	if err != nil {
+		k.Logger(ctx).Error("Error marshalling validator", "error", err)
+		return err
+	}
+
+	// store set span id
+	store.Set(GetSpanLastProducerKey(id), out)
+	return nil
+}
+
+func (k *Keeper) updateVotingPowers(valsA, valsB []hmTypes.Validator) []hmTypes.Validator {
+	valsA = hmTypes.SortValidatorByAddress(valsA)
+	valsB = hmTypes.SortValidatorByAddress(valsB)
+
+	// rollback voting power
+	for i := range valsA {
+		valsA[i].VotingPower = valsB[i].VotingPower
+	}
+
+	return valsA
 }

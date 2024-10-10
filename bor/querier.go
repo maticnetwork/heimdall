@@ -160,13 +160,29 @@ func handleQueryLatestSpan(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) 
 	return bz, nil
 }
 
-func handleQueryNextProducers(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QuerySpanParams
+
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, params.RecordID)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next span seed from keeper", err.Error())))
 	}
 
-	nextProducers, err := keeper.SelectNextProducers(ctx, nextSpanSeed)
+	prevSpan, err := keeper.GetSpan(ctx, params.RecordID-2)
+	if err != nil {
+		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch last span from keeper", err.Error())))
+	}
+
+	prevVals := make([]hmTypes.Validator, 0, len(prevSpan.ValidatorSet.Validators))
+	for _, val := range prevSpan.ValidatorSet.Validators {
+		prevVals = append(prevVals, *val)
+	}
+
+	nextProducers, err := keeper.SelectNextProducers(ctx, nextSpanSeed, prevVals)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next producers from keeper", err.Error())))
 	}
@@ -179,8 +195,14 @@ func handleQueryNextProducers(ctx sdk.Context, _ abci.RequestQuery, keeper Keepe
 	return bz, nil
 }
 
-func handlerQueryNextSpanSeed(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QuerySpanParams
+
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, params.RecordID)
 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Error fetching next span seed", err.Error()))
