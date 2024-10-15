@@ -1,7 +1,6 @@
 package bor
 
 import (
-	"bytes"
 	"errors"
 	"math/big"
 	"strconv"
@@ -202,9 +201,13 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 
 // FreezeSet freezes validator set for next span
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
-	var newProducers []hmTypes.Validator
+	var (
+		newProducers []hmTypes.Validator
+		proposer     hmTypes.Validator
+		err          error
+	)
+
 	if ctx.BlockHeight() < helper.GetNeedANameHeight() {
-		var err error
 		newProducers, err = k.SelectNextProducers(ctx, seed, nil)
 		if err != nil {
 			return err
@@ -215,24 +218,33 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 	} else {
 		// TODO: handle case when HF height is 0 (devnets)
 		// fetch span(id - 2)
-		secondLastSpan, err := k.GetSpan(ctx, id-2)
-		if err != nil {
-			return err
+		var lastSpan *hmTypes.Span
+		if id < 2 {
+			lastSpan, err = k.GetSpan(ctx, id-1)
+			if err != nil {
+				return err
+			}
+		} else {
+			lastSpan, err = k.GetSpan(ctx, id-2)
+			if err != nil {
+				return err
+			}
+
 		}
 
-		vals := make([]hmTypes.Validator, 0, len(secondLastSpan.ValidatorSet.Validators))
-		for _, val := range secondLastSpan.ValidatorSet.Validators {
+		vals := make([]hmTypes.Validator, 0, len(lastSpan.ValidatorSet.Validators))
+		for _, val := range lastSpan.ValidatorSet.Validators {
 			vals = append(vals, *val)
-		}
-
-		// get last producer of the last span
-		lastProd, err := k.GetSpanLastProducer(ctx, id-1)
-		if err != nil {
-			return err
 		}
 
 		// select next producers
 		newProducers, err = k.SelectNextProducers(ctx, seed, vals)
+		if err != nil {
+			return err
+		}
+
+		// get last producer of the last span
+		lastProd, err := k.GetSpanLastProducer(ctx, id-1)
 		if err != nil {
 			return err
 		}
@@ -245,8 +257,9 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 		borParams := k.GetParams(ctx)
 		valSet := hmTypes.NewValidatorSet(prods)
 		valSet.IncrementProposerPriority(int(borParams.SprintDuration))
+		proposer = *valSet.GetProposer()
 
-		if bytes.Equal(lastProd.Bytes(), valSet.GetProposer().Bytes()) {
+		if lastProd.ID == proposer.ID {
 			// if last producer is the same, then rotate proposer
 			valSet.IncrementProposerPriority(1)
 			prods = valSet.Validators
@@ -254,6 +267,13 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 			for i, val := range prods {
 				newProducers[i] = *val
 			}
+
+			proposer = *valSet.GetProposer()
+
+		}
+
+		if err = k.StoreSpanLastProducer(ctx, id, proposer); err != nil {
+			return err
 		}
 	}
 
@@ -283,7 +303,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash, prevVals
 
 	if prevVals != nil {
 		// rollback voting powers for the selection algorithm
-		spanEligibleVals = k.updateVotingPowers(spanEligibleVals, prevVals)
+		spanEligibleVals = k.rollbackVotingPowers(spanEligibleVals, prevVals)
 	}
 
 	// TODO remove old selection algorithm
@@ -431,10 +451,28 @@ func (k *Keeper) GetSpanLastProducer(ctx sdk.Context, id uint64) (hmTypes.Valida
 	store := ctx.KVStore(k.storeKey)
 	lastProdKey := GetSpanLastProducerKey(id)
 
-	// If we are starting from 0 there will be no lastProdKey present
-	// if !store.Has(lastProdKey) {
-	// 	return hmTypes.Validator{}, errors.New("last producer not found for the span id")
-	// }
+	// At the beginning there will be no lastProdKey present
+	// so we need to initialize the store with the last producer of the last span
+	if !store.Has(lastProdKey) {
+		lastSpan, err := k.GetSpan(ctx, id)
+		if err != nil {
+			return hmTypes.Validator{}, err
+		}
+
+		prods := make([]*hmTypes.Validator, 0, len(lastSpan.SelectedProducers))
+		for _, val := range lastSpan.SelectedProducers {
+			prods = append(prods, &val)
+		}
+
+		borParams := k.GetParams(ctx)
+		valSet := hmTypes.NewValidatorSet(prods)
+		valSet.IncrementProposerPriority(int(borParams.SprintDuration))
+		if err := k.StoreSpanLastProducer(ctx, id, *valSet.GetProposer()); err != nil {
+			return hmTypes.Validator{}, err
+		}
+
+		return *valSet.GetProposer(), nil
+	}
 
 	var producer hmTypes.Validator
 	if err := k.cdc.UnmarshalBinaryBare(store.Get(lastProdKey), &producer); err != nil {
@@ -460,14 +498,22 @@ func (k *Keeper) StoreSpanLastProducer(ctx sdk.Context, id uint64, producer hmTy
 	return nil
 }
 
-func (k *Keeper) updateVotingPowers(valsA, valsB []hmTypes.Validator) []hmTypes.Validator {
-	valsA = hmTypes.SortValidatorByAddress(valsA)
-	valsB = hmTypes.SortValidatorByAddress(valsB)
-
-	// rollback voting power
-	for i := range valsA {
-		valsA[i].VotingPower = valsB[i].VotingPower
+// rollbackVotingPowers rolls back voting powers of validators from a previous snapshot of validators
+func (k *Keeper) rollbackVotingPowers(valsFrom, valsTo []hmTypes.Validator) []hmTypes.Validator {
+	idToVP := make(map[uint64]int64)
+	for _, val := range valsFrom {
+		idToVP[val.ID.Uint64()] = val.VotingPower
 	}
 
-	return valsA
+	for _, valB := range valsTo {
+		if vp, ok := idToVP[valB.ID.Uint64()]; ok {
+			idToVP[valB.ID.Uint64()] = vp
+		}
+	}
+
+	for i := range valsFrom {
+		valsFrom[i].VotingPower = idToVP[valsFrom[i].ID.Uint64()]
+	}
+
+	return valsFrom
 }
