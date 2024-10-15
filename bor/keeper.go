@@ -216,20 +216,16 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 		// increment last eth block
 		k.IncrementLastEthBlock(ctx)
 	} else {
-		// TODO: handle case when HF height is 0 (devnets)
 		// fetch span(id - 2)
 		var lastSpan *hmTypes.Span
+		spanId := id - 2
 		if id < 2 {
-			lastSpan, err = k.GetSpan(ctx, id-1)
-			if err != nil {
-				return err
-			}
-		} else {
-			lastSpan, err = k.GetSpan(ctx, id-2)
-			if err != nil {
-				return err
-			}
+			spanId = id - 1
+		}
 
+		lastSpan, err = k.GetSpan(ctx, spanId)
+		if err != nil {
+			return err
 		}
 
 		vals := make([]hmTypes.Validator, 0, len(lastSpan.ValidatorSet.Validators))
@@ -373,7 +369,11 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 }
 
 func (k Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error) {
-	var blockHeader *ethTypes.Header
+	var (
+		blockHeader *ethTypes.Header
+		lastSpan    *hmTypes.Span
+		err         error
+	)
 
 	if ctx.BlockHeader().Height < helper.GetNeedANameHeight() {
 		lastEthBlock := k.GetLastEthBlock(ctx)
@@ -389,14 +389,22 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error)
 			return common.Hash{}, err
 		}
 	} else {
-		// get end block of the span(id - 2)
-		span, err := k.GetSpan(ctx, id-2)
+		spanId := id - 2
+		if id < 2 {
+			spanId = id - 1
+		}
+		lastSpan, err = k.GetSpan(ctx, spanId)
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching span while calculating next span seed", "error", err)
 			return common.Hash{}, err
 		}
 
-		blockHeader, err = k.contractCaller.GetMaticChainBlock(big.NewInt(int64(span.EndBlock)))
+		borBlock := lastSpan.EndBlock
+		if spanId == id-1 {
+			borBlock = lastSpan.StartBlock
+		}
+
+		blockHeader, err = k.contractCaller.GetMaticChainBlock(big.NewInt(int64(borBlock)))
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching block header from bor chain while calculating next span seed", "error", err)
 			return common.Hash{}, err
