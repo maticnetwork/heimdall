@@ -20,9 +20,10 @@ import (
 )
 
 var (
-	_ module.AppModule             = AppModule{}
-	_ module.AppModuleBasic        = AppModuleBasic{}
-	_ hmModule.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule                 = AppModule{}
+	_ module.AppModuleBasic            = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic     = AppModule{}
+	_ hmModule.StreamedGenesisExporter = AppModule{}
 	// _ module.AppModuleSimulation = AppModule{}
 )
 
@@ -139,6 +140,19 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
 	return types.ModuleCdc.MustMarshalJSON(gs)
+}
+
+// NextGenesisData returns the next chunk of genesis data.
+func (am AppModule) NextGenesisData(ctx sdk.Context, lastKey []byte) (*hmModule.ModuleGenesisData, error) {
+	data, lastKey, err := am.keeper.IterateRecordsAndCollect(ctx, lastKey, 1000)
+	if err != nil {
+		return nil, err
+	}
+	return &hmModule.ModuleGenesisData{
+		Path:    "clerk.event_records",
+		Data:    types.ModuleCdc.MustMarshalJSON(data),
+		LastKey: lastKey,
+	}, nil
 }
 
 // BeginBlock returns the begin blocker for the auth module.

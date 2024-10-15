@@ -29,13 +29,8 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 	params := keeper.GetParams(ctx)
-
-	allSpans := keeper.GetAllSpans(ctx)
-	hmTypes.SortSpanByID(allSpans)
-
 	return types.NewGenesisState(
 		params,
-		// TODO think better way to export all spans
-		allSpans,
+		nil,
 	)
 }

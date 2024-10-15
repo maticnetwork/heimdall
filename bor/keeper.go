@@ -349,3 +349,43 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 		}
 	}
 }
+
+// IterateSpansAndCollect iterates over spans, collects up to 'max' entries,
+// and returns a slice containing the collected spans.
+// It continues from the last key processed in the previous batch.
+func (k *Keeper) IterateSpansAndCollect(ctx sdk.Context, lastKey []byte, max int) ([]*hmTypes.Span, []byte, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	var startKey []byte
+	if lastKey != nil {
+		startKey = lastKey
+	} else {
+		startKey = SpanPrefixKey
+	}
+
+	endKey := sdk.PrefixEndBytes(SpanPrefixKey)
+
+	iterator := store.Iterator(startKey, endKey)
+	defer iterator.Close()
+
+	collectedSpans := make([]*hmTypes.Span, 0, max)
+	entriesCollected := 0
+
+	for ; iterator.Valid() && entriesCollected < max; iterator.Next() {
+		var span hmTypes.Span
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &span); err != nil {
+			k.Logger(ctx).Error("IterateSpansAndCollect | UnmarshalBinaryBare", "error", err)
+			return nil, nil, err
+		}
+
+		collectedSpans = append(collectedSpans, &span)
+		entriesCollected++
+	}
+
+	// We want to return the key after last processed key because the iterator is inclusive for the start key
+	if iterator.Valid() {
+		return collectedSpans, iterator.Key(), nil
+	}
+
+	return collectedSpans, nil, nil
+}

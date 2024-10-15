@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
 	"path"
+	"runtime"
+	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -22,9 +25,12 @@ import (
 	"github.com/ethereum/go-ethereum/console/prompt"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
@@ -220,16 +226,65 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 			}
 
 			happ := app.NewHeimdallApp(logger, db)
-			appState, _, err := happ.ExportAppStateAndValidators()
-			if err != nil {
+
+			saveMemProfile("memory-profile-1")
+
+			marshaledAppState := []byte{}
+
+			// Anonymous function just to ensure that appState is not retained in memory
+			func() {
+				appState, err := getAppState(happ)
+				if err != nil {
+					panic(err)
+				}
+
+				saveMemProfile("memory-profile-2")
+
+				runtime.GC()
+
+				sdkCtx := happ.NewContext(true, abci.Header{Height: happ.LastBlockHeight()})
+				moduleManager := happ.GetModuleManager()
+
+				for _, moduleName := range moduleManager.OrderExportGenesis {
+					module, ok := moduleManager.Modules[moduleName].(hmModule.StreamedGenesisExporter)
+					if !ok {
+						continue
+					}
+
+					runtime.GC()
+
+					fmt.Println("Exporting module data for", moduleName)
+					if err := fetchModuleData(appState, module, sdkCtx); err != nil {
+						panic(err)
+					}
+
+					saveMemProfile(fmt.Sprintf("memory-profile-%s", moduleName))
+				}
+
+				runtime.GC()
+
+				saveMemProfile("memory-profile-3")
+
+				marshaledAppState, err = jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appState)
+				if err != nil {
+					panic(err)
+				}
+
+				appState = nil
+			}()
+
+			runtime.GC()
+
+			saveMemProfile("memory-profile-4")
+
+			savePath := file.Rootify("dump-genesis.json", config.RootDir)
+			if err := writeGenesisFile(savePath, chainID, marshaledAppState); err != nil {
 				panic(err)
 			}
 
-			err = writeGenesisFile(file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
-			if err == nil {
-				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
-			}
-			return err
+			fmt.Println("New genesis json file created: ", savePath)
+
+			return nil
 		},
 	}
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "Node's home directory")
@@ -237,6 +292,173 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
 
 	return cmd
+}
+
+func saveMemProfile(filename string) {
+	f, err := os.Create(filename)
+	if err != nil {
+		fmt.Println("could not create memory profile: ", err)
+		return
+	}
+	defer f.Close()
+
+	runtime.GC()
+
+	if err := pprof.WriteHeapProfile(f); err != nil {
+		fmt.Println("could not write memory profile: ", err)
+	}
+}
+
+// getAppState generates and returns the app state.
+func getAppState(happ *app.HeimdallApp) (map[string]interface{}, error) {
+	appState, _, err := happ.ExportAppStateAndValidators()
+	if err != nil {
+		return nil, err
+	}
+
+	appStateData, err := appState.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	unmarshaledData := make(map[string]interface{})
+	if err := json.Unmarshal(appStateData, &unmarshaledData); err != nil {
+		return nil, err
+	}
+
+	return unmarshaledData, nil
+}
+
+func fetchModuleData(appData map[string]interface{}, module hmModule.StreamedGenesisExporter, sdkCtx sdk.Context) error {
+	var lastKey []byte
+	allData := []json.RawMessage{}
+	allDataLength := 0
+	var currAppendingPath string
+
+	for {
+		data, err := module.NextGenesisData(sdkCtx, lastKey)
+		if err != nil {
+			panic(err)
+		}
+
+		lastKey = data.LastKey
+
+		if lastKey == nil {
+			allData = append(allData, data.Data)
+			allDataLength += len(data.Data)
+
+			if allDataLength == 0 {
+				break
+			}
+
+			combinedData, err := combineJSONArrays(allData, allDataLength)
+			if err != nil {
+				return err
+			}
+
+			if err := AddProperty(appData, currAppendingPath, combinedData); err != nil {
+				return err
+			}
+
+			break
+		}
+
+		if currAppendingPath != "" && currAppendingPath != data.Path {
+			combinedData, err := combineJSONArrays(allData, allDataLength)
+			if err != nil {
+				return err
+			}
+
+			if err := AddProperty(appData, currAppendingPath, combinedData); err != nil {
+				return err
+			}
+
+			allData = []json.RawMessage{}
+			allDataLength = 0
+		}
+
+		currAppendingPath = data.Path
+
+		allData = append(allData, data.Data)
+		allDataLength += len(data.Data)
+	}
+
+	return nil
+}
+
+// combineJSONArrays combines multiple JSON arrays into a single JSON array.
+func combineJSONArrays(arrays []json.RawMessage, allArraysLength int) (json.RawMessage, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, allArraysLength))
+	buf.WriteByte('[')
+	first := true
+
+	for _, raw := range arrays {
+		// Ensure the raw message is not empty
+		if len(raw) == 0 {
+			continue
+		}
+
+		// Check that it's an array starting with '[' and ending with ']'
+		if raw[0] != '[' || raw[len(raw)-1] != ']' {
+			return nil, fmt.Errorf("invalid JSON array: %s", raw)
+		}
+
+		// Extract the content inside the brackets
+		content := raw[1 : len(raw)-1]
+
+		if !first {
+			buf.WriteByte(',')
+		}
+		buf.Write(content)
+		first = false
+	}
+	buf.WriteByte(']')
+
+	// Validate that the combined content is valid JSON
+	combinedJSON := buf.Bytes()
+	if !json.Valid(combinedJSON) {
+		return nil, errors.New("combined JSON is invalid")
+	}
+
+	return json.RawMessage(combinedJSON), nil
+}
+
+// AddProperty adds a property to the data map.
+func AddProperty(data map[string]interface{}, path string, value json.RawMessage) error {
+	if path == "" {
+		return fmt.Errorf("path cannot be empty")
+	}
+
+	keys := strings.Split(path, ".")
+	lastKey := keys[len(keys)-1]
+	parentPath := strings.Join(keys[:len(keys)-1], ".")
+
+	current, err := traversePath(data, parentPath)
+	if err != nil {
+		return err
+	}
+	current[lastKey] = value
+	return nil
+}
+
+// traversePath traverses the path in the data map.
+func traversePath(data map[string]interface{}, path string) (map[string]interface{}, error) {
+	if path == "." {
+		return data, nil
+	}
+
+	keys := strings.Split(path, ".")
+	current := data
+
+	for _, key := range keys {
+		if next, ok := current[key].(map[string]interface{}); ok {
+			current = next
+			continue
+		}
+		return nil, fmt.Errorf("invalid path: %s", path)
+	}
+
+	return current, nil
 }
 
 // generateKeystore generate keystore file from private key
