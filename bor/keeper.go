@@ -245,6 +245,8 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 			return err
 		}
 
+		ctx.Logger().Info("!!!!Fetched last producer for span", "span", id-1, "producer id", lastProd.Signer, "ID", lastProd.ID)
+
 		prods := make([]*hmTypes.Validator, 0, len(newProducers))
 		for _, val := range newProducers {
 			prods = append(prods, &val)
@@ -254,6 +256,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 		valSet := hmTypes.NewValidatorSet(prods)
 		valSet.IncrementProposerPriority(int(borParams.SprintDuration))
 		proposer = *valSet.GetProposer()
+		ctx.Logger().Info("!!!!Calculated last producer for span", "span", id, "producer id", proposer.Signer, "ID", proposer.ID)
 
 		if lastProd.ID == proposer.ID {
 			// if last producer is the same, then rotate proposer
@@ -265,6 +268,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 			}
 
 			proposer = *valSet.GetProposer()
+			ctx.Logger().Info("!!!!Rotated last producer for span", "span", id, "producer id", proposer.Signer, "ID", proposer.ID)
 
 		}
 
@@ -406,7 +410,7 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error)
 
 		blockHeader, err = k.contractCaller.GetMaticChainBlock(big.NewInt(int64(borBlock)))
 		if err != nil {
-			k.Logger(ctx).Error("Error fetching block header from bor chain while calculating next span seed", "error", err)
+			k.Logger(ctx).Error("Error fetching block header from bor chain while calculating next span seed", "error", err, "block", borBlock)
 			return common.Hash{}, err
 		}
 	}
@@ -479,6 +483,7 @@ func (k *Keeper) GetSpanLastProducer(ctx sdk.Context, id uint64) (hmTypes.Valida
 			return hmTypes.Validator{}, err
 		}
 
+		ctx.Logger().Info("!!!!Initialized last producer for span", "span", id, "producer id", valSet.GetProposer().Signer, "ID", valSet.GetProposer().ID)
 		return *valSet.GetProposer(), nil
 	}
 

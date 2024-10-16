@@ -480,8 +480,16 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// Fetching SelectedProducers
 		//
 
-		nextProducerBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextProducers), nil)
+		query, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
 		if err != nil {
+			fmt.Println("ERROR WHILE MARSHALLING!!: ", err)
+			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to marshal JSON").Error())
+			return
+		}
+
+		nextProducerBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextProducers), query)
+		if err != nil {
+			fmt.Println("ERROR WHILE QUERYING NEXT PRODUCERS!!: ", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

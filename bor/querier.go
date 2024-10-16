@@ -167,12 +167,23 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, params.RecordID)
+	spanId := params.RecordID
+
+	ctx.Logger().Info("!!!Querying next producers", "spanId", spanId)
+
+	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, spanId)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next span seed from keeper", err.Error())))
 	}
 
-	prevSpan, err := keeper.GetSpan(ctx, params.RecordID-2)
+	ctx.Logger().Info("!!!Next span seed", "seed", nextSpanSeed)
+
+	spanId = params.RecordID - 2
+	if params.RecordID < 2 {
+		spanId = params.RecordID - 1
+	}
+
+	prevSpan, err := keeper.GetSpan(ctx, spanId)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch last span from keeper", err.Error())))
 	}
