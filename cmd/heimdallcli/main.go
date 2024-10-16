@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	defaultLogger "log"
 	"os"
 	"path"
 	"runtime"
@@ -55,6 +56,7 @@ var (
 		Short: "Heimdall light-client",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Use != version.Cmd.Use {
+				defaultLogger.SetOutput(os.Stdout)
 				// initialise config
 				initTendermintViperConfig(cmd)
 			}
