@@ -421,7 +421,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
-		needANameHeight = -1
+		needANameHeight = 1000
 	}
 }
 
