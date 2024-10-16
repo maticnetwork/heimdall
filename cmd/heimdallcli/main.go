@@ -260,8 +260,6 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 				if err != nil {
 					panic(err)
 				}
-
-				appState = nil
 			}()
 
 			runtime.GC()
