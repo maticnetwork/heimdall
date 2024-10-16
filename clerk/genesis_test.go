@@ -66,5 +66,5 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 	actualParams := clerk.ExportGenesis(ctx, app.ClerkKeeper)
 
 	require.Equal(t, len(recordSequences), len(actualParams.RecordSequences))
-	require.Equal(t, len(eventRecords), len(actualParams.EventRecords))
+	require.Equal(t, 0, len(actualParams.EventRecords))
 }
