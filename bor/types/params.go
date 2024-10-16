@@ -15,10 +15,10 @@ const (
 
 // Default parameter values
 const (
-	DefaultSprintDuration    uint64 = 64
+	DefaultSprintDuration    uint64 = 16 // TODO(@Raneet10): revert this!
 	DefaultSpanDuration      uint64 = 100 * DefaultSprintDuration
 	DefaultFirstSpanDuration uint64 = 256
-	DefaultProducerCount     uint64 = 4
+	DefaultProducerCount     uint64 = 3 // TODO(@Raneet10): revert this!
 )
 
 // Parameter keys
