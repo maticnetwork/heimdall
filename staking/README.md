@@ -77,7 +77,7 @@ where
 * `BlockNumber` is the L1 block number in which the staking transaction was included.
 * `Nonce` is the count representing all the staking related transactions performed from the new validator's account. This is meant to keep Heimdall and L1 in sync.
 
-Upon broadcasting the message, it goes through `HandleMsgValidatorJoin` handler which checks the basic sanity of the transaction (verifying the validator isn't already existing, voting power, etc.).
+Upon broadcasting the message, it goes through `HandleMsgValidatorJoin` handler which checks the basic sanity of the transaction (verifying the validator doesn't already exist, voting power, etc.).
 
 The `SideHandleMsgValidatorJoin` side-handler in all the existing (honest) validators then ensures the authenticity of staking transaction on L1. It fetches the transaction receipt from L1 contract and validates it with the data provided in the `MsgValidatorJoin` transaction. Upon successful validation, `YES` is voted.
 

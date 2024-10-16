@@ -18,7 +18,7 @@ Fees serve two purposes for an operator of the network.
 
 Fees limit the growth of the state stored by every full node and allow for general purpose censorship of transactions of little economic value. Fees are best suited as an anti-spam mechanism where validators are disinterested in the use of the network and identities of users.
 
-Since Heimdall doesn't support custom contract or code for any transaction, it uses fixed cost transactions. For fixed cost transactions, the validator can top up their accounts on the Ethereum chain and get tokens on Heimdall using the Topup module.
+Since Heimdall doesn't support custom contracts or code for any transaction, it uses fixed cost transactions. For fixed cost transactions, the validator can top up their accounts on the Ethereum chain and get tokens on Heimdall using the Topup module.
 
 ### Types
 
@@ -26,7 +26,7 @@ Besides accounts (specified in State), the types exposed by the auth module are 
 
 #### StdSignature
 
-A StdSignature is the types of a byte array.
+A StdSignature is the type of a byte array.
 ```
 // StdSignature represents a sig
 type StdSignature []byte
