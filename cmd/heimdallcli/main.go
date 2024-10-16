@@ -9,7 +9,6 @@ import (
 	"os"
 	"path"
 	"runtime"
-	"runtime/pprof"
 	"strings"
 	"time"
 
@@ -227,8 +226,6 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 
 			happ := app.NewHeimdallApp(logger, db)
 
-			saveMemProfile("memory-profile-1")
-
 			marshaledAppState := []byte{}
 
 			// Anonymous function just to ensure that appState is not retained in memory
@@ -237,9 +234,6 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 				if err != nil {
 					panic(err)
 				}
-
-				saveMemProfile("memory-profile-2")
-
 				runtime.GC()
 
 				sdkCtx := happ.NewContext(true, abci.Header{Height: happ.LastBlockHeight()})
@@ -253,17 +247,12 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 
 					runtime.GC()
 
-					fmt.Println("Exporting module data for", moduleName)
 					if err := fetchModuleData(appState, module, sdkCtx); err != nil {
 						panic(err)
 					}
-
-					saveMemProfile(fmt.Sprintf("memory-profile-%s", moduleName))
 				}
 
 				runtime.GC()
-
-				saveMemProfile("memory-profile-3")
 
 				marshaledAppState, err = jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appState)
 				if err != nil {
@@ -274,8 +263,6 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 			}()
 
 			runtime.GC()
-
-			saveMemProfile("memory-profile-4")
 
 			savePath := file.Rootify("dump-genesis.json", config.RootDir)
 			if err := writeGenesisFile(savePath, chainID, marshaledAppState); err != nil {
@@ -292,21 +279,6 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
 
 	return cmd
-}
-
-func saveMemProfile(filename string) {
-	f, err := os.Create(filename)
-	if err != nil {
-		fmt.Println("could not create memory profile: ", err)
-		return
-	}
-	defer f.Close()
-
-	runtime.GC()
-
-	if err := pprof.WriteHeapProfile(f); err != nil {
-		fmt.Println("could not write memory profile: ", err)
-	}
 }
 
 // getAppState generates and returns the app state.
@@ -329,6 +301,7 @@ func getAppState(happ *app.HeimdallApp) (map[string]interface{}, error) {
 	return unmarshaledData, nil
 }
 
+// fetchModuleData fetches module genesis data in streamed fashion.
 func fetchModuleData(appData map[string]interface{}, module hmModule.StreamedGenesisExporter, sdkCtx sdk.Context) error {
 	var lastKey []byte
 	allData := []json.RawMessage{}
@@ -393,17 +366,14 @@ func combineJSONArrays(arrays []json.RawMessage, allArraysLength int) (json.RawM
 	first := true
 
 	for _, raw := range arrays {
-		// Ensure the raw message is not empty
 		if len(raw) == 0 {
 			continue
 		}
 
-		// Check that it's an array starting with '[' and ending with ']'
 		if raw[0] != '[' || raw[len(raw)-1] != ']' {
 			return nil, fmt.Errorf("invalid JSON array: %s", raw)
 		}
 
-		// Extract the content inside the brackets
 		content := raw[1 : len(raw)-1]
 
 		if !first {
@@ -414,7 +384,6 @@ func combineJSONArrays(arrays []json.RawMessage, allArraysLength int) (json.RawM
 	}
 	buf.WriteByte(']')
 
-	// Validate that the combined content is valid JSON
 	combinedJSON := buf.Bytes()
 	if !json.Valid(combinedJSON) {
 		return nil, errors.New("combined JSON is invalid")
