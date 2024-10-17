@@ -164,14 +164,14 @@ func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
 }
 
 // NextGenesisData returns the next chunk of genesis data.
-func (am AppModule) NextGenesisData(ctx sdk.Context, lastKey []byte) (*hmModule.ModuleGenesisData, error) {
-	data, lastKey, err := am.keeper.IterateSpansAndCollect(ctx, lastKey, 1000)
+func (am AppModule) NextGenesisData(ctx sdk.Context, nextKey []byte, max int) (*hmModule.ModuleGenesisData, error) {
+	data, nextKey, err := am.keeper.IterateSpansAndCollect(ctx, nextKey, max)
 	if err != nil {
 		return nil, err
 	}
 	return &hmModule.ModuleGenesisData{
 		Path:    "bor.spans",
 		Data:    types.ModuleCdc.MustMarshalJSON(data),
-		LastKey: lastKey,
+		NextKey: nextKey,
 	}, nil
 }

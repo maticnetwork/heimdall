@@ -30,13 +30,13 @@ type ModuleGenesisData struct {
 	// Data is the JSON data chunk to be appended.
 	Data json.RawMessage
 
-	// LastKey is the last key used to append data.
-	LastKey []byte
+	// NextKey is the last key used to append data.
+	NextKey []byte
 }
 
 // StreamedGenesisExporter defines an interface for modules to export their genesis data incrementally.
 type StreamedGenesisExporter interface {
 	// NextGenesisData returns the next chunk of genesis data.
-	// Returns nil when no more data is available.
-	NextGenesisData(ctx sdk.Context, lastKey []byte) (*ModuleGenesisData, error)
+	// Returns nil NextKey when no more data is available.
+	NextGenesisData(ctx sdk.Context, nextKey []byte, max int) (*ModuleGenesisData, error)
 }

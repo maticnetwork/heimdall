@@ -143,15 +143,15 @@ func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 }
 
 // NextGenesisData returns the next chunk of genesis data.
-func (am AppModule) NextGenesisData(ctx sdk.Context, lastKey []byte) (*hmModule.ModuleGenesisData, error) {
-	data, lastKey, err := am.keeper.IterateRecordsAndCollect(ctx, lastKey, 1000)
+func (am AppModule) NextGenesisData(ctx sdk.Context, nextKey []byte, max int) (*hmModule.ModuleGenesisData, error) {
+	data, nextKey, err := am.keeper.IterateRecordsAndCollect(ctx, nextKey, max)
 	if err != nil {
 		return nil, err
 	}
 	return &hmModule.ModuleGenesisData{
 		Path:    "clerk.event_records",
 		Data:    types.ModuleCdc.MustMarshalJSON(data),
-		LastKey: lastKey,
+		NextKey: nextKey,
 	}, nil
 }
 

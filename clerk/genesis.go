@@ -24,5 +24,5 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 // ExportGenesis returns a GenesisState for a given context and keeper.
 func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
-	return types.NewGenesisState([]*types.EventRecord{}, keeper.GetRecordSequences(ctx))
+	return types.NewGenesisState(nil, keeper.GetRecordSequences(ctx))
 }

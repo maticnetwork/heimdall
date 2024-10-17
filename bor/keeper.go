@@ -353,12 +353,12 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 // IterateSpansAndCollect iterates over spans, collects up to 'max' entries,
 // and returns a slice containing the collected spans.
 // It continues from the last key processed in the previous batch.
-func (k *Keeper) IterateSpansAndCollect(ctx sdk.Context, lastKey []byte, max int) ([]*hmTypes.Span, []byte, error) {
+func (k *Keeper) IterateSpansAndCollect(ctx sdk.Context, nextKey []byte, max int) ([]*hmTypes.Span, []byte, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	var startKey []byte
-	if lastKey != nil {
-		startKey = lastKey
+	if nextKey != nil {
+		startKey = nextKey
 	} else {
 		startKey = SpanPrefixKey
 	}

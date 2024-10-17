@@ -228,39 +228,10 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 
 			happ := app.NewHeimdallApp(logger, db)
 
-			marshaledAppState := []byte{}
-
-			// Anonymous function just to ensure that appState is not retained in memory
-			func() {
-				appState, err := getAppState(happ)
-				if err != nil {
-					panic(err)
-				}
-				runtime.GC()
-
-				sdkCtx := happ.NewContext(true, abci.Header{Height: happ.LastBlockHeight()})
-				moduleManager := happ.GetModuleManager()
-
-				for _, moduleName := range moduleManager.OrderExportGenesis {
-					module, ok := moduleManager.Modules[moduleName].(hmModule.StreamedGenesisExporter)
-					if !ok {
-						continue
-					}
-
-					runtime.GC()
-
-					if err := fetchModuleData(appState, module, sdkCtx); err != nil {
-						panic(err)
-					}
-				}
-
-				runtime.GC()
-
-				marshaledAppState, err = jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appState)
-				if err != nil {
-					panic(err)
-				}
-			}()
+			marshaledAppState, err := generateMarshalledAppState(happ, 1000)
+			if err != nil {
+				panic(err)
+			}
 
 			runtime.GC()
 
@@ -279,6 +250,42 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
 
 	return cmd
+}
+
+// generateMarshalledAppState fetches the app state, populates it with module data,
+// and marshals it into JSON.
+func generateMarshalledAppState(happ *app.HeimdallApp, maxNextGenesisItems int) ([]byte, error) {
+	appState, err := getAppState(happ)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime.GC()
+
+	sdkCtx := happ.NewContext(true, abci.Header{Height: happ.LastBlockHeight()})
+	moduleManager := happ.GetModuleManager()
+
+	for _, moduleName := range moduleManager.OrderExportGenesis {
+		module, ok := moduleManager.Modules[moduleName].(hmModule.StreamedGenesisExporter)
+		if !ok {
+			continue
+		}
+
+		runtime.GC()
+
+		if err := fetchModuleData(sdkCtx, appState, module, maxNextGenesisItems); err != nil {
+			return nil, err
+		}
+	}
+
+	runtime.GC()
+
+	marshaledAppState, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appState)
+	if err != nil {
+		return nil, err
+	}
+
+	return marshaledAppState, nil
 }
 
 // getAppState generates and returns the app state.
@@ -302,19 +309,19 @@ func getAppState(happ *app.HeimdallApp) (map[string]interface{}, error) {
 }
 
 // fetchModuleData fetches module genesis data in streamed fashion.
-func fetchModuleData(appData map[string]interface{}, module hmModule.StreamedGenesisExporter, sdkCtx sdk.Context) error {
+func fetchModuleData(sdkCtx sdk.Context, appData map[string]interface{}, module hmModule.StreamedGenesisExporter, maxNextGenesisItems int) error {
 	var lastKey []byte
 	allData := []json.RawMessage{}
 	allDataLength := 0
 	var currAppendingPath string
 
 	for {
-		data, err := module.NextGenesisData(sdkCtx, lastKey)
+		data, err := module.NextGenesisData(sdkCtx, lastKey, maxNextGenesisItems)
 		if err != nil {
 			panic(err)
 		}
 
-		lastKey = data.LastKey
+		lastKey = data.NextKey
 
 		if lastKey == nil {
 			allData = append(allData, data.Data)
