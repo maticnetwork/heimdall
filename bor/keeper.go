@@ -203,7 +203,6 @@ func (k *Keeper) GetLastSpan(ctx sdk.Context) (*hmTypes.Span, error) {
 func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlock uint64, borChainID string, seed common.Hash) error {
 	var (
 		newProducers []hmTypes.Validator
-		proposer     hmTypes.Validator
 		err          error
 	)
 
@@ -218,63 +217,65 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 	} else {
 		// fetch span(id - 2)
 		var lastSpan *hmTypes.Span
-		spanId := id - 2
+		lastSpanId := id - 2
 		if id < 2 {
-			spanId = id - 1
+			lastSpanId = id - 1
 		}
 
-		lastSpan, err = k.GetSpan(ctx, spanId)
+		lastSpan, err = k.GetSpan(ctx, lastSpanId)
 		if err != nil {
 			return err
 		}
 
-		vals := make([]hmTypes.Validator, 0, len(lastSpan.ValidatorSet.Validators))
+		prevVals := make([]hmTypes.Validator, 0, len(lastSpan.ValidatorSet.Validators))
 		for _, val := range lastSpan.ValidatorSet.Validators {
-			vals = append(vals, *val)
+			prevVals = append(prevVals, *val)
 		}
 
 		// select next producers
-		newProducers, err = k.SelectNextProducers(ctx, seed, vals)
+		newProducers, err = k.SelectNextProducers(ctx, seed, prevVals)
 		if err != nil {
 			return err
 		}
-
-		// get last producer of the last span
-		lastProd, err := k.GetSpanLastProducer(ctx, id-1)
-		if err != nil {
-			return err
-		}
-
-		ctx.Logger().Info("!!!!Fetched last producer for span", "span", id-1, "producer id", lastProd.Signer, "ID", lastProd.ID)
 
 		prods := make([]*hmTypes.Validator, 0, len(newProducers))
 		for _, val := range newProducers {
 			prods = append(prods, &val)
 		}
 
-		borParams := k.GetParams(ctx)
 		valSet := hmTypes.NewValidatorSet(prods)
-		valSet.IncrementProposerPriority(int(borParams.SprintDuration))
-		proposer = *valSet.GetProposer()
-		ctx.Logger().Info("!!!!Calculated last producer for span", "span", id, "producer id", proposer.Signer, "ID", proposer.ID)
 
-		if lastProd.ID == proposer.ID {
-			// if last producer is the same, then rotate proposer
-			valSet.IncrementProposerPriority(1)
-			prods = valSet.Validators
+		// find out the last producer of this span
+		curLastProducer, err := k.calculateSpanLastProducer(ctx, valSet.Copy(), id)
+		if err != nil {
+			return err
+		}
 
-			for i, val := range prods {
+		// get last producer of the last span
+		prevLastProducer, err := k.GetSpanLastProducer(ctx, id)
+		if err != nil {
+			return err
+		}
+
+		ctx.Logger().Info("!!!!Fetched last producer for span", "span", id, "producer id", prevLastProducer.Signer, "ID", prevLastProducer.ID)
+
+		hasRotated, curLastProducer, valSet, err := k.checkAndRotateProposerPriority(ctx, prevLastProducer, curLastProducer, valSet)
+		if err != nil {
+			return err
+		}
+
+		if hasRotated {
+			for i, val := range valSet.Validators {
 				newProducers[i] = *val
 			}
 
-			proposer = *valSet.GetProposer()
-			ctx.Logger().Info("!!!!Rotated last producer for span", "span", id, "producer id", proposer.Signer, "ID", proposer.ID)
-
+			ctx.Logger().Info("!!!!Rotated last producer for span", "span", id, "producer id", valSet.Proposer.Signer, "ID", valSet.Proposer.ID)
 		}
 
-		if err = k.StoreSpanLastProducer(ctx, id, proposer); err != nil {
+		if err := k.StoreSpanLastProducer(ctx, id, curLastProducer); err != nil {
 			return err
 		}
+
 	}
 
 	// generate new span
@@ -529,4 +530,32 @@ func (k *Keeper) rollbackVotingPowers(valsFrom, valsTo []hmTypes.Validator) []hm
 	}
 
 	return valsFrom
+}
+
+// calculateSpanLastProducer calculates the last sprint producer of the span
+func (k *Keeper) calculateSpanLastProducer(ctx sdk.Context, valSet *hmTypes.ValidatorSet, id uint64) (hmTypes.Validator, error) {
+	borParams := k.GetParams(ctx)
+	valSet.IncrementProposerPriority(int(borParams.SpanDuration / borParams.SprintDuration))
+	proposer := *valSet.GetProposer()
+	ctx.Logger().Info("!!!!Calculated last producer for span", "span", id, "producer id", proposer.Signer, "ID", proposer.ID)
+
+	return proposer, nil
+}
+
+// checkAndRotateProposerPriority checks if the LSP of the current span is the same as the LSP of the previous span
+// and rotates the proposer priority if so, where LSP = Last Sprint Producer
+func (k *Keeper) checkAndRotateProposerPriority(ctx sdk.Context, prevLastProducer, curLastProducer hmTypes.Validator, valSet *hmTypes.ValidatorSet) (bool, hmTypes.Validator, *hmTypes.ValidatorSet, error) {
+	var hasRotated bool
+	borParams := k.GetParams(ctx)
+
+	for prevLastProducer.ID == curLastProducer.ID {
+		hasRotated = true
+		// if last producer is the same, then rotate proposer
+		valSet.IncrementProposerPriority(1)
+		copySet := valSet.Copy()
+		copySet.IncrementProposerPriority(int(borParams.SpanDuration / borParams.SprintDuration))
+		curLastProducer = *copySet.GetProposer()
+	}
+
+	return hasRotated, curLastProducer, valSet, nil
 }
