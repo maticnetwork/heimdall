@@ -20,9 +20,10 @@ import (
 )
 
 var (
-	_ module.AppModule             = AppModule{}
-	_ module.AppModuleBasic        = AppModuleBasic{}
-	_ hmModule.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule                 = AppModule{}
+	_ module.AppModuleBasic            = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic     = AppModule{}
+	_ hmModule.StreamedGenesisExporter = AppModule{}
 	// _ module.AppModuleSimulation = AppModule{}
 )
 
@@ -160,4 +161,17 @@ func (am AppModule) NewSideTxHandler() hmTypes.SideTxHandler {
 // NewPostTxHandler side tx handler
 func (am AppModule) NewPostTxHandler() hmTypes.PostTxHandler {
 	return NewPostTxHandler(am.keeper, am.contractCaller)
+}
+
+// NextGenesisData returns the next chunk of genesis data.
+func (am AppModule) NextGenesisData(ctx sdk.Context, nextKey []byte, max int) (*hmModule.ModuleGenesisData, error) {
+	data, nextKey, err := am.keeper.IterateSpansAndCollect(ctx, nextKey, max)
+	if err != nil {
+		return nil, err
+	}
+	return &hmModule.ModuleGenesisData{
+		Path:    "bor.spans",
+		Data:    types.ModuleCdc.MustMarshalJSON(data),
+		NextKey: nextKey,
+	}, nil
 }

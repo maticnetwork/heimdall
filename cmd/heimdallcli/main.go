@@ -1,12 +1,15 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	defaultLogger "log"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -22,9 +25,12 @@ import (
 	"github.com/ethereum/go-ethereum/console/prompt"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
@@ -50,6 +56,7 @@ var (
 		Short: "Heimdall light-client",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Use != version.Cmd.Use {
+				defaultLogger.SetOutput(os.Stdout)
 				// initialise config
 				initTendermintViperConfig(cmd)
 			}
@@ -220,16 +227,22 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 			}
 
 			happ := app.NewHeimdallApp(logger, db)
-			appState, _, err := happ.ExportAppStateAndValidators()
+
+			marshaledAppState, err := generateMarshalledAppState(happ, 1000)
 			if err != nil {
 				panic(err)
 			}
 
-			err = writeGenesisFile(file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
-			if err == nil {
-				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
+			runtime.GC()
+
+			savePath := file.Rootify("dump-genesis.json", config.RootDir)
+			if err := writeGenesisFile(savePath, chainID, marshaledAppState); err != nil {
+				panic(err)
 			}
-			return err
+
+			fmt.Println("New genesis json file created: ", savePath)
+
+			return nil
 		},
 	}
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "Node's home directory")
@@ -237,6 +250,191 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
 
 	return cmd
+}
+
+// generateMarshalledAppState fetches the app state, populates it with module data,
+// and marshals it into JSON.
+func generateMarshalledAppState(happ *app.HeimdallApp, maxNextGenesisItems int) ([]byte, error) {
+	appState, err := getAppState(happ)
+	if err != nil {
+		return nil, err
+	}
+
+	runtime.GC()
+
+	sdkCtx := happ.NewContext(true, abci.Header{Height: happ.LastBlockHeight()})
+	moduleManager := happ.GetModuleManager()
+
+	for _, moduleName := range moduleManager.OrderExportGenesis {
+		module, ok := moduleManager.Modules[moduleName].(hmModule.StreamedGenesisExporter)
+		if !ok {
+			continue
+		}
+
+		runtime.GC()
+
+		if err := fetchModuleData(sdkCtx, appState, module, maxNextGenesisItems); err != nil {
+			return nil, err
+		}
+	}
+
+	runtime.GC()
+
+	marshaledAppState, err := jsoniter.ConfigCompatibleWithStandardLibrary.Marshal(appState)
+	if err != nil {
+		return nil, err
+	}
+
+	return marshaledAppState, nil
+}
+
+// getAppState generates and returns the app state.
+func getAppState(happ *app.HeimdallApp) (map[string]interface{}, error) {
+	appState, _, err := happ.ExportAppStateAndValidators()
+	if err != nil {
+		return nil, err
+	}
+
+	appStateData, err := appState.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	unmarshaledData := make(map[string]interface{})
+	if err := json.Unmarshal(appStateData, &unmarshaledData); err != nil {
+		return nil, err
+	}
+
+	return unmarshaledData, nil
+}
+
+// fetchModuleData fetches module genesis data in streamed fashion.
+func fetchModuleData(sdkCtx sdk.Context, appData map[string]interface{}, module hmModule.StreamedGenesisExporter, maxNextGenesisItems int) error {
+	var lastKey []byte
+	allData := []json.RawMessage{}
+	allDataLength := 0
+	var currAppendingPath string
+
+	for {
+		data, err := module.NextGenesisData(sdkCtx, lastKey, maxNextGenesisItems)
+		if err != nil {
+			panic(err)
+		}
+
+		lastKey = data.NextKey
+
+		if lastKey == nil {
+			allData = append(allData, data.Data)
+			allDataLength += len(data.Data)
+
+			if allDataLength == 0 {
+				break
+			}
+
+			combinedData, err := combineJSONArrays(allData, allDataLength)
+			if err != nil {
+				return err
+			}
+
+			if err := AddProperty(appData, currAppendingPath, combinedData); err != nil {
+				return err
+			}
+
+			break
+		}
+
+		if currAppendingPath != "" && currAppendingPath != data.Path {
+			combinedData, err := combineJSONArrays(allData, allDataLength)
+			if err != nil {
+				return err
+			}
+
+			if err := AddProperty(appData, currAppendingPath, combinedData); err != nil {
+				return err
+			}
+
+			allData = []json.RawMessage{}
+			allDataLength = 0
+		}
+
+		currAppendingPath = data.Path
+
+		allData = append(allData, data.Data)
+		allDataLength += len(data.Data)
+	}
+
+	return nil
+}
+
+// combineJSONArrays combines multiple JSON arrays into a single JSON array.
+func combineJSONArrays(arrays []json.RawMessage, allArraysLength int) (json.RawMessage, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, allArraysLength))
+	buf.WriteByte('[')
+	first := true
+
+	for _, raw := range arrays {
+		if len(raw) == 0 {
+			continue
+		}
+
+		if raw[0] != '[' || raw[len(raw)-1] != ']' {
+			return nil, fmt.Errorf("invalid JSON array: %s", raw)
+		}
+
+		content := raw[1 : len(raw)-1]
+
+		if !first {
+			buf.WriteByte(',')
+		}
+		buf.Write(content)
+		first = false
+	}
+	buf.WriteByte(']')
+
+	combinedJSON := buf.Bytes()
+	if !json.Valid(combinedJSON) {
+		return nil, errors.New("combined JSON is invalid")
+	}
+
+	return json.RawMessage(combinedJSON), nil
+}
+
+// AddProperty adds a property to the data map.
+func AddProperty(data map[string]interface{}, path string, value json.RawMessage) error {
+	if path == "" {
+		return fmt.Errorf("path cannot be empty")
+	}
+
+	keys := strings.Split(path, ".")
+	lastKey := keys[len(keys)-1]
+	parentPath := strings.Join(keys[:len(keys)-1], ".")
+
+	current, err := traversePath(data, parentPath)
+	if err != nil {
+		return err
+	}
+	current[lastKey] = value
+	return nil
+}
+
+// traversePath traverses the path in the data map.
+func traversePath(data map[string]interface{}, path string) (map[string]interface{}, error) {
+	if path == "." {
+		return data, nil
+	}
+
+	keys := strings.Split(path, ".")
+	current := data
+
+	for _, key := range keys {
+		if next, ok := current[key].(map[string]interface{}); ok {
+			current = next
+			continue
+		}
+		return nil, fmt.Errorf("invalid path: %s", path)
+	}
+
+	return current, nil
 }
 
 // generateKeystore generate keystore file from private key
