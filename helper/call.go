@@ -9,8 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -443,6 +445,41 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	}
 
 	return latestBlock, nil
+}
+
+// GetMaticChainBlockAuthor returns the producer of the bor block
+func (c *ContractCaller) GetBorChainBlockAuthor(blockNum *big.Int) (*common.Address, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
+	defer cancel()
+
+	var author *common.Address
+	err := c.MaticChainClient.Client().CallContext(ctx, &author, "bor_getAuthor", toBlockNumArg(blockNum))
+	if err != nil {
+		Logger.Error("Unable to connect to bor chain", "error", err)
+		return nil, err
+	}
+
+	if author == nil {
+		return nil, ethereum.NotFound
+	}
+
+	return author, nil
+}
+
+// copied from bor/ethclient package
+func toBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	if number.Sign() >= 0 {
+		return hexutil.EncodeBig(number)
+	}
+	// It's negative.
+	if number.IsInt64() {
+		return rpc.BlockNumber(number.Int64()).String()
+	}
+	// It's negative and large, which is invalid.
+	return fmt.Sprintf("<invalid %d>", number)
 }
 
 // GetBlockNumberFromTxHash gets block number of transaction
