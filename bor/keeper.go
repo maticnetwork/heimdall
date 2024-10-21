@@ -244,45 +244,6 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 		if err != nil {
 			return err
 		}
-
-		// prods := make([]*hmTypes.Validator, 0, len(newProducers))
-		// for _, val := range newProducers {
-		// 	prods = append(prods, &val)
-		// }
-
-		// valSet := hmTypes.NewValidatorSet(prods)
-
-		// // find out the last producer of this span
-		// curLastProducer, err := k.calculateSpanLastProducer(ctx, valSet.Copy(), id)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// // get last producer of the last span
-		// prevLastProducer, err := k.GetSpanLastProducer(ctx, id-1)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// ctx.Logger().Info("!!!!Fetched last producer for span", "span", id-1, "producer id", prevLastProducer.Signer, "ID", prevLastProducer.ID)
-
-		// hasRotated, curLastProducer, valSet, err := k.checkAndRotateProposerPriority(ctx, prevLastProducer, curLastProducer, valSet)
-		// if err != nil {
-		// 	return err
-		// }
-
-		// if hasRotated {
-		// 	for i, val := range valSet.Validators {
-		// 		newProducers[i] = *val
-		// 	}
-
-		// 	ctx.Logger().Info("!!!!Rotated last producer for span", "span", id, "producer id", curLastProducer.Signer, "ID", curLastProducer.ID)
-		// }
-
-		// if err := k.StoreSpanLastProducer(ctx, id, curLastProducer); err != nil {
-		// 	return err
-		// }
-
 	}
 
 	// generate new span
@@ -496,71 +457,6 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 	}
 }
 
-// GetSpanLastProducer gets producer of the last sprint of the given span
-// func (k *Keeper) GetSpanLastProducer(ctx sdk.Context, id uint64) (hmTypes.Validator, error) {
-// 	store := ctx.KVStore(k.storeKey)
-// 	lastProdKey := GetSpanLastProducerKey(id)
-
-// 	// TODO(@Raneet10): Remove this bit
-// 	if store.Has(lastProdKey) {
-// 		var producer hmTypes.Validator
-// 		if err := k.cdc.UnmarshalBinaryBare(store.Get(lastProdKey), &producer); err != nil {
-// 			k.Logger(ctx).Error("ERROR UNMARSHAL", "error", err)
-// 			return hmTypes.Validator{}, err
-// 		}
-// 		ctx.Logger().Info("!!!!HAS LAST PROD KEY", "lastProd", producer, "span id", id)
-
-// 	}
-
-// 	// At the beginning there will be no lastProdKey present
-// 	// so we need to initialize the store with the last producer of the last span
-// 	if !store.Has(lastProdKey) {
-// 		lastSpan, err := k.GetSpan(ctx, id)
-// 		if err != nil {
-// 			return hmTypes.Validator{}, err
-// 		}
-
-// 		prods := make([]*hmTypes.Validator, 0, len(lastSpan.SelectedProducers))
-// 		for _, val := range lastSpan.SelectedProducers {
-// 			prods = append(prods, &val)
-// 		}
-
-// 		proposer, err := k.calculateSpanLastProducer(ctx, hmTypes.NewValidatorSet(prods), id)
-// 		if err != nil {
-// 			return hmTypes.Validator{}, err
-// 		}
-// 		if err := k.StoreSpanLastProducer(ctx, id, proposer); err != nil {
-// 			return hmTypes.Validator{}, err
-// 		}
-
-// 		ctx.Logger().Info("!!!!Initialized last producer for span", "span", id, "producer id", proposer.Signer, "ID", proposer.ID)
-// 		return proposer, nil
-// 	}
-
-// 	var producer hmTypes.Validator
-// 	if err := k.cdc.UnmarshalBinaryBare(store.Get(lastProdKey), &producer); err != nil {
-// 		return hmTypes.Validator{}, err
-// 	}
-
-// 	return producer, nil
-
-// }
-
-// StoreSpanLastProducer stores producer of the last sprint of the given span
-// func (k *Keeper) StoreSpanLastProducer(ctx sdk.Context, id uint64, producer hmTypes.Validator) error {
-// 	store := ctx.KVStore(k.storeKey)
-
-// 	out, err := k.cdc.MarshalBinaryBare(producer)
-// 	if err != nil {
-// 		k.Logger(ctx).Error("Error marshalling validator", "error", err)
-// 		return err
-// 	}
-
-// 	// store set span id
-// 	store.Set(GetSpanLastProducerKey(id), out)
-// 	return nil
-// }
-
 // rollbackVotingPowers rolls back voting powers of validators from a previous snapshot of validators
 func (k *Keeper) rollbackVotingPowers(ctx sdk.Context, valsNew, valsOld []hmTypes.Validator) []hmTypes.Validator {
 	idToVP := make(map[uint64]int64)
@@ -614,47 +510,3 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 
 	return borBlock, author, nil
 }
-
-// calculateSpanLastProducer calculates the last sprint producer of the span
-// func (k *Keeper) calculateSpanLastProducer(ctx sdk.Context, valSet *hmTypes.ValidatorSet, id uint64) (hmTypes.Validator, error) {
-// 	borParams := k.GetParams(ctx)
-// 	// TODO(@Raneet10): Remove this bit
-// 	copySet := valSet.Copy()
-
-// 	for _, v := range copySet.Validators {
-// 		ctx.Logger().Info("!!!! BEFORE", "val ID", v.ID, "VP", v.VotingPower, "Signer", v.Signer, "Priority", v.ProposerPriority)
-// 	}
-// 	for i := 0; i < int(borParams.SpanDuration/borParams.SprintDuration); i++ {
-// 		copySet.IncrementProposerPriority(1)
-// 	}
-
-// 	for _, v := range copySet.Validators {
-// 		ctx.Logger().Info("!!!! AFTER", "val ID", v.ID, "VP", v.VotingPower, "Signer", v.Signer, "Priority", v.ProposerPriority)
-// 	}
-
-// 	ctx.Logger().Info("!!! PROPOSER CALCULATED", "span", id, "proposer", copySet.GetProposer().ID)
-
-// 	valSet.IncrementProposerPriority(int(borParams.SpanDuration / borParams.SprintDuration))
-// 	proposer := *valSet.GetProposer()
-// 	ctx.Logger().Info("!!!!Calculated last producer for span", "span", id, "producer id", proposer.Signer, "ID", proposer.ID)
-
-// 	return proposer, nil
-// }
-
-// checkAndRotateProposerPriority checks if the LSP of the current span is the same as the LSP of two spans prior to it
-// and rotates the proposer priority if so, where LSP = Last Sprint Producer
-// func (k *Keeper) checkAndRotateProposerPriority(ctx sdk.Context, prevLastProducer, curLastProducer hmTypes.Validator, valSet *hmTypes.ValidatorSet) (bool, hmTypes.Validator, *hmTypes.ValidatorSet, error) {
-// 	var hasRotated bool
-// 	borParams := k.GetParams(ctx)
-
-// 	for prevLastProducer.ID == curLastProducer.ID {
-// 		hasRotated = true
-// 		// if last producer is the same, then rotate proposer
-// 		valSet.IncrementProposerPriority(1)
-// 		copySet := valSet.Copy()
-// 		copySet.IncrementProposerPriority(int(borParams.SpanDuration / borParams.SprintDuration))
-// 		curLastProducer = *copySet.GetProposer()
-// 	}
-
-// 	return hasRotated, curLastProducer, valSet, nil
-// }
