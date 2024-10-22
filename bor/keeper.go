@@ -341,7 +341,7 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
-func (k Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error) {
+func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error) {
 	var (
 		blockHeader *ethTypes.Header
 		lastSpan    *hmTypes.Span
@@ -387,15 +387,23 @@ func (k Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error)
 
 		if err = k.StoreSeedProducer(ctx, id, author); err != nil {
 			k.Logger(ctx).Error("Error storing seed producer", "error", err, "span id", id)
+			ctx.Logger().Error("!!!ERROR STORING SEED PRODUCER", "span id", id, "error", err, "author", author) // TODO(@Raneet10): Remove this bit
 			return common.Hash{}, err
 		}
+
+		// TODO(@Raneet10): Remove this bit
+		auth, err := k.GetSeedProducer(ctx, id)
+		if err != nil {
+			ctx.Logger().Error("!!!ERROR FETCHING SEED PRODUCER", "span id", id, "error", err)
+		}
+		ctx.Logger().Info("!!!FETCHED SEED PRODUCER GetSeedProducer", "span id", id, "author", auth)
 	}
 
 	return blockHeader.Hash(), nil
 }
 
 // StoreSeedProducer stores producer of the block used for seed for the given span id
-func (k Keeper) StoreSeedProducer(ctx sdk.Context, id uint64, producer *common.Address) error {
+func (k *Keeper) StoreSeedProducer(ctx sdk.Context, id uint64, producer *common.Address) error {
 	store := ctx.KVStore(k.storeKey)
 	lastSeedKey := GetLastSeedProducer(id)
 
@@ -408,7 +416,7 @@ func (k Keeper) StoreSeedProducer(ctx sdk.Context, id uint64, producer *common.A
 }
 
 // GetSeedProducer gets producer of the block used for seed for the given span id
-func (k Keeper) GetSeedProducer(ctx sdk.Context, id uint64) (*common.Address, error) {
+func (k *Keeper) GetSeedProducer(ctx sdk.Context, id uint64) (*common.Address, error) {
 	store := ctx.KVStore(k.storeKey)
 	lastSeedKey := GetLastSeedProducer(id)
 
@@ -487,6 +495,14 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 		err      error
 	)
 
+	lastAuthor, err := k.GetSeedProducer(ctx, span.ID)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", span.ID)
+		return 0, nil, err
+	}
+
+	ctx.Logger().Info("!!!LAST AUTHOR", "author", lastAuthor, "span id", span.ID)
+
 	borParams := k.GetParams(ctx)
 	for borBlock = span.EndBlock; borBlock >= span.StartBlock; borBlock -= borParams.SprintDuration {
 		author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
@@ -496,12 +512,6 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 		}
 
 		ctx.Logger().Info("!!!GOT AUTHOR", "author", author, "block", borBlock)
-
-		lastAuthor, err := k.GetSeedProducer(ctx, span.ID)
-		if err != nil {
-			k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", span.ID)
-			return 0, nil, err
-		}
 
 		if !bytes.Equal(author.Bytes(), lastAuthor.Bytes()) || len(span.ValidatorSet.Validators) == 1 {
 			break
