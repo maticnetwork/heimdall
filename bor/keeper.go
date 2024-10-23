@@ -261,6 +261,10 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 
 // SelectNextProducers selects producers for next span
 func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash, prevVals []hmTypes.Validator) (vals []hmTypes.Validator, err error) {
+	if ctx.BlockHeader().Height < helper.GetNeedANameHeight() {
+		prevVals = nil
+	}
+
 	// spanEligibleVals are current validators who are not getting deactivated in between next span
 	spanEligibleVals := k.sk.GetSpanEligibleValidators(ctx)
 	producerCount := k.GetParams(ctx).ProducerCount
@@ -385,18 +389,11 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 
 		ctx.Logger().Info("!!!!Fetched block for seed", "block", borBlock, "author", author, "span id", id)
 
-		if err = k.StoreSeedProducer(ctx, id, author); err != nil {
-			k.Logger(ctx).Error("Error storing seed producer", "error", err, "span id", id)
-			ctx.Logger().Error("!!!ERROR STORING SEED PRODUCER", "span id", id, "error", err, "author", author) // TODO(@Raneet10): Remove this bit
-			return common.Hash{}, err
-		}
-
-		// TODO(@Raneet10): Remove this bit
-		auth, err := k.GetSeedProducer(ctx, id)
-		if err != nil {
-			ctx.Logger().Error("!!!ERROR FETCHING SEED PRODUCER", "span id", id, "error", err)
-		}
-		ctx.Logger().Info("!!!FETCHED SEED PRODUCER GetSeedProducer", "span id", id, "author", auth)
+		// if err = k.StoreSeedProducer(ctx, id, author); err != nil {
+		// 	k.Logger(ctx).Error("Error storing seed producer", "error", err, "span id", id)
+		// 	ctx.Logger().Error("!!!ERROR STORING SEED PRODUCER", "span id", id, "error", err, "author", author) // TODO(@Raneet10): Remove this bit
+		// 	return common.Hash{}, err
+		// }
 	}
 
 	return blockHeader.Hash(), nil
@@ -498,6 +495,7 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 	lastAuthor, err := k.GetSeedProducer(ctx, span.ID)
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", span.ID)
+		ctx.Logger().Error("!!!ERROR FETCHING LAST SEED PRODUCER getBorBlockForSeed", "span id", span.ID, "error", err) // TODO(@Raneet10): Remove this bit
 		return 0, nil, err
 	}
 

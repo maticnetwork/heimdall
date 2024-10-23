@@ -104,20 +104,47 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 
 // PostHandleMsgEventSpan handles state persisting span msg
 func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, sideTxResult abci.SideTxResultType) sdk.Result {
+	logger := k.Logger(ctx)
+
 	// Skip handler if span is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
-		k.Logger(ctx).Debug("Skipping new span since side-tx didn't get yes votes")
+		logger.Debug("Skipping new span since side-tx didn't get yes votes")
 		return common.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
 	// check for replay
 	if k.HasSpan(ctx, msg.ID) {
-		k.Logger(ctx).Debug("Skipping new span as it's already processed")
+		logger.Debug("Skipping new span as it's already processed")
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("Persisting span state", "sideTxResult", sideTxResult)
+	logger.Debug("Persisting span state", "sideTxResult", sideTxResult)
 
+	if ctx.BlockHeader().Height >= helper.GetNeedANameHeight() {
+		lastSpanId := msg.ID - 2
+		if msg.ID < 2 {
+			lastSpanId = msg.ID - 1
+		}
+
+		lastSpan, err := k.GetSpan(ctx, lastSpanId)
+		if err != nil {
+			logger.Error("Unable to get last span", "Error", err)
+			return common.ErrUnableToGetSpan(k.Codespace()).Result()
+		}
+
+		// store the seed producer
+		_, producer, err := k.getBorBlockForSeed(ctx, lastSpan)
+		if err != nil {
+			logger.Error("Unable to get seed producer", "Error", err)
+			return common.ErrUnableToGetSeed(k.Codespace()).Result()
+		}
+
+		if err = k.StoreSeedProducer(ctx, msg.ID, producer); err != nil {
+			logger.Error("Unable to store seed producer", "Error", err)
+			return common.ErrUnableToStoreSeedProducer(k.Codespace()).Result()
+		}
+
+	}
 	// freeze for new span
 	err := k.FreezeSet(ctx, msg.ID, msg.StartBlock, msg.EndBlock, msg.ChainID, msg.Seed)
 	if err != nil {

@@ -8,7 +8,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
@@ -192,10 +191,6 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	prevVals := make([]hmTypes.Validator, 0, len(prevSpan.ValidatorSet.Validators))
 	for _, val := range prevSpan.ValidatorSet.Validators {
 		prevVals = append(prevVals, *val)
-	}
-
-	if ctx.BlockHeader().Height < helper.GetNeedANameHeight() {
-		prevVals = nil
 	}
 
 	nextProducers, err := keeper.SelectNextProducers(ctx, nextSpanSeed, prevVals)
