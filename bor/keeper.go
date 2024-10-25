@@ -27,8 +27,7 @@ var (
 	LastSpanIDKey         = []byte{0x35} // Key to store last span start block
 	SpanPrefixKey         = []byte{0x36} // prefix key to store span
 	LastProcessedEthBlock = []byte{0x38} // key to store last processed eth block for seed
-	// SpanLastProducerKey   = []byte{0x39} // key to store last producer of the span
-	SeedLastProducerKey = []byte{0x39} // key to store last producer of the span
+	SeedLastProducerKey   = []byte{0x39} // key to store last producer of the span
 )
 
 // Keeper stores all related data
@@ -42,7 +41,7 @@ type Keeper struct {
 	// param space
 	paramSpace subspace.Subspace
 	// contract caller
-	contractCaller helper.ContractCaller
+	contractCaller helper.IContractCaller
 	// chain manager keeper
 	chainKeeper chainmanager.Keeper
 }
@@ -55,7 +54,7 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	chainKeeper chainmanager.Keeper,
 	stakingKeeper staking.Keeper,
-	caller helper.ContractCaller,
+	caller *helper.ContractCaller,
 ) Keeper {
 	return Keeper{
 		cdc:            cdc,
@@ -83,14 +82,14 @@ func GetSpanKey(id uint64) []byte {
 	return append(SpanPrefixKey, []byte(strconv.FormatUint(id, 10))...)
 }
 
-// func GetSpanLastProducerKey(id uint64) []byte {
-// 	idBytes := sdk.Uint64ToBigEndian(id)
-// 	return append(SpanLastProducerKey, idBytes...)
-// }
-
 func GetLastSeedProducer(id uint64) []byte {
 	idBytes := sdk.Uint64ToBigEndian(id)
 	return append(SeedLastProducerKey, idBytes...)
+}
+
+// SetContractCaller sets contract caller
+func (k *Keeper) SetContractCaller(contractCaller helper.IContractCaller) {
+	k.contractCaller = contractCaller
 }
 
 // AddNewSpan adds new span for bor to store
@@ -276,7 +275,7 @@ func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash, prevVals
 
 	if len(prevVals) > 0 {
 		// rollback voting powers for the selection algorithm
-		spanEligibleVals = k.rollbackVotingPowers(ctx, spanEligibleVals, prevVals)
+		spanEligibleVals = rollbackVotingPowers(ctx, spanEligibleVals, prevVals)
 	}
 
 	// TODO remove old selection algorithm
@@ -388,12 +387,6 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 		}
 
 		ctx.Logger().Info("!!!!Fetched block for seed", "block", borBlock, "author", author, "span id", id)
-
-		// if err = k.StoreSeedProducer(ctx, id, author); err != nil {
-		// 	k.Logger(ctx).Error("Error storing seed producer", "error", err, "span id", id)
-		// 	ctx.Logger().Error("!!!ERROR STORING SEED PRODUCER", "span id", id, "error", err, "author", author) // TODO(@Raneet10): Remove this bit
-		// 	return common.Hash{}, err
-		// }
 	}
 
 	return blockHeader.Hash(), nil
@@ -462,28 +455,6 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 	}
 }
 
-// rollbackVotingPowers rolls back voting powers of validators from a previous snapshot of validators
-func (k *Keeper) rollbackVotingPowers(ctx sdk.Context, valsNew, valsOld []hmTypes.Validator) []hmTypes.Validator {
-	idToVP := make(map[uint64]int64)
-	for _, val := range valsOld {
-		idToVP[val.ID.Uint64()] = val.VotingPower
-	}
-
-	for i := range valsNew {
-		// TODO(@Raneet10): Remove this bit
-		ctx.Logger().Info("!!!!VP BEFORE", "val ID", valsNew[i].ID, "VP", valsNew[i].VotingPower)
-		if _, ok := idToVP[valsNew[i].ID.Uint64()]; ok {
-			valsNew[i].VotingPower = idToVP[valsNew[i].ID.Uint64()]
-		} else {
-			valsNew[i].VotingPower = 0
-		}
-		// TODO(@Raneet10): Remove this bit
-		ctx.Logger().Info("!!!!VP AFTER", "val ID", valsNew[i].ID, "VP", valsNew[i].VotingPower)
-	}
-
-	return valsNew
-}
-
 // getBorBlockForSeed returns the bor block number and its producer whose hash is used as seed for the next span
 func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64, *common.Address, error) {
 	var (
@@ -517,4 +488,26 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 	}
 
 	return borBlock, author, nil
+}
+
+// rollbackVotingPowers rolls back voting powers of validators from a previous snapshot of validators
+func rollbackVotingPowers(ctx sdk.Context, valsNew, valsOld []hmTypes.Validator) []hmTypes.Validator {
+	idToVP := make(map[uint64]int64)
+	for _, val := range valsOld {
+		idToVP[val.ID.Uint64()] = val.VotingPower
+	}
+
+	for i := range valsNew {
+		// TODO(@Raneet10): Remove this bit
+		ctx.Logger().Info("!!!!VP BEFORE", "val ID", valsNew[i].ID, "VP", valsNew[i].VotingPower)
+		if _, ok := idToVP[valsNew[i].ID.Uint64()]; ok {
+			valsNew[i].VotingPower = idToVP[valsNew[i].ID.Uint64()]
+		} else {
+			valsNew[i].VotingPower = 0
+		}
+		// TODO(@Raneet10): Remove this bit
+		ctx.Logger().Info("!!!!VP AFTER", "val ID", valsNew[i].ID, "VP", valsNew[i].VotingPower)
+	}
+
+	return valsNew
 }

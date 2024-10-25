@@ -1,0 +1,173 @@
+package bor_test
+
+import (
+	"math/big"
+	"testing"
+
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/ethereum/go-ethereum/common"
+	ethTypes "github.com/ethereum/go-ethereum/core/types"
+	"github.com/maticnetwork/heimdall/app"
+	"github.com/maticnetwork/heimdall/bor"
+	"github.com/maticnetwork/heimdall/helper/mocks"
+	hmTypes "github.com/maticnetwork/heimdall/types"
+	"github.com/stretchr/testify/suite"
+	abci "github.com/tendermint/tendermint/abci/types"
+)
+
+type BorKeeperTestSuite struct {
+	suite.Suite
+
+	app            *app.HeimdallApp
+	contractCaller *mocks.IContractCaller
+	ctx            sdk.Context
+}
+
+func createTestApp(isCheckTx bool) (*app.HeimdallApp, sdk.Context) {
+	app := app.Setup(isCheckTx)
+	ctx := app.BaseApp.NewContext(isCheckTx, abci.Header{})
+
+	return app, ctx
+}
+
+func (suite *BorKeeperTestSuite) SetupTest() {
+	suite.app, suite.ctx = createTestApp(false)
+	suite.contractCaller = &mocks.IContractCaller{}
+	suite.app.BorKeeper.SetContractCaller(suite.contractCaller)
+}
+
+func TestKeeperTestSuite(t *testing.T) {
+	t.Parallel()
+	suite.Run(t, new(BorKeeperTestSuite))
+}
+
+func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
+	require, ctx, borKeeper := s.Require(), s.ctx, s.app.BorKeeper
+	valSet := s.setupValSet()
+	vals := make([]hmTypes.Validator, 0, len(valSet.Validators))
+	for _, val := range valSet.Validators {
+		vals = append(vals, *val)
+	}
+
+	spans := []hmTypes.Span{hmTypes.NewSpan(0, 0, 255, *valSet, vals, "test-chain"),
+		hmTypes.NewSpan(1, 256, 6655, *valSet, vals, "test-chain"),
+	}
+
+	for _, span := range spans {
+		err := borKeeper.AddNewSpan(ctx, span)
+		require.NoError(err)
+	}
+
+	val1Addr := vals[0].PubKey.Address()
+	val2Addr := vals[1].PubKey.Address()
+
+	borParams := borKeeper.GetParams(ctx)
+	seedBlock1 := spans[0].EndBlock
+	seedBlock2 := spans[1].EndBlock - borParams.SprintDuration
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(seedBlock1))).Return(&val1Addr, nil)
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[1].EndBlock))).Return(&val1Addr, nil)
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(seedBlock2))).Return(&val2Addr, nil)
+
+	blockHeader1 := ethTypes.Header{Number: big.NewInt(int64(seedBlock1))}
+	blockHash1 := blockHeader1.Hash()
+	blockHeader2 := ethTypes.Header{Number: big.NewInt(int64(seedBlock2))}
+	blockHash2 := blockHeader2.Hash()
+
+	s.contractCaller.On("GetMaticChainBlock", big.NewInt(int64(seedBlock1))).Return(&blockHeader1, nil)
+	s.contractCaller.On("GetMaticChainBlock", big.NewInt(int64(seedBlock2))).Return(&blockHeader2, nil)
+
+	testcases := []struct {
+		name             string
+		lastSpanId       uint64
+		lastSeedProducer *common.Address
+		expSeed          common.Hash
+	}{
+		{
+			name:             "Last seed producer is different than end block author",
+			lastSeedProducer: &val2Addr,
+			lastSpanId:       0,
+			expSeed:          blockHash1,
+		},
+		{
+			name:             "Last seed producer is same as end block author",
+			lastSeedProducer: &val1Addr,
+			lastSpanId:       1,
+			expSeed:          blockHash2,
+		},
+	}
+
+	for _, tc := range testcases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			err := borKeeper.StoreSeedProducer(ctx, tc.lastSpanId, tc.lastSeedProducer)
+			require.NoError(err)
+
+			seed, err := borKeeper.GetNextSpanSeed(ctx, tc.lastSpanId+2)
+			require.NoError(err)
+			require.Equal(tc.expSeed.Bytes(), seed.Bytes())
+		})
+	}
+
+}
+
+func (s *BorKeeperTestSuite) TestGetSeedProducer() {
+	borKeeper := s.app.BorKeeper
+	producer := common.HexToAddress("0xc0ffee254729296a45a3885639AC7E10F9d54979")
+	borKeeper.StoreSeedProducer(s.ctx, 1, &producer)
+
+	author, err := borKeeper.GetSeedProducer(s.ctx, 1)
+	s.Require().NoError(err)
+	s.Require().Equal(producer.Bytes(), author.Bytes())
+
+}
+
+func (s *BorKeeperTestSuite) TestRollbackVotingPowers() {
+	testcases := []struct {
+		name    string
+		valsOld []hmTypes.Validator
+		valsNew []hmTypes.Validator
+		expRes  []hmTypes.Validator
+	}{
+		{
+			name:    "Revert to old voting powers",
+			valsOld: []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}, {ID: 3, VotingPower: 300}},
+			valsNew: []hmTypes.Validator{{ID: 1, VotingPower: 200}, {ID: 2, VotingPower: 400}, {ID: 3, VotingPower: 200}},
+			expRes:  []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}, {ID: 3, VotingPower: 300}},
+		},
+		{
+			name:    "Validator joined",
+			valsOld: []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}},
+			valsNew: []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}, {ID: 3, VotingPower: 300}},
+			expRes:  []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}, {ID: 3, VotingPower: 0}},
+		},
+		{
+			name:    "Validator left",
+			valsOld: []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}, {ID: 3, VotingPower: 300}},
+			valsNew: []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}},
+			expRes:  []hmTypes.Validator{{ID: 1, VotingPower: 100}, {ID: 2, VotingPower: 200}},
+		},
+	}
+
+	for _, tc := range testcases {
+		s.T().Run(tc.name, func(t *testing.T) {
+			res := bor.RollbackVotingPowers(s.ctx, tc.valsNew, tc.valsOld)
+			s.Require().Equal(tc.expRes, res)
+		})
+	}
+}
+
+func (suite *BorKeeperTestSuite) setupValSet() *hmTypes.ValidatorSet {
+	suite.T().Helper()
+
+	pubKey1 := hmTypes.NewPubKey([]byte("pubkey1"))
+	pubKey2 := hmTypes.NewPubKey([]byte("pubkey2"))
+	pubKey3 := hmTypes.NewPubKey([]byte("pubkey3"))
+
+	val1 := hmTypes.NewValidator(1, 100, 0, 1, 100, hmTypes.NewPubKey(pubKey1[:]), hmTypes.HeimdallAddress(pubKey1.Address()))
+	val2 := hmTypes.NewValidator(2, 100, 0, 1, 100, hmTypes.NewPubKey(pubKey2[:]), hmTypes.HeimdallAddress(pubKey2.Address()))
+	val3 := hmTypes.NewValidator(3, 100, 0, 1, 100, hmTypes.NewPubKey(pubKey3[:]), hmTypes.HeimdallAddress(pubKey3.Address()))
+
+	vals := []*hmTypes.Validator{val1, val2, val3}
+	valSet := hmTypes.NewValidatorSet(vals)
+
+	return valSet
+}
