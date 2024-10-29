@@ -94,18 +94,13 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, htt
 	cliCtx.BroadcastMode = client.BroadcastAsync
 	cliCtx.TrustNode = true
 
-	bridgeDBInstance, err := util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag))
-	if err != nil {
-		logger.Error("Failed to get Heimdall BridgeDB instance: %v", err)
-	}
-
 	// creating syncer object
 	return &BaseListener{
 		Logger:        logger,
 		name:          name,
 		quit:          make(chan struct{}),
 		impl:          impl,
-		storageClient: bridgeDBInstance,
+		storageClient: util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag)),
 
 		cliCtx:            cliCtx,
 		queueConnector:    queueConnector,

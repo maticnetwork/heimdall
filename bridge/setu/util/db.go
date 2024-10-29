@@ -1,6 +1,8 @@
 package util
 
 import (
+	"fmt"
+	"log"
 	"sync"
 
 	"github.com/syndtr/goleveldb/leveldb"
@@ -10,18 +12,16 @@ var bridgeDB *leveldb.DB
 var bridgeDBOnce sync.Once
 var bridgeDBCloseOnce sync.Once
 
-// GetBridgeDBInstance get sington object for bridge-db
-func GetBridgeDBInstance(filePath string) (*leveldb.DB, error) {
-	var err error
+func GetBridgeDBInstance(filePath string) *leveldb.DB {
 	bridgeDBOnce.Do(func() {
+		var err error
 		bridgeDB, err = leveldb.OpenFile(filePath, nil)
+		if err != nil {
+			fmt.Println("Error in Opening Database")
+			log.Fatalln("Error in Opening Database", err)
+		}
 	})
-	if err != nil {
-		// Return nil and the error
-		return nil, err
-	}
-	// Return the database instance
-	return bridgeDB, nil
+	return bridgeDB
 }
 
 // CloseBridgeDBInstance closes bridge-db instance
