@@ -94,7 +94,6 @@ func NewBaseListener(cdc *codec.Codec, queueConnector *queue.QueueConnector, htt
 	cliCtx.BroadcastMode = client.BroadcastAsync
 	cliCtx.TrustNode = true
 
-	// Creating syncer object
 	bridgeDBInstance, err := util.GetBridgeDBInstance(viper.GetString(util.BridgeDBFlag))
 	if err != nil {
 		logger.Error("Failed to get Heimdall BridgeDB instance: %v", err)
