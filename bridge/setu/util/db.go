@@ -17,7 +17,7 @@ func GetBridgeDBInstance(filePath string) *leveldb.DB {
 		var err error
 		bridgeDB, err = leveldb.OpenFile(filePath, nil)
 		if err != nil {
-			log.Fatalln("Error in Opening Database", err.Error())
+			log.Fatalln("Error in Bor Opening Database", err.Error())
 		}
 	})
 	return bridgeDB
