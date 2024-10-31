@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/maticnetwork/heimdall/helper"
 	"io"
 	"net/http"
 	"net/url"
@@ -24,7 +23,8 @@ import (
 
 const (
 	DefaultPage  = 1
-	DefaultLimit = 30 // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	DefaultLimit = 30                // should be consistent with tendermint/tendermint/rpc/core/pipe.go:19
+	APIBodyLimit = 128 * 1024 * 1024 // 128 MB
 )
 
 var (
@@ -130,7 +130,7 @@ func (br BaseReq) ValidateBasic(w http.ResponseWriter) bool {
 // Writes an error response to ResponseWriter and returns true if errors occurred.
 func ReadRESTReq(w http.ResponseWriter, r *http.Request, cdc *codec.Codec, req interface{}) bool {
 	// Limit the number of bytes read from the request body
-	limitedBody := http.MaxBytesReader(w, r.Body, helper.APIBodyLimit)
+	limitedBody := http.MaxBytesReader(w, r.Body, APIBodyLimit)
 
 	body, err := io.ReadAll(limitedBody)
 	if err != nil {

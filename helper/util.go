@@ -574,8 +574,9 @@ func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx
 		limitedReader := &io.LimitedReader{R: os.Stdin, N: APIBodyLimit}
 		bytes, err = io.ReadAll(limitedReader)
 	} else {
-		file, err := os.Open(filename)
-		if err != nil {
+		file, er := os.Open(filename)
+		if er != nil {
+			err = er
 			return
 		}
 		defer file.Close()
