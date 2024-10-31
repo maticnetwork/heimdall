@@ -652,10 +652,12 @@ func GetUnconfirmedTxnCount(event interface{}) int {
 		logger.Error("Error fetching mempool txs count", "url", endpoint, "error", err)
 		return 0
 	}
-
-	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
+	// Limit the number of bytes read from the response body
+	limitedBody := http.MaxBytesReader(nil, resp.Body, helper.APIBodyLimit)
+
+	body, err := io.ReadAll(limitedBody)
 	if err != nil {
 		logger.Error("Error fetching mempool txs count", "error", err)
 		return 0

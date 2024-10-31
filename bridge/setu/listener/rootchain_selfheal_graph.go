@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/maticnetwork/heimdall/helper"
 	"io"
 	"math/big"
 	"net/http"
@@ -42,6 +43,7 @@ type stateSyncResponse struct {
 	} `json:"data"`
 }
 
+// querySubGraph queries the subgraph and limits the read size
 func (rl *RootChainListener) querySubGraph(query []byte, ctx context.Context) (data []byte, err error) {
 	request, err := http.NewRequestWithContext(ctx, http.MethodPost, rl.subGraphClient.graphUrl, bytes.NewBuffer(query))
 	if err != nil {
@@ -56,7 +58,10 @@ func (rl *RootChainListener) querySubGraph(query []byte, ctx context.Context) (d
 	}
 	defer response.Body.Close()
 
-	return io.ReadAll(response.Body)
+	// Limit the number of bytes read from the response body
+	limitedBody := http.MaxBytesReader(nil, response.Body, helper.APIBodyLimit)
+
+	return io.ReadAll(limitedBody)
 }
 
 // getLatestStateID returns state ID from the latest StateSynced event
