@@ -310,10 +310,10 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	return common.FromHex(rootHash), nil
 }
 
-// GetRootHash get root hash from bor chain
+// GetVoteOnHash gets vote on hash from bor chain
 func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error) {
 	if start > end {
-		return false, errors.New("Start block number is greater than the end block number")
+		return false, errors.New("start block number is greater than the end block number")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
@@ -368,7 +368,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "status", stakerDetails.Status, "error", err)
+		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "error", err)
 		return
 	}
 
@@ -814,6 +814,9 @@ func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *valid
 	error,
 ) {
 	d, err := validatorSetInstance.GetSpan(nil, id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	return d.Number, d.StartBlock, d.EndBlock, err
 }
 

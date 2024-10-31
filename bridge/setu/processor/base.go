@@ -162,12 +162,14 @@ func (bp *BaseProcessor) checkTxAgainstMempool(msg types.Msg, event interface{})
 		bp.Logger.Error("Error fetching mempool tx", "url", endpoint, "error", err)
 		return false, err
 	}
-
-	body, err := io.ReadAll(resp.Body)
 	defer resp.Body.Close()
 
+	// Limit the number of bytes read from the response body
+	limitedBody := http.MaxBytesReader(nil, resp.Body, helper.APIBodyLimit)
+
+	body, err := io.ReadAll(limitedBody)
 	if err != nil {
-		bp.Logger.Error("Error fetching mempool tx", "error", err)
+		bp.Logger.Error("Error reading response body for mempool tx", "error", err)
 		return false, err
 	}
 
