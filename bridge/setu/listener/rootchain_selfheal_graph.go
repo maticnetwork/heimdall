@@ -5,7 +5,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/maticnetwork/heimdall/helper"
 	"io"
 	"math/big"
 	"net/http"
@@ -15,6 +14,8 @@ import (
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	jsoniter "github.com/json-iterator/go"
+
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // StakeUpdate represents the StakeUpdate event
