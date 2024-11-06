@@ -133,7 +133,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 		}
 
 		// store the seed producer
-		_, producer, err := k.getBorBlockForSeed(ctx, lastSpan)
+		_, producer, err := k.getBorBlockForSeed(ctx, lastSpan, blockProducerAuthorsCollusionCheck)
 		if err != nil {
 			logger.Error("Unable to get seed producer", "Error", err)
 			return common.ErrUnableToGetSeed(k.Codespace()).Result()

@@ -1,8 +1,8 @@
 package bor
 
 import (
-	"bytes"
 	"errors"
+	"fmt"
 	"math/big"
 	"strconv"
 
@@ -22,6 +22,7 @@ import (
 )
 
 const maxSpanListLimit = 150 // a span is ~6 KB => we can fit 150 spans in 1 MB response
+const blockProducerAuthorsCollusionCheck = 20
 
 var (
 	LastSpanIDKey         = []byte{0x35} // Key to store last span start block
@@ -375,7 +376,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 			return common.Hash{}, err
 		}
 
-		borBlock, author, err := k.getBorBlockForSeed(ctx, lastSpan)
+		borBlock, author, err := k.getBorBlockForSeed(ctx, lastSpan, blockProducerAuthorsCollusionCheck)
 		if err != nil {
 			return common.Hash{}, err
 		}
@@ -410,7 +411,12 @@ func (k *Keeper) GetSeedProducer(ctx sdk.Context, id uint64) (*common.Address, e
 	store := ctx.KVStore(k.storeKey)
 	lastSeedKey := GetLastSeedProducer(id)
 
-	author := common.BytesToAddress(store.Get(lastSeedKey))
+	authorBytes := store.Get(lastSeedKey)
+	if authorBytes == nil {
+		return nil, nil
+	}
+
+	author := common.BytesToAddress(authorBytes)
 
 	return &author, nil
 }
@@ -456,21 +462,37 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 }
 
 // getBorBlockForSeed returns the bor block number and its producer whose hash is used as seed for the next span
-func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64, *common.Address, error) {
+func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span, maxUniqueAuthors int) (uint64, *common.Address, error) {
 	var (
 		borBlock uint64
 		author   *common.Address
 		err      error
 	)
 
-	lastAuthor, err := k.GetSeedProducer(ctx, span.ID)
-	if err != nil {
-		k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", span.ID)
-		ctx.Logger().Error("!!!ERROR FETCHING LAST SEED PRODUCER getBorBlockForSeed", "span id", span.ID, "error", err) // TODO(@Raneet10): Remove this bit
-		return 0, nil, err
+	uniqueAuthors := make(map[string]struct{})
+	spanID := span.ID
+
+	for len(uniqueAuthors) < maxUniqueAuthors {
+		if spanID == 0 {
+			break
+		}
+
+		lastAuthor, err := k.GetSeedProducer(ctx, spanID)
+		if err != nil {
+			k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", spanID)
+			return 0, nil, err
+		}
+
+		if lastAuthor == nil {
+			k.Logger(ctx).Info("GetSeedProducer returned empty value", "span id", spanID)
+			break
+		}
+
+		uniqueAuthors[lastAuthor.Hex()] = struct{}{}
+		spanID--
 	}
 
-	ctx.Logger().Info("!!!LAST AUTHOR", "author", lastAuthor, "span id", span.ID)
+	ctx.Logger().Info("!!!LAST AUTHORS", "authors", fmt.Sprintf("%+v", uniqueAuthors), "span id", span.ID)
 
 	borParams := k.GetParams(ctx)
 	for borBlock = span.EndBlock; borBlock >= span.StartBlock; borBlock -= borParams.SprintDuration {
@@ -480,12 +502,21 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 			return 0, nil, err
 		}
 
-		ctx.Logger().Info("!!!GOT AUTHOR", "author", author, "block", borBlock)
-
-		if !bytes.Equal(author.Bytes(), lastAuthor.Bytes()) || len(span.ValidatorSet.Validators) == 1 {
-			break
+		if _, exists := uniqueAuthors[author.Hex()]; !exists || len(span.ValidatorSet.Validators) == 1 {
+			ctx.Logger().Info("!!!GOT AUTHOR", "author", author, "block", borBlock)
+			return borBlock, author, nil
 		}
 	}
+
+	borBlock = span.EndBlock
+
+	author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching end block author from bor chain while calculating next span seed", "error", err, "block", borBlock)
+		return 0, nil, err
+	}
+
+	ctx.Logger().Info("!!!RETURNING END BLOCK AUTHOR", "author", author, "block", borBlock)
 
 	return borBlock, author, nil
 }
