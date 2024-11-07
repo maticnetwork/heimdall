@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -114,6 +115,8 @@ func (h *BorGRPCClient) GetBorBlockReceipt(ctx context.Context, txHash common.Ha
 	req := &proto.ReceiptRequest{
 		Hash: protoutil.ConvertHashToH256(txHash),
 	}
+
+	fmt.Printf(">>>>> Using BorGRPCClient to fetch bor block receipt")
 
 	log.Info("Fetching bor block receipt")
 

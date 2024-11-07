@@ -283,6 +283,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		return
 	}
 
+	fmt.Printf(">>>>> conf.BorGRPCUrl: %v\n", conf.BorGRPCUrl)
 	if strings.Compare(conf.BorRPCUrl, "") != 0 || strings.Compare(conf.BorGRPCUrl, "") != 0 {
 		return
 	}
@@ -385,8 +386,12 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
+	fmt.Printf(">>>>> maticClient: %v\n", maticClient)
 
+	fmt.Printf(">>>>> conf.BorGRPCUrl: %v\n", conf.BorGRPCUrl)
+	fmt.Printf(">>>>> conf.BorGRPCFlag: %v\n", conf.BorGRPCFlag)
 	maticGRPCClient = borgrpc.NewBorGRPCClient(conf.BorGRPCUrl)
+	fmt.Printf(">>>>> maticGRPCClient: %v\n", maticGRPCClient)
 
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
@@ -520,6 +525,7 @@ func GetMaticRPCClient() *rpc.Client {
 
 // GetMaticGRPCClient returns matic's gRPC client
 func GetMaticGRPCClient() *borgrpc.BorGRPCClient {
+	fmt.Printf(">>>>> maticGRPCClient: %v\n", maticGRPCClient)
 	return maticGRPCClient
 }
 
@@ -631,10 +637,12 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 		"",
 		"Set gRPC endpoint for bor chain",
 	)
+	fmt.Printf(">>>>> PersistenFlag for BorGRPCUrlFlag: %v\n", BorGRPCUrlFlag)
 
 	if err := v.BindPFlag(BorGRPCUrlFlag, cmd.PersistentFlags().Lookup(BorGRPCUrlFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorGRPCUrlFlag), "Error", err)
 	}
+	fmt.Printf(">>>>> PersistenFlag for BorGRPCUrlFlag: %v\n", BorGRPCUrlFlag)
 
 	cmd.PersistentFlags().Bool(
 		BorGRPCFlag,
@@ -824,6 +832,7 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 
 	// get gRPC flag for bor chain from viper/cobra
 	boolConfgValue := v.GetBool(BorGRPCFlag)
+	fmt.Printf(">>>>> boolConfgValue: %v\n", boolConfgValue)
 	if boolConfgValue {
 		c.BorGRPCFlag = boolConfgValue
 	}
@@ -948,6 +957,7 @@ func (c *Configuration) Merge(cc *Configuration) {
 	}
 
 	if cc.BorGRPCUrl != "" {
+		fmt.Printf(">>>>> cc.BorGRPCUrl: %v\n", cc.BorGRPCUrl)
 		c.BorGRPCUrl = cc.BorGRPCUrl
 	}
 

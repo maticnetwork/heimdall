@@ -1,6 +1,7 @@
 package grpc
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
@@ -29,15 +30,19 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		grpc_retry.WithCodes(codes.Internal, codes.Unavailable, codes.Aborted, codes.NotFound),
 	}
 
+	fmt.Printf(">>>>> Connecting to Bor gRPC server at %s\n", address)
+
 	conn, err := grpc.Dial(address,
 		grpc.WithStreamInterceptor(grpc_retry.StreamClientInterceptor(opts...)),
 		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(opts...)),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
+		fmt.Printf(">>>>> Error connecting to Bor gRPC")
 		log.Crit("Failed to connect to Bor gRPC", "error", err)
 	}
 
+	fmt.Printf(">>>>> Connected to Bor gRPC")
 	log.Info("Connected to Bor gRPC server", "address", address)
 
 	return &BorGRPCClient{

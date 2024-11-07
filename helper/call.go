@@ -315,8 +315,10 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 
 	// Both MainChainClient and MaticChainClient cannot be nil, check it while initializing
 	if c.MaticGrpcFlag {
+		fmt.Printf(">>>>> using MaticGrpcClient for GetRootHash")
 		rootHash, err = c.MaticGrpcClient.GetRootHash(ctx, start, end)
 	} else {
+		fmt.Printf(">>>>> using MaticChainClient for GetRootHash")
 		rootHash, err = c.MaticChainClient.GetRootHash(ctx, start, end)
 	}
 
@@ -341,8 +343,10 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 	var err error
 
 	if c.MaticGrpcFlag {
+		fmt.Printf(">>>>> using MaticGrpcClient for GetVoteOnHash")
 		vote, err = c.MaticGrpcClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	} else {
+		fmt.Printf(">>>>> using MaticChainClient for GetVoteOnHash")
 		vote, err = c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	}
 
@@ -465,8 +469,10 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	var latestBlock *ethTypes.Header
 
 	if c.MaticGrpcFlag {
+		fmt.Printf(">>>>> using MaticGrpcClient for GetMaticChainBlock")
 		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
 	} else {
+		fmt.Printf(">>>>> using MaticChainClient for GetMaticChainBlock")
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	}
 
@@ -880,8 +886,10 @@ func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint6
 	var err error
 
 	if c.MaticGrpcFlag {
+		fmt.Printf(">>>>> using MaticGrpcClient for GetBlockByNumber")
 		block, err = c.MaticGrpcClient.BlockByNumber(ctx, blockNumber)
 	} else {
+		fmt.Printf(">>>>> using MaticChainClient for GetBlockByNumber")
 		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
 	}
 
@@ -911,15 +919,19 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 	defer cancel()
 
 	if c.MaticGrpcFlag {
+		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt")
 		return c.getTxReceipt(ctx, nil, c.MaticGrpcClient, txHash)
 	}
+	fmt.Printf()
 	return c.getTxReceipt(ctx, c.MaticChainClient, nil, txHash)
 }
 
 func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Client, grpcClient *grpc.BorGRPCClient, txHash common.Hash) (*ethTypes.Receipt, error) {
 	if grpcClient != nil {
+		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt")
 		return grpcClient.GetTransactionReceipt(ctx, txHash)
 	}
+	fmt.Printf(">>>>> using MaticChainClient for getTxReceipt")
 	return client.TransactionReceipt(ctx, txHash)
 }
 
