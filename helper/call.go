@@ -468,9 +468,8 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 
 	var latestBlock *ethTypes.Header
 	fmt.Printf(">>>>> blockNum: %v\n", blockNum)
-	fmt.Printf(">>>>> blockNum.Uint64(): %v\n", blockNum.Uint64())
 
-	if c.MaticGrpcFlag {
+	if c.MaticGrpcFlag && blockNum != nil {
 		fmt.Printf(">>>>> using MaticGrpcClient for GetMaticChainBlock\n")
 		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
 	} else {
@@ -887,7 +886,7 @@ func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint6
 	var block *ethTypes.Block
 	var err error
 
-	if c.MaticGrpcFlag {
+	if c.MaticGrpcFlag && big.NewInt(int64(blockNumber)) != nil {
 		fmt.Printf(">>>>> using MaticGrpcClient for GetBlockByNumber\n")
 		block, err = c.MaticGrpcClient.BlockByNumber(ctx, blockNumber)
 	} else {
