@@ -116,7 +116,7 @@ func (h *BorGRPCClient) GetBorBlockReceipt(ctx context.Context, txHash common.Ha
 		Hash: protoutil.ConvertHashToH256(txHash),
 	}
 
-	fmt.Printf(">>>>> Using BorGRPCClient to fetch bor block receipt")
+	fmt.Printf(">>>>> Using BorGRPCClient to fetch bor block receipt\n")
 
 	log.Info("Fetching bor block receipt")
 

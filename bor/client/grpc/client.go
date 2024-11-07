@@ -38,11 +38,11 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		fmt.Printf(">>>>> Error connecting to Bor gRPC")
+		fmt.Printf(">>>>> Error connecting to Bor gRPC\n")
 		log.Crit("Failed to connect to Bor gRPC", "error", err)
 	}
 
-	fmt.Printf(">>>>> Connected to Bor gRPC")
+	fmt.Printf(">>>>> Connected to Bor gRPC\n")
 	log.Info("Connected to Bor gRPC server", "address", address)
 
 	return &BorGRPCClient{

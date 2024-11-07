@@ -315,10 +315,10 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 
 	// Both MainChainClient and MaticChainClient cannot be nil, check it while initializing
 	if c.MaticGrpcFlag {
-		fmt.Printf(">>>>> using MaticGrpcClient for GetRootHash")
+		fmt.Printf(">>>>> using MaticGrpcClient for GetRootHash\n")
 		rootHash, err = c.MaticGrpcClient.GetRootHash(ctx, start, end)
 	} else {
-		fmt.Printf(">>>>> using MaticChainClient for GetRootHash")
+		fmt.Printf(">>>>> using MaticChainClient for GetRootHash\n")
 		rootHash, err = c.MaticChainClient.GetRootHash(ctx, start, end)
 	}
 
@@ -343,10 +343,10 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 	var err error
 
 	if c.MaticGrpcFlag {
-		fmt.Printf(">>>>> using MaticGrpcClient for GetVoteOnHash")
+		fmt.Printf(">>>>> using MaticGrpcClient for GetVoteOnHash\n")
 		vote, err = c.MaticGrpcClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	} else {
-		fmt.Printf(">>>>> using MaticChainClient for GetVoteOnHash")
+		fmt.Printf(">>>>> using MaticChainClient for GetVoteOnHash\n")
 		vote, err = c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
 	}
 
@@ -467,12 +467,14 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	defer cancel()
 
 	var latestBlock *ethTypes.Header
+	fmt.Printf(">>>>> blockNum: %v\n", blockNum)
+	fmt.Printf(">>>>> blockNum.Uint64(): %v\n", blockNum.Uint64())
 
 	if c.MaticGrpcFlag {
-		fmt.Printf(">>>>> using MaticGrpcClient for GetMaticChainBlock")
+		fmt.Printf(">>>>> using MaticGrpcClient for GetMaticChainBlock\n")
 		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
 	} else {
-		fmt.Printf(">>>>> using MaticChainClient for GetMaticChainBlock")
+		fmt.Printf(">>>>> using MaticChainClient for GetMaticChainBlock\n")
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	}
 
@@ -886,10 +888,10 @@ func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint6
 	var err error
 
 	if c.MaticGrpcFlag {
-		fmt.Printf(">>>>> using MaticGrpcClient for GetBlockByNumber")
+		fmt.Printf(">>>>> using MaticGrpcClient for GetBlockByNumber\n")
 		block, err = c.MaticGrpcClient.BlockByNumber(ctx, blockNumber)
 	} else {
-		fmt.Printf(">>>>> using MaticChainClient for GetBlockByNumber")
+		fmt.Printf(">>>>> using MaticChainClient for GetBlockByNumber\n")
 		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
 	}
 
@@ -919,19 +921,19 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 	defer cancel()
 
 	if c.MaticGrpcFlag {
-		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt")
+		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt\n")
 		return c.getTxReceipt(ctx, nil, c.MaticGrpcClient, txHash)
 	}
-	fmt.Printf(">>>>> using MaticChainClient for getTxReceipt")
+	fmt.Printf(">>>>> using MaticChainClient for getTxReceipt\n")
 	return c.getTxReceipt(ctx, c.MaticChainClient, nil, txHash)
 }
 
 func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Client, grpcClient *grpc.BorGRPCClient, txHash common.Hash) (*ethTypes.Receipt, error) {
 	if grpcClient != nil {
-		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt")
+		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt\n")
 		return grpcClient.GetTransactionReceipt(ctx, txHash)
 	}
-	fmt.Printf(">>>>> using MaticChainClient for getTxReceipt")
+	fmt.Printf(">>>>> using MaticChainClient for getTxReceipt\n")
 	return client.TransactionReceipt(ctx, txHash)
 }
 
