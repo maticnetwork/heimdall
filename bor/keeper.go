@@ -23,6 +23,7 @@ import (
 
 const maxSpanListLimit = 150 // a span is ~6 KB => we can fit 150 spans in 1 MB response
 const blockProducerAuthorsCollusionCheck = 20
+const blockProducerMaxSpanLookback = 100
 
 var (
 	LastSpanIDKey         = []byte{0x35} // Key to store last span start block
@@ -222,11 +223,12 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 		// increment last eth block
 		k.IncrementLastEthBlock(ctx)
 	} else {
-		// fetch span(id - 2)
 		var lastSpan *hmTypes.Span
-		lastSpanId := id - 2
+		var lastSpanId uint64
 		if id < 2 {
 			lastSpanId = id - 1
+		} else {
+			lastSpanId = id - 2
 		}
 
 		lastSpan, err = k.GetSpan(ctx, lastSpanId)
@@ -366,9 +368,11 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 			return common.Hash{}, err
 		}
 	} else {
-		spanId := id - 2
+		var spanId uint64
 		if id < 2 {
 			spanId = id - 1
+		} else {
+			spanId = id - 2
 		}
 		lastSpan, err = k.GetSpan(ctx, spanId)
 		if err != nil {
@@ -376,7 +380,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 			return common.Hash{}, err
 		}
 
-		borBlock, author, err := k.getBorBlockForSeed(ctx, lastSpan, blockProducerAuthorsCollusionCheck)
+		borBlock, author, err := k.getBorBlockForSeed(ctx, lastSpan)
 		if err != nil {
 			return common.Hash{}, err
 		}
@@ -462,7 +466,7 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 }
 
 // getBorBlockForSeed returns the bor block number and its producer whose hash is used as seed for the next span
-func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span, maxUniqueAuthors int) (uint64, *common.Address, error) {
+func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64, *common.Address, error) {
 	var (
 		borBlock uint64
 		author   *common.Address
@@ -472,7 +476,7 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span, maxUniq
 	uniqueAuthors := make(map[string]struct{})
 	spanID := span.ID
 
-	for len(uniqueAuthors) < maxUniqueAuthors {
+	for i := 0; len(uniqueAuthors) < blockProducerAuthorsCollusionCheck && i < blockProducerMaxSpanLookback; i++ {
 		if spanID == 0 {
 			break
 		}

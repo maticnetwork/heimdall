@@ -178,9 +178,10 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 
 	ctx.Logger().Info("!!!Next span seed", "seed", nextSpanSeed)
 
-	spanId = params.RecordID - 2
 	if params.RecordID < 2 {
 		spanId = params.RecordID - 1
+	} else {
+		spanId = params.RecordID - 2
 	}
 
 	prevSpan, err := keeper.GetSpan(ctx, spanId)

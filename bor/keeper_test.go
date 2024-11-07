@@ -49,8 +49,11 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 		vals = append(vals, *val)
 	}
 
-	spans := []hmTypes.Span{hmTypes.NewSpan(0, 0, 255, *valSet, vals, "test-chain"),
-		hmTypes.NewSpan(1, 256, 6655, *valSet, vals, "test-chain"),
+	spans := []hmTypes.Span{
+		hmTypes.NewSpan(0, 0, 256, *valSet, vals, "test-chain"),
+		hmTypes.NewSpan(1, 256, 6656, *valSet, vals, "test-chain"),
+		hmTypes.NewSpan(2, 6656, 16656, *valSet, vals, "test-chain"),
+		hmTypes.NewSpan(3, 16656, 26656, *valSet, vals, "test-chain"),
 	}
 
 	for _, span := range spans {
@@ -60,21 +63,44 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 
 	val1Addr := vals[0].PubKey.Address()
 	val2Addr := vals[1].PubKey.Address()
+	val3Addr := vals[2].PubKey.Address()
 
 	borParams := borKeeper.GetParams(ctx)
+
 	seedBlock1 := spans[0].EndBlock
-	seedBlock2 := spans[1].EndBlock - borParams.SprintDuration
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(seedBlock1))).Return(&val1Addr, nil)
+
+	seedBlock2 := spans[1].EndBlock - borParams.SprintDuration
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[1].EndBlock))).Return(&val1Addr, nil)
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(seedBlock2))).Return(&val2Addr, nil)
+
+	seedBlock3 := spans[2].EndBlock - (2 * borParams.SprintDuration)
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[2].EndBlock))).Return(&val1Addr, nil)
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[2].EndBlock-borParams.SprintDuration))).Return(&val2Addr, nil)
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(seedBlock3))).Return(&val3Addr, nil)
+
+	seedBlock4 := spans[3].EndBlock
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[3].EndBlock))).Return(&val1Addr, nil)
+
+	for block := spans[3].EndBlock; block >= spans[3].StartBlock; block -= borParams.SprintDuration {
+		s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(block))).Return(&val2Addr, nil)
+	}
+
+	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[3].EndBlock-borParams.SprintDuration))).Return(&val2Addr, nil)
 
 	blockHeader1 := ethTypes.Header{Number: big.NewInt(int64(seedBlock1))}
 	blockHash1 := blockHeader1.Hash()
 	blockHeader2 := ethTypes.Header{Number: big.NewInt(int64(seedBlock2))}
 	blockHash2 := blockHeader2.Hash()
+	blockHeader3 := ethTypes.Header{Number: big.NewInt(int64(seedBlock3))}
+	blockHash3 := blockHeader3.Hash()
+	blockHeader4 := ethTypes.Header{Number: big.NewInt(int64(seedBlock4))}
+	blockHash4 := blockHeader4.Hash()
 
 	s.contractCaller.On("GetMaticChainBlock", big.NewInt(int64(seedBlock1))).Return(&blockHeader1, nil)
 	s.contractCaller.On("GetMaticChainBlock", big.NewInt(int64(seedBlock2))).Return(&blockHeader2, nil)
+	s.contractCaller.On("GetMaticChainBlock", big.NewInt(int64(seedBlock3))).Return(&blockHeader3, nil)
+	s.contractCaller.On("GetMaticChainBlock", big.NewInt(int64(seedBlock4))).Return(&blockHeader4, nil)
 
 	testcases := []struct {
 		name             string
@@ -93,6 +119,18 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 			lastSeedProducer: &val1Addr,
 			lastSpanId:       1,
 			expSeed:          blockHash2,
+		},
+		{
+			name:             "Next seed producer should be different from previous recent seed producers",
+			lastSeedProducer: &val2Addr,
+			lastSpanId:       2,
+			expSeed:          blockHash3,
+		},
+		{
+			name:             "If no unique seed producer is found, last span block is selected",
+			lastSeedProducer: &val3Addr,
+			lastSpanId:       3,
+			expSeed:          blockHash4,
 		},
 	}
 
