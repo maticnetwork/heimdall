@@ -922,7 +922,7 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt")
 		return c.getTxReceipt(ctx, nil, c.MaticGrpcClient, txHash)
 	}
-	fmt.Printf()
+	fmt.Printf(">>>>> using MaticChainClient for getTxReceipt")
 	return c.getTxReceipt(ctx, c.MaticChainClient, nil, txHash)
 }
 
