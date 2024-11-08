@@ -523,7 +523,6 @@ func GetMaticRPCClient() *rpc.Client {
 
 // GetMaticGRPCClient returns matic's gRPC client
 func GetMaticGRPCClient() *borgrpc.BorGRPCClient {
-	fmt.Printf(">>>>> maticGRPCClient: %v\n", maticGRPCClient)
 	return maticGRPCClient
 }
 
