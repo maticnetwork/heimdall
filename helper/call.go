@@ -930,7 +930,7 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Client, grpcClient *grpc.BorGRPCClient, txHash common.Hash) (*ethTypes.Receipt, error) {
 	if grpcClient != nil {
 		fmt.Printf(">>>>> using MaticGrpcClient for getTxReceipt\n")
-		return grpcClient.GetTransactionReceipt(ctx, txHash)
+		return grpcClient.TransactionReceipt(ctx, txHash)
 	}
 	fmt.Printf(">>>>> using MaticChainClient for getTxReceipt\n")
 	return client.TransactionReceipt(ctx, txHash)

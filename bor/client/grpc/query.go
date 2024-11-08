@@ -102,8 +102,8 @@ func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID uint64) (*eth
 	return ethTypes.NewBlock(&header, nil, nil, nil, nil), nil
 }
 
-func (h *BorGRPCClient) GetTransactionReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
-	fmt.Printf(">>>>> Using BorGRPCClient GetTransactionReceipt\n")
+func (h *BorGRPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient TransactionReceipt\n")
 
 	req := &proto.ReceiptRequest{
 		Hash: protoutil.ConvertHashToH256(txHash),
@@ -121,8 +121,8 @@ func (h *BorGRPCClient) GetTransactionReceipt(ctx context.Context, txHash common
 	return receiptResponseToTypesReceipt(res.Receipt), nil
 }
 
-func (h *BorGRPCClient) GetBorBlockReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
-	fmt.Printf(">>>>> Using BorGRPCClient GetBorBlockReceipt\n")
+func (h *BorGRPCClient) BorBlockReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient BorBlockReceipt\n")
 
 	req := &proto.ReceiptRequest{
 		Hash: protoutil.ConvertHashToH256(txHash),
