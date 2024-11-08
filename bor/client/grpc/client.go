@@ -43,7 +43,7 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		grpc.WithBlock(),
 	)
 	if err != nil {
-		fmt.Printf(">>>>> Error connecting to Bor gRPC\n")
+		fmt.Printf(">>>>> Error connecting to Bor gRPC: error: %v\n", err)
 		log.Crit("Failed to connect to Bor gRPC", "error", err)
 	}
 
