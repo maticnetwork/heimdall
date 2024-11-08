@@ -14,10 +14,6 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
-const (
-	stateFetchLimit = 50
-)
-
 type BorGRPCClient struct {
 	conn   *grpc.ClientConn
 	client proto.BorApiClient
@@ -32,7 +28,7 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		grpc_retry.WithCodes(codes.Internal, codes.Unavailable, codes.Aborted, codes.NotFound),
 	}
 
-	conn, err := grpc.Dial(address,
+	conn, err := grpc.NewClient(address,
 		grpc.WithStreamInterceptor(grpc_retry.StreamClientInterceptor(opts...)),
 		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(opts...)),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),

@@ -149,7 +149,7 @@ func receiptResponseToTypesReceipt(receipt *proto.Receipt) *ethTypes.Receipt {
 		BlobGasUsed:       receipt.BlobGasUsed,
 		BlobGasPrice:      big.NewInt(receipt.BlobGasPrice),
 		BlockHash:         protoutil.ConvertH256ToHash(receipt.BlockHash),
-		BlockNumber:       big.NewInt(int64(receipt.BlockNumber)),
+		BlockNumber:       big.NewInt(receipt.BlockNumber),
 		TransactionIndex:  uint(receipt.TransactionIndex),
 	}
 }
