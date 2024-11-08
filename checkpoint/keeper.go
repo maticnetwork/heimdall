@@ -140,11 +140,11 @@ func (k *Keeper) GetCheckpointByNumber(ctx sdk.Context, number uint64) (hmTypes.
 }
 
 // GetCheckpointList returns all checkpoints with params like page and limit
-func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.Checkpoint, error) {
+func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) ([]hmTypes.CheckpointWithID, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	// create headers
-	var checkpoints []hmTypes.Checkpoint
+	var checkpoints []hmTypes.CheckpointWithID
 
 	// have max limit
 	if limit > maxCheckpointListLimit {
@@ -158,7 +158,22 @@ func (k *Keeper) GetCheckpointList(ctx sdk.Context, page uint64, limit uint64) (
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {
-			checkpoints = append(checkpoints, checkpoint)
+			id, err := GetCheckpointIDFromKey(iterator.Key())
+			if err != nil {
+				continue
+			}
+
+			checkpointWithID := hmTypes.CheckpointWithID{
+				ID:         id,
+				Proposer:   checkpoint.Proposer,
+				StartBlock: checkpoint.StartBlock,
+				EndBlock:   checkpoint.EndBlock,
+				RootHash:   checkpoint.RootHash,
+				BorChainID: checkpoint.BorChainID,
+				TimeStamp:  checkpoint.TimeStamp,
+			}
+
+			checkpoints = append(checkpoints, checkpointWithID)
 		}
 	}
 
@@ -195,6 +210,11 @@ func (k *Keeper) GetLastCheckpoint(ctx sdk.Context) (hmTypes.Checkpoint, error) 
 func GetCheckpointKey(checkpointNumber uint64) []byte {
 	checkpointNumberBytes := []byte(strconv.FormatUint(checkpointNumber, 10))
 	return append(CheckpointKey, checkpointNumberBytes...)
+}
+
+// GetCheckpointIDFromKey get the checkpoint ID from the DB key
+func GetCheckpointIDFromKey(key []byte) (uint64, error) {
+	return strconv.ParseUint(string(key[1:]), 10, 64)
 }
 
 // HasStoreValue check if value exists in store or not

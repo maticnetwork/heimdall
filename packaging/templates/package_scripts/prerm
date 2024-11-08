@@ -4,4 +4,4 @@
 ##################
 # Stops existing for upgrade
 #################
-sudo systemctl stop heimdalld.service
+#sudo systemctl stop heimdalld.service

@@ -17,7 +17,7 @@
 
 ## Overview
 
-The validators on bor chain produce blocks in sprints and spans. Hence, it is imperative for the protocol to formalise the validators who will be producers in a range of blocks (`span`). The `bor` module in heimdall facilitates this by pseudo-randomly selecting validators who will producing blocks (producers) from the current validator set. The bor chain fetches and persists this information before the next span begins. `bor` module is a crucial component in heimdall since the PoS chain "liveness" depends on it.
+The validators on bor chain produce blocks in sprints and spans. Hence, it is imperative for the protocol to formalise the validators who will be producers in a range of blocks (`span`). The `bor` module in heimdall facilitates this by pseudo-randomly selecting validators who will be producing blocks (producers) from the current validator set. The bor chain fetches and persists this information before the next span begins. `bor` module is a crucial component in heimdall since the PoS chain "liveness" depends on it.
 
 ## How does it work
 
@@ -33,7 +33,7 @@ type Span struct {
 	ChainID           string       `json:"bor_chain_id" yaml:"bor_chain_id"`
 }
 ```
-where ,
+where,
 
 * `ID` means the id of the span, calculated by monotonically incrementing the ID of the previous span.
 * `StartBlock` corresponds to the block in bor from which the given span would commence.

@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/rpc"
 	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/types/rest"
 	"github.com/go-kit/log"
 	"github.com/gorilla/mux"
 	"github.com/rakyll/statik/fs"
@@ -26,6 +27,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	tx "github.com/maticnetwork/heimdall/client/tx"
 	"github.com/maticnetwork/heimdall/helper"
+	hmRest "github.com/maticnetwork/heimdall/types/rest"
 
 	// unnamed import of statik for swagger UI support
 	"github.com/maticnetwork/heimdall/server/gRPC"
@@ -264,6 +266,9 @@ func RegisterRoutes(ctx client.CLIContext, mux *mux.Router) {
 	rpc.RegisterRPCRoutes(ctx, mux)
 	tx.RegisterRoutes(ctx, mux)
 
+	// Register the status endpoint here (as it's generic)
+	mux.HandleFunc("/status", statusHandlerFn(ctx)).Methods("GET")
+
 	// auth.RegisterRoutes(rs.CliCtx, rs.Mux)
 	// bank.RegisterRoutes(rs.CliCtx, rs.Mux)
 
@@ -284,4 +289,16 @@ func registerSwaggerUI(mux *mux.Router) {
 
 	staticServer := http.FileServer(statikFS)
 	mux.PathPrefix("/swagger-ui/").Handler(http.StripPrefix("/swagger-ui/", staticServer))
+}
+
+func statusHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		status, err := cliCtx.Client.Status()
+		if err != nil {
+			hmRest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		rest.PostProcessResponse(w, cliCtx, status.SyncInfo)
+	}
 }

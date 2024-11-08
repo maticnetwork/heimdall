@@ -135,7 +135,7 @@ jobs:
 
         - name: Upload logs
           if: always()
-          uses: actions/upload-artifact@v3
+          uses: actions/upload-artifact@v4.4.0
           with:
             name: logs_${{ github.run_id }}
             path: |
@@ -154,7 +154,7 @@ jobs:
 
         - name: Upload code and chain data
           if: always()
-          uses: actions/upload-artifact@v3
+          uses: actions/upload-artifact@v4.4.0
           with:
             name: code_${{ github.run_id }}
             path: code.tar.gz
