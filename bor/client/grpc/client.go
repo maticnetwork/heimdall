@@ -42,7 +42,7 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		log.Crit("Failed to connect to Bor gRPC", "error", err)
 	}
 
-	fmt.Printf(">>>>> Connected to Bor gRPC\n")
+	fmt.Printf(">>>>> Connected to Bor gRPC on address %s\n", address)
 	log.Info("Connected to Bor gRPC server", "address", address)
 
 	return &BorGRPCClient{
