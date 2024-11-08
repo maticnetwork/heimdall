@@ -1,7 +1,7 @@
 package grpc
 
 import (
-	"fmt"
+	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
@@ -24,13 +24,13 @@ type BorGRPCClient struct {
 }
 
 func NewBorGRPCClient(address string) *BorGRPCClient {
+	address = removePrefix(address)
+
 	opts := []grpc_retry.CallOption{
 		grpc_retry.WithMax(5),
 		grpc_retry.WithBackoff(grpc_retry.BackoffLinear(1 * time.Second)),
 		grpc_retry.WithCodes(codes.Internal, codes.Unavailable, codes.Aborted, codes.NotFound),
 	}
-
-	fmt.Printf(">>>>> Connecting to Bor gRPC server at %s\n", address)
 
 	conn, err := grpc.Dial(address,
 		grpc.WithStreamInterceptor(grpc_retry.StreamClientInterceptor(opts...)),
@@ -38,11 +38,9 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
-		fmt.Printf(">>>>> Error connecting to Bor gRPC: error: %v\n", err)
 		log.Crit("Failed to connect to Bor gRPC", "error", err)
 	}
 
-	fmt.Printf(">>>>> Connected to Bor gRPC on address %s\n", address)
 	log.Info("Connected to Bor gRPC server", "address", address)
 
 	return &BorGRPCClient{
@@ -54,4 +52,12 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 func (h *BorGRPCClient) Close() {
 	log.Debug("Shutdown detected, Closing Bor gRPC client")
 	h.conn.Close()
+}
+
+// removePrefix removes the http:// or https:// prefix from the address, if present.
+func removePrefix(address string) string {
+	if strings.HasPrefix(address, "http://") || strings.HasPrefix(address, "https://") {
+		return address[strings.Index(address, "//")+2:]
+	}
+	return address
 }
