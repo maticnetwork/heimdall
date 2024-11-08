@@ -1,7 +1,6 @@
 package grpc
 
 import (
-	"context"
 	"fmt"
 	"time"
 
@@ -31,16 +30,12 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		grpc_retry.WithCodes(codes.Internal, codes.Unavailable, codes.Aborted, codes.NotFound),
 	}
 
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-
 	fmt.Printf(">>>>> Connecting to Bor gRPC server at %s\n", address)
 
-	conn, err := grpc.DialContext(ctx, address,
+	conn, err := grpc.Dial(address,
 		grpc.WithStreamInterceptor(grpc_retry.StreamClientInterceptor(opts...)),
 		grpc.WithUnaryInterceptor(grpc_retry.UnaryClientInterceptor(opts...)),
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithBlock(),
 	)
 	if err != nil {
 		fmt.Printf(">>>>> Error connecting to Bor gRPC: error: %v\n", err)
