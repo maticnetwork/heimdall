@@ -15,8 +15,8 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	lru "github.com/hashicorp/golang-lru"
-	"github.com/maticnetwork/heimdall/bor/client/grpc"
 
+	"github.com/maticnetwork/heimdall/bor/client/grpc"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"

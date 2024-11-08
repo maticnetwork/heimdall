@@ -17,17 +17,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+	tmTypes "github.com/tendermint/tendermint/types"
 
 	borgrpc "github.com/maticnetwork/heimdall/bor/client/grpc"
-
 	"github.com/maticnetwork/heimdall/file"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-
-	cfg "github.com/tendermint/tendermint/config"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 const (
