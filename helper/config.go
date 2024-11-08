@@ -386,12 +386,10 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
-	fmt.Printf(">>>>> maticClient: %v\n", maticClient)
 
 	fmt.Printf(">>>>> conf.BorGRPCUrl: %v\n", conf.BorGRPCUrl)
 	fmt.Printf(">>>>> conf.BorGRPCFlag: %v\n", conf.BorGRPCFlag)
 	maticGRPCClient = borgrpc.NewBorGRPCClient(conf.BorGRPCUrl)
-	fmt.Printf(">>>>> maticGRPCClient: %v\n", maticGRPCClient)
 
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
@@ -832,7 +830,7 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 
 	// get gRPC flag for bor chain from viper/cobra
 	boolConfgValue := v.GetBool(BorGRPCFlag)
-	fmt.Printf(">>>>> boolConfgValue: %v\n", boolConfgValue)
+	fmt.Printf(">>>>> boolConfgValue for BorGRPCFlag: %v\n", boolConfgValue)
 	if boolConfgValue {
 		c.BorGRPCFlag = boolConfgValue
 	}

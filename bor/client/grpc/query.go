@@ -14,6 +14,8 @@ import (
 )
 
 func (h *BorGRPCClient) GetRootHash(ctx context.Context, startBlock uint64, endBlock uint64) (string, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient GetRootHash\n")
+
 	req := &proto.GetRootHashRequest{
 		StartBlockNumber: startBlock,
 		EndBlockNumber:   endBlock,
@@ -32,6 +34,8 @@ func (h *BorGRPCClient) GetRootHash(ctx context.Context, startBlock uint64, endB
 }
 
 func (h *BorGRPCClient) GetVoteOnHash(ctx context.Context, startBlock uint64, endBlock uint64, rootHash string, milestoneId string) (bool, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient GetVoteOnHash\n")
+
 	req := &proto.GetVoteOnHashRequest{
 		StartBlockNumber: startBlock,
 		EndBlockNumber:   endBlock,
@@ -52,6 +56,8 @@ func (h *BorGRPCClient) GetVoteOnHash(ctx context.Context, startBlock uint64, en
 }
 
 func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*ethTypes.Header, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient HeaderByNumber\n")
+
 	req := &proto.GetHeaderByNumberRequest{
 		Number: blockID,
 	}
@@ -73,6 +79,8 @@ func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*et
 }
 
 func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID uint64) (*ethTypes.Block, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient BlockByNumber\n")
+
 	req := &proto.GetBlockByNumberRequest{
 		Number: blockID,
 	}
@@ -95,6 +103,8 @@ func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID uint64) (*eth
 }
 
 func (h *BorGRPCClient) GetTransactionReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient GetTransactionReceipt\n")
+
 	req := &proto.ReceiptRequest{
 		Hash: protoutil.ConvertHashToH256(txHash),
 	}
@@ -112,11 +122,11 @@ func (h *BorGRPCClient) GetTransactionReceipt(ctx context.Context, txHash common
 }
 
 func (h *BorGRPCClient) GetBorBlockReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
+	fmt.Printf(">>>>> Using BorGRPCClient GetBorBlockReceipt\n")
+
 	req := &proto.ReceiptRequest{
 		Hash: protoutil.ConvertHashToH256(txHash),
 	}
-
-	fmt.Printf(">>>>> Using BorGRPCClient to fetch bor block receipt\n")
 
 	log.Info("Fetching bor block receipt")
 
