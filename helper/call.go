@@ -465,6 +465,9 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	var latestBlock *ethTypes.Header
 
 	if c.MaticGrpcFlag && blockNum != nil {
+		if blockNum.Sign() < 0 {
+			blockNum = new(big.Int).Abs(blockNum)
+		}
 		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
 	} else {
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
