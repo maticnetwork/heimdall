@@ -476,27 +476,35 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 	uniqueAuthors := make(map[string]struct{})
 	spanID := span.ID
 
+	lastAuthor, err := k.GetSeedProducer(ctx, spanID)
+	if err != nil {
+		k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", spanID)
+		return 0, nil, err
+	}
+
 	for i := 0; len(uniqueAuthors) < blockProducerAuthorsCollusionCheck && i < blockProducerMaxSpanLookback; i++ {
 		if spanID == 0 {
 			break
 		}
 
-		lastAuthor, err := k.GetSeedProducer(ctx, spanID)
+		author, err := k.GetSeedProducer(ctx, spanID)
 		if err != nil {
-			k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", spanID)
+			k.Logger(ctx).Error("Error fetching span seed producer", "error", err, "span id", spanID)
 			return 0, nil, err
 		}
 
-		if lastAuthor == nil {
+		if author == nil {
 			k.Logger(ctx).Info("GetSeedProducer returned empty value", "span id", spanID)
 			break
 		}
 
-		uniqueAuthors[lastAuthor.Hex()] = struct{}{}
+		uniqueAuthors[author.Hex()] = struct{}{}
 		spanID--
 	}
 
 	ctx.Logger().Info("!!!LAST AUTHORS", "authors", fmt.Sprintf("%+v", uniqueAuthors), "span id", span.ID)
+
+	firstDiffFromLast := uint64(0)
 
 	borParams := k.GetParams(ctx)
 	for borBlock = span.EndBlock; borBlock >= span.StartBlock; borBlock -= borParams.SprintDuration {
@@ -510,9 +518,16 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 			ctx.Logger().Info("!!!GOT AUTHOR", "author", author, "block", borBlock)
 			return borBlock, author, nil
 		}
+
+		if firstDiffFromLast == 0 && lastAuthor != nil && author.Hex() != lastAuthor.Hex() {
+			firstDiffFromLast = borBlock
+		}
 	}
 
-	borBlock = span.EndBlock
+	borBlock = firstDiffFromLast
+	if borBlock == 0 {
+		borBlock = span.EndBlock
+	}
 
 	author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
 	if err != nil {
@@ -520,7 +535,7 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 		return 0, nil, err
 	}
 
-	ctx.Logger().Info("!!!RETURNING END BLOCK AUTHOR", "author", author, "block", borBlock)
+	ctx.Logger().Info("!!!RETURNING FIRST DIFFERENT BLOCK AUTHOR", "author", author, "block", borBlock)
 
 	return borBlock, author, nil
 }

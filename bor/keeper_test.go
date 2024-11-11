@@ -79,7 +79,7 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[2].EndBlock-borParams.SprintDuration))).Return(&val2Addr, nil)
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(seedBlock3))).Return(&val3Addr, nil)
 
-	seedBlock4 := spans[3].EndBlock
+	seedBlock4 := spans[3].EndBlock - borParams.SprintDuration
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[3].EndBlock))).Return(&val1Addr, nil)
 
 	for block := spans[3].EndBlock; block >= spans[3].StartBlock; block -= borParams.SprintDuration {
@@ -127,8 +127,8 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 			expSeed:          blockHash3,
 		},
 		{
-			name:             "If no unique seed producer is found, last span block is selected",
-			lastSeedProducer: &val3Addr,
+			name:             "If no unique seed producer is found, first block with different author from previous seed producer is selected",
+			lastSeedProducer: &val1Addr,
 			lastSpanId:       3,
 			expSeed:          blockHash4,
 		},
