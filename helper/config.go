@@ -235,7 +235,7 @@ var aalborgHeight int64 = 0
 
 var newHexToStringAlgoHeight int64 = 0
 
-var needANameHeight int64 = 0
+var needANameHeight int64 = 6400
 
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress

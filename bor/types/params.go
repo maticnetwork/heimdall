@@ -18,7 +18,7 @@ const (
 	DefaultSprintDuration    uint64 = 16 // TODO(@Raneet10): revert this!
 	DefaultSpanDuration      uint64 = 100 * DefaultSprintDuration
 	DefaultFirstSpanDuration uint64 = 256
-	DefaultProducerCount     uint64 = 3 // TODO(@Raneet10): revert this!
+	DefaultProducerCount     uint64 = 2 // TODO(@Raneet10): revert this!
 )
 
 // Parameter keys
