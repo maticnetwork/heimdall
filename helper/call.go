@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 	"strings"
 	"time"
@@ -465,7 +466,11 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	var latestBlock *ethTypes.Header
 
 	if c.MaticGrpcFlag {
-		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
+		if blockNum == nil {
+			latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, uint64(rpc.LatestBlockNumber.Int64()))
+		} else {
+			latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
+		}
 	} else {
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	}
@@ -1015,4 +1020,19 @@ func chooseContractCallerABI(contractCallerObj *ContractCaller, abi string) (*ab
 // getABI returns the contract's ABI struct from on its JSON representation
 func getABI(data string) (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(data))
+}
+
+func toBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	if number.Sign() >= 0 {
+		return hexutil.EncodeBig(number)
+	}
+	// It's negative.
+	if number.IsInt64() {
+		return rpc.BlockNumber(number.Int64()).String()
+	}
+	// It's negative and large, which is invalid.
+	return fmt.Sprintf("<invalid %d>", number)
 }
