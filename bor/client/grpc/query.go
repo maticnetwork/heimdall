@@ -6,7 +6,7 @@ import (
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -57,7 +57,11 @@ func (h *BorGRPCClient) GetVoteOnHash(ctx context.Context, startBlock uint64, en
 
 func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*ethTypes.Header, error) {
 
-	blockNumberAsString := toBlockNumArg(big.NewInt(int64(blockID)))
+	if blockID > math.MaxInt64 {
+		return nil, fmt.Errorf("blockID too large: %d", blockID)
+	}
+
+	blockNumberAsString := ToBlockNumArg(big.NewInt(int64(blockID)))
 
 	req := &proto.GetHeaderByNumberRequest{
 		Number: blockNumberAsString,
@@ -83,7 +87,11 @@ func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*et
 
 func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID uint64) (*ethTypes.Block, error) {
 
-	blockNumberAsString := toBlockNumArg(big.NewInt(int64(blockID)))
+	if blockID > math.MaxInt64 {
+		return nil, fmt.Errorf("blockID too large: %d", blockID)
+	}
+
+	blockNumberAsString := ToBlockNumArg(big.NewInt(int64(blockID)))
 
 	req := &proto.GetBlockByNumberRequest{
 		Number: blockNumberAsString,
@@ -161,12 +169,12 @@ func receiptResponseToTypesReceipt(receipt *proto.Receipt) *ethTypes.Receipt {
 	}
 }
 
-func toBlockNumArg(number *big.Int) string {
+func ToBlockNumArg(number *big.Int) string {
 	if number == nil {
 		return "latest"
 	}
 	if number.Sign() >= 0 {
-		return hexutil.EncodeBig(number)
+		return number.String()
 	}
 	// It's negative.
 	if number.IsInt64() {
