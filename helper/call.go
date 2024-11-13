@@ -16,6 +16,7 @@ import (
 	"github.com/ethereum/go-ethereum/rpc"
 	lru "github.com/hashicorp/golang-lru"
 
+	"github.com/maticnetwork/heimdall/bor/client/grpc"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -100,11 +101,18 @@ type IContractCaller interface {
 
 // ContractCaller contract caller
 type ContractCaller struct {
-	MainChainClient   *ethclient.Client
-	MainChainRPC      *rpc.Client
-	MainChainTimeout  time.Duration
-	MaticChainClient  *ethclient.Client
-	MaticChainRPC     *rpc.Client
+	MainChainClient  *ethclient.Client
+	MainChainRPC     *rpc.Client
+	MainChainTimeout time.Duration
+
+	// MaticGrpcFlag is a flag to check if the client is grpc or not
+	MaticGrpcFlag bool
+
+	MaticChainClient *ethclient.Client
+	MaticChainRPC    *rpc.Client
+
+	MaticGrpcClient *grpc.BorGRPCClient
+
 	MaticChainTimeout time.Duration
 
 	RootChainABI     abi.ABI
@@ -141,6 +149,8 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.MaticChainRPC = GetMaticRPCClient()
 	contractCallerObj.ReceiptCache, err = lru.New(1000)
+	contractCallerObj.MaticGrpcFlag = config.BorGRPCFlag
+	contractCallerObj.MaticGrpcClient = GetMaticGRPCClient()
 
 	if err != nil {
 		return contractCallerObj, err
@@ -300,7 +310,15 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	rootHash, err := c.MaticChainClient.GetRootHash(ctx, start, end)
+	var rootHash string
+	var err error
+
+	// Both MainChainClient and MaticChainClient cannot be nil, check it while initializing
+	if c.MaticGrpcFlag {
+		rootHash, err = c.MaticGrpcClient.GetRootHash(ctx, start, end)
+	} else {
+		rootHash, err = c.MaticChainClient.GetRootHash(ctx, start, end)
+	}
 
 	if err != nil {
 		Logger.Error("Could not fetch rootHash from matic chain", "error", err)
@@ -319,7 +337,15 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	var vote bool
+	var err error
+
+	if c.MaticGrpcFlag {
+		vote, err = c.MaticGrpcClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	} else {
+		vote, err = c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	}
+
 	if err != nil {
 		return false, errors.New(fmt.Sprint("Error in fetching vote from matic chain", "err", err))
 	}
@@ -436,7 +462,17 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	latestBlock, err := c.MaticChainClient.HeaderByNumber(ctx, blockNum)
+	var latestBlock *ethTypes.Header
+
+	if c.MaticGrpcFlag && blockNum != nil {
+		if blockNum.Sign() < 0 {
+			blockNum = new(big.Int).Abs(blockNum)
+		}
+		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
+	} else {
+		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
+	}
+
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "error", err)
 		return
@@ -846,7 +882,15 @@ func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
 
 // GetBlockByNumber returns blocks by number from child chain (bor)
 func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint64) *ethTypes.Block {
-	block, err := c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	var block *ethTypes.Block
+	var err error
+
+	if c.MaticGrpcFlag && big.NewInt(int64(blockNumber)) != nil {
+		block, err = c.MaticGrpcClient.BlockByNumber(ctx, blockNumber)
+	} else {
+		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	}
+
 	if err != nil {
 		Logger.Error("Unable to fetch block by number from child chain", "block", block, "err", err)
 		return nil
@@ -864,7 +908,7 @@ func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
 
-	return c.getTxReceipt(ctx, c.MainChainClient, txHash)
+	return c.getTxReceipt(ctx, c.MainChainClient, nil, txHash)
 }
 
 // GetMaticTxReceipt returns matic tx receipt
@@ -872,10 +916,16 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	return c.getTxReceipt(ctx, c.MaticChainClient, txHash)
+	if c.MaticGrpcFlag {
+		return c.getTxReceipt(ctx, nil, c.MaticGrpcClient, txHash)
+	}
+	return c.getTxReceipt(ctx, c.MaticChainClient, nil, txHash)
 }
 
-func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Client, txHash common.Hash) (*ethTypes.Receipt, error) {
+func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Client, grpcClient *grpc.BorGRPCClient, txHash common.Hash) (*ethTypes.Receipt, error) {
+	if grpcClient != nil {
+		return grpcClient.TransactionReceipt(ctx, txHash)
+	}
 	return client.TransactionReceipt(ctx, txHash)
 }
 

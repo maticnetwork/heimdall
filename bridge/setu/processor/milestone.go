@@ -105,7 +105,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 		}
 
 		if result == nil {
-			return fmt.Errorf("Got nil result while fetching milestone count")
+			return errors.New("got nil result while fetching milestone count")
 		}
 
 		var start = helper.GetMilestoneBorBlockHeight()
@@ -118,7 +118,7 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 			}
 
 			if latestMilestone == nil {
-				return errors.New("Got nil result while fetching latest milestone")
+				return errors.New("got nil result while fetching latest milestone")
 			}
 
 			//start block number should be continuous to the end block of lasted stored milestone
@@ -160,7 +160,7 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	//fetch the endBlock+1 number instead of endBlock so that we can directly get the hash of endBlock using parent hash
 	block, err = mp.contractConnector.GetMaticChainBlock(big.NewInt(int64(endNum + 1)))
 	if err != nil {
-		return fmt.Errorf("Error while fetching %d block %w", endNum+1, err)
+		return fmt.Errorf("error while fetching block %d: %w", endNum+1, err)
 	}
 
 	endHash := block.ParentHash

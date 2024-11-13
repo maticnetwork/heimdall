@@ -12,9 +12,10 @@ require (
 	github.com/golang/mock v1.6.0
 	github.com/google/uuid v1.6.0
 	github.com/gorilla/mux v1.8.1
+	github.com/grpc-ecosystem/go-grpc-middleware v1.4.0
 	github.com/hashicorp/golang-lru v1.0.2
 	github.com/json-iterator/go v1.1.12
-	github.com/maticnetwork/polyproto v0.0.3-0.20230216113155-340ea926ca53
+	github.com/maticnetwork/polyproto v0.0.3
 	github.com/pborman/uuid v1.2.1
 	github.com/pkg/errors v0.9.1
 	github.com/prometheus/client_golang v1.19.0

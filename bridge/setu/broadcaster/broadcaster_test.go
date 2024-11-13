@@ -114,7 +114,7 @@ var (
 	}
 )
 
-// Parallel test - to check BroadcastToHeimdall synchronisation
+//nolint:tparallel
 func TestBroadcastToHeimdall(t *testing.T) {
 	t.Parallel()
 

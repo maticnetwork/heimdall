@@ -17,15 +17,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+	tmTypes "github.com/tendermint/tendermint/types"
 
+	borgrpc "github.com/maticnetwork/heimdall/bor/client/grpc"
 	"github.com/maticnetwork/heimdall/file"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-
-	cfg "github.com/tendermint/tendermint/config"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -48,6 +48,8 @@ const (
 	// heimdall-config flags
 	MainRPCUrlFlag               = "eth_rpc_url"
 	BorRPCUrlFlag                = "bor_rpc_url"
+	BorGRPCUrlFlag               = "bor_grpc_url"
+	BorGRPCFlag                  = "bor_grpc_flag"
 	TendermintNodeURLFlag        = "tendermint_rpc_url"
 	HeimdallServerURLFlag        = "heimdall_rest_server"
 	AmqpURLFlag                  = "amqp_url"
@@ -81,6 +83,7 @@ const (
 	// RPC Endpoints
 	DefaultMainRPCUrl = "http://localhost:9545"
 	DefaultBorRPCUrl  = "http://localhost:8545"
+	DefaultBorGRPCUrl = "http://localhost:3131"
 
 	// RPC Timeouts
 	DefaultEthRPCTimeout = 5 * time.Second
@@ -168,6 +171,8 @@ func init() {
 type Configuration struct {
 	EthRPCUrl        string `mapstructure:"eth_rpc_url"`        // RPC endpoint for main chain
 	BorRPCUrl        string `mapstructure:"bor_rpc_url"`        // RPC endpoint for bor chain
+	BorGRPCUrl       string `mapstructure:"bor_grpc_url"`       // gRPC endpoint for bor chain
+	BorGRPCFlag      bool   `mapstructure:"bor_grpc_flag"`      // gRPC flag for bor chain
 	TendermintRPCUrl string `mapstructure:"tendermint_rpc_url"` // tendemint node url
 	SubGraphUrl      string `mapstructure:"sub_graph_url"`      // sub graph url
 
@@ -213,6 +218,7 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
+var maticGRPCClient *borgrpc.BorGRPCClient
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -275,7 +281,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		return
 	}
 
-	if strings.Compare(conf.BorRPCUrl, "") != 0 {
+	if strings.Compare(conf.BorRPCUrl, "") != 0 || strings.Compare(conf.BorGRPCUrl, "") != 0 {
 		return
 	}
 
@@ -377,6 +383,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
+
+	maticGRPCClient = borgrpc.NewBorGRPCClient(conf.BorGRPCUrl)
+
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
 	if err != nil {
@@ -424,6 +433,7 @@ func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
 		BorRPCUrl:        DefaultBorRPCUrl,
+		BorGRPCUrl:       DefaultBorGRPCUrl,
 		TendermintRPCUrl: DefaultTendermintNodeURL,
 
 		EthRPCTimeout: DefaultEthRPCTimeout,
@@ -504,6 +514,11 @@ func GetMaticClient() *ethclient.Client {
 // GetMaticRPCClient returns matic's RPC client
 func GetMaticRPCClient() *rpc.Client {
 	return maticRPCClient
+}
+
+// GetMaticGRPCClient returns matic's gRPC client
+func GetMaticGRPCClient() *borgrpc.BorGRPCClient {
+	return maticGRPCClient
 }
 
 // GetPrivKey returns priv key object
@@ -606,6 +621,27 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 
 	if err := v.BindPFlag(BorRPCUrlFlag, cmd.PersistentFlags().Lookup(BorRPCUrlFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorRPCUrlFlag), "Error", err)
+	}
+
+	// add BorGRPCUrlFlag flag
+	cmd.PersistentFlags().String(
+		BorGRPCUrlFlag,
+		"",
+		"Set gRPC endpoint for bor chain",
+	)
+
+	if err := v.BindPFlag(BorGRPCUrlFlag, cmd.PersistentFlags().Lookup(BorGRPCUrlFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorGRPCUrlFlag), "Error", err)
+	}
+
+	cmd.PersistentFlags().Bool(
+		BorGRPCFlag,
+		false,
+		"Set if heimdall will use gRPC or Rest to interact with bor chain",
+	)
+
+	if err := v.BindPFlag(BorGRPCFlag, cmd.PersistentFlags().Lookup(BorGRPCFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorGRPCFlag), "Error", err)
 	}
 
 	// add TendermintNodeURLFlag flag
@@ -778,6 +814,18 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		c.BorRPCUrl = stringConfgValue
 	}
 
+	// get endpoint for bor chain from viper/cobra
+	stringConfgValue = v.GetString(BorGRPCUrlFlag)
+	if stringConfgValue != "" {
+		c.BorGRPCUrl = stringConfgValue
+	}
+
+	// get gRPC flag for bor chain from viper/cobra
+	boolConfgValue := v.GetBool(BorGRPCFlag)
+	if boolConfgValue {
+		c.BorGRPCFlag = boolConfgValue
+	}
+
 	// get endpoint for tendermint from viper/cobra
 	stringConfgValue = v.GetString(TendermintNodeURLFlag)
 	if stringConfgValue != "" {
@@ -895,6 +943,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.BorRPCUrl != "" {
 		c.BorRPCUrl = cc.BorRPCUrl
+	}
+
+	if cc.BorGRPCUrl != "" {
+		c.BorGRPCUrl = cc.BorGRPCUrl
 	}
 
 	if cc.TendermintRPCUrl != "" {
