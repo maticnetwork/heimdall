@@ -55,13 +55,13 @@ func (h *BorGRPCClient) GetVoteOnHash(ctx context.Context, startBlock uint64, en
 	return res.Response, nil
 }
 
-func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*ethTypes.Header, error) {
+func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID int64) (*ethTypes.Header, error) {
 
 	if blockID > math.MaxInt64 {
 		return nil, fmt.Errorf("blockID too large: %d", blockID)
 	}
 
-	blockNumberAsString := ToBlockNumArg(big.NewInt(int64(blockID)))
+	blockNumberAsString := ToBlockNumArg(big.NewInt(blockID))
 
 	req := &proto.GetHeaderByNumberRequest{
 		Number: blockNumberAsString,
@@ -85,13 +85,13 @@ func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*et
 	return resp, nil
 }
 
-func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID uint64) (*ethTypes.Block, error) {
+func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID int64) (*ethTypes.Block, error) {
 
 	if blockID > math.MaxInt64 {
 		return nil, fmt.Errorf("blockID too large: %d", blockID)
 	}
 
-	blockNumberAsString := ToBlockNumArg(big.NewInt(int64(blockID)))
+	blockNumberAsString := ToBlockNumArg(big.NewInt(blockID))
 
 	req := &proto.GetBlockByNumberRequest{
 		Number: blockNumberAsString,
