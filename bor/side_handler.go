@@ -121,21 +121,21 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 	logger.Debug("Persisting span state", "sideTxResult", sideTxResult)
 
 	if ctx.BlockHeader().Height >= helper.GetNeedANameHeight() {
-		var lastSpanId uint64
+		var seedSpanID uint64
 		if msg.ID < 2 {
-			lastSpanId = msg.ID - 1
+			seedSpanID = msg.ID - 1
 		} else {
-			lastSpanId = msg.ID - 2
+			seedSpanID = msg.ID - 2
 		}
 
-		lastSpan, err := k.GetSpan(ctx, lastSpanId)
+		lastSpan, err := k.GetSpan(ctx, seedSpanID)
 		if err != nil {
 			logger.Error("Unable to get last span", "Error", err)
 			return common.ErrUnableToGetSpan(k.Codespace()).Result()
 		}
 
 		// store the seed producer
-		_, producer, err := k.getBorBlockForSeed(ctx, lastSpan)
+		_, producer, err := k.getBorBlockForSpanSeed(ctx, lastSpan, msg.ID)
 		if err != nil {
 			logger.Error("Unable to get seed producer", "Error", err)
 			return common.ErrUnableToGetSeed(k.Codespace()).Result()

@@ -73,6 +73,9 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 	seedBlock2 := spans[1].EndBlock - borParams.SprintDuration
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[1].EndBlock))).Return(&val1Addr, nil)
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(seedBlock2))).Return(&val2Addr, nil)
+	for block := spans[1].EndBlock - (2 * borParams.SprintDuration); block >= spans[1].StartBlock; block -= borParams.SprintDuration {
+		s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(block))).Return(&val2Addr, nil)
+	}
 
 	seedBlock3 := spans[2].EndBlock - (2 * borParams.SprintDuration)
 	s.contractCaller.On("GetBorChainBlockAuthor", big.NewInt(int64(spans[2].EndBlock))).Return(&val1Addr, nil)
@@ -136,7 +139,7 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 
 	for _, tc := range testcases {
 		s.T().Run(tc.name, func(t *testing.T) {
-			err := borKeeper.StoreSeedProducer(ctx, tc.lastSpanId, tc.lastSeedProducer)
+			err := borKeeper.StoreSeedProducer(ctx, tc.lastSpanId+1, tc.lastSeedProducer)
 			require.NoError(err)
 
 			seed, err := borKeeper.GetNextSpanSeed(ctx, tc.lastSpanId+2)

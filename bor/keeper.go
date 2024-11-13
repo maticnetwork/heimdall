@@ -350,7 +350,7 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error) {
 	var (
 		blockHeader *ethTypes.Header
-		lastSpan    *hmTypes.Span
+		seedSpan    *hmTypes.Span
 		err         error
 	)
 
@@ -368,19 +368,19 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 			return common.Hash{}, err
 		}
 	} else {
-		var spanId uint64
+		var seedSpanID uint64
 		if id < 2 {
-			spanId = id - 1
+			seedSpanID = id - 1
 		} else {
-			spanId = id - 2
+			seedSpanID = id - 2
 		}
-		lastSpan, err = k.GetSpan(ctx, spanId)
+		seedSpan, err = k.GetSpan(ctx, seedSpanID)
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching span while calculating next span seed", "error", err)
 			return common.Hash{}, err
 		}
 
-		borBlock, author, err := k.getBorBlockForSeed(ctx, lastSpan)
+		borBlock, author, err := k.getBorBlockForSpanSeed(ctx, seedSpan, id)
 		if err != nil {
 			return common.Hash{}, err
 		}
@@ -465,8 +465,8 @@ func (k *Keeper) IterateSpansAndApplyFn(ctx sdk.Context, f func(span hmTypes.Spa
 	}
 }
 
-// getBorBlockForSeed returns the bor block number and its producer whose hash is used as seed for the next span
-func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64, *common.Address, error) {
+// getBorBlockForSpanSeed returns the bor block number and its producer whose hash is used as seed for the next span
+func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span, proposedSpanID uint64) (uint64, *common.Address, error) {
 	var (
 		borBlock uint64
 		author   *common.Address
@@ -474,7 +474,7 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 	)
 
 	uniqueAuthors := make(map[string]struct{})
-	spanID := span.ID
+	spanID := proposedSpanID - 1
 
 	lastAuthor, err := k.GetSeedProducer(ctx, spanID)
 	if err != nil {
@@ -502,19 +502,19 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 		spanID--
 	}
 
-	ctx.Logger().Info("!!!LAST AUTHORS", "authors", fmt.Sprintf("%+v", uniqueAuthors), "span id", span.ID)
+	ctx.Logger().Info("!!!LAST AUTHORS", "authors", fmt.Sprintf("%+v", uniqueAuthors), "span id", seedSpan.ID)
 
 	firstDiffFromLast := uint64(0)
 
 	borParams := k.GetParams(ctx)
-	for borBlock = span.EndBlock; borBlock >= span.StartBlock; borBlock -= borParams.SprintDuration {
+	for borBlock = seedSpan.EndBlock; borBlock >= seedSpan.StartBlock; borBlock -= borParams.SprintDuration {
 		author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching block author from bor chain while calculating next span seed", "error", err, "block", borBlock)
 			return 0, nil, err
 		}
 
-		if _, exists := uniqueAuthors[author.Hex()]; !exists || len(span.ValidatorSet.Validators) == 1 {
+		if _, exists := uniqueAuthors[author.Hex()]; !exists || len(seedSpan.ValidatorSet.Validators) == 1 {
 			ctx.Logger().Info("!!!GOT AUTHOR", "author", author, "block", borBlock)
 			return borBlock, author, nil
 		}
@@ -526,7 +526,7 @@ func (k *Keeper) getBorBlockForSeed(ctx sdk.Context, span *hmTypes.Span) (uint64
 
 	borBlock = firstDiffFromLast
 	if borBlock == 0 {
-		borBlock = span.EndBlock
+		borBlock = seedSpan.EndBlock
 	}
 
 	author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
