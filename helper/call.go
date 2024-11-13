@@ -11,7 +11,6 @@ import (
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -1020,19 +1019,4 @@ func chooseContractCallerABI(contractCallerObj *ContractCaller, abi string) (*ab
 // getABI returns the contract's ABI struct from on its JSON representation
 func getABI(data string) (abi.ABI, error) {
 	return abi.JSON(strings.NewReader(data))
-}
-
-func toBlockNumArg(number *big.Int) string {
-	if number == nil {
-		return "latest"
-	}
-	if number.Sign() >= 0 {
-		return hexutil.EncodeBig(number)
-	}
-	// It's negative.
-	if number.IsInt64() {
-		return rpc.BlockNumber(number.Int64()).String()
-	}
-	// It's negative and large, which is invalid.
-	return fmt.Sprintf("<invalid %d>", number)
 }
