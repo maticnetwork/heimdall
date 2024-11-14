@@ -258,6 +258,8 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 		borChainID,
 	)
 
+	k.Logger(ctx).Info("Freezing new span", "id", id, "span", newSpan)
+
 	return k.AddNewSpan(ctx, newSpan)
 }
 
@@ -472,6 +474,8 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 		author   *common.Address
 		err      error
 	)
+
+	k.Logger(ctx).Info("!!!GETTING BOR BLOCK FOR SPAN SEED", "span id", seedSpan.ID, "proposed span id", proposedSpanID)
 
 	uniqueAuthors := make(map[string]struct{})
 	spanID := proposedSpanID - 1
