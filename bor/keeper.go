@@ -475,7 +475,20 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 		err      error
 	)
 
-	k.Logger(ctx).Info("!!!GETTING BOR BLOCK FOR SPAN SEED", "span id", seedSpan.ID, "proposed span id", proposedSpanID)
+	ctx.Logger().Info("!!!GETTING BOR BLOCK FOR SPAN SEED", "span id", seedSpan.ID, "proposed span id", proposedSpanID)
+
+	if proposedSpanID == 1 {
+		borBlock = 1
+		author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
+		if err != nil {
+			k.Logger(ctx).Error("Error fetching first block for span seed", "error", err, "block", borBlock)
+			return 0, nil, err
+		}
+
+		ctx.Logger().Info("!!!RETURNING FIRST BLOCK AUTHOR", "author", author, "block", borBlock)
+
+		return borBlock, author, nil
+	}
 
 	uniqueAuthors := make(map[string]struct{})
 	spanID := proposedSpanID - 1
