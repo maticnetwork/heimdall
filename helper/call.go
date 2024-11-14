@@ -464,11 +464,13 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 
 	var latestBlock *ethTypes.Header
 
-	if c.MaticGrpcFlag && blockNum != nil {
-		if blockNum.Sign() < 0 {
-			blockNum = new(big.Int).Abs(blockNum)
+	if c.MaticGrpcFlag {
+		if blockNum == nil {
+			// LatestBlockNumber is BlockNumber(-2) in go-ethereum rpc
+			latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, -2)
+		} else {
+			latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Int64())
 		}
-		latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Uint64())
 	} else {
 		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
 	}
@@ -885,8 +887,8 @@ func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint6
 	var block *ethTypes.Block
 	var err error
 
-	if c.MaticGrpcFlag && big.NewInt(int64(blockNumber)) != nil {
-		block, err = c.MaticGrpcClient.BlockByNumber(ctx, blockNumber)
+	if c.MaticGrpcFlag {
+		block, err = c.MaticGrpcClient.BlockByNumber(ctx, int64(blockNumber))
 	} else {
 		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
 	}

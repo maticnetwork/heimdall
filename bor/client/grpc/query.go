@@ -2,11 +2,15 @@ package grpc
 
 import (
 	"context"
+	"fmt"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
+	"github.com/ethereum/go-ethereum/common/math"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/ethereum/go-ethereum/rpc"
 
 	proto "github.com/maticnetwork/polyproto/bor"
 	protoutil "github.com/maticnetwork/polyproto/utils"
@@ -52,10 +56,16 @@ func (h *BorGRPCClient) GetVoteOnHash(ctx context.Context, startBlock uint64, en
 	return res.Response, nil
 }
 
-func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*ethTypes.Header, error) {
+func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID int64) (*ethTypes.Header, error) {
+
+	if blockID > math.MaxInt64 {
+		return nil, fmt.Errorf("blockID too large: %d", blockID)
+	}
+
+	blockNumberAsString := ToBlockNumArg(big.NewInt(blockID))
 
 	req := &proto.GetHeaderByNumberRequest{
-		Number: blockID,
+		Number: blockNumberAsString,
 	}
 
 	log.Info("Fetching header by number")
@@ -76,10 +86,16 @@ func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID uint64) (*et
 	return resp, nil
 }
 
-func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID uint64) (*ethTypes.Block, error) {
+func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID int64) (*ethTypes.Block, error) {
+
+	if blockID > math.MaxInt64 {
+		return nil, fmt.Errorf("blockID too large: %d", blockID)
+	}
+
+	blockNumberAsString := ToBlockNumArg(big.NewInt(blockID))
 
 	req := &proto.GetBlockByNumberRequest{
-		Number: blockID,
+		Number: blockNumberAsString,
 	}
 
 	log.Info("Fetching block by number")
@@ -152,4 +168,19 @@ func receiptResponseToTypesReceipt(receipt *proto.Receipt) *ethTypes.Receipt {
 		BlockNumber:       big.NewInt(receipt.BlockNumber),
 		TransactionIndex:  uint(receipt.TransactionIndex),
 	}
+}
+
+func ToBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	if number.Sign() >= 0 {
+		return hexutil.EncodeBig(number)
+	}
+	// It's negative.
+	if number.IsInt64() {
+		return rpc.BlockNumber(number.Int64()).String()
+	}
+	// It's negative and large, which is invalid.
+	return fmt.Sprintf("<invalid %d>", number)
 }
