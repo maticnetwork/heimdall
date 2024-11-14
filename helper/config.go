@@ -83,7 +83,7 @@ const (
 	// RPC Endpoints
 	DefaultMainRPCUrl = "http://localhost:9545"
 	DefaultBorRPCUrl  = "http://localhost:8545"
-	DefaultBorGRPCUrl = "http://localhost:3131"
+	DefaultBorGRPCUrl = "localhost:3131"
 
 	// RPC Timeouts
 	DefaultEthRPCTimeout = 5 * time.Second
