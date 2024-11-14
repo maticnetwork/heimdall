@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -174,7 +175,7 @@ func ToBlockNumArg(number *big.Int) string {
 		return "latest"
 	}
 	if number.Sign() >= 0 {
-		return number.String()
+		return hexutil.EncodeBig(number)
 	}
 	// It's negative.
 	if number.IsInt64() {
