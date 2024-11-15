@@ -23,12 +23,12 @@ func TestToBlockNumArg(t *testing.T) {
 		{
 			name:     "Positive number",
 			input:    big.NewInt(12345),
-			expected: "12345",
+			expected: "0x3039",
 		},
 		{
 			name:     "Zero",
 			input:    big.NewInt(0),
-			expected: "0",
+			expected: "0x0",
 		},
 		{
 			name:     "Negative number",
