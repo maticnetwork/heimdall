@@ -22,7 +22,7 @@ import (
 )
 
 const maxSpanListLimit = 150 // a span is ~6 KB => we can fit 150 spans in 1 MB response
-const blockProducerAuthorsCollusionCheck = 20
+const blockAuthorsCollisionCheck = 20
 const blockProducerMaxSpanLookback = 100
 
 var (
@@ -499,7 +499,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 		return 0, nil, err
 	}
 
-	for i := 0; len(uniqueAuthors) < blockProducerAuthorsCollusionCheck && i < blockProducerMaxSpanLookback; i++ {
+	for i := 0; len(uniqueAuthors) < blockAuthorsCollisionCheck && i < blockProducerMaxSpanLookback; i++ {
 		if spanID == 0 {
 			break
 		}
