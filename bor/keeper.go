@@ -22,8 +22,8 @@ import (
 )
 
 const maxSpanListLimit = 150 // a span is ~6 KB => we can fit 150 spans in 1 MB response
-const blockAuthorsCollisionCheck = 20
-const blockProducerMaxSpanLookback = 100
+const blockAuthorsCollisionCheck = 10
+const blockProducerMaxSpanLookback = 50
 
 var (
 	LastSpanIDKey         = []byte{0x35} // Key to store last span start block
