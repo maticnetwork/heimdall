@@ -168,15 +168,15 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	}
 
 	spanId := params.RecordID
-
-	ctx.Logger().Info("!!!Querying next producers", "spanId", spanId)
+	logger := ctx.Logger()
+	logger.Debug("querying next producers", "spanId", spanId)
 
 	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, spanId)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next span seed from keeper", err.Error())))
 	}
 
-	ctx.Logger().Info("!!!Next span seed", "seed", nextSpanSeed)
+	logger.Debug("next span seed", "seed", nextSpanSeed)
 
 	if params.RecordID < 2 {
 		spanId = params.RecordID - 1

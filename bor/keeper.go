@@ -393,7 +393,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 			return common.Hash{}, err
 		}
 
-		ctx.Logger().Info("!!!!Fetched block for seed", "block", borBlock, "author", author, "span id", id)
+		k.Logger(ctx).Debug("fetched block for seed", "block", borBlock, "author", author, "span id", id)
 	}
 
 	return blockHeader.Hash(), nil
@@ -475,17 +475,19 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 		err      error
 	)
 
-	ctx.Logger().Info("!!!GETTING BOR BLOCK FOR SPAN SEED", "span id", seedSpan.ID, "proposed span id", proposedSpanID)
+	logger := k.Logger(ctx)
+
+	logger.Debug("getting bor block for span seed", "span id", seedSpan.ID, "proposed span id", proposedSpanID)
 
 	if proposedSpanID == 1 {
 		borBlock = 1
 		author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
 		if err != nil {
-			k.Logger(ctx).Error("Error fetching first block for span seed", "error", err, "block", borBlock)
+			logger.Error("Error fetching first block for span seed", "error", err, "block", borBlock)
 			return 0, nil, err
 		}
 
-		ctx.Logger().Info("!!!RETURNING FIRST BLOCK AUTHOR", "author", author, "block", borBlock)
+		logger.Debug("returning first block author", "author", author, "block", borBlock)
 
 		return borBlock, author, nil
 	}
@@ -495,7 +497,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 
 	lastAuthor, err := k.GetSeedProducer(ctx, spanID)
 	if err != nil {
-		k.Logger(ctx).Error("Error fetching last seed producer", "error", err, "span id", spanID)
+		logger.Error("Error fetching last seed producer", "error", err, "span id", spanID)
 		return 0, nil, err
 	}
 
@@ -506,12 +508,12 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 
 		author, err := k.GetSeedProducer(ctx, spanID)
 		if err != nil {
-			k.Logger(ctx).Error("Error fetching span seed producer", "error", err, "span id", spanID)
+			logger.Error("Error fetching span seed producer", "error", err, "span id", spanID)
 			return 0, nil, err
 		}
 
 		if author == nil {
-			k.Logger(ctx).Info("GetSeedProducer returned empty value", "span id", spanID)
+			logger.Info("GetSeedProducer returned empty value", "span id", spanID)
 			break
 		}
 
@@ -519,7 +521,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 		spanID--
 	}
 
-	ctx.Logger().Info("!!!LAST AUTHORS", "authors", fmt.Sprintf("%+v", uniqueAuthors), "span id", seedSpan.ID)
+	logger.Debug("last authors", "authors", fmt.Sprintf("%+v", uniqueAuthors), "span id", seedSpan.ID)
 
 	firstDiffFromLast := uint64(0)
 
@@ -527,12 +529,12 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 	for borBlock = seedSpan.EndBlock; borBlock >= seedSpan.StartBlock; borBlock -= borParams.SprintDuration {
 		author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
 		if err != nil {
-			k.Logger(ctx).Error("Error fetching block author from bor chain while calculating next span seed", "error", err, "block", borBlock)
+			logger.Error("Error fetching block author from bor chain while calculating next span seed", "error", err, "block", borBlock)
 			return 0, nil, err
 		}
 
 		if _, exists := uniqueAuthors[author.Hex()]; !exists || len(seedSpan.ValidatorSet.Validators) == 1 {
-			ctx.Logger().Info("!!!GOT AUTHOR", "author", author, "block", borBlock)
+			logger.Debug("got author", "author", author, "block", borBlock)
 			return borBlock, author, nil
 		}
 
@@ -548,11 +550,11 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 
 	author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
 	if err != nil {
-		k.Logger(ctx).Error("Error fetching end block author from bor chain while calculating next span seed", "error", err, "block", borBlock)
+		logger.Error("Error fetching end block author from bor chain while calculating next span seed", "error", err, "block", borBlock)
 		return 0, nil, err
 	}
 
-	ctx.Logger().Info("!!!RETURNING FIRST DIFFERENT BLOCK AUTHOR", "author", author, "block", borBlock)
+	logger.Debug("returning first different block author", "author", author, "block", borBlock)
 
 	return borBlock, author, nil
 }
@@ -565,15 +567,11 @@ func rollbackVotingPowers(ctx sdk.Context, valsNew, valsOld []hmTypes.Validator)
 	}
 
 	for i := range valsNew {
-		// TODO(@Raneet10): Remove this bit
-		ctx.Logger().Info("!!!!VP BEFORE", "val ID", valsNew[i].ID, "VP", valsNew[i].VotingPower)
 		if _, ok := idToVP[valsNew[i].ID.Uint64()]; ok {
 			valsNew[i].VotingPower = idToVP[valsNew[i].ID.Uint64()]
 		} else {
 			valsNew[i].VotingPower = 0
 		}
-		// TODO(@Raneet10): Remove this bit
-		ctx.Logger().Info("!!!!VP AFTER", "val ID", valsNew[i].ID, "VP", valsNew[i].VotingPower)
 	}
 
 	return valsNew
