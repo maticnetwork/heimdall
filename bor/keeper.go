@@ -501,6 +501,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 		return 0, nil, err
 	}
 
+	// get seed block authors from last "blockProducerMaxSpanLookback" spans
 	for i := 0; len(uniqueAuthors) < blockAuthorsCollisionCheck && i < blockProducerMaxSpanLookback; i++ {
 		if spanID == 0 {
 			break
@@ -525,6 +526,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 
 	firstDiffFromLast := uint64(0)
 
+	// try to find a seed block with an author not in the last "blockAuthorsCollisionCheck" spans
 	borParams := k.GetParams(ctx)
 	for borBlock = seedSpan.EndBlock; borBlock >= seedSpan.StartBlock; borBlock -= borParams.SprintDuration {
 		author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))
@@ -543,6 +545,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 		}
 	}
 
+	// if no unique author found, return the first different block author
 	borBlock = firstDiffFromLast
 	if borBlock == 0 {
 		borBlock = seedSpan.EndBlock
