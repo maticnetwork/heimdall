@@ -419,7 +419,7 @@ func (k *Keeper) GetSeedProducer(ctx sdk.Context, id uint64) (*common.Address, e
 
 	authorBytes := store.Get(lastSeedKey)
 	if authorBytes == nil {
-		return nil, nil
+		return nil, nil //nolint: nilnil
 	}
 
 	author := common.BytesToAddress(authorBytes)

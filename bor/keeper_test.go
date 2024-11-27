@@ -11,7 +11,6 @@ import (
 	"github.com/maticnetwork/heimdall/bor"
 	"github.com/maticnetwork/heimdall/helper/mocks"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	abci "github.com/tendermint/tendermint/abci/types"
 )
@@ -157,7 +156,7 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 	}
 }
 
-func TestProposeSpanOne(t *testing.T) {
+func (s *BorKeeperTestSuite) TestProposeSpanOne() {
 	app, ctx := createTestApp(false)
 	contractCaller := &mocks.IContractCaller{}
 	app.BorKeeper.SetContractCaller(contractCaller)
@@ -168,7 +167,7 @@ func TestProposeSpanOne(t *testing.T) {
 		vals = append(vals, *val)
 	}
 	err := app.BorKeeper.AddNewSpan(ctx, hmTypes.NewSpan(0, 0, 256, *valSet, vals, "test-chain"))
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	val1Addr := vals[0].PubKey.Address()
 
@@ -180,14 +179,15 @@ func TestProposeSpanOne(t *testing.T) {
 	contractCaller.On("GetMaticChainBlock", big.NewInt(seedBlock1)).Return(&blockHeader1, nil)
 
 	seed, err := app.BorKeeper.GetNextSpanSeed(ctx, 1)
-	require.NoError(t, err)
-	require.Equal(t, blockHash1.Bytes(), seed.Bytes())
+	s.Require().NoError(err)
+	s.Require().Equal(blockHash1.Bytes(), seed.Bytes())
 }
 
 func (s *BorKeeperTestSuite) TestGetSeedProducer() {
 	borKeeper := s.app.BorKeeper
 	producer := common.HexToAddress("0xc0ffee254729296a45a3885639AC7E10F9d54979")
-	borKeeper.StoreSeedProducer(s.ctx, 1, &producer)
+	err := borKeeper.StoreSeedProducer(s.ctx, 1, &producer)
+	s.Require().NoError(err)
 
 	author, err := borKeeper.GetSeedProducer(s.ctx, 1)
 	s.Require().NoError(err)
