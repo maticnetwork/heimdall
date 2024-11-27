@@ -120,7 +120,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 
 	logger.Debug("Persisting span state", "sideTxResult", sideTxResult)
 
-	if ctx.BlockHeader().Height >= helper.GetNeedANameHeight() {
+	if ctx.BlockHeader().Height >= helper.GetJorvikHeight() {
 		var seedSpanID uint64
 		if msg.ID < 2 {
 			seedSpanID = msg.ID - 1

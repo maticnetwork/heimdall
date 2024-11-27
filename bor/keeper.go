@@ -214,7 +214,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 		err          error
 	)
 
-	if ctx.BlockHeight() < helper.GetNeedANameHeight() {
+	if ctx.BlockHeight() < helper.GetJorvikHeight() {
 		newProducers, err = k.SelectNextProducers(ctx, seed, nil)
 		if err != nil {
 			return err
@@ -265,7 +265,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 
 // SelectNextProducers selects producers for next span
 func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash, prevVals []hmTypes.Validator) (vals []hmTypes.Validator, err error) {
-	if ctx.BlockHeader().Height < helper.GetNeedANameHeight() {
+	if ctx.BlockHeader().Height < helper.GetJorvikHeight() {
 		prevVals = nil
 	}
 
@@ -356,7 +356,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 		err         error
 	)
 
-	if ctx.BlockHeader().Height < helper.GetNeedANameHeight() {
+	if ctx.BlockHeader().Height < helper.GetJorvikHeight() {
 		lastEthBlock := k.GetLastEthBlock(ctx)
 		// increment last processed header block number
 		newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
