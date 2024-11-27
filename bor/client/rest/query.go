@@ -135,11 +135,21 @@ func registerQueryRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/bor/span/{id}", spanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/latest-span", latestSpanHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/prepare-next-span", prepareNextSpanHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/bor/next-span-seed", fetchNextSpanSeedHandlerFn(cliCtx)).Methods("GET")
+	r.HandleFunc("/bor/next-span-seed/{id}", fetchNextSpanSeedHandlerFn(cliCtx)).Methods("GET")
 	r.HandleFunc("/bor/params", paramsHandlerFn(cliCtx)).Methods("GET")
 }
 
-// swagger:route GET /bor/next-span-seed bor borNextSpanSeed
+//swagger:parameters borCurrentSpanById
+type borCurrentSpanById struct {
+
+	//Id number of the span
+	//required:true
+	//type:integer
+	//in:path
+	Id int `json:"id"`
+}
+
+// swagger:route GET /bor/next-span-seed/{id} bor borCurrentSpanById
 // It returns the seed for the next span
 // responses:
 //   200: borNextSpanSeedResponse
@@ -153,7 +163,19 @@ func fetchNextSpanSeedHandlerFn(
 			return
 		}
 
-		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+		vars := mux.Vars(r)
+
+		spanID, ok := rest.ParseUint64OrReturnBadRequest(w, vars["id"])
+		if !ok {
+			return
+		}
+
+		seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+		if err != nil {
+			return
+		}
+
+		res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 		if err != nil {
 			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -165,7 +187,7 @@ func fetchNextSpanSeedHandlerFn(
 
 		// error if span seed found
 		if !hmRest.ReturnNotFoundIfNoContent(w, res, "NextSpanSeed not found") {
-			RestLogger.Error("NextSpanSeed not found ", "Error", err.Error())
+			RestLogger.Error("NextSpanSeed not found ", "Error", err)
 			return
 		}
 
@@ -458,8 +480,16 @@ func prepareNextSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		// Fetching SelectedProducers
 		//
 
-		nextProducerBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextProducers), nil)
+		query, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
 		if err != nil {
+			fmt.Println("error while marshalling: ", err)
+			hmRest.WriteErrorResponse(w, http.StatusNoContent, errors.New("unable to marshal JSON").Error())
+			return
+		}
+
+		nextProducerBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextProducers), query)
+		if err != nil {
+			fmt.Println("error while querying next producers: ", err)
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}

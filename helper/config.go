@@ -241,6 +241,8 @@ var aalborgHeight int64 = 0
 
 var newHexToStringAlgoHeight int64 = 0
 
+var jorvikHeight int64 = 0
+
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
 	RootChainAddress      hmTypes.HeimdallAddress
@@ -410,21 +412,25 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
 		aalborgHeight = 15950759
+		jorvikHeight = -1
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
 		aalborgHeight = 18035772
+		jorvikHeight = -1
 	case AmoyChain:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
+		jorvikHeight = 5768528
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
+		jorvikHeight = 0
 	}
 }
 
@@ -575,6 +581,11 @@ func GetMilestoneBorBlockHeight() uint64 {
 // GetNewHexToStringAlgoHeight returns newHexToStringAlgoHeight
 func GetNewHexToStringAlgoHeight() int64 {
 	return newHexToStringAlgoHeight
+}
+
+// GetJorvikHeight returns jorvikHeight
+func GetJorvikHeight() int64 {
+	return jorvikHeight
 }
 
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
