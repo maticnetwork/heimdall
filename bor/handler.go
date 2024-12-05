@@ -49,6 +49,15 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 		return common.ErrSpanNotFound(k.Codespace()).Result()
 	}
 
+	k.Logger(ctx).Info("Before validate span",
+		"lastSpanId", lastSpan.ID,
+		"spanId", msg.ID,
+		"lastSpanStartBlock", lastSpan.StartBlock,
+		"lastSpanEndBlock", lastSpan.EndBlock,
+		"spanStartBlock", msg.StartBlock,
+		"spanEndBlock", msg.EndBlock,
+	)
+
 	// Validate span continuity
 	if lastSpan.ID+1 != msg.ID || msg.StartBlock != lastSpan.EndBlock+1 || msg.EndBlock < msg.StartBlock {
 		k.Logger(ctx).Error("Blocks not in continuity",

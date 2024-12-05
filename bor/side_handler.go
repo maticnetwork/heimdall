@@ -83,6 +83,14 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 	}
 
 	currentBlock := childBlock.Number.Uint64()
+
+	k.Logger(ctx).Info("Before validate span", "currentChildBlock", currentBlock,
+		"msgStartblock", msg.StartBlock,
+		"msgEndBlock", msg.EndBlock,
+		"lastSpanStartBlock", lastSpan.StartBlock,
+		"lastSpanEndBlock", lastSpan.EndBlock,
+		"nextSpanSeed", nextSpanSeed.String())
+
 	// check if span proposed is in-turn or not
 	if !(lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock) {
 		k.Logger(ctx).Error(
@@ -96,6 +104,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan, cont
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for span msg")
+
+	k.Logger(ctx).Debug("Span msg validation successful")
 
 	result.Result = abci.SideTxResultType_Yes
 
@@ -133,6 +143,11 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg types.MsgProposeSpan,
 			logger.Error("Unable to get last span", "Error", err)
 			return common.ErrUnableToGetSpan(k.Codespace()).Result()
 		}
+
+		k.Logger(ctx).Info("[PostHandler] Before getting seed producer",
+			"lastSpanId", lastSpan.ID,
+			"msg.ID", msg.ID,
+		)
 
 		// store the seed producer
 		_, producer, err := k.getBorBlockForSpanSeed(ctx, lastSpan, msg.ID)

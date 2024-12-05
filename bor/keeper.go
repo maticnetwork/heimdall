@@ -387,6 +387,8 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 			return common.Hash{}, err
 		}
 
+		k.Logger(ctx).Info("fetched block for seed", "block", borBlock, "author", author, "seed span id", seedSpan.ID, "proposed span id", id)
+
 		blockHeader, err = k.contractCaller.GetMaticChainBlock(big.NewInt(int64(borBlock)))
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching block header from bor chain while calculating next span seed", "error", err, "block", borBlock)
