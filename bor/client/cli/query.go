@@ -269,7 +269,7 @@ func GetNextSpanSeed(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// PostSendProposeSpanTx send propose span transaction
+// GetPreparedProposeSpan generates a propose span transaction
 func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "propose-span",
