@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -84,6 +82,11 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			height := cliCtx.Height
+			if height == 0 {
+				return errors.New("height cannot be zero")
+			}
+
 			//
 			// Query data
 			//
@@ -116,19 +119,32 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return errors.New("next span seed not found")
 			}
 
-			var seed common.Hash
-			if err := jsoniter.ConfigFastest.Unmarshal(res, &seed); err != nil {
+			var seedResponse types.QuerySpanSeedResponse
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &seedResponse); err != nil {
 				return err
 			}
 
-			msg := types.NewMsgProposeSpan(
-				spanID,
-				proposer,
-				startBlock,
-				startBlock+spanDuration-1,
-				borChainID,
-				seed,
-			)
+			var msg sdk.Msg
+			if height < helper.GetAntevortaHeight() {
+				msg = types.NewMsgProposeSpan(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+				)
+			} else {
+				msg = types.NewMsgProposeSpanV2(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+					seedResponse.SeedAuthor,
+				)
+			}
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},

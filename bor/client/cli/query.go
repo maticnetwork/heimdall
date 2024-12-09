@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -313,6 +311,11 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			height := cliCtx.Height
+			if height == 0 {
+				return errors.New("height cannot be zero")
+			}
+
 			//
 			// Query data
 			//
@@ -345,23 +348,42 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return errors.New("next span seed not found")
 			}
 
-			var seed common.Hash
-			if err := jsoniter.Unmarshal(res, &seed); err != nil {
+			var seedResponse types.QuerySpanSeedResponse
+			if err := jsoniter.Unmarshal(res, &seedResponse); err != nil {
 				return err
 			}
 
-			msg := types.NewMsgProposeSpan(
-				spanID,
-				proposer,
-				startBlock,
-				startBlock+spanDuration-1,
-				borChainID,
-				seed,
-			)
+			var result []byte
 
-			result, err := jsoniter.Marshal(&msg)
-			if err != nil {
-				return err
+			if height < helper.GetAntevortaHeight() {
+				msg := types.NewMsgProposeSpan(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+				)
+
+				result, err = jsoniter.Marshal(&msg)
+				if err != nil {
+					return err
+				}
+			} else {
+				msg := types.NewMsgProposeSpanV2(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+					seedResponse.SeedAuthor,
+				)
+
+				result, err = jsoniter.Marshal(&msg)
+				if err != nil {
+					return err
+				}
 			}
 
 			fmt.Println(string(result))
