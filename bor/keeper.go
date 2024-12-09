@@ -352,9 +352,10 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, common.Address, error) {
 	var (
 		blockHeader *ethTypes.Header
+		borBlock    uint64
 		seedSpan    *hmTypes.Span
 		err         error
-		author      common.Address
+		author      *common.Address
 	)
 
 	if ctx.BlockHeader().Height < helper.GetJorvikHeight() {
@@ -370,7 +371,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 			k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
 			return common.Hash{}, common.Address{}, err
 		}
-		author = common.Address{}
+		author = nil
 	} else {
 		var seedSpanID uint64
 		if id < 2 {
@@ -384,7 +385,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 			return common.Hash{}, common.Address{}, err
 		}
 
-		borBlock, author, err := k.getBorBlockForSpanSeed(ctx, seedSpan, id)
+		borBlock, author, err = k.getBorBlockForSpanSeed(ctx, seedSpan, id)
 		if err != nil {
 			return common.Hash{}, common.Address{}, err
 		}
@@ -403,7 +404,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 		k.Logger(ctx).Debug("fetched block for seed", "block", borBlock, "author", author, "span id", id)
 	}
 
-	return blockHeader.Hash(), author, nil
+	return blockHeader.Hash(), *author, nil
 }
 
 // StoreSeedProducer stores producer of the block used for seed for the given span id

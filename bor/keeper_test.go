@@ -41,7 +41,6 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(BorKeeperTestSuite))
 }
 
-// TODO: fixme
 func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 	require, ctx, borKeeper := s.Require(), s.ctx, s.app.BorKeeper
 	valSet := s.setupValSet()
@@ -109,30 +108,35 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 		lastSpanId       uint64
 		lastSeedProducer *common.Address
 		expSeed          common.Hash
+		expAuthor        *common.Address
 	}{
 		{
 			name:             "Last seed producer is different than end block author",
 			lastSeedProducer: &val2Addr,
 			lastSpanId:       0,
 			expSeed:          blockHash1,
+			expAuthor:        &val2Addr,
 		},
 		{
 			name:             "Last seed producer is same as end block author",
 			lastSeedProducer: &val1Addr,
 			lastSpanId:       1,
 			expSeed:          blockHash2,
+			expAuthor:        &val1Addr,
 		},
 		{
 			name:             "Next seed producer should be different from previous recent seed producers",
 			lastSeedProducer: &val2Addr,
 			lastSpanId:       2,
 			expSeed:          blockHash3,
+			expAuthor:        &val3Addr,
 		},
 		{
 			name:             "If no unique seed producer is found, first block with different author from previous seed producer is selected",
 			lastSeedProducer: &val1Addr,
 			lastSpanId:       3,
 			expSeed:          blockHash4,
+			expAuthor:        &val2Addr,
 		},
 	}
 
@@ -153,12 +157,11 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 			seed, author, err := borKeeper.GetNextSpanSeed(ctx, tc.lastSpanId+2)
 			require.NoError(err)
 			require.Equal(tc.expSeed.Bytes(), seed.Bytes())
-			require.Equal(tc.lastSeedProducer.Bytes(), author.Bytes())
+			require.Equal(tc.expAuthor.Bytes(), author.Bytes())
 		})
 	}
 }
 
-// TODO: fixme
 func (s *BorKeeperTestSuite) TestProposeSpanOne() {
 	app, ctx := createTestApp(false)
 	contractCaller := &mocks.IContractCaller{}
