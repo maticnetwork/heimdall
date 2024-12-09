@@ -277,7 +277,7 @@ func PostSendProposeSpanOldTx(cdc *codec.Codec) *cobra.Command {
 
 func PostSendProposeSpanNewTx(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "propose-span-old",
+		Use:   "propose-span-new",
 		Short: "send propose span tx",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
@@ -353,13 +353,14 @@ func PostSendProposeSpanNewTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			msg := types.NewMsgProposeSpan(
+			msg := types.NewMsgProposeSpanV2(
 				spanID,
 				proposer,
 				startBlock,
 				startBlock+spanDuration-1,
 				borChainID,
 				seedResponse.Seed,
+				seedResponse.SeedAuthor,
 			)
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
