@@ -354,7 +354,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 		blockHeader *ethTypes.Header
 		seedSpan    *hmTypes.Span
 		err         error
-		author      *common.Address
+		author      common.Address
 	)
 
 	if ctx.BlockHeader().Height < helper.GetJorvikHeight() {
@@ -370,6 +370,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 			k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
 			return common.Hash{}, common.Address{}, err
 		}
+		author = common.Address{}
 	} else {
 		var seedSpanID uint64
 		if id < 2 {
@@ -394,15 +395,15 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 			return common.Hash{}, common.Address{}, err
 		}
 
+		if author == nil {
+			k.Logger(ctx).Error("seed author is nil")
+			return blockHeader.Hash(), common.Address{}, fmt.Errorf("seed author is nil")
+		}
+
 		k.Logger(ctx).Debug("fetched block for seed", "block", borBlock, "author", author, "span id", id)
 	}
 
-	if author == nil {
-		k.Logger(ctx).Error("seed author is nil")
-		return blockHeader.Hash(), common.Address{}, fmt.Errorf("seed author is nil")
-	}
-
-	return blockHeader.Hash(), *author, nil
+	return blockHeader.Hash(), author, nil
 }
 
 // StoreSeedProducer stores producer of the block used for seed for the given span id

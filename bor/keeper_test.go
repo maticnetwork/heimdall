@@ -41,6 +41,7 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(BorKeeperTestSuite))
 }
 
+// TODO: fixme
 func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 	require, ctx, borKeeper := s.Require(), s.ctx, s.app.BorKeeper
 	valSet := s.setupValSet()
@@ -149,13 +150,15 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 
 	for _, tc := range testcases {
 		s.T().Run(tc.name, func(t *testing.T) {
-			seed, err := borKeeper.GetNextSpanSeed(ctx, tc.lastSpanId+2)
+			seed, author, err := borKeeper.GetNextSpanSeed(ctx, tc.lastSpanId+2)
 			require.NoError(err)
 			require.Equal(tc.expSeed.Bytes(), seed.Bytes())
+			require.Equal(tc.lastSeedProducer.Bytes(), author.Bytes())
 		})
 	}
 }
 
+// TODO: fixme
 func (s *BorKeeperTestSuite) TestProposeSpanOne() {
 	app, ctx := createTestApp(false)
 	contractCaller := &mocks.IContractCaller{}
@@ -178,9 +181,10 @@ func (s *BorKeeperTestSuite) TestProposeSpanOne() {
 	blockHash1 := blockHeader1.Hash()
 	contractCaller.On("GetMaticChainBlock", big.NewInt(seedBlock1)).Return(&blockHeader1, nil)
 
-	seed, err := app.BorKeeper.GetNextSpanSeed(ctx, 1)
+	seed, author, err := app.BorKeeper.GetNextSpanSeed(ctx, 1)
 	s.Require().NoError(err)
 	s.Require().Equal(blockHash1.Bytes(), seed.Bytes())
+	s.Require().Equal(val1Addr.Bytes(), author.Bytes())
 }
 
 func (s *BorKeeperTestSuite) TestGetSeedProducer() {
