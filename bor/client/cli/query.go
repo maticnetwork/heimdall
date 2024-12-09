@@ -311,9 +311,9 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			height := cliCtx.Height
-			if height == 0 {
-				return errors.New("height cannot be zero")
+			nodeStatus, err := helper.GetNodeStatus(cliCtx)
+			if err != nil {
+				return err
 			}
 
 			//
@@ -355,7 +355,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 
 			var result []byte
 
-			if height < helper.GetAntevortaHeight() {
+			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
 				msg := types.NewMsgProposeSpan(
 					spanID,
 					proposer,
