@@ -53,6 +53,10 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	var proposeMsg types.MsgProposeSpanV2
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
+		if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span is not allowed after Antevorta hardfork height")
+			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
 			Proposer:   msg.Proposer,
@@ -62,6 +66,10 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 			Seed:       msg.Seed,
 		}
 	case types.MsgProposeSpanV2:
+		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span v2 is not allowed before Antevorta hardfork height")
+			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		}
 		proposeMsg = msg
 	}
 
@@ -80,6 +88,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	if !bytes.Equal(proposeMsg.Seed.Bytes(), seed.Bytes()) {
 		k.Logger(ctx).Error(
 			"Span Seed does not match",
+			"proposer", proposeMsg.Proposer.String(),
+			"chainID", proposeMsg.ChainID,
 			"msgSeed", proposeMsg.Seed.String(),
 			"mainchainSeed", seed.String(),
 		)
@@ -92,6 +102,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 		if !bytes.Equal(proposeMsg.SeedAuthor.Bytes(), seedAuthor.Bytes()) {
 			k.Logger(ctx).Error(
 				"Span Seed Author does not match",
+				"proposer", proposeMsg.Proposer.String(),
+				"chainID", proposeMsg.ChainID,
 				"msgSeed", proposeMsg.Seed.String(),
 				"msgSeedAuthor", proposeMsg.SeedAuthor.String(),
 				"mainchainSeedAuthor", seedAuthor.String(),
@@ -167,7 +179,14 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	logger.Debug("Persisting span state", "sideTxResult", sideTxResult)
+	logger.Debug("Persisting span state",
+		"sideTxResult", sideTxResult,
+		"proposer", proposeMsg.Proposer.String(),
+		"spanId", proposeMsg.ID,
+		"startBlock", proposeMsg.StartBlock,
+		"endBlock", proposeMsg.EndBlock,
+		"seed", proposeMsg.Seed.String(),
+	)
 
 	if ctx.BlockHeader().Height >= helper.GetJorvikHeight() {
 		var seedSpanID uint64
