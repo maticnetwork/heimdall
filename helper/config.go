@@ -243,7 +243,7 @@ var newHexToStringAlgoHeight int64 = 0
 
 var jorvikHeight int64 = 0
 
-var antevortaHeight int64 = 10000
+var antevortaHeight int64 = 3000
 
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
