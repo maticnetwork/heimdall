@@ -59,10 +59,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
-			Proposer:   msg.Proposer,
 			StartBlock: msg.StartBlock,
 			EndBlock:   msg.EndBlock,
-			ChainID:    msg.ChainID,
 			Seed:       msg.Seed,
 		}
 	case types.MsgProposeSpanV2:
@@ -159,7 +157,6 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	case types.MsgProposeSpan:
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
-			Proposer:   msg.Proposer,
 			StartBlock: msg.StartBlock,
 			EndBlock:   msg.EndBlock,
 			ChainID:    msg.ChainID,

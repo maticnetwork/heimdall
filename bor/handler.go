@@ -36,7 +36,6 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
-			Proposer:   msg.Proposer,
 			StartBlock: msg.StartBlock,
 			EndBlock:   msg.EndBlock,
 			ChainID:    msg.ChainID,
