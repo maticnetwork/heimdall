@@ -7,6 +7,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // NewHandler returns a handler for "bor" type messages.
@@ -29,6 +30,11 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 	var proposeMsg types.MsgProposeSpanV2
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
+		k.Logger(ctx).Error("Msg span is received")
+		if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span is not allowed after hardfork height")
+			return sdk.ErrTxDecode("Msg span is not allowed after hardfork height").Result()
+		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
 			Proposer:   msg.Proposer,
@@ -38,6 +44,11 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 			Seed:       msg.Seed,
 		}
 	case types.MsgProposeSpanV2:
+		k.Logger(ctx).Error("Msg span v2 is received")
+		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span v2 is not allowed before hardfork height")
+			return sdk.ErrTxDecode("Msg span v2 is not allowed before hardfork height").Result()
+		}
 		proposeMsg = msg
 	}
 

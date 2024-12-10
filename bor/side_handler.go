@@ -53,6 +53,10 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	var proposeMsg types.MsgProposeSpanV2
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
+		if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span is not allowed after hardfork height")
+			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
 			Proposer:   msg.Proposer,
@@ -62,6 +66,10 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 			Seed:       msg.Seed,
 		}
 	case types.MsgProposeSpanV2:
+		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span v2 is not allowed before hardfork height")
+			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		}
 		proposeMsg = msg
 	}
 
