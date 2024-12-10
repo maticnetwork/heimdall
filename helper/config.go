@@ -243,7 +243,7 @@ var newHexToStringAlgoHeight int64 = 0
 
 var jorvikHeight int64 = 0
 
-var antevortaHeight int64 = 3000
+var antevortaHeight int64 = 0
 
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
@@ -436,7 +436,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
 		jorvikHeight = 0
-		antevortaHeight = 10000
+		antevortaHeight = 0
 	}
 }
 
