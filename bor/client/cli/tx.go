@@ -126,8 +126,12 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			fmt.Printf("nodeStatus: %+v\n", nodeStatus)
+			fmt.Printf("nodeStatus.SyncInfo.LatestBlockHeight: %d\n", nodeStatus.SyncInfo.LatestBlockHeight)
+			fmt.Printf("helper.GetAntevortaHeight(): %d\n", helper.GetAntevortaHeight())
 			var msg sdk.Msg
 			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
+				fmt.Println("Old version")
 				msg = types.NewMsgProposeSpan(
 					spanID,
 					proposer,
@@ -137,6 +141,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 					seedResponse.Seed,
 				)
 			} else {
+				fmt.Println("New version")
 				msg = types.NewMsgProposeSpanV2(
 					spanID,
 					proposer,
