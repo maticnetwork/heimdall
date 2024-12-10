@@ -1,6 +1,7 @@
 package bor
 
 import (
+	"errors"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -31,11 +32,13 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
 		if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
-			k.Logger(ctx).Error("Msg span is not allowed after hardfork height")
-			return sdk.ErrTxDecode("Msg span is not allowed after hardfork height").Result()
+			err := errors.New("msg span is not allowed after Antevorta hardfork height")
+			k.Logger(ctx).Error(err.Error())
+			return sdk.ErrTxDecode(err.Error()).Result()
 		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
+			Proposer:   msg.Proposer,
 			StartBlock: msg.StartBlock,
 			EndBlock:   msg.EndBlock,
 			ChainID:    msg.ChainID,
@@ -43,13 +46,15 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 		}
 	case types.MsgProposeSpanV2:
 		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
-			k.Logger(ctx).Error("Msg span v2 is not allowed before hardfork height")
-			return sdk.ErrTxDecode("Msg span v2 is not allowed before hardfork height").Result()
+			err := errors.New("msg span v2 is not allowed before Antevorta hardfork height")
+			k.Logger(ctx).Error(err.Error())
+			return sdk.ErrTxDecode(err.Error()).Result()
 		}
 		proposeMsg = msg
 	}
 
 	k.Logger(ctx).Debug("✅ Validating proposed span msg",
+		"proposer", proposeMsg.Proposer.String(),
 		"spanId", proposeMsg.ID,
 		"startBlock", proposeMsg.StartBlock,
 		"endBlock", proposeMsg.EndBlock,
