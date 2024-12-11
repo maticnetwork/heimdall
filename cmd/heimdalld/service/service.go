@@ -262,7 +262,6 @@ which accepts a path for the resulting pprof file.
 
 				logger, err := SetupCtxLogger(logWriter, ctx.Config.LogLevel)
 				if err != nil {
-					logger.Error("Unable to setup logger", "err", err)
 					return err
 				}
 

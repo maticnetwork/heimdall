@@ -171,7 +171,7 @@ func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 	logger := ctx.Logger()
 	logger.Debug("querying next producers", "spanId", spanId)
 
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, spanId)
+	nextSpanSeed, _, err := keeper.GetNextSpanSeed(ctx, spanId)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next span seed from keeper", err.Error())))
 	}
@@ -214,14 +214,14 @@ func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Kee
 		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
 	}
 
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx, params.RecordID)
+	nextSpanSeed, author, err := keeper.GetNextSpanSeed(ctx, params.RecordID)
 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Error fetching next span seed", err.Error()))
 	}
 
 	// json record
-	bz, err := jsoniter.ConfigFastest.Marshal(nextSpanSeed)
+	bz, err := jsoniter.ConfigFastest.Marshal(types.NewQuerySpanSeedResponse(nextSpanSeed, author))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

@@ -349,11 +349,13 @@ func (k *Keeper) GetLastEthBlock(ctx sdk.Context) *big.Int {
 	return lastEthBlock
 }
 
-func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error) {
+func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, common.Address, error) {
 	var (
 		blockHeader *ethTypes.Header
+		borBlock    uint64
 		seedSpan    *hmTypes.Span
 		err         error
+		author      *common.Address
 	)
 
 	if ctx.BlockHeader().Height < helper.GetJorvikHeight() {
@@ -367,8 +369,9 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 		blockHeader, err = k.contractCaller.GetMainChainBlock(newEthBlock)
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
-			return common.Hash{}, err
+			return common.Hash{}, common.Address{}, err
 		}
+		author = &common.Address{}
 	} else {
 		var seedSpanID uint64
 		if id < 2 {
@@ -379,24 +382,29 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 		seedSpan, err = k.GetSpan(ctx, seedSpanID)
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching span while calculating next span seed", "error", err)
-			return common.Hash{}, err
+			return common.Hash{}, common.Address{}, err
 		}
 
-		borBlock, author, err := k.getBorBlockForSpanSeed(ctx, seedSpan, id)
+		borBlock, author, err = k.getBorBlockForSpanSeed(ctx, seedSpan, id)
 		if err != nil {
-			return common.Hash{}, err
+			return common.Hash{}, common.Address{}, err
 		}
 
 		blockHeader, err = k.contractCaller.GetMaticChainBlock(big.NewInt(int64(borBlock)))
 		if err != nil {
 			k.Logger(ctx).Error("Error fetching block header from bor chain while calculating next span seed", "error", err, "block", borBlock)
-			return common.Hash{}, err
+			return common.Hash{}, common.Address{}, err
+		}
+
+		if author == nil {
+			k.Logger(ctx).Error("seed author is nil")
+			return blockHeader.Hash(), common.Address{}, fmt.Errorf("seed author is nil")
 		}
 
 		k.Logger(ctx).Debug("fetched block for seed", "block", borBlock, "author", author, "span id", id)
 	}
 
-	return blockHeader.Hash(), nil
+	return blockHeader.Hash(), *author, nil
 }
 
 // StoreSeedProducer stores producer of the block used for seed for the given span id

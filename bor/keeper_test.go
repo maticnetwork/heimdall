@@ -108,30 +108,35 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 		lastSpanId       uint64
 		lastSeedProducer *common.Address
 		expSeed          common.Hash
+		expAuthor        *common.Address
 	}{
 		{
 			name:             "Last seed producer is different than end block author",
 			lastSeedProducer: &val2Addr,
 			lastSpanId:       0,
 			expSeed:          blockHash1,
+			expAuthor:        &val2Addr,
 		},
 		{
 			name:             "Last seed producer is same as end block author",
 			lastSeedProducer: &val1Addr,
 			lastSpanId:       1,
 			expSeed:          blockHash2,
+			expAuthor:        &val1Addr,
 		},
 		{
 			name:             "Next seed producer should be different from previous recent seed producers",
 			lastSeedProducer: &val2Addr,
 			lastSpanId:       2,
 			expSeed:          blockHash3,
+			expAuthor:        &val3Addr,
 		},
 		{
 			name:             "If no unique seed producer is found, first block with different author from previous seed producer is selected",
 			lastSeedProducer: &val1Addr,
 			lastSpanId:       3,
 			expSeed:          blockHash4,
+			expAuthor:        &val2Addr,
 		},
 	}
 
@@ -149,9 +154,10 @@ func (s *BorKeeperTestSuite) TestGetNextSpanSeed() {
 
 	for _, tc := range testcases {
 		s.T().Run(tc.name, func(t *testing.T) {
-			seed, err := borKeeper.GetNextSpanSeed(ctx, tc.lastSpanId+2)
+			seed, author, err := borKeeper.GetNextSpanSeed(ctx, tc.lastSpanId+2)
 			require.NoError(err)
 			require.Equal(tc.expSeed.Bytes(), seed.Bytes())
+			require.Equal(tc.expAuthor.Bytes(), author.Bytes())
 		})
 	}
 }
@@ -178,9 +184,10 @@ func (s *BorKeeperTestSuite) TestProposeSpanOne() {
 	blockHash1 := blockHeader1.Hash()
 	contractCaller.On("GetMaticChainBlock", big.NewInt(seedBlock1)).Return(&blockHeader1, nil)
 
-	seed, err := app.BorKeeper.GetNextSpanSeed(ctx, 1)
+	seed, author, err := app.BorKeeper.GetNextSpanSeed(ctx, 1)
 	s.Require().NoError(err)
 	s.Require().Equal(blockHash1.Bytes(), seed.Bytes())
+	s.Require().Equal(val1Addr.Bytes(), author.Bytes())
 }
 
 func (s *BorKeeperTestSuite) TestGetSeedProducer() {

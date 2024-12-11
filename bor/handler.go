@@ -1,12 +1,14 @@
 package bor
 
 import (
+	"errors"
 	"strconv"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/common"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // NewHandler returns a handler for "bor" type messages.
@@ -15,7 +17,8 @@ func NewHandler(k Keeper) sdk.Handler {
 		ctx = ctx.WithEventManager(sdk.NewEventManager())
 
 		switch msg := msg.(type) {
-		case types.MsgProposeSpan:
+		case types.MsgProposeSpan,
+			types.MsgProposeSpanV2:
 			return HandleMsgProposeSpan(ctx, msg, k)
 		default:
 			return sdk.ErrTxDecode("Invalid message in bor module").Result()
@@ -24,12 +27,38 @@ func NewHandler(k Keeper) sdk.Handler {
 }
 
 // HandleMsgProposeSpan handles proposeSpan msg
-func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) sdk.Result {
+func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
+	var proposeMsg types.MsgProposeSpanV2
+	switch msg := msg.(type) {
+	case types.MsgProposeSpan:
+		if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
+			err := errors.New("msg span is not allowed after Antevorta hardfork height")
+			k.Logger(ctx).Error(err.Error())
+			return sdk.ErrTxDecode(err.Error()).Result()
+		}
+		proposeMsg = types.MsgProposeSpanV2{
+			ID:         msg.ID,
+			Proposer:   msg.Proposer,
+			StartBlock: msg.StartBlock,
+			EndBlock:   msg.EndBlock,
+			ChainID:    msg.ChainID,
+			Seed:       msg.Seed,
+		}
+	case types.MsgProposeSpanV2:
+		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
+			err := errors.New("msg span v2 is not allowed before Antevorta hardfork height")
+			k.Logger(ctx).Error(err.Error())
+			return sdk.ErrTxDecode(err.Error()).Result()
+		}
+		proposeMsg = msg
+	}
+
 	k.Logger(ctx).Debug("✅ Validating proposed span msg",
-		"spanId", msg.ID,
-		"startBlock", msg.StartBlock,
-		"endBlock", msg.EndBlock,
-		"seed", msg.Seed.String(),
+		"proposer", proposeMsg.Proposer.String(),
+		"spanId", proposeMsg.ID,
+		"startBlock", proposeMsg.StartBlock,
+		"endBlock", proposeMsg.EndBlock,
+		"seed", proposeMsg.Seed.String(),
 	)
 
 	// chainManager params
@@ -37,8 +66,8 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 	chainParams := params.ChainParams
 
 	// check chain id
-	if chainParams.BorChainID != msg.ChainID {
-		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", msg.ChainID)
+	if chainParams.BorChainID != proposeMsg.ChainID {
+		k.Logger(ctx).Error("Invalid Bor chain id", "msgChainID", proposeMsg.ChainID)
 		return common.ErrInvalidBorChainID(k.Codespace()).Result()
 	}
 
@@ -50,14 +79,14 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 	}
 
 	// Validate span continuity
-	if lastSpan.ID+1 != msg.ID || msg.StartBlock != lastSpan.EndBlock+1 || msg.EndBlock < msg.StartBlock {
+	if lastSpan.ID+1 != proposeMsg.ID || proposeMsg.StartBlock != lastSpan.EndBlock+1 || proposeMsg.EndBlock < proposeMsg.StartBlock {
 		k.Logger(ctx).Error("Blocks not in continuity",
 			"lastSpanId", lastSpan.ID,
-			"spanId", msg.ID,
+			"spanId", proposeMsg.ID,
 			"lastSpanStartBlock", lastSpan.StartBlock,
 			"lastSpanEndBlock", lastSpan.EndBlock,
-			"spanStartBlock", msg.StartBlock,
-			"spanEndBlock", msg.EndBlock,
+			"spanStartBlock", proposeMsg.StartBlock,
+			"spanEndBlock", proposeMsg.EndBlock,
 		)
 
 		return common.ErrSpanNotInContinuity(k.Codespace()).Result()
@@ -65,9 +94,9 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 
 	// Validate Span duration
 	spanDuration := k.GetParams(ctx).SpanDuration
-	if spanDuration != (msg.EndBlock - msg.StartBlock + 1) {
+	if spanDuration != (proposeMsg.EndBlock - proposeMsg.StartBlock + 1) {
 		k.Logger(ctx).Error("Span duration of proposed span is wrong",
-			"proposedSpanDuration", msg.EndBlock-msg.StartBlock+1,
+			"proposedSpanDuration", proposeMsg.EndBlock-proposeMsg.StartBlock+1,
 			"paramsSpanDuration", spanDuration,
 		)
 
@@ -79,9 +108,9 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg types.MsgProposeSpan, k Keeper) s
 		sdk.NewEvent(
 			types.EventTypeProposeSpan,
 			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeySpanID, strconv.FormatUint(msg.ID, 10)),
-			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(msg.StartBlock, 10)),
-			sdk.NewAttribute(types.AttributeKeySpanEndBlock, strconv.FormatUint(msg.EndBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeySpanID, strconv.FormatUint(proposeMsg.ID, 10)),
+			sdk.NewAttribute(types.AttributeKeySpanStartBlock, strconv.FormatUint(proposeMsg.StartBlock, 10)),
+			sdk.NewAttribute(types.AttributeKeySpanEndBlock, strconv.FormatUint(proposeMsg.EndBlock, 10)),
 		),
 	})
 
