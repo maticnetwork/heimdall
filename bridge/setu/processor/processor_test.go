@@ -16,7 +16,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	// Установка конфигурации для всех тестов
+	// Set the Configuration for All Tests
 	setup()
 	code := m.Run()
 	os.Exit(code)
