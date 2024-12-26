@@ -9,87 +9,119 @@ import (
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/spf13/viper"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
+func TestMain(m *testing.M) {
+	// Set the Configuration for All Tests
+	setup()
+	code := m.Run()
+	os.Exit(code)
+}
+
+func setup() {
+	viper.Set(helper.TendermintNodeFlag, "http://localhost:26657")
+	viper.Set("log_level", "info")
+	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
+}
+
 func TestBroadcastWhenTxInMempool(t *testing.T) {
 	t.Parallel()
 
-	cdc := app.MakeCodec()
-
-	viper.Set(helper.TendermintNodeFlag, "http://localhost:26657")
-	viper.Set("log_level", "info")
-
-	helper.InitHeimdallConfig(os.ExpandEnv("$HOME/.heimdalld"))
-
-	_txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
-
-	defaultMessage := clerkTypes.MsgEventRecord{
-		From:            hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
-		TxHash:          hmTypes.BytesToHeimdallHash([]byte("0xa86a2f8f30d5fab1bb858e572ecf3f24d691276f833f06fc90a745cea20f4fcb")),
-		LogIndex:        71,
-		BlockNumber:     14475337,
-		ContractAddress: hmTypes.BytesToHeimdallAddress([]byte("0x401f6c983ea34274ec46f84d70b31c151321188b")),
-		Data:            []byte{},
-		ID:              1897091,
-		ChainID:         "15001",
+	testCases := []struct {
+		name           string
+		message        clerkTypes.MsgEventRecord
+		expectedStatus bool
+		description   string
+	}{
+		{
+			name: "unique message",
+			message: clerkTypes.MsgEventRecord{
+				From:            hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+				TxHash:          hmTypes.BytesToHeimdallHash([]byte("0xa86a2f8f30d5fab1bb858e572ecf3f24d691276f833f06fc90a745cea20f4fcb")),
+				LogIndex:        71,
+				BlockNumber:     14475337,
+				ContractAddress: hmTypes.BytesToHeimdallAddress([]byte("0x401f6c983ea34274ec46f84d70b31c151321188b")),
+				Data:           []byte{},
+				ID:             1897091,
+				ChainID:        "15001",
+			},
+			expectedStatus: false,
+			description:   "First message should go through as it's unique in mempool",
+		},
+		{
+			name: "duplicate message",
+			message: clerkTypes.MsgEventRecord{
+				From:            hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+				TxHash:          hmTypes.BytesToHeimdallHash([]byte("0xa86a2f8f30d5fab1bb858e572ecf3f24d691276f833f06fc90a745cea20f4fcb")),
+				LogIndex:        71,
+				BlockNumber:     14475337,
+				ContractAddress: hmTypes.BytesToHeimdallAddress([]byte("0x401f6c983ea34274ec46f84d70b31c151321188b")),
+				Data:           []byte{},
+				ID:             1897091,
+				ChainID:        "15001",
+			},
+			expectedStatus: true,
+			description:   "Duplicate message should fail",
+		},
+		{
+			name: "different txhash",
+			message: clerkTypes.MsgEventRecord{
+				From:            hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+				TxHash:          hmTypes.BytesToHeimdallHash([]byte("0x8a83aa78a400fe959b44ccf70d926c967af4e451ba630a849b2e1dedc7e30c07")),
+				LogIndex:        71,
+				BlockNumber:     14475337,
+				ContractAddress: hmTypes.BytesToHeimdallAddress([]byte("0x401f6c983ea34274ec46f84d70b31c151321188b")),
+				Data:           []byte{},
+				ID:             1897091,
+				ChainID:        "15001",
+			},
+			expectedStatus: false,
+			description:   "Message with different txhash should go through",
+		},
+		{
+			name: "different logIndex",
+			message: clerkTypes.MsgEventRecord{
+				From:            hmTypes.BytesToHeimdallAddress(helper.GetAddress()),
+				TxHash:          hmTypes.BytesToHeimdallHash([]byte("0xa86a2f8f30d5fab1bb858e572ecf3f24d691276f833f06fc90a745cea20f4fcb")),
+				LogIndex:        72,
+				BlockNumber:     14475337,
+				ContractAddress: hmTypes.BytesToHeimdallAddress([]byte("0x401f6c983ea34274ec46f84d70b31c151321188b")),
+				Data:           []byte{},
+				ID:             1897091,
+				ChainID:        "15001",
+			},
+			expectedStatus: false,
+			description:   "Message with different logIndex should go through",
+		},
 	}
 
-	// adding clerk messages and errors for testing
-	var (
-		testData       []clerkTypes.MsgEventRecord
-		expectedStatus []bool
-	)
-
-	// keep the first 2 messages same (default)
-	testData = append(testData, defaultMessage)
-	expectedStatus = append(expectedStatus, false) // 1st message should go through as it's unique in mempool
-	testData = append(testData, defaultMessage)
-	expectedStatus = append(expectedStatus, true) // 2nd message should fail, as it's duplicate
-
-	// change the txhash in the 3rd message
-	defaultMessage2 := defaultMessage
-	defaultMessage2.TxHash = hmTypes.BytesToHeimdallHash([]byte("0x8a83aa78a400fe959b44ccf70d926c967af4e451ba630a849b2e1dedc7e30c07"))
-	testData = append(testData, defaultMessage2)
-	expectedStatus = append(expectedStatus, false) // 3rd message should go through as the txhash is different
-
-	// change the log index in the 4th message
-	defaultMessage2 = defaultMessage
-	defaultMessage2.LogIndex = 72
-	testData = append(testData, defaultMessage2)
-	expectedStatus = append(expectedStatus, false) // 4th message should go through as the log index is different
+	cdc := app.MakeCodec()
+	txBroadcaster := broadcaster.NewTxBroadcaster(cdc)
 
 	// create a mock clerk processor
 	contractCaller, err := helper.NewContractCaller()
-	if err != nil {
-		t.Fatal(err)
-	}
+	require.NoError(t, err, "Error creating contract caller")
 
 	cp := NewClerkProcessor(&contractCaller.StateSenderABI)
 	cp.BaseProcessor = *NewBaseProcessor(cdc, nil, nil, nil, "clerk", cp)
 
-	for index, tx := range testData { //nolint
-		index := index
-		tx := tx
-
-		t.Run(string(rune(index)), func(t *testing.T) {
+	for _, tc := range testCases {
+		tc := tc // capture range variable
+		t.Run(tc.name, func(t *testing.T) {
 			t.Parallel()
 
-			inMempool, err := cp.checkTxAgainstMempool(tx, nil)
-			t.Log("Done checking tx against mempool", "in mempool", inMempool)
-			if err != nil {
-				t.Fatal(err)
-			}
+			inMempool, err := cp.checkTxAgainstMempool(tc.message, nil)
+			require.NoError(t, err, "Error checking tx against mempool")
+			
+			assert.Equal(t, tc.expectedStatus, inMempool, tc.description)
 
-			assert.Equal(t, inMempool, expectedStatus[index])
 			if !inMempool {
-				t.Log("Tx not in mempool, broadcasting")
-				_, err := _txBroadcaster.BroadcastToHeimdall(tx, nil)
-				assert.Empty(t, err, "Error broadcasting tx to heimdall", err)
-			} else {
-				t.Log("Tx is already in mempool, not broadcasting")
+				_, err := txBroadcaster.BroadcastToHeimdall(tc.message, nil)
+				assert.NoError(t, err, "Error broadcasting tx to heimdall")
 			}
 		})
 	}
