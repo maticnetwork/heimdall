@@ -188,7 +188,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 		"seed", proposeMsg.Seed.String(),
 	)
 
-	if ctx.BlockHeader().Height >= helper.GetJorvikHeight() {
+	if ctx.BlockHeight() >= helper.GetJorvikHeight() {
 		var seedSpanID uint64
 		if proposeMsg.ID < 2 {
 			seedSpanID = proposeMsg.ID - 1
