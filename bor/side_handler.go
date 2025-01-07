@@ -161,6 +161,10 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	var proposeMsg types.MsgProposeSpanV2
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
+		if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span is not allowed after Antevorta hardfork height")
+			return common.ErrSideTxValidation(k.Codespace()).Result()
+		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
 			Proposer:   msg.Proposer,
@@ -170,6 +174,10 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 			Seed:       msg.Seed,
 		}
 	case types.MsgProposeSpanV2:
+		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
+			k.Logger(ctx).Error("Msg span v2 is not allowed before Antevorta hardfork height")
+			return common.ErrSideTxValidation(k.Codespace()).Result()
+		}
 		proposeMsg = msg
 	}
 
