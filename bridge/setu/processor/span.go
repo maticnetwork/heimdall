@@ -81,6 +81,18 @@ func (sp *SpanProcessor) checkAndPropose() {
 		return
 	}
 
+	nodeStatus, err := helper.GetNodeStatus(sp.cliCtx)
+	if err != nil {
+		sp.Logger.Error("Error while fetching heimdall node status", "error", err)
+		return
+	}
+
+	if nodeStatus.SyncInfo.LatestBlockHeight >= helper.GetAntevortaHeight() {
+		if !sp.contractConnector.CheckIfBlocksExist(lastSpan.StartBlock) {
+			return
+		}
+	}
+
 	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
