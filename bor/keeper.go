@@ -371,7 +371,9 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 			k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
 			return common.Hash{}, common.Address{}, err
 		}
-		author = &common.Address{}
+		// author = &common.Address{}
+		addr := common.HexToAddress("0xdead")
+		author = &addr
 	} else {
 		var seedSpanID uint64
 		if id < 2 {
