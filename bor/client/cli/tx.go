@@ -124,6 +124,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			fmt.Println("Seed: ", seedResponse.Seed.Hex(), "SeedAuthor: ", seedResponse.SeedAuthor.Hex())
 			// var msg sdk.Msg
 			// if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
 			// 	msg = types.NewMsgProposeSpan(

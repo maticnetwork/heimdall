@@ -374,6 +374,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 		// author = &common.Address{}
 		addr := common.HexToAddress("0xdead")
 		author = &addr
+		k.Logger(ctx).Info("seed author", "author", author, "block", newEthBlock)
 	} else {
 		var seedSpanID uint64
 		if id < 2 {
@@ -406,6 +407,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 		k.Logger(ctx).Debug("fetched block for seed", "block", borBlock, "author", author, "span id", id)
 	}
 
+	k.Logger(ctx).Info("returning seed", "seed", blockHeader.Hash(), "author", author)
 	return blockHeader.Hash(), *author, nil
 }
 
