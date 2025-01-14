@@ -355,7 +355,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 
 			var result []byte
 
-			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
+			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
 				msg := types.NewMsgProposeSpan(
 					spanID,
 					proposer,

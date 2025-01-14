@@ -141,7 +141,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 
 		var txRes sdk.TxResponse
 
-		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
+		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
 			// broadcast to heimdall
 			msg := borTypes.MsgProposeSpan{
 				ID:         nextSpanMsg.ID,

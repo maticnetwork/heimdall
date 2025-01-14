@@ -97,7 +97,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
+	if ctx.BlockHeight() >= helper.GetDanelawHeight() {
 		// check if span seed author matches or not.
 		if !bytes.Equal(proposeMsg.SeedAuthor.Bytes(), seedAuthor.Bytes()) {
 			k.Logger(ctx).Error(
@@ -212,7 +212,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 
 		var producer *ethCommon.Address
 
-		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
+		if ctx.BlockHeight() < helper.GetDanelawHeight() {
 			// store the seed producer
 			_, producer, err = k.getBorBlockForSpanSeed(ctx, lastSpan, proposeMsg.ID)
 			if err != nil {

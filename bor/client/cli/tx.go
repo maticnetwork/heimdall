@@ -125,7 +125,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var msg sdk.Msg
-			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
+			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
 				msg = types.NewMsgProposeSpan(
 					spanID,
 					proposer,
