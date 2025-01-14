@@ -7,7 +7,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/helper"
 	stakingcli "github.com/maticnetwork/heimdall/staking/client/cli"
 	"github.com/spf13/cobra"
@@ -46,13 +45,14 @@ application.
 				return fmt.Errorf("failed to rollback tendermint state: %w", err)
 			}
 			// rollback the multistore
-			hApp := app.NewHeimdallApp(logger, db)
-			cms := hApp.BaseApp.GetCommitMultiStore()
-			rs, ok := cms.(*rootmulti.Store)
-			if !ok {
-				panic("store not of type rootmultistore")
-			}
+			// hApp := app.NewHeimdallApp(logger, db)
+			// cms := hApp.BaseApp.GetCommitMultiStore()
+			// rs, ok := cms.(*rootmulti.Store)
+			// if !ok {
+			// 	panic("store not of type rootmultistore")
+			// }
 
+			rs := rootmulti.NewStore(db)
 			if err := rs.RollbackToVersion(height); err != nil {
 				return err
 			}
