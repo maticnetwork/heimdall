@@ -102,7 +102,7 @@ const (
 	DefaultSyncerPollInterval       = 1 * time.Minute
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
-	DefaultSpanPollInterval         = 1 * time.Minute
+	DefaultSpanPollInterval         = 15 * time.Second
 
 	DefaultMilestonePollInterval = 30 * time.Second
 
@@ -435,8 +435,8 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
-		jorvikHeight = 0
-		danelawHeight = 0
+		jorvikHeight = 1200
+		danelawHeight = 2400
 	}
 }
 

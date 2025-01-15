@@ -9,6 +9,7 @@ import (
 
 // InitGenesis sets distribution information for genesis.
 func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
+	data.Params.SpanDuration = 64
 	keeper.SetParams(ctx, data.Params)
 
 	if len(data.Spans) > 0 {
