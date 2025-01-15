@@ -32,7 +32,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
 		if ctx.BlockHeight() >= helper.GetDanelawHeight() {
-			err := errors.New("msg span is not allowed after Antevorta hardfork height")
+			err := errors.New("msg span is not allowed after Danelaw hardfork height")
 			k.Logger(ctx).Error(err.Error())
 			return sdk.ErrTxDecode(err.Error()).Result()
 		}
@@ -46,7 +46,7 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 		}
 	case types.MsgProposeSpanV2:
 		if ctx.BlockHeight() < helper.GetDanelawHeight() {
-			err := errors.New("msg span v2 is not allowed before Antevorta hardfork height")
+			err := errors.New("msg span v2 is not allowed before Danelaw hardfork height")
 			k.Logger(ctx).Error(err.Error())
 			return sdk.ErrTxDecode(err.Error()).Result()
 		}
