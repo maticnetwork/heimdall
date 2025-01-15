@@ -149,6 +149,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 
 // PostHandleMsgEventSpan handles state persisting span msg
 func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult abci.SideTxResultType) sdk.Result {
+	return common.ErrSideTxValidation(k.Codespace()).Result()
 	logger := k.Logger(ctx)
 
 	// Skip handler if span is not approved
@@ -212,7 +213,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 
 		var producer *ethCommon.Address
 
-		if ctx.BlockHeight() < helper.GetDanelawHeight() {
+		if ctx.BlockHeight() > helper.GetDanelawHeight() {
 			// store the seed producer
 			_, producer, err = k.getBorBlockForSpanSeed(ctx, lastSpan, proposeMsg.ID)
 			if err != nil {
