@@ -54,7 +54,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
 		if ctx.BlockHeight() >= helper.GetDanelawHeight() {
-			k.Logger(ctx).Error("Msg span is not allowed after Antevorta hardfork height")
+			k.Logger(ctx).Error("Msg span is not allowed after Danelaw hardfork height")
 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 		}
 		proposeMsg = types.MsgProposeSpanV2{
@@ -67,7 +67,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 		}
 	case types.MsgProposeSpanV2:
 		if ctx.BlockHeight() < helper.GetDanelawHeight() {
-			k.Logger(ctx).Error("Msg span v2 is not allowed before Antevorta hardfork height")
+			k.Logger(ctx).Error("Msg span v2 is not allowed before Danelaw hardfork height")
 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 		}
 		proposeMsg = msg
@@ -162,7 +162,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
 		if ctx.BlockHeight() >= helper.GetDanelawHeight() {
-			k.Logger(ctx).Error("Msg span is not allowed after Antevorta hardfork height")
+			k.Logger(ctx).Error("Msg span is not allowed after Danelaw hardfork height")
 			return common.ErrSideTxValidation(k.Codespace()).Result()
 		}
 		proposeMsg = types.MsgProposeSpanV2{
@@ -175,7 +175,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 		}
 	case types.MsgProposeSpanV2:
 		if ctx.BlockHeight() < helper.GetDanelawHeight() {
-			k.Logger(ctx).Error("Msg span v2 is not allowed before Antevorta hardfork height")
+			k.Logger(ctx).Error("Msg span v2 is not allowed before Danelaw hardfork height")
 			return common.ErrSideTxValidation(k.Codespace()).Result()
 		}
 		proposeMsg = msg
