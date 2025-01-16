@@ -53,8 +53,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	var proposeMsg types.MsgProposeSpanV2
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
-		if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
-			k.Logger(ctx).Error("Msg span is not allowed after Antevorta hardfork height")
+		if ctx.BlockHeight() >= helper.GetDanelawHeight() {
+			k.Logger(ctx).Error("Msg span is not allowed after Danelaw hardfork height")
 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 		}
 		proposeMsg = types.MsgProposeSpanV2{
@@ -66,8 +66,8 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 			Seed:       msg.Seed,
 		}
 	case types.MsgProposeSpanV2:
-		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
-			k.Logger(ctx).Error("Msg span v2 is not allowed before Antevorta hardfork height")
+		if ctx.BlockHeight() < helper.GetDanelawHeight() {
+			k.Logger(ctx).Error("Msg span v2 is not allowed before Danelaw hardfork height")
 			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 		}
 		proposeMsg = msg
@@ -97,7 +97,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
 	}
 
-	if ctx.BlockHeight() >= helper.GetAntevortaHeight() {
+	if ctx.BlockHeight() >= helper.GetDanelawHeight() {
 		// check if span seed author matches or not.
 		if !bytes.Equal(proposeMsg.SeedAuthor.Bytes(), seedAuthor.Bytes()) {
 			k.Logger(ctx).Error(
@@ -161,6 +161,10 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	var proposeMsg types.MsgProposeSpanV2
 	switch msg := msg.(type) {
 	case types.MsgProposeSpan:
+		if ctx.BlockHeight() >= helper.GetDanelawHeight() {
+			k.Logger(ctx).Error("Msg span is not allowed after Danelaw hardfork height")
+			return common.ErrSideTxValidation(k.Codespace()).Result()
+		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
 			Proposer:   msg.Proposer,
@@ -170,6 +174,10 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 			Seed:       msg.Seed,
 		}
 	case types.MsgProposeSpanV2:
+		if ctx.BlockHeight() < helper.GetDanelawHeight() {
+			k.Logger(ctx).Error("Msg span v2 is not allowed before Danelaw hardfork height")
+			return common.ErrSideTxValidation(k.Codespace()).Result()
+		}
 		proposeMsg = msg
 	}
 
@@ -188,7 +196,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 		"seed", proposeMsg.Seed.String(),
 	)
 
-	if ctx.BlockHeader().Height >= helper.GetJorvikHeight() {
+	if ctx.BlockHeight() >= helper.GetJorvikHeight() {
 		var seedSpanID uint64
 		if proposeMsg.ID < 2 {
 			seedSpanID = proposeMsg.ID - 1
@@ -204,7 +212,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 
 		var producer *ethCommon.Address
 
-		if ctx.BlockHeight() < helper.GetAntevortaHeight() {
+		if ctx.BlockHeight() < helper.GetDanelawHeight() {
 			// store the seed producer
 			_, producer, err = k.getBorBlockForSpanSeed(ctx, lastSpan, proposeMsg.ID)
 			if err != nil {

@@ -81,6 +81,25 @@ func (sp *SpanProcessor) checkAndPropose() {
 		return
 	}
 
+	nodeStatus, err := helper.GetNodeStatus(sp.cliCtx)
+	if err != nil {
+		sp.Logger.Error("Error while fetching heimdall node status", "error", err)
+		return
+	}
+
+	if nodeStatus.SyncInfo.LatestBlockHeight >= helper.GetDanelawHeight() {
+		latestBlock, err := sp.contractConnector.GetMaticChainBlock(nil)
+		if err != nil {
+			sp.Logger.Error("Error fetching current child block", "error", err)
+			return
+		}
+
+		if latestBlock.Number.Uint64() < lastSpan.StartBlock {
+			sp.Logger.Debug("Current bor block is less than last span start block, skipping proposing span", "currentBlock", latestBlock.Number.Uint64(), "lastSpanStartBlock", lastSpan.StartBlock)
+			return
+		}
+	}
+
 	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
@@ -122,7 +141,7 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 
 		var txRes sdk.TxResponse
 
-		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
+		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
 			// broadcast to heimdall
 			msg := borTypes.MsgProposeSpan{
 				ID:         nextSpanMsg.ID,

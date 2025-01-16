@@ -174,7 +174,7 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var msg sdk.Msg
-		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetAntevortaHeight() {
+		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
 			// draft a propose span message
 			msg = types.NewMsgProposeSpan(
 				req.ID,

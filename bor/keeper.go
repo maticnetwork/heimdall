@@ -265,7 +265,7 @@ func (k *Keeper) FreezeSet(ctx sdk.Context, id uint64, startBlock uint64, endBlo
 
 // SelectNextProducers selects producers for next span
 func (k *Keeper) SelectNextProducers(ctx sdk.Context, seed common.Hash, prevVals []hmTypes.Validator) (vals []hmTypes.Validator, err error) {
-	if ctx.BlockHeader().Height < helper.GetJorvikHeight() {
+	if ctx.BlockHeight() < helper.GetJorvikHeight() {
 		prevVals = nil
 	}
 
@@ -358,7 +358,7 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, commo
 		author      *common.Address
 	)
 
-	if ctx.BlockHeader().Height < helper.GetJorvikHeight() {
+	if ctx.BlockHeight() < helper.GetJorvikHeight() {
 		lastEthBlock := k.GetLastEthBlock(ctx)
 		// increment last processed header block number
 		newEthBlock := lastEthBlock.Add(lastEthBlock, big.NewInt(1))
