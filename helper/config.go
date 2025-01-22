@@ -436,7 +436,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
 		jorvikHeight = 100
-		danelawHeight = 2000
+		danelawHeight = 200
 	}
 }
 
