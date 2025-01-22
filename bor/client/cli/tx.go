@@ -82,10 +82,10 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			nodeStatus, err := helper.GetNodeStatus(cliCtx)
-			if err != nil {
-				return err
-			}
+			// nodeStatus, err := helper.GetNodeStatus(cliCtx)
+			// if err != nil {
+			// 	return err
+			// }
 
 			//
 			// Query data
@@ -124,27 +124,27 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			var msg sdk.Msg
-			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
-				msg = types.NewMsgProposeSpan(
-					spanID,
-					proposer,
-					startBlock,
-					startBlock+spanDuration-1,
-					borChainID,
-					seedResponse.Seed,
-				)
-			} else {
-				msg = types.NewMsgProposeSpanV2(
-					spanID,
-					proposer,
-					startBlock,
-					startBlock+spanDuration-1,
-					borChainID,
-					seedResponse.Seed,
-					seedResponse.SeedAuthor,
-				)
-			}
+			// var msg sdk.Msg
+			// if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
+			// 	msg = types.NewMsgProposeSpan(
+			// 		spanID,
+			// 		proposer,
+			// 		startBlock,
+			// 		startBlock+spanDuration-1,
+			// 		borChainID,
+			// 		seedResponse.Seed,
+			// 	)
+			// } else {
+			msg := types.NewMsgProposeSpanV2(
+				spanID,
+				proposer,
+				startBlock,
+				startBlock+spanDuration-1,
+				borChainID,
+				seedResponse.Seed,
+				seedResponse.SeedAuthor,
+			)
+			// }
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},
