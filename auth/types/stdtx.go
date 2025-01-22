@@ -212,20 +212,20 @@ func DefaultMainTxDecoder(cdc *codec.Codec, lastBlockHeight func() int64, getDan
 			return nil, sdk.ErrTxDecode("txBytes are empty")
 		}
 
-		currentHeight := lastBlockHeight() + 1
-		if currentHeight < getDanelawHeight() && getDanelawHeight() == getJorvikHeight() {
-			var hftx = StdTx{}
-			if err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &hftx); err != nil {
-				return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
-			}
+		// currentHeight := lastBlockHeight() + 1
+		// if currentHeight < getDanelawHeight() && getDanelawHeight() == getJorvikHeight() {
+		// 	var hftx = StdTx{}
+		// 	if err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &hftx); err != nil {
+		// 		return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
+		// 	}
 
-			msgs := hftx.GetMsgs()
-			for _, msg := range msgs {
-				if msg.Route() == "bor" && msg.Type() == "propose-span-v2" {
-					return nil, sdk.ErrTxDecode("error decoding transaction")
-				}
-			}
-		}
+		// 	msgs := hftx.GetMsgs()
+		// 	for _, msg := range msgs {
+		// 		if msg.Route() == "bor" && msg.Type() == "propose-span-v2" {
+		// 			return nil, sdk.ErrTxDecode("error decoding transaction")
+		// 		}
+		// 	}
+		// }
 
 		// StdTx.Msg is an interface. The concrete types
 		// are registered by MakeTxCodec
