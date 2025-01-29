@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -223,14 +221,28 @@ func GetSpanList(cdc *codec.Codec) *cobra.Command {
 
 // GetNextSpanSeed implements the next span seed.
 func GetNextSpanSeed(cdc *codec.Codec) *cobra.Command {
-	return &cobra.Command{
+	cmd := &cobra.Command{
 		Use:   "next-span-seed",
-		Args:  cobra.NoArgs,
 		Short: "show the next span seed",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			cliCtx := context.NewCLIContext().WithCodec(cdc)
 
-			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			spanIDStr := viper.GetString(FlagSpanId)
+			if spanIDStr == "" {
+				return fmt.Errorf("span id cannot be empty")
+			}
+
+			spanID, err := strconv.ParseUint(spanIDStr, 10, 64)
+			if err != nil {
+				return err
+			}
+
+			seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+			if err != nil {
+				return err
+			}
+
+			res, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 			if err != nil {
 
 				fmt.Println("Error while fetching the span seed")
@@ -247,9 +259,17 @@ func GetNextSpanSeed(cdc *codec.Codec) *cobra.Command {
 
 		},
 	}
+
+	cmd.Flags().String(FlagSpanId, "", "--span-id=<span-id>")
+
+	if err := cmd.MarkFlagRequired(FlagSpanId); err != nil {
+		cliLogger.Error("GetNextSpanSeed | MarkFlagRequired | FlagSpanId", "Error", err)
+	}
+
+	return cmd
 }
 
-// PostSendProposeSpanTx send propose span transaction
+// GetPreparedProposeSpan generates a propose span transaction
 func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "propose-span",
@@ -291,6 +311,11 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			nodeStatus, err := helper.GetNodeStatus(cliCtx)
+			if err != nil {
+				return err
+			}
+
 			//
 			// Query data
 			//
@@ -309,7 +334,12 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
-			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+			if err != nil {
+				return err
+			}
+
+			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 			if err != nil {
 				return err
 			}
@@ -318,23 +348,42 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return errors.New("next span seed not found")
 			}
 
-			var seed common.Hash
-			if err := jsoniter.Unmarshal(res, &seed); err != nil {
+			var seedResponse types.QuerySpanSeedResponse
+			if err := jsoniter.Unmarshal(res, &seedResponse); err != nil {
 				return err
 			}
 
-			msg := types.NewMsgProposeSpan(
-				spanID,
-				proposer,
-				startBlock,
-				startBlock+spanDuration-1,
-				borChainID,
-				seed,
-			)
+			var result []byte
 
-			result, err := jsoniter.Marshal(&msg)
-			if err != nil {
-				return err
+			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
+				msg := types.NewMsgProposeSpan(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+				)
+
+				result, err = jsoniter.Marshal(&msg)
+				if err != nil {
+					return err
+				}
+			} else {
+				msg := types.NewMsgProposeSpanV2(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+					seedResponse.SeedAuthor,
+				)
+
+				result, err = jsoniter.Marshal(&msg)
+				if err != nil {
+					return err
+				}
 			}
 
 			fmt.Println(string(result))

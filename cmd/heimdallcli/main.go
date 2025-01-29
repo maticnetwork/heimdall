@@ -1,12 +1,16 @@
 package main
 
 import (
+	"bytes"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	defaultLogger "log"
 	"os"
 	"path"
+	"runtime"
 	"strings"
 	"time"
 
@@ -22,9 +26,11 @@ import (
 	"github.com/ethereum/go-ethereum/console/prompt"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/google/uuid"
+	hmModule "github.com/maticnetwork/heimdall/types/module"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
 	"github.com/tendermint/tendermint/libs/common"
@@ -50,6 +56,7 @@ var (
 		Short: "Heimdall light-client",
 		PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 			if cmd.Use != version.Cmd.Use {
+				defaultLogger.SetOutput(os.Stdout)
 				// initialise config
 				initTendermintViperConfig(cmd)
 			}
@@ -220,16 +227,21 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 			}
 
 			happ := app.NewHeimdallApp(logger, db)
-			appState, _, err := happ.ExportAppStateAndValidators()
+
+			savePath := file.Rootify("dump-genesis.json", config.RootDir)
+			file, err := os.Create(savePath)
 			if err != nil {
 				panic(err)
 			}
+			defer file.Close()
 
-			err = writeGenesisFile(file.Rootify("config/dump-genesis.json", config.RootDir), chainID, appState)
-			if err == nil {
-				fmt.Println("New genesis json file created:", file.Rootify("config/dump-genesis.json", config.RootDir))
+			if err := generateMarshalledAppState(happ, chainID, 1000, file); err != nil {
+				panic(err)
 			}
-			return err
+
+			fmt.Println("New genesis json file created: ", savePath)
+
+			return nil
 		},
 	}
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "Node's home directory")
@@ -237,6 +249,192 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
 
 	return cmd
+}
+
+// generateMarshalledAppState writes the genesis doc with app state directly to a file to minimize memory usage.
+func generateMarshalledAppState(happ *app.HeimdallApp, chainID string, maxNextGenesisItems int, w io.Writer) error {
+	sdkCtx := happ.NewContext(true, abci.Header{Height: happ.LastBlockHeight()})
+	moduleManager := happ.GetModuleManager()
+
+	if _, err := w.Write([]byte("{")); err != nil {
+		return err
+	}
+
+	if _, err := w.Write([]byte(`"app_state":`)); err != nil {
+		return err
+	}
+
+	if _, err := w.Write([]byte(`{`)); err != nil {
+		return err
+	}
+
+	isFirst := true
+
+	for _, moduleName := range moduleManager.OrderExportGenesis {
+		runtime.GC()
+
+		if !isFirst {
+			if _, err := w.Write([]byte(`,`)); err != nil {
+				return err
+			}
+		}
+
+		isFirst = false
+
+		if _, err := w.Write([]byte(`"` + moduleName + `":`)); err != nil {
+			return err
+		}
+
+		module, isStreamedGenesis := moduleManager.Modules[moduleName].(hmModule.StreamedGenesisExporter)
+		if isStreamedGenesis {
+			partialGenesis, err := module.ExportPartialGenesis(sdkCtx)
+			if err != nil {
+				return err
+			}
+
+			propertyName, data, err := fetchModuleStreamedData(sdkCtx, module, maxNextGenesisItems)
+			if err != nil {
+				return err
+			}
+
+			// remove the closing '}'
+			if _, err = w.Write(partialGenesis[0 : len(partialGenesis)-1]); err != nil {
+				return err
+			}
+
+			if _, err = w.Write([]byte(`,`)); err != nil {
+				return err
+			}
+
+			if _, err = w.Write([]byte(`"` + propertyName + `":`)); err != nil {
+				return err
+			}
+
+			if _, err = w.Write(data); err != nil {
+				return err
+			}
+
+			// add the closing '}'
+			if _, err = w.Write(partialGenesis[len(partialGenesis)-1:]); err != nil {
+				return err
+			}
+
+			continue
+		}
+
+		genesis := moduleManager.Modules[moduleName].ExportGenesis(sdkCtx)
+
+		if _, err := w.Write(genesis); err != nil {
+			return err
+		}
+	}
+
+	if _, err := w.Write([]byte(`}`)); err != nil {
+		return err
+	}
+
+	if _, err := w.Write([]byte(`,`)); err != nil {
+		return err
+	}
+
+	consensusParams := tmTypes.DefaultConsensusParams()
+	genesisTime := time.Now().UTC().Format(time.RFC3339Nano)
+
+	consensusParamsData, err := tmTypes.GetCodec().MarshalJSON(consensusParams)
+	if err != nil {
+		return err
+	}
+
+	remainingFields := map[string]interface{}{
+		"chain_id":         chainID,
+		"consensus_params": json.RawMessage(consensusParamsData),
+		"genesis_time":     genesisTime,
+	}
+
+	remainingFieldsData, err := json.Marshal(remainingFields)
+	if err != nil {
+		return err
+	}
+
+	if _, err := w.Write(remainingFieldsData[1 : len(remainingFieldsData)-1]); err != nil {
+		return err
+	}
+
+	if _, err := w.Write([]byte("}")); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// fetchModuleStreamedData fetches module genesis data in streamed fashion.
+func fetchModuleStreamedData(sdkCtx sdk.Context, module hmModule.StreamedGenesisExporter, maxNextGenesisItems int) (string, json.RawMessage, error) {
+	var lastKey []byte
+	allData := []json.RawMessage{}
+	allDataLength := 0
+
+	for {
+		data, err := module.NextGenesisData(sdkCtx, lastKey, maxNextGenesisItems)
+		if err != nil {
+			panic(err)
+		}
+
+		lastKey = data.NextKey
+
+		if lastKey == nil {
+			allData = append(allData, data.Data)
+			allDataLength += len(data.Data)
+
+			if allDataLength == 0 {
+				break
+			}
+
+			combinedData, err := combineJSONArrays(allData, allDataLength)
+			if err != nil {
+				return "", nil, err
+			}
+
+			return data.Path, combinedData, nil
+		}
+
+		allData = append(allData, data.Data)
+		allDataLength += len(data.Data)
+	}
+
+	return "", nil, errors.New("failed to iterate module genesis data")
+}
+
+// combineJSONArrays combines multiple JSON arrays into a single JSON array.
+func combineJSONArrays(arrays []json.RawMessage, allArraysLength int) (json.RawMessage, error) {
+	buf := bytes.NewBuffer(make([]byte, 0, allArraysLength))
+	buf.WriteByte('[')
+	first := true
+
+	for _, raw := range arrays {
+		if len(raw) == 0 {
+			continue
+		}
+
+		if raw[0] != '[' || raw[len(raw)-1] != ']' {
+			return nil, fmt.Errorf("invalid JSON array: %s", raw)
+		}
+
+		content := raw[1 : len(raw)-1]
+
+		if !first {
+			buf.WriteByte(',')
+		}
+		buf.Write(content)
+		first = false
+	}
+	buf.WriteByte(']')
+
+	combinedJSON := buf.Bytes()
+	if !json.Valid(combinedJSON) {
+		return nil, errors.New("combined JSON is invalid")
+	}
+
+	return json.RawMessage(combinedJSON), nil
 }
 
 // generateKeystore generate keystore file from private key
@@ -322,23 +520,6 @@ func generateValidatorKey(cdc *codec.Codec) *cobra.Command {
 	}
 
 	return client.GetCommands(cmd)[0]
-}
-
-//
-// Internal functions
-//
-
-func writeGenesisFile(genesisFile, chainID string, appState json.RawMessage) error {
-	genDoc := tmTypes.GenesisDoc{
-		ChainID:  chainID,
-		AppState: appState,
-	}
-
-	if err := genDoc.ValidateAndComplete(); err != nil {
-		return err
-	}
-
-	return genDoc.SaveAs(genesisFile)
 }
 
 // keyFileName implements the naming convention for keyfiles:

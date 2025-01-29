@@ -203,6 +203,41 @@ func (fee StdFee) GasPrices() sdk.DecCoins {
 // Decoders
 //
 
+// DefaultMainTxDecoder logic for standard transaction decoding
+func DefaultMainTxDecoder(cdc *codec.Codec, lastBlockHeight func() int64, getDanelawHeight func() int64, getJorvikHeight func() int64) sdk.TxDecoder {
+	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
+		var tx = StdTx{}
+
+		if len(txBytes) == 0 {
+			return nil, sdk.ErrTxDecode("txBytes are empty")
+		}
+
+		currentHeight := lastBlockHeight() + 1
+		if currentHeight < getDanelawHeight() && getDanelawHeight() == getJorvikHeight() {
+			var hftx = StdTx{}
+			if err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &hftx); err != nil {
+				return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
+			}
+
+			msgs := hftx.GetMsgs()
+			for _, msg := range msgs {
+				if msg.Route() == "bor" && msg.Type() == "propose-span-v2" {
+					return nil, sdk.ErrTxDecode("error decoding transaction")
+				}
+			}
+		}
+
+		// StdTx.Msg is an interface. The concrete types
+		// are registered by MakeTxCodec
+		err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
+		if err != nil {
+			return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
+		}
+
+		return tx, nil
+	}
+}
+
 // DefaultTxDecoder logic for standard transaction decoding
 func DefaultTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
 	return func(txBytes []byte) (sdk.Tx, sdk.Error) {

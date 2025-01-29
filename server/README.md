@@ -6,7 +6,7 @@ The `server` module in Heimdall is responsible for running a REST and gRPC serve
 
 ### REST
 
-Every module in heimdall has their own rest endpoints, All of these endpoints are registered in the `server/rest.go` file via `app.ModuleBasics.RegisterRESTRoutes` and it also handle the root endpoints. The `server/rest.go` file also contains the `StartServer` function which starts the REST server.
+Every module in heimdall has its own rest endpoints, All of these endpoints are registered in the `server/rest.go` file via `app.ModuleBasics.RegisterRESTRoutes` and it also handle the root endpoints. The `server/rest.go` file also contains the `StartServer` function which starts the REST server.
 
 ### gRPC
 

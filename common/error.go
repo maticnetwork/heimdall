@@ -50,13 +50,16 @@ const (
 	CodeNoSignerChangeError CodeType = 2513
 	CodeNonce               CodeType = 2514
 
-	CodeSpanNotContinuous   CodeType = 3501
-	CodeUnableToFreezeSet   CodeType = 3502
-	CodeSpanNotFound        CodeType = 3503
-	CodeValSetMisMatch      CodeType = 3504
-	CodeProducerMisMatch    CodeType = 3505
-	CodeInvalidBorChainID   CodeType = 3506
-	CodeInvalidSpanDuration CodeType = 3507
+	CodeSpanNotContinuous         CodeType = 3501
+	CodeUnableToFreezeSet         CodeType = 3502
+	CodeSpanNotFound              CodeType = 3503
+	CodeValSetMisMatch            CodeType = 3504
+	CodeProducerMisMatch          CodeType = 3505
+	CodeInvalidBorChainID         CodeType = 3506
+	CodeInvalidSpanDuration       CodeType = 3507
+	CodeUnableToGetSpan           CodeType = 3508
+	CodeUnableToGetSeed           CodeType = 3509
+	CodeUnableToStoreSeedProducer CodeType = 3510
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
@@ -284,6 +287,18 @@ func ErrValSetMisMatch(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrProducerMisMatch(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeProducerMisMatch, "Producer set mismatch")
+}
+
+func ErrUnableToGetSpan(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToGetSpan, "Span not found")
+}
+
+func ErrUnableToGetSeed(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToGetSeed, "Seed not found")
+}
+
+func ErrUnableToStoreSeedProducer(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToStoreSeedProducer, "Unable to store seed producer")
 }
 
 //

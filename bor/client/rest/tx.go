@@ -11,10 +11,9 @@ import (
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/maticnetwork/heimdall/bor/types"
 	restClient "github.com/maticnetwork/heimdall/client/rest"
+	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 	"github.com/maticnetwork/heimdall/types/rest"
 )
@@ -149,8 +148,13 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
+		seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(req.ID))
+		if err != nil {
+			return
+		}
+
 		// fetch seed
-		res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+		res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 		if err != nil {
 			RestLogger.Error("Error while fetching next span seed  ", "Error", err.Error())
 			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
@@ -158,20 +162,40 @@ func postProposeSpanHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 			return
 		}
 
-		var seed common.Hash
-		if err = jsoniter.ConfigFastest.Unmarshal(res, &seed); err != nil {
+		var seedResponse types.QuerySpanSeedResponse
+		if err = jsoniter.ConfigFastest.Unmarshal(res, &seedResponse); err != nil {
 			return
 		}
 
-		// draft a propose span message
-		msg := types.NewMsgProposeSpan(
-			req.ID,
-			hmTypes.HexToHeimdallAddress(req.BaseReq.From),
-			req.StartBlock,
-			req.StartBlock+spanDuration-1,
-			req.BorChainID,
-			seed,
-		)
+		nodeStatus, err := helper.GetNodeStatus(cliCtx)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
+			return
+		}
+
+		var msg sdk.Msg
+		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
+			// draft a propose span message
+			msg = types.NewMsgProposeSpan(
+				req.ID,
+				hmTypes.HexToHeimdallAddress(req.BaseReq.From),
+				req.StartBlock,
+				req.StartBlock+spanDuration-1,
+				req.BorChainID,
+				seedResponse.Seed,
+			)
+		} else {
+			// draft a propose span v2 message
+			msg = types.NewMsgProposeSpanV2(
+				req.ID,
+				hmTypes.HexToHeimdallAddress(req.BaseReq.From),
+				req.StartBlock,
+				req.StartBlock+spanDuration-1,
+				req.BorChainID,
+				seedResponse.Seed,
+				seedResponse.SeedAuthor,
+			)
+		}
 
 		// send response
 		restClient.WriteGenerateStdTxResponse(w, cliCtx, req.BaseReq, []sdk.Msg{msg})
