@@ -414,8 +414,8 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
 		aalborgHeight = 15950759
-		jorvikHeight = -1
-		danelawHeight = -1
+		jorvikHeight = 22393043
+		danelawHeight = 22393043
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
