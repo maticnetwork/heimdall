@@ -200,7 +200,7 @@ func (valID ValidatorID) Bytes() []byte {
 
 // Int converts validator ID to int
 func (valID ValidatorID) Int() int {
-	if uint64(valID) > uint64(^0) {
+	if uint64(valID) > uint64(int(^uint(0)>>1)) {
 		panic(fmt.Sprintf("ValidatorID value too large to convert to int: %d", valID))
 	}
 	return int(valID)
