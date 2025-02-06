@@ -2,6 +2,8 @@ package listener
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"math/big"
 	"strconv"
 	"time"
@@ -82,6 +84,10 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 
 				// Querying and processing Begin events
 				for i := fromBlock; i <= toBlock; i++ {
+					if i > math.MaxInt64 {
+						hl.Logger.Error("Block number out of range for int64", "blockNumber", i)
+						continue
+					}
 					// nolint: contextcheck
 					events, err := helper.GetBeginBlockEvents(hl.httpClient, int64(i))
 					if err != nil {
@@ -151,6 +157,9 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 	if err != nil {
 		hl.Logger.Error("Error while fetching heimdall node status", "error", err)
 		return fromBlock, toBlock, err
+	}
+	if nodeStatus.SyncInfo.LatestBlockHeight < 0 {
+		return fromBlock, toBlock, fmt.Errorf("latest block height is negative: %d", nodeStatus.SyncInfo.LatestBlockHeight)
 	}
 
 	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)

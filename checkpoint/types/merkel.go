@@ -3,6 +3,7 @@ package types
 import (
 	"bytes"
 	"errors"
+	"fmt"
 
 	"github.com/cbergoon/merkletree"
 	"github.com/ethereum/go-ethereum/common"
@@ -78,6 +79,9 @@ func GetAccountProof(dividendAccounts []hmTypes.DividendAccount, userAddr hmType
 
 		if dividendAccounts[i].User.Equals(userAddr) {
 			account = dividendAccounts[i]
+			if i < 0 {
+				return nil, 0, fmt.Errorf("index value cannot be negative: %d", i)
+			}
 			index = uint64(i)
 		}
 	}

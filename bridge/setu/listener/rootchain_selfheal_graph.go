@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"math/big"
 	"net/http"
 	"strconv"
@@ -162,6 +163,9 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 	}
 
 	for _, log := range receipt.Logs {
+		if log.Index > math.MaxInt {
+			return nil, fmt.Errorf("log index value out of range for int: %d", log.Index)
+		}
 		if strconv.Itoa(int(log.Index)) == response.Data.StateSyncs[0].LogIndex {
 			return log, nil
 		}
@@ -172,6 +176,10 @@ func (rl *RootChainListener) getStateSync(ctx context.Context, stateId int64) (*
 
 // getLatestNonce returns the nonce from the latest StakeUpdate event
 func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uint64) (uint64, error) {
+	if validatorId > math.MaxInt {
+		return 0, fmt.Errorf("validator ID value out of range for int: %d", validatorId)
+	}
+
 	query := map[string]string{
 		"query": `
 		{
@@ -204,6 +212,10 @@ func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uin
 	latestValidatorNonce, err := strconv.Atoi(response.Data.StakeUpdates[0].Nonce)
 	if err != nil {
 		return 0, err
+	}
+
+	if latestValidatorNonce < 0 {
+		return 0, fmt.Errorf("latest validator nonce is negative: %d", latestValidatorNonce)
 	}
 
 	return uint64(latestValidatorNonce), nil
@@ -247,6 +259,9 @@ func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, no
 	}
 
 	for _, log := range receipt.Logs {
+		if log.Index > math.MaxInt {
+			return nil, fmt.Errorf("log index value out of range for int: %d", log.Index)
+		}
 		if strconv.Itoa(int(log.Index)) == response.Data.StakeUpdates[0].LogIndex {
 			return log, nil
 		}

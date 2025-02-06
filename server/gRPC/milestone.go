@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -69,7 +70,12 @@ func (h *HeimdallGRPCServer) FetchMilestone(ctx context.Context, in *emptypb.Emp
 
 	copy(address[:], milestone.Proposer.Bytes())
 
+	if milestone.TimeStamp > math.MaxInt64 {
+		return nil, fmt.Errorf("timestamp value out of range for int64: %d", milestone.TimeStamp)
+	}
+
 	resp := &proto.FetchMilestoneResponse{}
+
 	resp.Height = fmt.Sprint(result.Height)
 	resp.Result = &proto.Milestone{
 		StartBlock: milestone.StartBlock,

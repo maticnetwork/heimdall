@@ -2,7 +2,8 @@ package types
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
+	"math"
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -49,10 +50,11 @@ func ValidateGenesis(data GenesisState) error {
 		return err
 	}
 
-	if len(data.Checkpoints) != 0 {
-		if int(data.AckCount) != len(data.Checkpoints) {
-			return errors.New("Incorrect state in state-dump , Please Check")
-		}
+	if data.AckCount > math.MaxInt {
+		return fmt.Errorf("ack count value out of range for int: %d", data.AckCount)
+	}
+	if int(data.AckCount) != len(data.Checkpoints) {
+		return fmt.Errorf("ack count does not match the number of checkpoints")
 	}
 
 	return nil

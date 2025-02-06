@@ -2,6 +2,7 @@ package staking
 
 import (
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -134,6 +135,10 @@ func handleQueryProposer(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 	// get validator set
 	validatorSet := keeper.GetValidatorSet(ctx)
 
+	if params.Times > math.MaxInt {
+		return nil, sdk.ErrInternal(fmt.Sprintf("times value out of range for int: %d", params.Times))
+	}
+
 	times := int(params.Times)
 	if times > len(validatorSet.Validators) {
 		times = len(validatorSet.Validators)
@@ -166,6 +171,10 @@ func handleQueryMilestoneProposer(ctx sdk.Context, req abci.RequestQuery, keeper
 	// get validator set
 	validatorSet := keeper.GetMilestoneValidatorSet(ctx)
 
+	if params.Times > math.MaxInt {
+		return nil, sdk.ErrInternal(fmt.Sprintf("times value out of range for int: %d", params.Times))
+	}
+	
 	times := int(params.Times)
 	if times > len(validatorSet.Validators) {
 		times = len(validatorSet.Validators)

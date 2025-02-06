@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -199,6 +200,9 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 
 	logger.Debug("Fetched proposers list", "numberOfProposers", count+1)
 
+	if count > math.MaxInt {
+		return false, fmt.Errorf("count value out of range for int: %d", count)
+	}
 	for i := 1; i <= int(count) && i < len(proposers); i++ {
 		if bytes.Equal(proposers[i].Signer.Bytes(), helper.GetAddress()) {
 			return true, nil

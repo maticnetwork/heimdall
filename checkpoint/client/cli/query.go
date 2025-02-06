@@ -3,6 +3,7 @@ package cli
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strconv"
 	"strings"
 	"time"
@@ -125,7 +126,7 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 			}
 
 			if len(res) == 0 {
-				return errors.New("No last-no-ack count found")
+				return errors.New("no last-no-ack count found")
 			}
 
 			var lastNoAck uint64
@@ -133,6 +134,9 @@ func GetLastNoACK(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			if lastNoAck > math.MaxInt64 {
+				return fmt.Errorf("lastNoAck value out of range for int64: %d", lastNoAck)
+			}
 			fmt.Printf("LastNoACK received at %v", time.Unix(int64(lastNoAck), 0))
 			return nil
 		},
@@ -450,6 +454,9 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 			// State dump
 			//
 
+			if lastNoACKTime > math.MaxInt64 {
+				return fmt.Errorf("lastNoACKTime value out of range for int64: %d", lastNoACKTime)
+			}
 			state := stateDump{
 				ACKCount:         ackCountInt,
 				CheckpointBuffer: _checkpoint,

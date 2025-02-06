@@ -725,7 +725,7 @@ func getSplitPoint(length int) int {
 	uLength := uint(length)
 	bitlen := bits.Len(uLength)
 
-	k := 1 << uint(bitlen-1)
+	k := 1 << (bitlen - 1)
 	if k == length {
 		k >>= 1
 	}

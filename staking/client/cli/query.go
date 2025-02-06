@@ -58,7 +58,7 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 
 			var queryParams []byte
 			var err error
-			var t string = ""
+			var t = ""
 			if validatorAddressStr != "" {
 				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQuerySignerParams(common.FromHex(validatorAddressStr)))
 				if err != nil {
@@ -66,6 +66,10 @@ func GetValidatorInfo(cdc *codec.Codec) *cobra.Command {
 				}
 				t = types.QuerySigner
 			} else if validatorID != 0 {
+				validatorID := viper.GetInt64(FlagValidatorID)
+				if validatorID < 0 {
+					return fmt.Errorf("validator ID cannot be negative: %d", validatorID)
+				}
 				queryParams, err = cliCtx.Codec.MarshalJSON(types.NewQueryValidatorParams(hmTypes.ValidatorID(validatorID)))
 				if err != nil {
 					return err

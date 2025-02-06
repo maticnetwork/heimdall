@@ -313,17 +313,21 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 			// get main tx receipt
 			receipt, err := contractCallerObj.GetConfirmedTxReceipt(txHash.EthHash(), chainmanagerParams.MainchainTxConfirmations)
 			if err != nil || receipt == nil {
-				return errors.New("Transaction is not confirmed yet. Please wait for sometime and try again")
+				return errors.New("transaction is not confirmed yet. Please wait for sometime and try again")
 			}
 
+			logIndex := viper.GetInt64(FlagCheckpointLogIndex)
+			if logIndex < 0 {
+				return fmt.Errorf("log index cannot be negative: %d", logIndex)
+			}
 			// decode new header block event
 			res, err := contractCallerObj.DecodeNewHeaderBlockEvent(
 				chainmanagerParams.ChainParams.RootChainAddress.EthAddress(),
 				receipt,
-				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+				uint64(logIndex),
 			)
 			if err != nil {
-				return errors.New("Invalid transaction for header block")
+				return errors.New("invalid transaction for header block")
 			}
 
 			// draft new checkpoint no-ack msg
@@ -335,7 +339,7 @@ func SendCheckpointACKTx(cdc *codec.Codec) *cobra.Command {
 				res.End.Uint64(),
 				res.Root,
 				txHash,
-				uint64(viper.GetInt64(FlagCheckpointLogIndex)),
+				uint64(logIndex),
 			)
 
 			// msg

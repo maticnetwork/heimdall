@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 
@@ -81,8 +82,12 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 		return
 	}
 
-	auth.GasPrice = gasprice
+	if nonce > uint64(math.MaxInt64) {
+		return nil, fmt.Errorf("nonce value too large to convert to int64: %d", nonce)
+	}
+	
 	auth.Nonce = big.NewInt(int64(nonce))
+	auth.GasPrice = gasprice
 	auth.GasLimit = gasLimit
 
 	return
