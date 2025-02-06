@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -89,7 +90,7 @@ func (h *HeimdallGRPCServer) FetchCheckpoint(_ context.Context, in *proto.FetchC
 		EndBlock:   checkPoint.EndBlock,
 		RootHash:   protoutils.ConvertHashToH256(hash),
 		Proposer:   protoutils.ConvertAddressToH160(address),
-		Timestamp:  timestamppb.New(time.Unix(int64(checkPoint.TimeStamp), 0)),
+		Timestamp:  timestamppb.New(time.Unix(big.NewInt(0).SetUint64(checkPoint.TimeStamp).Int64(), 0)),
 		BorChainID: checkPoint.BorChainID,
 	}
 

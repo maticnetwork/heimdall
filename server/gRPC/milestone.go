@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math"
+	"math/big"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -82,7 +83,7 @@ func (h *HeimdallGRPCServer) FetchMilestone(ctx context.Context, in *emptypb.Emp
 		EndBlock:   milestone.EndBlock,
 		RootHash:   protoutils.ConvertHashToH256(hash),
 		Proposer:   protoutils.ConvertAddressToH160(address),
-		Timestamp:  timestamppb.New(time.Unix(int64(milestone.TimeStamp), 0)),
+		Timestamp:  timestamppb.New(time.Unix(big.NewInt(0).SetUint64(milestone.TimeStamp).Int64(), 0)),
 		BorChainID: milestone.BorChainID,
 	}
 

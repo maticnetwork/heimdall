@@ -88,12 +88,13 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 						hl.Logger.Error("Block number out of range for int64", "blockNumber", i)
 						continue
 					}
-					// nolint: contextcheck
+					//nolint:contextcheck
 					events, err := helper.GetBeginBlockEvents(hl.httpClient, int64(i))
 					if err != nil {
 						hl.Logger.Error("Error fetching begin block events", "error", err)
 					}
 					for _, event := range events {
+						//nolint:gosec
 						hl.ProcessBlockEvent(sdk.StringifyEvent(event), int64(i))
 					}
 				}
@@ -162,7 +163,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		return fromBlock, toBlock, fmt.Errorf("latest block height is negative: %d", nodeStatus.SyncInfo.LatestBlockHeight)
 	}
 
-	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
+	toBlock = big.NewInt(0).SetInt64(nodeStatus.SyncInfo.LatestBlockHeight).Uint64()
 
 	// fromBlock - get last block from storage
 	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)

@@ -203,7 +203,7 @@ func (valID ValidatorID) Int() int {
 	if uint64(valID) > uint64(int(^uint(0)>>1)) {
 		panic(fmt.Sprintf("ValidatorID value too large to convert to int: %d", valID))
 	}
-	return int(valID)
+	return valID.Int()
 }
 
 // Uint64 converts validator ID to int

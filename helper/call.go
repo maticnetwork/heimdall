@@ -399,7 +399,7 @@ func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoIn
 		return validator, fmt.Errorf("ValidatorID value too large to convert to int64: %d", valID)
 	}
 
-	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(0).SetUint64(valID.Uint64()))
 	if err != nil {
 		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "error", err)
 		return

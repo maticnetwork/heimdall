@@ -99,21 +99,21 @@ func parseTopics(out interface{}, fields abi.Arguments, topics []common.Hash) er
 			if int64Value < math.MaxUint8 || int64Value > math.MaxUint8 {
 				return fmt.Errorf("value out of range for uint8: %d", int64Value)
 			}
-			field.Set(reflect.ValueOf(uint8(num.Uint64())))
+			field.Set(reflect.ValueOf(uint8(int64Value)))
 		case reflect.Uint16:
 			num := new(big.Int).SetBytes(topics[0][:])
 			int64Value := num.Int64()
 			if int64Value < math.MaxUint16 || int64Value > math.MaxUint16 {
 				return fmt.Errorf("value out of range for uint16: %d", int64Value)
 			}
-			field.Set(reflect.ValueOf(uint16(num.Uint64())))
+			field.Set(reflect.ValueOf(uint16(int64Value)))
 		case reflect.Uint32:
 			num := new(big.Int).SetBytes(topics[0][:])
 			int64Value := num.Int64()
 			if int64Value < math.MaxUint32 || int64Value > math.MaxUint32 {
 				return fmt.Errorf("value out of range for uint32: %d", int64Value)
 			}
-			field.Set(reflect.ValueOf(uint32(num.Uint64())))
+			field.Set(reflect.ValueOf(uint32(int64Value)))
 		case reflect.Uint64:
 			num := new(big.Int).SetBytes(topics[0][:])
 			field.Set(reflect.ValueOf(num.Uint64()))
