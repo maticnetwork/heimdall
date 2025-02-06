@@ -59,7 +59,7 @@ build-arm: clean
 LINT_COMMAND := $(shell command -v golangci-lint 2> /dev/null)
 lint:
 ifndef LINT_COMMAND
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.56.2
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.63.4
 endif
 	golangci-lint run --config ./.golangci.yml
 
