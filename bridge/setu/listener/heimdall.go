@@ -175,18 +175,18 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		}
 
 		//nolint:gosec
-		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
+		if result, e := strconv.ParseUint(string(lastBlockBytes), 10, 64); e == nil {
 			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", result)
 			fromBlock = result + 1
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
 			toBlock = 0
 
-			return fromBlock, toBlock, err
+			return fromBlock, toBlock, e
 		}
 	}
 
-	return fromBlock, toBlock, err
+	return fromBlock, toBlock, nil
 }
 
 // ProcessBlockEvent - process Blockevents (BeginBlock, EndBlock events) from heimdall.
