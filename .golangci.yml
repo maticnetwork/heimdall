@@ -157,5 +157,4 @@ issues:
         - prealloc
   max-issues-per-linter: 0
   max-same-issues: 0
-  #new: true
-  new-from-rev: origin/master
+  new-from-rev: origin/develop

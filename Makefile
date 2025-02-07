@@ -63,6 +63,11 @@ ifndef LINT_COMMAND
 endif
 	golangci-lint run --config ./.golangci.yml
 
+.PHONY: vulncheck
+
+vulncheck:
+	@go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
 #
 # docker commands
 #
