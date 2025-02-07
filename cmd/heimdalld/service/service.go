@@ -260,13 +260,12 @@ which accepts a path for the resulting pprof file.
 			if LogsWriterFile != "" {
 				logWriter := helper.GetLogsWriter(LogsWriterFile)
 
-				logger, err := SetupCtxLogger(logWriter, ctx.Config.LogLevel)
+				lg, err := SetupCtxLogger(logWriter, ctx.Config.LogLevel)
 				if err != nil {
-					logger.Error("Unable to setup logger", "err", err)
 					return err
 				}
 
-				ctx.Logger = logger
+				ctx.Logger = lg
 			}
 
 			ctx.Logger.Info("starting ABCI with Tendermint")
@@ -359,7 +358,7 @@ func startOpenTracing(cmd *cobra.Command) (*sdktrace.TracerProvider, *context.Co
 		traceExporterReady := make(chan *otlptrace.Exporter, 1)
 
 		go func() {
-			traceExporter, _ := otlptracegrpc.New(
+			traceExporter, _ = otlptracegrpc.New(
 				ctx,
 				otlptracegrpc.WithInsecure(),
 				otlptracegrpc.WithEndpoint(openCollectorEndpoint),
@@ -546,6 +545,7 @@ func openDB(rootDir string) (dbm.DB, error) {
 
 func openTraceWriter(traceWriterFile string) (io.Writer, error) {
 	if traceWriterFile == "" {
+		//nolint:nilnil
 		return nil, nil
 	}
 

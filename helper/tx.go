@@ -10,7 +10,7 @@ import (
 	"math/big"
 	"strings"
 
-	ethereum "github.com/ethereum/go-ethereum"
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -85,7 +85,7 @@ func GenerateAuthObj(client *ethclient.Client, address common.Address, data []by
 	if nonce > uint64(math.MaxInt64) {
 		return nil, fmt.Errorf("nonce value too large to convert to int64: %d", nonce)
 	}
-	
+
 	auth.Nonce = big.NewInt(int64(nonce))
 	auth.GasPrice = gasprice
 	auth.GasLimit = gasLimit

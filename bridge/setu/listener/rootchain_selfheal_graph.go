@@ -223,6 +223,12 @@ func (rl *RootChainListener) getLatestNonce(ctx context.Context, validatorId uin
 
 // getStakeUpdate returns StakeUpdate event based on the given validator ID and nonce
 func (rl *RootChainListener) getStakeUpdate(ctx context.Context, validatorId, nonce uint64) (*types.Log, error) {
+	if validatorId > math.MaxInt {
+		return nil, fmt.Errorf("validator ID value out of range for int: %d", validatorId)
+	}
+	if nonce > math.MaxInt {
+		return nil, fmt.Errorf("nonce value out of range for int: %d", nonce)
+	}
 	query := map[string]string{
 		"query": `
 		{

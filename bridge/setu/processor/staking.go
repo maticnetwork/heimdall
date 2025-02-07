@@ -1,7 +1,9 @@
 package processor
 
 import (
+	"errors"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/RichardKnop/machinery/v1/tasks"
@@ -180,6 +182,10 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			return err
 		}
 
+		if nonceDelay < 0 || nonceDelay > math.MaxInt64 {
+			return errors.New("nonceDelay is invalid")
+		}
+
 		if !validNonce {
 			sp.Logger.Info("Ignoring task to send unstake-init to heimdall as nonce is out of order")
 			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
@@ -254,6 +260,10 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 		if err != nil {
 			sp.Logger.Error("Error while validating nonce for the validator", "error", err)
 			return err
+		}
+
+		if nonceDelay < 0 || nonceDelay > math.MaxInt64 {
+			return errors.New("nonceDelay is invalid")
 		}
 
 		if !validNonce {
@@ -334,6 +344,10 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 		if err != nil {
 			sp.Logger.Error("Error while validating nonce for the validator", "error", err)
 			return err
+		}
+
+		if nonceDelay < 0 || nonceDelay > math.MaxInt64 {
+			return errors.New("nonceDelay is invalid")
 		}
 
 		if !validNonce {

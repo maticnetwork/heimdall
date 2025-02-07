@@ -51,7 +51,7 @@ func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallC
 
 	if !writeGenesis {
 		// When not forcing, check if genesis file exists
-		_, err := os.Stat(config.GenesisFile())
+		_, err = os.Stat(config.GenesisFile())
 		if err != nil && errors.Is(err, os.ErrNotExist) {
 			logger.Info(fmt.Sprintf("Genesis file %v not found, writing genesis file\n", config.GenesisFile()))
 
@@ -67,9 +67,9 @@ func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallC
 	}
 
 	if writeGenesis {
-		genesisCreated, err := helper.WriteGenesisFile(initConfig.chain, config.GenesisFile(), cdc)
-		if err != nil {
-			return err
+		genesisCreated, e := helper.WriteGenesisFile(initConfig.chain, config.GenesisFile(), cdc)
+		if e != nil {
+			return e
 		} else if genesisCreated {
 			return nil
 		}
@@ -83,13 +83,16 @@ func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallC
 		chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
 	}
 
-	// get pubkey
-	newPubkey := CryptoKeyToPubkey(valPubKey)
+	// get pubKey
+	newPubKey := CryptoKeyToPubkey(valPubKey)
 
 	// create validator account
-	validator := hmTypes.NewValidator(hmTypes.NewValidatorID(uint64(initConfig.validatorID)),
-		0, 0, 1, 1, newPubkey,
-		hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()))
+	validator := hmTypes.NewValidator(
+		//nolint:gosec
+		hmTypes.NewValidatorID(uint64(initConfig.validatorID)),
+		0, 0, 1, 1, newPubKey,
+		hmTypes.BytesToHeimdallAddress(valPubKey.Address().Bytes()),
+	)
 
 	// create dividend account for validator
 	dividendAccount := hmTypes.NewDividendAccount(validator.Signer, ZeroIntString)
@@ -159,7 +162,7 @@ func heimdallInit(_ *server.Context, cdc *codec.Codec, initConfig *initHeimdallC
 		return err
 	}
 
-	fmt.Fprintf(os.Stderr, "%s\n", string(out))
+	_, _ = fmt.Fprintf(os.Stderr, "%s\n", string(out))
 
 	return writeGenesisFile(tmtime.Now(), config.GenesisFile(), chainID, appStateJSON)
 }

@@ -161,7 +161,7 @@ func SendCheckpointTx(cdc *codec.Codec) *cobra.Command {
 					return err
 				}
 
-				if err := jsoniter.ConfigFastest.Unmarshal(proposerBytes, &checkpointProposer); err != nil {
+				if err = jsoniter.ConfigFastest.Unmarshal(proposerBytes, &checkpointProposer); err != nil {
 					return err
 				}
 

@@ -154,8 +154,8 @@ func (am AppModule) ExportPartialGenesis(ctx sdk.Context) (json.RawMessage, erro
 }
 
 // NextGenesisData returns the next chunk of genesis data.
-func (am AppModule) NextGenesisData(ctx sdk.Context, nextKey []byte, max int) (*hmModule.ModuleGenesisData, error) {
-	data, nextKey, err := am.keeper.IterateRecordsAndCollect(ctx, nextKey, max)
+func (am AppModule) NextGenesisData(ctx sdk.Context, nextKey []byte, maxV int) (*hmModule.ModuleGenesisData, error) {
+	data, nextKey, err := am.keeper.IterateRecordsAndCollect(ctx, nextKey, maxV)
 	if err != nil {
 		return nil, err
 	}

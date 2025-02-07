@@ -168,10 +168,10 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 	// fromBlock - get last block from storage
 	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
 	if hasLastBlock {
-		lastBlockBytes, err := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
-		if err != nil {
-			hl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
-			return fromBlock, toBlock, err
+		lastBlockBytes, e := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
+		if e != nil {
+			hl.Logger.Info("Error while fetching last block bytes from storage", "error", e)
+			return fromBlock, toBlock, e
 		}
 
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {

@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"errors"
+	"math"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
@@ -20,6 +21,9 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 
 	// Add finalised checkpoints to state
 	if len(data.Checkpoints) != 0 {
+		if data.AckCount > math.MaxInt {
+			panic(errors.New("AckCount value out of range for int"))
+		}
 		// check if we are provided all the headers
 		if int(data.AckCount) != len(data.Checkpoints) {
 			panic(errors.New("Incorrect state in state-dump , Please Check "))
@@ -28,6 +32,7 @@ func InitGenesis(ctx sdk.Context, keeper Keeper, data types.GenesisState) {
 		data.Checkpoints = hmTypes.SortHeaders(data.Checkpoints)
 		// load checkpoints to state
 		for i, checkpoint := range data.Checkpoints {
+			//nolint:gosec
 			checkpointIndex := uint64(i) + 1
 			if err := keeper.AddCheckpoint(ctx, checkpointIndex, checkpoint); err != nil {
 				keeper.Logger(ctx).Error("InitGenesis | AddCheckpoint",

@@ -174,7 +174,7 @@ func handleQueryMilestoneProposer(ctx sdk.Context, req abci.RequestQuery, keeper
 	if params.Times > math.MaxInt {
 		return nil, sdk.ErrInternal(fmt.Sprintf("times value out of range for int: %d", params.Times))
 	}
-	
+
 	times := int(params.Times)
 	if times > len(validatorSet.Validators) {
 		times = len(validatorSet.Validators)

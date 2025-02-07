@@ -134,7 +134,7 @@ func NewAnteHandler(
 			return newCtx, err.Result(), true
 		}
 
-		if res := ValidateMemo(stdTx, params); !res.IsOK() {
+		if res = ValidateMemo(stdTx, params); !res.IsOK() {
 			return newCtx, res, true
 		}
 
@@ -218,7 +218,7 @@ func ValidateMemo(stdTx authTypes.StdTx, params authTypes.Params) sdk.Result {
 }
 
 // verify the signature and increment the sequence. If the account doesn't have
-// a pubkey, set it.
+// a pubKey, set it.
 func processSig(
 	ctx sdk.Context,
 	acc authTypes.Account,
@@ -228,7 +228,7 @@ func processSig(
 	params authTypes.Params,
 	sigGasConsumer SignatureVerificationGasConsumer,
 ) (updatedAcc authTypes.Account, res sdk.Result) {
-	if res := sigGasConsumer(ctx.GasMeter(), sig, params); !res.IsOK() {
+	if res = sigGasConsumer(ctx.GasMeter(), sig, params); !res.IsOK() {
 		return nil, res
 	}
 

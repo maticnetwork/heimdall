@@ -128,12 +128,12 @@ func binarySearch(array []uint64, search uint64) int {
 }
 
 // randomRangeInclusive produces unbiased pseudo random in the range [min, max]. Uses rand.Uint64() and can be seeded beforehand.
-func randomRangeInclusive(min uint64, max uint64) uint64 {
-	if max <= min {
-		return max
+func randomRangeInclusive(minV uint64, maxV uint64) uint64 {
+	if maxV <= minV {
+		return maxV
 	}
 
-	rangeLength := max - min + 1
+	rangeLength := maxV - minV + 1
 	maxAllowedValue := math.MaxUint64 - math.MaxUint64%rangeLength - 1
 	randomValue := rand.Uint64() //nolint
 
@@ -142,7 +142,7 @@ func randomRangeInclusive(min uint64, max uint64) uint64 {
 		randomValue = rand.Uint64() //nolint
 	}
 
-	return min + randomValue%rangeLength
+	return minV + randomValue%rangeLength
 }
 
 // createWeightedRanges converts array [1, 2, 3] into cumulative form [1, 3, 6]

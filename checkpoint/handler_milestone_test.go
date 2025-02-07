@@ -156,7 +156,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	//Test5- When milestone is not in continuity
 	suite.Run("Milestone not in countinuity", func() {
 
-		err := keeper.AddMilestone(ctx, header)
+		err = keeper.AddMilestone(ctx, header)
 		require.NoError(t, err)
 
 		_, err = keeper.GetLastMilestone(ctx)

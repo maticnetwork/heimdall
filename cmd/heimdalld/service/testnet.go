@@ -97,7 +97,7 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				config.SetRoot(nodeDir)
 
 				// create config folder
-				err := os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm)
+				err = os.MkdirAll(filepath.Join(nodeDir, "config"), nodeDirPerm)
 				if err != nil {
 					_ = os.RemoveAll(outDir)
 					return err
@@ -115,17 +115,18 @@ testnet --v 4 --n 8 --output-dir ./output --starting-ip-address 192.168.10.2
 				}
 
 				genFiles[i] = config.GenesisFile()
-				newPubkey := CryptoKeyToPubkey(valPubKeys[i])
+				newPubKey := CryptoKeyToPubkey(valPubKeys[i])
 
 				if i < numValidators {
 					// create validator account
 					validators[i] = hmTypes.NewValidator(
+						//nolint:gosec
 						hmTypes.NewValidatorID(uint64(startID+int64(i))),
 						0,
 						0,
 						1,
 						10000,
-						newPubkey,
+						newPubKey,
 						hmTypes.BytesToHeimdallAddress(valPubKeys[i].Address().Bytes()),
 					)
 

@@ -243,7 +243,7 @@ func GetCheckpointLatest(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var ackCount uint64
-			if err := jsoniter.Unmarshal(ackcountBytes, &ackCount); err != nil {
+			if err = jsoniter.Unmarshal(ackcountBytes, &ackCount); err != nil {
 				return err
 			}
 
@@ -423,7 +423,7 @@ func GetOverview(cdc *codec.Codec) *cobra.Command {
 
 			validatorSetBytes, _, err := cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", stakingTypes.QuerierRoute, stakingTypes.QueryCurrentValidatorSet), nil)
 			if err == nil {
-				if err := jsoniter.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
+				if err = jsoniter.Unmarshal(validatorSetBytes, &validatorSet); err != nil {
 					// log and ignore
 					cliLogger.Error("Error while unmarshing validator set", "error", err.Error())
 				}

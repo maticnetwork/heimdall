@@ -385,9 +385,9 @@ func GetSignedTxBytes(cliCtx context.CLIContext,
 	}
 
 	if !cliCtx.SkipConfirm {
-		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
-		if err != nil {
-			return nil, err
+		stdSignMsg, e := txBldr.BuildSignMsg(msgs)
+		if e != nil {
+			return nil, e
 		}
 
 		var json []byte
@@ -436,9 +436,9 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 	}
 
 	if !cliCtx.SkipConfirm {
-		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
-		if err != nil {
-			return nil, err
+		stdSignMsg, e := txBldr.BuildSignMsg(msgs)
+		if e != nil {
+			return nil, e
 		}
 
 		var json []byte

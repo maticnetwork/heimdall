@@ -67,7 +67,7 @@ func QueryTxsByEvents(cliCtx cosmosContext.CLIContext, tags []string, page, limi
 
 	if prove {
 		for _, tx := range resTxs.Txs {
-			err := ValidateTxResult(cliCtx, tx)
+			err = ValidateTxResult(cliCtx, tx)
 			if err != nil {
 				return nil, err
 			}

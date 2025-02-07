@@ -136,7 +136,7 @@ func GetTotalStakingPower(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var totalPower uint64
-			if err := json.Unmarshal(totalPowerBytes, &totalPower); err != nil {
+			if err = json.Unmarshal(totalPowerBytes, &totalPower); err != nil {
 				return err
 			}
 

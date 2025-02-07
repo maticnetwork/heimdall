@@ -98,7 +98,7 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var spanDuration uint64
-			if err := jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
+			if err = jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 

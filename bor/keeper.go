@@ -371,11 +371,11 @@ func (k *Keeper) GetNextSpanSeed(ctx sdk.Context, id uint64) (common.Hash, error
 		k.Logger(ctx).Debug("newEthBlock to generate seed", "newEthBlock", newEthBlock)
 
 		// fetch block header from mainchain
-		var err error
-		blockHeader, err = k.contractCaller.GetMainChainBlock(newEthBlock)
-		if err != nil {
-			k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", err)
-			return common.Hash{}, err
+		var e error
+		blockHeader, e = k.contractCaller.GetMainChainBlock(newEthBlock)
+		if e != nil {
+			k.Logger(ctx).Error("Error fetching block header from mainchain while calculating next span seed", "error", e)
+			return common.Hash{}, e
 		}
 	} else {
 		var seedSpanID uint64
@@ -519,7 +519,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 			break
 		}
 
-		author, err := k.GetSeedProducer(ctx, spanID)
+		author, err = k.GetSeedProducer(ctx, spanID)
 		if err != nil {
 			logger.Error("Error fetching span seed producer", "error", err, "span id", spanID)
 			return 0, nil, err
@@ -564,6 +564,10 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 	borBlock = firstDiffFromLast
 	if borBlock == 0 {
 		borBlock = seedSpan.EndBlock
+	}
+
+	if borBlock > math.MaxInt64 {
+		return 0, nil, fmt.Errorf("bor block value out of range for int64: %d", borBlock)
 	}
 
 	author, err = k.contractCaller.GetBorChainBlockAuthor(big.NewInt(int64(borBlock)))

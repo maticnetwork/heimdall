@@ -78,6 +78,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		if pivot>>8 > math.MaxUint32 {
 			return nil, fmt.Errorf("pivot value out of range for uint32: %d", pivot>>8)
 		}
+		//nolint:gosec
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(pivot>>8))
 		source := sha256Hash(buf)
 
@@ -92,6 +93,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		if end>>8 > math.MaxUint32 {
 			return nil, fmt.Errorf("end value out of range for uint32: %d", end>>8)
 		}
+		//nolint:gosec
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(end>>8))
 		source = sha256Hash(buf)
 
