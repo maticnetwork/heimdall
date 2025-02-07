@@ -404,10 +404,10 @@ func GetSignedTxBytes(cliCtx context.CLIContext,
 
 		buf := bufio.NewReader(os.Stdin)
 
-		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
-		if err != nil || !ok {
+		ok, e := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if e != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return nil, err
+			return nil, e
 		}
 	}
 
@@ -455,10 +455,10 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 
 		buf := bufio.NewReader(os.Stdin)
 
-		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
-		if err != nil || !ok {
+		ok, e := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if e != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return nil, err
+			return nil, e
 		}
 	}
 

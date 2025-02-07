@@ -121,8 +121,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, _ h
 
 			return common.ErrDisContinuousCheckpoint(k.Codespace()).Result()
 		}
-	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
-		logger.Error("First checkpoint to start from block 0", "checkpoint start block", msg.StartBlock, "error", err)
+	} else if e.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
+		logger.Error("First checkpoint to start from block 0", "checkpoint start block", msg.StartBlock, "error", e)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
@@ -306,6 +306,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	}
 
 	// Set new last no-ack
+	//nolint:gosec
 	newLastNoAck := uint64(currentTime.Unix())
 	k.SetLastNoAck(ctx, newLastNoAck)
 	logger.Debug("Last No-ACK time set", "lastNoAck", newLastNoAck)

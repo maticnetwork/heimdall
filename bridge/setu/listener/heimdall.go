@@ -174,6 +174,7 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 			return fromBlock, toBlock, e
 		}
 
+		//nolint:gosec
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
 			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", result)
 			fromBlock = result + 1

@@ -180,10 +180,11 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 	recoverHandler := recoverAndLog(maxBytesHandler{h: handler, n: cfg.MaxBodyBytes}, logger)
 
 	readHeaderTimeout := viper.GetUint(FlagRPCReadHeaderTimeout)
-	if readHeaderTimeout < 0 || readHeaderTimeout > math.MaxUint {
+	if readHeaderTimeout > math.MaxUint {
 		return fmt.Errorf("read header timeout exceeds uint max value or is negative")
 	}
 	if readHeaderTimeout == 0 {
+		//nolint:gosec
 		readHeaderTimeout = uint(cfg.ReadTimeout)
 	}
 
@@ -201,7 +202,8 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 			}
 
 		}),
-		ReadTimeout:       cfg.ReadTimeout,
+		ReadTimeout: cfg.ReadTimeout,
+		//nolint:gosec
 		ReadHeaderTimeout: time.Duration(readHeaderTimeout) * time.Second,
 		WriteTimeout:      cfg.WriteTimeout,
 		MaxHeaderBytes:    cfg.MaxHeaderBytes,

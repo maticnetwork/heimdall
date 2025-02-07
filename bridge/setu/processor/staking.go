@@ -182,12 +182,13 @@ func (sp *StakingProcessor) sendUnstakeInitToHeimdall(eventName string, logBytes
 			return err
 		}
 
-		if nonceDelay < 0 || nonceDelay > math.MaxInt64 {
+		if nonceDelay > math.MaxInt64 {
 			return errors.New("nonceDelay is invalid")
 		}
 
 		if !validNonce {
 			sp.Logger.Info("Ignoring task to send unstake-init to heimdall as nonce is out of order")
+			//nolint:gosec
 			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
 		}
 
@@ -262,12 +263,13 @@ func (sp *StakingProcessor) sendStakeUpdateToHeimdall(eventName string, logBytes
 			return err
 		}
 
-		if nonceDelay < 0 || nonceDelay > math.MaxInt64 {
+		if nonceDelay > math.MaxInt64 {
 			return errors.New("nonceDelay is invalid")
 		}
 
 		if !validNonce {
 			sp.Logger.Info("Ignoring task to send stake-update to heimdall as nonce is out of order")
+			//nolint:gosec
 			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
 		}
 
@@ -346,12 +348,13 @@ func (sp *StakingProcessor) sendSignerChangeToHeimdall(eventName string, logByte
 			return err
 		}
 
-		if nonceDelay < 0 || nonceDelay > math.MaxInt64 {
+		if nonceDelay > math.MaxInt64 {
 			return errors.New("nonceDelay is invalid")
 		}
 
 		if !validNonce {
 			sp.Logger.Info("Ignoring task to send signer-change to heimdall as nonce is out of order")
+			//nolint:gosec
 			return tasks.NewErrRetryTaskLater("Nonce out of order", defaultDelayDuration*time.Duration(nonceDelay))
 		}
 

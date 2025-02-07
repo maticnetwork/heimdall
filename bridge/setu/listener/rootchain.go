@@ -132,6 +132,7 @@ func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
 
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 
+		//nolint:gosec
 		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
 			if result >= headerNumber.Uint64() {
 				return

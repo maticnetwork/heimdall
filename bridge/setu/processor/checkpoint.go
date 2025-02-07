@@ -419,9 +419,7 @@ func (cp *CheckpointProcessor) nextExpectedCheckpoint(checkpointContext *Checkpo
 		currentTime := time.Now().UTC().Unix()
 		defaultForcePushInterval := checkpointParams.MaxCheckpointLength * 2 // in seconds (1024 * 2 seconds)
 
-		if lastCheckpointTime < 0 || lastCheckpointTime > math.MaxInt64 {
-			return nil, fmt.Errorf("last checkpoint time is invalid")
-		}
+		//nolint:gosec
 		if currentTime-int64(lastCheckpointTime) > int64(defaultForcePushInterval) {
 			end = latestChildBlock
 			cp.Logger.Info("Force push checkpoint",
@@ -613,7 +611,7 @@ func (cp *CheckpointProcessor) getLatestCheckpointTime(checkpointContext *Checkp
 		cp.Logger.Error("Error while fetching header block object", "error", err)
 		return 0, err
 	}
-	if createdAt < 0 || createdAt > math.MaxInt64 {
+	if createdAt > math.MaxInt64 {
 		return 0, fmt.Errorf("createdAt is invalid")
 	}
 	return int64(createdAt), nil
