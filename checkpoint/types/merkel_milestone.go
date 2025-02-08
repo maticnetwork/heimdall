@@ -3,6 +3,7 @@ package types
 import (
 	"errors"
 	"fmt"
+	"math"
 	"strings"
 
 	"github.com/ethereum/go-ethereum/common"
@@ -14,7 +15,15 @@ import (
 
 // ValidateMilestone validates the structure of the milestone
 func ValidateMilestone(start uint64, end uint64, rootHash hmTypes.HeimdallHash, milestoneID string, contractCaller helper.IContractCaller, milestoneLength uint64, confirmations uint64) (bool, error) {
+	if end > math.MaxInt64 || start > math.MaxInt64 {
+		return false, fmt.Errorf("start or end value out of range for int64: start=%d, end=%d", start, end)
+	}
+
 	msgMilestoneLength := int64(end) - int64(start) + 1
+
+	if milestoneLength > math.MaxInt64 {
+		return false, fmt.Errorf("milestone length value out of range for int64: %d", milestoneLength)
+	}
 
 	// Check for the minimum length of the milestone
 	if msgMilestoneLength < int64(milestoneLength) {

@@ -2,6 +2,7 @@ package bor
 
 import (
 	"encoding/binary"
+	"fmt"
 	"math"
 	"math/rand"
 
@@ -14,6 +15,9 @@ import (
 
 // XXXSelectNextProducers selects producers for next span by converting power to tickets
 func XXXSelectNextProducers(blkHash common.Hash, spanEligibleVals []hmTypes.Validator, producerCount uint64) (selectedIDs []uint64, err error) {
+	if producerCount > math.MaxInt64 {
+		return nil, fmt.Errorf("producer count value out of range for int: %d", producerCount)
+	}
 	if len(spanEligibleVals) <= int(producerCount) {
 		for _, val := range spanEligibleVals {
 			selectedIDs = append(selectedIDs, uint64(val.ID))
@@ -55,6 +59,9 @@ func convertToSlots(vals []hmTypes.Validator) (validatorIndices []uint64) {
 func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.Validator, producerCount uint64) ([]uint64, error) {
 	selectedProducers := make([]uint64, 0)
 
+	if producerCount > math.MaxInt64 {
+		return nil, fmt.Errorf("producer count value out of range for int: %d", producerCount)
+	}
 	if len(spanEligibleValidators) <= int(producerCount) {
 		for _, validator := range spanEligibleValidators {
 			selectedProducers = append(selectedProducers, uint64(validator.ID))
@@ -65,13 +72,21 @@ func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.V
 
 	// extract seed from hash
 	seedBytes := helper.ToBytes32(blkHash.Bytes()[:32])
-	seed := int64(binary.BigEndian.Uint64(seedBytes[:]))
+
+	seedUint64 := binary.BigEndian.Uint64(seedBytes[:])
+	if seedUint64 > math.MaxInt64 {
+		return nil, fmt.Errorf("seed value out of range for int64: %d", seedUint64)
+	}
+	seed := int64(seedUint64)
 	// nolint: staticcheck
 	rand.Seed(seed)
 
 	// weighted range from validators' voting power
 	votingPower := make([]uint64, len(spanEligibleValidators))
 	for idx, validator := range spanEligibleValidators {
+		if validator.VotingPower < 0 {
+			return nil, fmt.Errorf("voting power value is negative: %d", validator.VotingPower)
+		}
 		votingPower[idx] = uint64(validator.VotingPower)
 	}
 
@@ -113,12 +128,12 @@ func binarySearch(array []uint64, search uint64) int {
 }
 
 // randomRangeInclusive produces unbiased pseudo random in the range [min, max]. Uses rand.Uint64() and can be seeded beforehand.
-func randomRangeInclusive(min uint64, max uint64) uint64 {
-	if max <= min {
-		return max
+func randomRangeInclusive(minV uint64, maxV uint64) uint64 {
+	if maxV <= minV {
+		return maxV
 	}
 
-	rangeLength := max - min + 1
+	rangeLength := maxV - minV + 1
 	maxAllowedValue := math.MaxUint64 - math.MaxUint64%rangeLength - 1
 	randomValue := rand.Uint64() //nolint
 
@@ -127,7 +142,7 @@ func randomRangeInclusive(min uint64, max uint64) uint64 {
 		randomValue = rand.Uint64() //nolint
 	}
 
-	return min + randomValue%rangeLength
+	return minV + randomValue%rangeLength
 }
 
 // createWeightedRanges converts array [1, 2, 3] into cumulative form [1, 3, 6]

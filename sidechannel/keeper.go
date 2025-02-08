@@ -3,6 +3,7 @@ package sidechannel
 import (
 	"bytes"
 	"encoding/binary"
+	"math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -178,6 +179,9 @@ func (keeper Keeper) IterateTxsAndApplyFn(ctx sdk.Context, f func(int64, tmTypes
 		}
 
 		// call function and return if required
+		if height > math.MaxInt64 {
+			return
+		}
 		if err := f(int64(height), iterator.Value()); err != nil {
 			return
 		}
@@ -205,6 +209,10 @@ func (keeper Keeper) IterateValidatorsAndApplyFn(ctx sdk.Context, f func(int64, 
 
 		var height uint64
 		if err := binary.Read(bytes.NewBuffer(heightBytes), binary.BigEndian, &height); err != nil {
+			return
+		}
+
+		if height > math.MaxInt64 {
 			return
 		}
 

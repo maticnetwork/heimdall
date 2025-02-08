@@ -41,5 +41,5 @@ type StreamedGenesisExporter interface {
 	ExportPartialGenesis(ctx sdk.Context) (json.RawMessage, error)
 	// NextGenesisData returns the next chunk of genesis data.
 	// Returns nil NextKey when no more data is available.
-	NextGenesisData(ctx sdk.Context, nextKey []byte, max int) (*ModuleGenesisData, error)
+	NextGenesisData(ctx sdk.Context, nextKey []byte, maxV int) (*ModuleGenesisData, error)
 }

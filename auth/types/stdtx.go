@@ -1,6 +1,9 @@
 package types
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
@@ -196,6 +199,9 @@ func (fee StdFee) Bytes() []byte {
 // originally part of the submitted transaction because the fee is computed
 // as fee = ceil(gasWanted * gasPrices).
 func (fee StdFee) GasPrices() sdk.DecCoins {
+	if fee.Gas > uint64(math.MaxInt64) {
+		panic(fmt.Sprintf("Gas value too large to convert to int64: %d", fee.Gas))
+	}
 	return sdk.NewDecCoins(fee.Amount).QuoDec(sdk.NewDec(int64(fee.Gas)))
 }
 

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
+	"math/big"
 	"time"
 
 	cliContext "github.com/cosmos/cosmos-sdk/client/context"
@@ -25,7 +27,7 @@ type Checkpoint struct {
 	TimeStamp  uint64                  `json:"timestamp"`
 }
 
-func (h *HeimdallGRPCServer) FetchCheckpointCount(ctx context.Context, in *emptypb.Empty) (*proto.FetchCheckpointCountResponse, error) {
+func (h *HeimdallGRPCServer) FetchCheckpointCount(_ context.Context, _ *emptypb.Empty) (*proto.FetchCheckpointCountResponse, error) {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
 
 	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fetchCheckpointCount))
@@ -45,7 +47,7 @@ func (h *HeimdallGRPCServer) FetchCheckpointCount(ctx context.Context, in *empty
 	return resp, nil
 }
 
-func (h *HeimdallGRPCServer) FetchCheckpoint(ctx context.Context, in *proto.FetchCheckpointRequest) (*proto.FetchCheckpointResponse, error) {
+func (h *HeimdallGRPCServer) FetchCheckpoint(_ context.Context, in *proto.FetchCheckpointRequest) (*proto.FetchCheckpointResponse, error) {
 	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
 
 	url := ""
@@ -76,14 +78,19 @@ func (h *HeimdallGRPCServer) FetchCheckpoint(ctx context.Context, in *proto.Fetc
 
 	copy(address[:], checkPoint.Proposer.Bytes())
 
+	if checkPoint.TimeStamp > math.MaxInt64 {
+		return nil, fmt.Errorf("timestamp value out of range for int64: %d", checkPoint.TimeStamp)
+	}
+
 	resp := &proto.FetchCheckpointResponse{}
+
 	resp.Height = fmt.Sprint(result.Height)
 	resp.Result = &proto.Checkpoint{
 		StartBlock: checkPoint.StartBlock,
 		EndBlock:   checkPoint.EndBlock,
 		RootHash:   protoutils.ConvertHashToH256(hash),
 		Proposer:   protoutils.ConvertAddressToH160(address),
-		Timestamp:  timestamppb.New(time.Unix(int64(checkPoint.TimeStamp), 0)),
+		Timestamp:  timestamppb.New(time.Unix(big.NewInt(0).SetUint64(checkPoint.TimeStamp).Int64(), 0)),
 		BorChainID: checkPoint.BorChainID,
 	}
 

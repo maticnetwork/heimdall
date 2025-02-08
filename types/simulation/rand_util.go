@@ -45,14 +45,14 @@ func RandStringOfLength(r *rand.Rand, n int) string {
 }
 
 // RandPositiveInt get a rand positive sdk.Int
-func RandPositiveInt(r *rand.Rand, max sdk.Int) (sdk.Int, error) {
-	if !max.GTE(sdk.OneInt()) {
+func RandPositiveInt(r *rand.Rand, maxV sdk.Int) (sdk.Int, error) {
+	if !maxV.GTE(sdk.OneInt()) {
 		return sdk.Int{}, errors.New("max too small")
 	}
 
-	max = max.Sub(sdk.OneInt())
+	maxV = maxV.Sub(sdk.OneInt())
 
-	return sdk.NewIntFromBigInt(new(big.Int).Rand(r, max.BigInt())).Add(sdk.OneInt()), nil
+	return sdk.NewIntFromBigInt(new(big.Int).Rand(r, maxV.BigInt())).Add(sdk.OneInt()), nil
 }
 
 // RandTimestamp generates a random timestamp
@@ -63,8 +63,8 @@ func RandTimestamp(r *rand.Rand) time.Time {
 }
 
 // RandIntBetween returns a random int between two numbers inclusively.
-func RandIntBetween(r *rand.Rand, min, max int) int {
-	return r.Intn(max-min) + min
+func RandIntBetween(r *rand.Rand, minV, maxV int) int {
+	return r.Intn(maxV-minV) + minV
 }
 
 // RandSubsetCoins returns random subset of the provided coins

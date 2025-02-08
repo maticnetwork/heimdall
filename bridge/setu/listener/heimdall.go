@@ -2,6 +2,8 @@ package listener
 
 import (
 	"context"
+	"fmt"
+	"math"
 	"math/big"
 	"strconv"
 	"time"
@@ -82,12 +84,17 @@ func (hl *HeimdallListener) StartPolling(ctx context.Context, pollInterval time.
 
 				// Querying and processing Begin events
 				for i := fromBlock; i <= toBlock; i++ {
-					// nolint: contextcheck
+					if i > math.MaxInt64 {
+						hl.Logger.Error("Block number out of range for int64", "blockNumber", i)
+						continue
+					}
+					//nolint:contextcheck
 					events, err := helper.GetBeginBlockEvents(hl.httpClient, int64(i))
 					if err != nil {
 						hl.Logger.Error("Error fetching begin block events", "error", err)
 					}
 					for _, event := range events {
+						//nolint:gosec
 						hl.ProcessBlockEvent(sdk.StringifyEvent(event), int64(i))
 					}
 				}
@@ -152,30 +159,34 @@ func (hl *HeimdallListener) fetchFromAndToBlock() (uint64, uint64, error) {
 		hl.Logger.Error("Error while fetching heimdall node status", "error", err)
 		return fromBlock, toBlock, err
 	}
+	if nodeStatus.SyncInfo.LatestBlockHeight < 0 {
+		return fromBlock, toBlock, fmt.Errorf("latest block height is negative: %d", nodeStatus.SyncInfo.LatestBlockHeight)
+	}
 
-	toBlock = uint64(nodeStatus.SyncInfo.LatestBlockHeight)
+	toBlock = big.NewInt(0).SetInt64(nodeStatus.SyncInfo.LatestBlockHeight).Uint64()
 
 	// fromBlock - get last block from storage
 	hasLastBlock, _ := hl.storageClient.Has([]byte(heimdallLastBlockKey), nil)
 	if hasLastBlock {
-		lastBlockBytes, err := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
-		if err != nil {
-			hl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
-			return fromBlock, toBlock, err
+		lastBlockBytes, e := hl.storageClient.Get([]byte(heimdallLastBlockKey), nil)
+		if e != nil {
+			hl.Logger.Info("Error while fetching last block bytes from storage", "error", e)
+			return fromBlock, toBlock, e
 		}
 
-		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
+		//nolint:gosec
+		if result, e := strconv.ParseUint(string(lastBlockBytes), 10, 64); e == nil {
 			hl.Logger.Debug("Got last block from bridge storage", "lastBlock", result)
 			fromBlock = result + 1
 		} else {
 			hl.Logger.Info("Error parsing last block bytes from storage", "error", err)
 			toBlock = 0
 
-			return fromBlock, toBlock, err
+			return fromBlock, toBlock, e
 		}
 	}
 
-	return fromBlock, toBlock, err
+	return fromBlock, toBlock, nil
 }
 
 // ProcessBlockEvent - process Blockevents (BeginBlock, EndBlock events) from heimdall.
