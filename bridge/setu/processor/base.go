@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"io"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -19,6 +20,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/broadcaster"
 	"github.com/maticnetwork/heimdall/bridge/setu/queue"
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
+	milestoneTypes "github.com/maticnetwork/heimdall/checkpoint/types"
 	clerkTypes "github.com/maticnetwork/heimdall/clerk/types"
 	"github.com/maticnetwork/heimdall/helper"
 )
@@ -243,4 +245,85 @@ Loop:
 	}
 
 	return status, nil
+}
+
+// GetMilestoneCoveredBlocksFromMempool returns all block numbers covered by milestone transactions in mempool
+func (bp *BaseProcessor) GetMilestoneCoveredBlocks(preCoveredBlocks []uint64) ([]uint64, error) {
+	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
+
+	resp, err := helper.Client.Get(endpoint)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		bp.Logger.Error("Error fetching mempool tx", "url", endpoint, "error", err)
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Limit the number of bytes read from the response body
+	limitedBody := http.MaxBytesReader(nil, resp.Body, helper.APIBodyLimit)
+
+	body, err := io.ReadAll(limitedBody)
+	if err != nil {
+		bp.Logger.Error("Error reading response body for mempool tx", "error", err)
+		return nil, err
+	}
+
+	var response util.TendermintUnconfirmedTxs
+	err = jsoniter.ConfigFastest.Unmarshal(body, &response)
+	if err != nil {
+		bp.Logger.Error("Error unmarshalling response received from Heimdall Server", "error", err)
+		return nil, err
+	}
+
+	// Use map to store unique block numbers
+	blocksMap := make(map[uint64]struct{})
+
+	for _, block := range preCoveredBlocks {
+		blocksMap[block] = struct{}{}
+	}
+
+	currentMilestoneEndBlock := preCoveredBlocks[0]
+
+	for _, txn := range response.Result.Txs {
+		txBytes, err := base64.StdEncoding.DecodeString(txn)
+		if err != nil {
+			bp.Logger.Error("Error decoding tx (base64 decoder) while checking mempool", "error", err)
+			continue
+		}
+
+		decodedTx, err := helper.GetTxDecoder(bp.cliCtx.Codec)(txBytes)
+		if err != nil {
+			bp.Logger.Error("Error decoding tx (tx decoder) while checking mempool", "error", err)
+			continue
+		}
+		txMsg := decodedTx.GetMsgs()[0]
+
+		if txMsg.Type() == "milestone" {
+			mempoolTxMsg, ok := txMsg.(milestoneTypes.MsgMilestone)
+			if !ok {
+				bp.Logger.Error("Unable to typecast message to milestone while checking mempool")
+				continue
+			}
+
+			// If the start block is less than or equal to the current milestone end block, skip
+			if mempoolTxMsg.StartBlock <= currentMilestoneEndBlock {
+				continue
+			}
+
+			// Add all blocks in the range to the map
+			for block := mempoolTxMsg.StartBlock; block <= mempoolTxMsg.EndBlock; block++ {
+				blocksMap[block] = struct{}{}
+			}
+		}
+	}
+
+	// Convert map keys to sorted slice
+	blocks := make([]uint64, 0, len(blocksMap))
+	for block := range blocksMap {
+		blocks = append(blocks, block)
+	}
+	sort.Slice(blocks, func(i, j int) bool {
+		return blocks[i] < blocks[j]
+	})
+
+	return blocks, nil
 }

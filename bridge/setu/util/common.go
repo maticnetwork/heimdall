@@ -714,3 +714,20 @@ func IsPubKeyFirstByteValid(pubKey []byte) bool {
 
 	return bytes.Equal(prefix, pubKey[0:1])
 }
+
+// GetHighestPendingMilestoneEndBlock returns the highest end block from milestones in voting phase
+func GetHighestPendingMilestoneEndBlock(cliCtx cliContext.CLIContext) (uint64, error) {
+	params := []byte{}
+	path := fmt.Sprintf("custom/%s/%s", checkpointTypes.QuerierRoute, checkpointTypes.QueryHighestPendingMilestoneEndBlock)
+	result, _, err := cliCtx.QueryWithData(path, params)
+	if err != nil {
+		return 0, err
+	}
+
+	var endBlock uint64
+	if err := json.Unmarshal(result, &endBlock); err != nil {
+		return 0, err
+	}
+
+	return endBlock, nil
+}

@@ -6,18 +6,20 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/tendermint/tendermint/libs/log"
 
+	"github.com/maticnetwork/heimdall/checkpoint/types"
 	cmn "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 var (
-	MilestoneKey          = []byte{0x20} // Key to store milestone
-	CountKey              = []byte{0x30} //Key to store the count
-	MilestoneNoAckKey     = []byte{0x40} //Key to store the NoAckMilestone
-	MilestoneLastNoAckKey = []byte{0x50} //Key to store the Latest NoAckMilestone
-	LastMilestoneTimeout  = []byte{0x60} //Key to store the Last Milestone Timeout
-	BlockNumberKey        = []byte{0x70} //Key to store the count
+	MilestoneKey              = []byte{0x20} // Key to store milestone
+	CountKey                  = []byte{0x30} //Key to store the count
+	MilestoneNoAckKey         = []byte{0x40} //Key to store the NoAckMilestone
+	MilestoneLastNoAckKey     = []byte{0x50} //Key to store the Latest NoAckMilestone
+	LastMilestoneTimeout      = []byte{0x60} //Key to store the Last Milestone Timeout
+	BlockNumberKey            = []byte{0x70} //Key to store the count
+	HighestPendingEndBlockKey = []byte{0x80} // Key to store highest pending milestone end block
 )
 
 // Logger returns a module-specific logger
@@ -132,21 +134,34 @@ func (k *Keeper) GetMilestoneCount(ctx sdk.Context) uint64 {
 }
 
 // SetMilestoneBlockNumber set the block number when the latest milestone enter the handler
-func (k *Keeper) SetMilestoneBlockNumber(ctx sdk.Context, number int64) {
+func (k *Keeper) SetMilestoneBlockNumber(ctx sdk.Context, number int64, endBlock uint64) {
 	store := ctx.KVStore(k.storeKey)
-	// convert block number to bytes
+
+	// Store the voting block number as before
+	milestoneID := types.GetMilestoneID()
+	key := append(BlockNumberKey, []byte(milestoneID)...)
 	value := []byte(strconv.FormatInt(number, 10))
-	// set
-	store.Set(BlockNumberKey, value)
+	store.Set(key, value)
+
+	// Update highest pending end block if this is higher
+	k.SetHighestPendingEndBlock(ctx, endBlock)
 }
 
-// GetMilestoneBlockNumber returns the block number when the latest milestone enter the handler
-func (k *Keeper) GetMilestoneBlockNumber(ctx sdk.Context) int64 {
+// SetHighestPendingEndBlock sets the highest pending end block
+func (k *Keeper) SetHighestPendingEndBlock(ctx sdk.Context, endBlock uint64) {
 	store := ctx.KVStore(k.storeKey)
+	store.Set(HighestPendingEndBlockKey, []byte(strconv.FormatUint(endBlock, 10)))
+}
+
+// GetMilestoneBlockNumber returns the block number when the milestone entered voting phase
+func (k *Keeper) GetMilestoneBlockNumber(ctx sdk.Context, milestoneID string) int64 {
+	store := ctx.KVStore(k.storeKey)
+	key := append(BlockNumberKey, []byte(milestoneID)...)
+
 	// check if block number is there
-	if store.Has(BlockNumberKey) {
+	if store.Has(key) {
 		// get the block number
-		result, err := strconv.ParseInt(string(store.Get(BlockNumberKey)), 10, 64)
+		result, err := strconv.ParseInt(string(store.Get(key)), 10, 64)
 		if err == nil {
 			return result
 		}
@@ -232,4 +247,20 @@ func (k *Keeper) GetLastMilestoneTimeout(ctx sdk.Context) uint64 {
 func GetMilestoneNoAckKey(milestoneId string) []byte {
 	milestoneNoAckBytes := []byte(milestoneId)
 	return append(MilestoneNoAckKey, milestoneNoAckBytes...)
+}
+
+// Simplified GetHighestPendingMilestoneEndBlock with O(1) lookup
+func (k *Keeper) GetHighestPendingMilestoneEndBlock(ctx sdk.Context) (uint64, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	if !store.Has(HighestPendingEndBlockKey) {
+		return 0, cmn.ErrNoMilestoneFound(k.Codespace())
+	}
+
+	endBlock, err := strconv.ParseUint(string(store.Get(HighestPendingEndBlockKey)), 10, 64)
+	if err != nil {
+		return 0, err
+	}
+
+	return endBlock, nil
 }

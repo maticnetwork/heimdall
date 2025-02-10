@@ -24,23 +24,38 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 
 	//Get the milestone count
 	count := k.GetMilestoneCount(ctx)
-	lastMilestone, err := k.GetLastMilestone(ctx)
+	_, err := k.GetLastMilestone(ctx)
 
 	if count != uint64(0) && err != nil {
 		logger.Error("Error while receiving the last milestone in the side handler")
 		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
 	}
 
-	if count != uint64(0) && msg.StartBlock != lastMilestone.EndBlock+1 {
-		logger.Error("Milestone is not in continuity to last stored milestone",
-			"startBlock", msg.StartBlock,
-			"endBlock", msg.EndBlock,
-			"hash", msg.Hash,
-			"milestoneId", msg.MilestoneID,
-			"error", err,
-		)
+	if count != 0 {
+		// Existing milestones present
+		// highestPendingEndBlock, _ := k.GetHighestPendingMilestoneEndBlock(ctx)
 
-		return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
+		// expectedStart := lastMilestone.EndBlock + 1
+		// if highestPendingEndBlock > lastMilestone.EndBlock {
+		// 	expectedStart = highestPendingEndBlock + 1
+		// }
+
+		// if msg.StartBlock != expectedStart {
+		// 	logger.Error("Milestone continuity broken",
+		// 		"expectedStart", expectedStart,
+		// 		"actualStart", msg.StartBlock,
+		// 		"lastMilestoneEnd", lastMilestone.EndBlock)
+		// 	return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
+		// }
+	} else {
+		// First milestone validation
+		borStart := helper.GetMilestoneBorBlockHeight()
+		if msg.StartBlock != borStart {
+			logger.Error("First milestone invalid start",
+				"expected", borStart,
+				"actual", msg.StartBlock)
+			return common.ErrorSideTx(k.Codespace(), common.CodeInvalidBlockInput)
+		}
 	}
 
 	// Validating the milestone
@@ -141,7 +156,6 @@ func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, s
 		return sdk.Result{
 			Events: ctx.EventManager().Events(),
 		}
-
 	}
 
 	//Add the milestone to the store

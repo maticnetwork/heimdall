@@ -2,11 +2,16 @@ package checkpoint
 
 import (
 	"bytes"
+	"encoding/base64"
+	"io"
+	"net/http"
 	"strconv"
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	jsoniter "github.com/json-iterator/go"
 
+	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/checkpoint/types"
 	"github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
@@ -43,15 +48,15 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		return common.ErrInvalidMsg(k.Codespace(), "Invalid proposer in msg").Result()
 	}
 
-	if ctx.BlockHeight()-k.GetMilestoneBlockNumber(ctx) < 2 {
-		logger.Error(
-			"Previous milestone still in voting phase",
-			"previousMilestoneBlock", k.GetMilestoneBlockNumber(ctx),
-			"currentMilestoneBlock", ctx.BlockHeight(),
-		)
+	// if ctx.BlockHeight()-k.GetMilestoneBlockNumber(ctx) < 2 {
+	// 	logger.Error(
+	// 		"Previous milestone still in voting phase",
+	// 		"previousMilestoneBlock", k.GetMilestoneBlockNumber(ctx),
+	// 		"currentMilestoneBlock", ctx.BlockHeight(),
+	// 	)
 
-		return common.ErrPrevMilestoneInVoting(k.Codespace()).Result()
-	}
+	// 	return common.ErrPrevMilestoneInVoting(k.Codespace()).Result()
+	// }
 
 	//Increment the priority in the milestone validator set
 	k.sk.MilestoneIncrementAccum(ctx, 1)
@@ -76,13 +81,52 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 
 	// fetch last stored milestone from store
 	if lastMilestone, err := k.GetLastMilestone(ctx); err == nil {
-		// make sure new milestone is in continuity
-		if lastMilestone.EndBlock+1 != msg.StartBlock {
-			logger.Error("Milestone not in continuity ",
+		// Get highest end block from pending milestones
+		highestPendingEndBlock, err := k.GetHighestPendingMilestoneEndBlock(ctx)
+		logger.Info("Highest pending end block", "highestPendingEndBlock", highestPendingEndBlock, "error", err)
+
+		// Check continuity with any pending milestone or last stored milestone
+		isValid := false
+
+		// Check against last verified milestone
+		if lastMilestone.EndBlock+1 == msg.StartBlock {
+			isValid = true
+			logger.Info("Milestone in continuity with last stored milestone",
 				"lastMilestoneEndBlock", lastMilestone.EndBlock,
 				"receivedMsgStartBlock", msg.StartBlock,
 			)
+		}
 
+		// Check against pending milestones in DB
+		if highestPendingEndBlock+1 == msg.StartBlock {
+			isValid = true
+			logger.Info("Milestone in continuity with pending milestone in DB",
+				"pendingEndBlock", highestPendingEndBlock,
+				"receivedMsgStartBlock", msg.StartBlock,
+			)
+		}
+
+		// Get all pending milestone end blocks from DB
+		pendingMilestones, err := k.GetAllPendingMilestones(ctx)
+		// Check against mempool transactions if available
+		if err == nil {
+			for _, pending := range pendingMilestones {
+				if pending.EndBlock+1 == msg.StartBlock {
+					isValid = true
+					logger.Info("Milestone in continuity with pending milestone in mempool",
+						"pendingEndBlock", pending.EndBlock,
+						"receivedMsgStartBlock", msg.StartBlock,
+					)
+					break
+				}
+			}
+		}
+
+		if !isValid {
+			logger.Error("Milestone not in continuity with any pending or stored milestone",
+				"lastMilestoneEndBlock", lastMilestone.EndBlock,
+				"receivedMsgStartBlock", msg.StartBlock,
+			)
 			return common.ErrMilestoneNotInContinuity(k.Codespace()).Result()
 		}
 	} else if msg.StartBlock != helper.GetMilestoneBorBlockHeight() {
@@ -90,8 +134,7 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 	}
 
-	k.SetMilestoneBlockNumber(ctx, ctx.BlockHeight())
-
+	k.SetMilestoneBlockNumber(ctx, ctx.BlockHeight(), msg.EndBlock)
 	//Set the MilestoneID in the cache
 	types.SetMilestoneID(msg.MilestoneID)
 
@@ -112,8 +155,8 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	}
 }
 
-// Handles milestone timeout transaction
-func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k Keeper) sdk.Result {
+// handleMsgMilestoneTimeout handles milestone timeout transaction
+func handleMsgMilestoneTimeout(ctx sdk.Context, msg types.MsgMilestoneTimeout, k Keeper) sdk.Result {
 	logger := k.MilestoneLogger(ctx)
 
 	// Get current block time
@@ -158,6 +201,11 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k K
 	k.SetLastMilestoneTimeout(ctx, newLastMilestoneTimeout)
 	logger.Debug("Last milestone-timeout set", "lastMilestoneTimeout", newLastMilestoneTimeout)
 
+	// Remove milestone from voting phase if it exists
+	// if lastMilestone.MilestoneID != "" {
+	// 	k.RemoveMilestoneFromVoting(ctx, lastMilestone.MilestoneID)
+	// }
+
 	//
 	// Update to new proposer
 	//
@@ -187,4 +235,54 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k K
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}
+}
+
+// GetAllPendingMilestones returns all pending milestones from the store
+func (k Keeper) GetAllPendingMilestones(ctx sdk.Context) ([]types.MsgMilestone, error) {
+	endpoint := helper.GetConfig().TendermintRPCUrl + util.TendermintUnconfirmedTxsURL
+
+	var pendingMilestones []types.MsgMilestone
+
+	resp, err := helper.Client.Get(endpoint)
+	if err != nil || resp.StatusCode != http.StatusOK {
+		return pendingMilestones, err
+	}
+	defer resp.Body.Close()
+
+	// Limit the number of bytes read from the response body
+	limitedBody := http.MaxBytesReader(nil, resp.Body, helper.APIBodyLimit)
+
+	body, err := io.ReadAll(limitedBody)
+	if err != nil {
+		return pendingMilestones, err
+	}
+
+	// a minimal response of the unconfirmed txs
+	var response util.TendermintUnconfirmedTxs
+
+	err = jsoniter.ConfigFastest.Unmarshal(body, &response)
+	if err != nil {
+		return pendingMilestones, err
+	}
+
+	for _, txn := range response.Result.Txs {
+		// Tendermint encodes the transactions with base64 encoding. Decode it first.
+		txBytes, err := base64.StdEncoding.DecodeString(txn)
+		if err != nil {
+			return pendingMilestones, err
+		}
+
+		// Unmarshal the transaction from bytes
+		decodedTx, err := helper.GetTxDecoder(k.cdc)(txBytes)
+		if err != nil {
+			continue
+		}
+
+		// We only need to check for milestone type transactions
+		if decodedTx.GetMsgs()[0].Type() == "milestone" {
+			pendingMilestones = append(pendingMilestones, decodedTx.GetMsgs()[0].(types.MsgMilestone))
+		}
+	}
+
+	return pendingMilestones, nil
 }

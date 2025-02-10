@@ -110,6 +110,8 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 
 		var start = helper.GetMilestoneBorBlockHeight()
 
+		endNum := uint64(0)
+
 		if result.Count != 0 {
 			// fetch latest milestone
 			latestMilestone, err := util.GetLatestMilestone(mp.cliCtx)
@@ -121,14 +123,54 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 				return errors.New("got nil result while fetching latest milestone")
 			}
 
-			//start block number should be continuous to the end block of lasted stored milestone
-			start = latestMilestone.EndBlock + 1
+			// Get highest end block from pending milestones
+			highestPendingEndBlock, err := util.GetHighestPendingMilestoneEndBlock(mp.cliCtx)
+			mp.Logger.Info("Highest pending end block", "highestPendingEndBlock", highestPendingEndBlock, "error", err)
+
+			if highestPendingEndBlock == 0 {
+				highestPendingEndBlock = latestMilestone.EndBlock
+			}
+
+			sortedPendingBlocks, err := mp.GetMilestoneCoveredBlocks([]uint64{latestMilestone.EndBlock, highestPendingEndBlock})
+			if err != nil {
+				mp.Logger.Error("Error fetching all pending end blocks in mempool", "error", err)
+				return err
+			}
+
+			mp.Logger.Info("All pending end blocks", "allBlocks", sortedPendingBlocks, "error", err)
+
+			start = sortedPendingBlocks[0] + 1
+
+			// Find the first block after latest milestone that isn't covered in mempool
+			for _, block := range sortedPendingBlocks[1:] {
+				if block != start {
+					break
+				}
+
+				start++
+			}
+
+			mp.Logger.Info("Start block", "start", start)
+
+			block, err := mp.contractConnector.GetMaticChainBlock(nil)
+			if err != nil {
+				return err
+			}
+
+			endNum = block.Number.Uint64()
 		}
 
 		//send the milestone to heimdall chain
-		if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, milestoneLength); err != nil {
-			mp.Logger.Error("Error sending milestone to heimdall", "error", err)
-			return err
+		if endNum == 0 {
+			if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, milestoneLength, endNum); err != nil {
+				mp.Logger.Error("Error sending milestone to heimdall", "error", err)
+				return err
+			}
+		} else {
+			if err := mp.createAndSendMilestoneToHeimdall(milestoneContext, start, milestoneLength, start); err != nil {
+				mp.Logger.Error("Error sending milestone to heimdall", "error", err)
+				return err
+			}
 		}
 	} else {
 		mp.Logger.Info("I am not the current milestone proposer")
@@ -138,13 +180,18 @@ func (mp *MilestoneProcessor) checkAndPropose(milestoneLength uint64) (err error
 }
 
 // sendMilestoneToHeimdall - creates milestone msg and broadcasts to heimdall
-func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, startNum uint64, milestoneLength uint64) error {
+func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext *MilestoneContext, startNum uint64, milestoneLength uint64, endNum uint64) error {
 	mp.Logger.Debug("Initiating milestone to Heimdall", "start", startNum, "milestoneLength", milestoneLength)
 
 	blocksConfirmation := helper.MaticChainMilestoneConfirmation
 
-	// Get latest matic block
-	block, err := mp.contractConnector.GetMaticChainBlock(nil)
+	var targetEndNum *big.Int
+
+	if endNum != 0 {
+		targetEndNum = big.NewInt(int64(endNum))
+	}
+
+	block, err := mp.contractConnector.GetMaticChainBlock(targetEndNum)
 	if err != nil {
 		return err
 	}
@@ -152,18 +199,12 @@ func (mp *MilestoneProcessor) createAndSendMilestoneToHeimdall(milestoneContext 
 	latestNum := block.Number.Uint64()
 
 	if latestNum < startNum+milestoneLength+blocksConfirmation-1 {
-		return fmt.Errorf("Less than milestoneLength  Start=%v Latest Block=%v MilestoneLength=%v MaticChainConfirmation=%v", startNum, latestNum, milestoneLength, blocksConfirmation)
+		return fmt.Errorf("less than milestoneLength  Start=%v Latest Block=%v MilestoneLength=%v MaticChainConfirmation=%v", startNum, latestNum, milestoneLength, blocksConfirmation)
 	}
 
-	endNum := latestNum - blocksConfirmation
+	endNum = block.Number.Uint64()
 
-	//fetch the endBlock+1 number instead of endBlock so that we can directly get the hash of endBlock using parent hash
-	block, err = mp.contractConnector.GetMaticChainBlock(big.NewInt(int64(endNum + 1)))
-	if err != nil {
-		return fmt.Errorf("error while fetching block %d: %w", endNum+1, err)
-	}
-
-	endHash := block.ParentHash
+	endHash := block.Hash()
 
 	milestoneId := fmt.Sprintf("%s - %s", uuid.NewRandom().String(), hmTypes.BytesToHeimdallAddress(endHash[:]).String())
 

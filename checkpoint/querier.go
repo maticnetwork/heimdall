@@ -44,6 +44,8 @@ func NewQuerier(keeper Keeper, stakingKeeper staking.Keeper, topupKeeper topup.K
 			return handleQueryLatestNoAckMilestone(ctx, keeper)
 		case types.QueryNoAckMilestoneByID:
 			return handleQueryNoAckMilestoneByID(ctx, req, keeper)
+		case types.QueryHighestPendingMilestoneEndBlock:
+			return handleQueryHighestPendingMilestoneEndBlock(ctx, req, keeper)
 
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown auth query endpoint")
@@ -189,6 +191,20 @@ func handleQueryNextCheckpoint(ctx sdk.Context, req abci.RequestQuery, keeper Ke
 	bz, err := jsoniter.ConfigFastest.Marshal(checkpointMsg)
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr(fmt.Sprintf("could not marshall checkpoint msg. Error:%v", err), err.Error()))
+	}
+
+	return bz, nil
+}
+
+func handleQueryHighestPendingMilestoneEndBlock(ctx sdk.Context, req abci.RequestQuery, k Keeper) ([]byte, sdk.Error) {
+	endBlock, err := k.GetHighestPendingMilestoneEndBlock(ctx)
+	if err != nil {
+		return nil, sdk.ErrInternal(err.Error())
+	}
+
+	bz, err := jsoniter.ConfigFastest.Marshal(endBlock)
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
 	return bz, nil

@@ -123,7 +123,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 		require.True(t, got.IsOK(), "expected send-milstone to be ok, got %v", got)
 		bufferedHeader, _ := keeper.GetLastMilestone(ctx)
 		require.Empty(t, bufferedHeader, "Should not store state")
-		milestoneBlockNumber := keeper.GetMilestoneBlockNumber(ctx)
+		milestoneBlockNumber := keeper.GetMilestoneBlockNumber(ctx, milestoneID)
 		require.Equal(t, int64(3), milestoneBlockNumber, "Mismatch in milestoneBlockNumber")
 	})
 

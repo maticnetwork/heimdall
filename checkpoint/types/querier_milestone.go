@@ -1,11 +1,15 @@
 package types
 
 const (
-	QueryLatestMilestone      = "milestone-latest"
-	QueryMilestoneByNumber    = "milestone-by-number"
-	QueryCount                = "count"
-	QueryLatestNoAckMilestone = "latest-no-ack-milestone"
-	QueryNoAckMilestoneByID   = "no-ack-milestone-by-id"
+	QueryLatestMilestone                 = "milestone-latest"
+	QueryMilestoneByNumber               = "milestone-by-number"
+	QueryCount                           = "count"
+	QueryLatestNoAckMilestone            = "latest-no-ack-milestone"
+	QueryNoAckMilestoneByID              = "no-ack-milestone-by-id"
+	QueryMilestone                       = "milestone"
+	QueryMilestoneCount                  = "milestone-count"
+	QueryLastMilestone                   = "last-milestone"
+	QueryHighestPendingMilestoneEndBlock = "highest-pending-milestone-end-block"
 )
 
 // QueryMilestoneParams defines the params for querying accounts.

@@ -73,7 +73,7 @@ func (msg MsgMilestone) ValidateBasic() sdk.Error {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid proposer %v", msg.Proposer.String())
 	}
 
-	if msg.StartBlock >= msg.EndBlock || msg.EndBlock == 0 {
+	if msg.StartBlock > msg.EndBlock || msg.EndBlock < 0 {
 		return hmCommon.ErrInvalidMsg(hmCommon.DefaultCodespace, "Invalid startBlock %v or/and endBlock %v", msg.StartBlock, msg.EndBlock)
 	}
 

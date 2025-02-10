@@ -104,7 +104,7 @@ const (
 	DefaultClerkPollInterval        = 10 * time.Second
 	DefaultSpanPollInterval         = 1 * time.Minute
 
-	DefaultMilestonePollInterval = 30 * time.Second
+	DefaultMilestonePollInterval = 400 * time.Millisecond
 
 	DefaultEnableSH              = false
 	DefaultSHStateSyncedInterval = 15 * time.Minute
@@ -139,15 +139,15 @@ const (
 	MaxStateSyncSize = 30000
 
 	//Milestone Length
-	MilestoneLength = uint64(12)
+	MilestoneLength = uint64(1)
 
-	MilestonePruneNumber = uint64(100)
+	MilestonePruneNumber = uint64(2000)
 
-	MaticChainMilestoneConfirmation = uint64(16)
+	MaticChainMilestoneConfirmation = uint64(0)
 
 	//Milestone buffer Length
-	MilestoneBufferLength = MilestoneLength * 5
-	MilestoneBufferTime   = 256 * time.Second
+	MilestoneBufferLength = MilestoneLength * 200
+	MilestoneBufferTime   = 0 * time.Second
 	// Default Open Collector Endpoint
 	DefaultOpenCollectorEndpoint = "localhost:4317"
 )

@@ -14,7 +14,7 @@ import (
 const (
 	DefaultMainchainTxConfirmations           uint64 = 6
 	DefaultMaticchainTxConfirmations          uint64 = 10
-	DefaultMaticchainMilestoneTxConfirmations uint64 = 16
+	DefaultMaticchainMilestoneTxConfirmations uint64 = 0
 )
 
 var (
