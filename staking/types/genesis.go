@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/json"
 	"errors"
+	"math"
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmTypes "github.com/maticnetwork/heimdall/types"
@@ -21,6 +22,9 @@ type GenesisValidator struct {
 
 // HeimdallValidator converts genesis validator validator to Heimdall validator
 func (v *GenesisValidator) HeimdallValidator() hmTypes.Validator {
+	if v.Power > math.MaxInt64 {
+		return hmTypes.Validator{}
+	}
 	return hmTypes.Validator{
 		ID:          v.ID,
 		PubKey:      v.PubKey,

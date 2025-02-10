@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -199,6 +200,9 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 
 	logger.Debug("Fetched proposers list", "numberOfProposers", count+1)
 
+	if count > math.MaxInt {
+		return false, fmt.Errorf("count value out of range for int: %d", count)
+	}
 	for i := 1; i <= int(count) && i < len(proposers); i++ {
 		if bytes.Equal(proposers[i].Signer.Bytes(), helper.GetAddress()) {
 			return true, nil
@@ -208,7 +212,7 @@ func IsInProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) 
 	return false, nil
 }
 
-// IsInProposerList checks if we are in current proposer
+// IsInMilestoneProposerList checks if we are in current proposer
 func IsInMilestoneProposerList(cliCtx cliContext.CLIContext, count uint64) (bool, error) {
 	logger.Debug("Skipping proposers", "count", strconv.FormatUint(count, 10))
 
@@ -452,7 +456,7 @@ func GetCheckpointParams(cliCtx cliContext.CLIContext) (*checkpointTypes.Params,
 	return &params, nil
 }
 
-// GetCheckpointParams return params
+// GetMilestoneParams return params
 func GetMilestoneParams(cliCtx cliContext.CLIContext) (*milestoneTypes.Params, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,
@@ -536,7 +540,7 @@ func GetLatestMilestone(cliCtx cliContext.CLIContext) (*hmtypes.Milestone, error
 	return &milestone, nil
 }
 
-// GetCheckpointParams return params
+// GetMilestoneCount return params
 func GetMilestoneCount(cliCtx cliContext.CLIContext) (*milestoneTypes.Count, error) {
 	response, err := helper.FetchFromAPI(
 		cliCtx,

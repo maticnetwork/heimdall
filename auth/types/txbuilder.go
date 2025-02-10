@@ -65,10 +65,20 @@ func NewTxBuilderFromCLI() TxBuilder {
 		panic(err)
 	}
 
+	accNumber := viper.GetInt64(client.FlagAccountNumber)
+	if accNumber < 0 {
+		panic(fmt.Sprintf("Account number cannot be negative: %d", accNumber))
+	}
+
+	sequence := viper.GetInt64(client.FlagSequence)
+	if sequence < 0 {
+		panic(fmt.Sprintf("Sequence cannot be negative: %d", sequence))
+	}
+
 	txbldr := TxBuilder{
 		keybase:            kb,
-		accountNumber:      uint64(viper.GetInt64(client.FlagAccountNumber)),
-		sequence:           uint64(viper.GetInt64(client.FlagSequence)),
+		accountNumber:      uint64(accNumber),
+		sequence:           uint64(sequence),
 		gas:                client.GasFlagVar.Gas,
 		gasAdjustment:      viper.GetFloat64(client.FlagGasAdjustment),
 		simulateAndExecute: client.GasFlagVar.Simulate,

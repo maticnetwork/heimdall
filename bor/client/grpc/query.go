@@ -78,7 +78,7 @@ func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID int64) (*eth
 	log.Info("Fetched header by number")
 
 	resp := &ethTypes.Header{
-		Number:     big.NewInt(int64(res.Header.Number)),
+		Number:     big.NewInt(0).SetUint64(res.Header.Number),
 		ParentHash: protoutil.ConvertH256ToHash(res.Header.ParentHash),
 		Time:       res.Header.Time,
 	}
@@ -108,11 +108,11 @@ func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID int64) (*ethT
 	log.Info("Fetched block by number")
 
 	header := ethTypes.Header{
-		Number:     big.NewInt(int64(res.Block.Header.Number)),
+		Number:     big.NewInt(0).SetUint64(res.Block.Header.Number),
 		ParentHash: protoutil.ConvertH256ToHash(res.Block.Header.ParentHash),
 		Time:       res.Block.Header.Time,
 	}
-	return ethTypes.NewBlock(&header, nil, nil, nil, nil), nil
+	return ethTypes.NewBlock(&header, nil, nil, nil), nil
 }
 
 func (h *BorGRPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
@@ -152,9 +152,16 @@ func (h *BorGRPCClient) BorBlockReceipt(ctx context.Context, txHash common.Hash)
 }
 
 func receiptResponseToTypesReceipt(receipt *proto.Receipt) *ethTypes.Receipt {
+	var receiptType uint8
+	if receipt.Type <= math.MaxUint8 {
+		receiptType = uint8(receipt.Type)
+	} else {
+		log.Error("Invalid receipt type", "value", receipt.Type)
+		return &ethTypes.Receipt{}
+	}
 	// Bloom and Logs have been intentionally left out as they are not used in the current implementation
 	return &ethTypes.Receipt{
-		Type:              uint8(receipt.Type),
+		Type:              receiptType,
 		PostState:         receipt.PostState,
 		Status:            receipt.Status,
 		CumulativeGasUsed: receipt.CumulativeGasUsed,

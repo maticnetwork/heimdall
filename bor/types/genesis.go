@@ -46,7 +46,7 @@ func genFirstSpan(valset hmTypes.ValidatorSet, chainId string) []*hmTypes.Span {
 
 	if len(valset.Validators) > int(DefaultProducerCount) {
 		// pop top validators and select
-		for i := 0; uint64(i) < DefaultProducerCount; i++ {
+		for i := 0; i < int(DefaultProducerCount); i++ {
 			selectedProducers = append(selectedProducers, *valset.Validators[i])
 		}
 	} else {

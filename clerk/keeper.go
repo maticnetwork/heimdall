@@ -321,7 +321,7 @@ func (k *Keeper) HasRecordSequence(ctx sdk.Context, sequence string) bool {
 // IterateRecordsAndCollect iterates over EventRecords, collects up to 'max' entries,
 // and returns a slice containing the collected records.
 // It continues from the last key processed in the previous batch.
-func (k *Keeper) IterateRecordsAndCollect(ctx sdk.Context, nextKey []byte, max int) ([]*types.EventRecord, []byte, error) {
+func (k *Keeper) IterateRecordsAndCollect(ctx sdk.Context, nextKey []byte, maxV int) ([]*types.EventRecord, []byte, error) {
 	store := ctx.KVStore(k.storeKey)
 
 	var startKey []byte
@@ -336,10 +336,10 @@ func (k *Keeper) IterateRecordsAndCollect(ctx sdk.Context, nextKey []byte, max i
 	iterator := store.Iterator(startKey, endKey)
 	defer iterator.Close()
 
-	collectedRecords := make([]*types.EventRecord, 0, max)
+	collectedRecords := make([]*types.EventRecord, 0, maxV)
 	entriesCollected := 0
 
-	for ; iterator.Valid() && entriesCollected < max; iterator.Next() {
+	for ; iterator.Valid() && entriesCollected < maxV; iterator.Next() {
 		var record types.EventRecord
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &record); err != nil {
 			k.Logger(ctx).Error("IterateRecordsAndCollect | UnmarshalBinaryBare", "error", err)

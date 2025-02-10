@@ -73,7 +73,9 @@ func SideHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, c
 // PostHandleMsgMilestone handles msg milestone
 func PostHandleMsgMilestone(ctx sdk.Context, k Keeper, msg types.MsgMilestone, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.MilestoneLogger(ctx)
-	timeStamp := uint64(ctx.BlockTime().Unix())
+	time := ctx.BlockTime().Unix()
+	//nolint:gosec
+	timeStamp := uint64(time)
 
 	// TX bytes
 	txBytes := ctx.TxBytes()

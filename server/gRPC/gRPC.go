@@ -70,7 +70,7 @@ func loggingServerInterceptor(ctx context.Context, req interface{}, info *grpc.U
 
 	h, err := handler(ctx, req)
 	if err != nil {
-		err = status.Errorf(codes.Internal, err.Error())
+		err = status.Error(codes.Internal, err.Error())
 	}
 
 	logger.Info("Request", "method", info.FullMethod, "duration", time.Since(start), "error", err)

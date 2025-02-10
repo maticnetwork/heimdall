@@ -156,13 +156,13 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	//Test5- When milestone is not in continuity
 	suite.Run("Milestone not in countinuity", func() {
 
-		err := keeper.AddMilestone(ctx, header)
+		err = keeper.AddMilestone(ctx, header)
 		require.NoError(t, err)
 
 		_, err = keeper.GetLastMilestone(ctx)
 		require.NoError(t, err)
 
-		lastMilestone, err := keeper.GetLastMilestone(ctx)
+		lastMilestone, err = keeper.GetLastMilestone(ctx)
 		if err == nil {
 			// pass wrong start
 			start = start + lastMilestone.EndBlock + 2 //Start block is 2 more than last milestone's end block
