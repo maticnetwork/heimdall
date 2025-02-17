@@ -527,7 +527,7 @@ func (k *Keeper) getBorBlockForSpanSeed(ctx sdk.Context, seedSpan *hmTypes.Span,
 			break
 		}
 
-		author, err := k.GetSeedProducer(ctx, spanID)
+		author, err = k.GetSeedProducer(ctx, spanID)
 		if err != nil {
 			logger.Error("Error fetching span seed producer", "error", err, "span id", spanID)
 			return 0, nil, err
