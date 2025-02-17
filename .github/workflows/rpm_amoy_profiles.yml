@@ -10,6 +10,9 @@ on:
       - 'v*.*.*'
       - 'v*.*.*-*'
 
+env:
+  NETWORK: amoy
+
 jobs:
   build:
     permissions:
@@ -45,7 +48,7 @@ jobs:
 
       - name: Setting up Amoy Sentry Node Spec files
         run: |
-          touch packaging/rpm/heimdall-amoy-sentry.spec 
+          touch packaging/rpm/heimdall-amoy-sentry.spec
           echo "Name: heimdall-amoy-sentry-config" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "Version: ${{ env.GIT_TAG1 }}" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "Release:  1%{?dist}" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
@@ -55,7 +58,7 @@ jobs:
 
           echo "%description" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "heimdall amoy Sentry rpm package" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
-          
+
           echo "" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "%pre" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "sudo -u heimdall heimdalld init --chain=amoy --home /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
@@ -63,15 +66,16 @@ jobs:
           echo "%install" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "mkdir -p %{buildroot}/var/lib/heimdall/config" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
-          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-amoy-sentry.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
+          sed -i 's/{{NETWORK}}/${{env.NETWORK}}/' /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-sentry.service
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-sentry.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/amoy/config.toml %{buildroot}/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/amoy/heimdall-config.toml %{buildroot}/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
-          
+
           echo "%files" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
-          
+
           echo "%attr(0755, heimdall, heimdall) /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "%post" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "/bin/systemctl daemon-reload" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
@@ -83,14 +87,14 @@ jobs:
            --define "_rpmdir %{_topdir}/RPMS" \
            --define "_srcrpmdir %{_topdir}/SRPMS" \
            --define "__spec_install_post /bin/true" \
-           -bb packaging/rpm/SPECS/heimdall-amoy-sentry.spec 
+           -bb packaging/rpm/SPECS/heimdall-amoy-sentry.spec
 
       - name: Setting up Amoy Validator Node node
         run: echo "#########################################################################"
 
       - name: Setting up Amoy Validator Node Spec files
         run: |
-          touch packaging/rpm/heimdall-amoy-validator.spec 
+          touch packaging/rpm/heimdall-amoy-validator.spec
           echo "Name: heimdall-amoy-validator-config" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "Version: ${{ env.GIT_TAG1 }}" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "Release:  1%{?dist}" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
@@ -100,7 +104,7 @@ jobs:
 
           echo "%description" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "heimdall amoy Validator rpm package" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
-          
+
           echo "" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "%pre" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "sudo -u heimdall heimdalld init --chain=amoy --home /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
@@ -108,15 +112,16 @@ jobs:
           echo "%install" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "mkdir -p %{buildroot}/var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "mkdir -p %{buildroot}/lib/systemd/system" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
-          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-amoy-validator.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
+          sed -i 's/{{NETWORK}}/${{env.NETWORK}}/' /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-validator.service
+          echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/systemd/heimdalld-validator.service %{buildroot}/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/amoy/config.toml %{buildroot}/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "cp /home/runner/work/heimdall/heimdall/packaging/templates/config/amoy/heimdall-config.toml %{buildroot}/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
-          
+
           echo "%files" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "/lib/systemd/system/heimdalld.service" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "/var/lib/heimdall/config/config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
           echo "/var/lib/heimdall/config/heimdall-config.toml" >> packaging/rpm/SPECS/heimdall-amoy-sentry.spec
-          
+
           echo "%attr(0755, heimdall, heimdall) /var/lib/heimdall" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "%post" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
           echo "/bin/systemctl daemon-reload" >> packaging/rpm/SPECS/heimdall-amoy-validator.spec
@@ -128,7 +133,7 @@ jobs:
            --define "_rpmdir %{_topdir}/RPMS" \
            --define "_srcrpmdir %{_topdir}/SRPMS" \
            --define "__spec_install_post /bin/true" \
-           -bb packaging/rpm/SPECS/heimdall-amoy-validator.spec   
+           -bb packaging/rpm/SPECS/heimdall-amoy-validator.spec
 
       - name: rename packages due to rpm dist rules amoy validator
         run: mv /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-amoy-validator-config-${{ env.GIT_TAG1 }}-1.noarch.rpm /home/runner/work/heimdall/heimdall/packaging/rpm_build/RPMS/noarch/heimdall-amoy-validator-config-${{ env.GIT_TAG1 }}.noarch.rpm

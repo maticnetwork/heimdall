@@ -1,6 +1,0 @@
-#!/bin/bash
-#
-###################
-# Remove heimdall installation
-###################
-sudo systemctl daemon-reload
