@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -271,7 +269,7 @@ func GetNextSpanSeed(cdc *codec.Codec) *cobra.Command {
 	return cmd
 }
 
-// PostSendProposeSpanTx send propose span transaction
+// GetPreparedProposeSpan generates a propose span transaction
 func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "propose-span",
@@ -313,6 +311,11 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			nodeStatus, err := helper.GetNodeStatus(cliCtx)
+			if err != nil {
+				return err
+			}
+
 			//
 			// Query data
 			//
@@ -345,23 +348,42 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 				return errors.New("next span seed not found")
 			}
 
-			var seed common.Hash
-			if err = jsoniter.Unmarshal(res, &seed); err != nil {
+			var seedResponse types.QuerySpanSeedResponse
+			if err = jsoniter.Unmarshal(res, &seedResponse); err != nil {
 				return err
 			}
 
-			msg := types.NewMsgProposeSpan(
-				spanID,
-				proposer,
-				startBlock,
-				startBlock+spanDuration-1,
-				borChainID,
-				seed,
-			)
+			var result []byte
 
-			result, err := jsoniter.Marshal(&msg)
-			if err != nil {
-				return err
+			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
+				msg := types.NewMsgProposeSpan(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+				)
+
+				result, err = jsoniter.Marshal(&msg)
+				if err != nil {
+					return err
+				}
+			} else {
+				msg := types.NewMsgProposeSpanV2(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+					seedResponse.SeedAuthor,
+				)
+
+				result, err = jsoniter.Marshal(&msg)
+				if err != nil {
+					return err
+				}
 			}
 
 			fmt.Println(string(result))
