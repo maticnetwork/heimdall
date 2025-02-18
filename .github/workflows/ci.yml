@@ -16,12 +16,12 @@ jobs:
     name: build
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - name: "Build binaries"
         run: make build
@@ -30,12 +30,12 @@ jobs:
     name: lint
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - name: "Run linter"
         run: make lint
@@ -44,12 +44,12 @@ jobs:
     name: test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.22.x
+          go-version: 1.23.x
 
       - name: "Run tests"
         run: make tests
@@ -67,16 +67,16 @@ jobs:
         os: [ ubuntu-20.04 ] # list of os: https://github.com/actions/virtual-environments
     runs-on: ${{ matrix.os }}
     steps:
-        - uses: actions/checkout@v3
+        - uses: actions/checkout@v4
           with:
             path: heimdall
 
         - uses: actions/setup-go@v5
           with:
-            go-version: 1.22.x
+            go-version: 1.23.x
 
         - name: Checkout matic-cli
-          uses: actions/checkout@v3
+          uses: actions/checkout@v4
           with:
             repository: maticnetwork/matic-cli
             ref: master
@@ -92,7 +92,7 @@ jobs:
             sudo apt install python2 jq curl
             sudo ln -sf /usr/bin/python2 /usr/bin/python
 
-        - uses: actions/setup-node@v3
+        - uses: actions/setup-node@v4
           with:
             node-version: '18.19.0'
             cache: 'npm'
@@ -113,25 +113,15 @@ jobs:
         - name: Launch devnet
           run: |
             cd matic-cli/devnet
-            bash docker-ganache-start.sh
-            bash docker-heimdall-start-all.sh
-            bash docker-bor-setup.sh
-            bash docker-bor-start-all.sh
+            bash ../util-scripts/docker/devnet_setup.sh
             cd -
             timeout 2m bash heimdall/integration-tests/bor_health.sh
-            cd -
-            bash ganache-deployment-bor.sh
-            bash ganache-deployment-sync.sh
 
         - name: Run smoke tests
           run: |
-            echo "Funding ganache accounts..."
-            timeout 10m bash heimdall/integration-tests/fund_ganache_accounts.sh
-            echo "Deposit 100 matic for each account to bor network"
-            cd matic-cli/devnet/code/contracts
-            npm run truffle exec scripts/deposit.js -- --network development $(jq -r .root.tokens.MaticToken contractAddresses.json) 100000000000000000000
-            cd -
-            timeout 60m bash heimdall/integration-tests/smoke_test.sh
+            cd matic-cli/devnet
+            timeout 10m bash ../util-scripts/docker/fund_ganache_accounts.sh
+            timeout 60m bash ../util-scripts/docker/smoke_test.sh
 
         - name: Upload logs
           if: always()
