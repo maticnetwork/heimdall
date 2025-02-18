@@ -1,19 +1,44 @@
 #!/bin/bash
+set -e
 
-host='localhost'
+balanceInit=$(docker exec bor0 bash -c "bor attach /var/lib/bor/data/bor.ipc -exec 'Math.round(web3.fromWei(eth.getBalance(eth.accounts[0])))'")
 
-echo "Transferring 1 ETH from ganache account[0] to all others..."
+stateSyncFound="false"
+checkpointFound="false"
+SECONDS=0
+start_time=$SECONDS
 
-signersFile="matic-cli/devnet/devnet/signer-dump.json"
-signersDump=$(jq . $signersFile)
-signersLength=$(jq '. | length' $signersFile)
+while true
+do
 
-rootChainWeb3="http://${host}:9545"
+    balance=$(docker exec bor0 bash -c "bor attach /var/lib/bor/data/bor.ipc -exec 'Math.round(web3.fromWei(eth.getBalance(eth.accounts[0])))'")
 
-for ((i = 1; i < signersLength; i++)); do
-  to_address=$(echo "$signersDump" | jq -r ".[$i].address")
-  from_address=$(echo "$signersDump" | jq -r ".[0].address")
-  txReceipt=$(curl $rootChainWeb3 -X POST --data '{"jsonrpc":"2.0","method":"eth_sendTransaction","params":[{"to":"'"$to_address"'","from":"'"$from_address"'","value":"0xDE0B6B3A7640000"}],"id":1}' -H "Content-Type: application/json")
-  txHash=$(echo "$txReceipt" | jq -r '.result')
-  echo "Funds transferred from $from_address to $to_address with txHash: $txHash"
+    if ! [[ "$balance" =~ ^[0-9]+$ ]]; then
+        echo "Something is wrong! Can't find the balance of first account in bor network."
+        exit 1
+    fi
+
+    if (( balance > balanceInit )); then
+        if [ "$stateSyncFound" != "true" ]; then
+            stateSyncTime=$(( SECONDS - start_time ))
+            stateSyncFound="true"
+        fi
+    fi
+
+    checkpointID=$(curl -sL http://localhost:1317/checkpoints/latest | jq .result.id)
+
+    if [ "$checkpointID" != "null" ]; then
+        if [ "$checkpointFound" != "true" ]; then
+            checkpointTime=$(( SECONDS - start_time ))
+            checkpointFound="true"
+        fi
+    fi
+
+    if [ "$stateSyncFound" == "true" ] && [ "$checkpointFound" == "true" ]; then
+        break
+    fi
+
 done
+echo "Both state sync and checkpoint went through. All tests have passed!"
+echo "Time taken for state sync: $(printf '%02dm:%02ds\n' $((stateSyncTime%3600/60)) $((stateSyncTime%60)))"
+echo "Time taken for checkpoint: $(printf '%02dm:%02ds\n' $((checkpointTime%3600/60)) $((checkpointTime%60)))"
