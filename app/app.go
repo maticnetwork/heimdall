@@ -192,8 +192,12 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	config := sdk.GetConfig()
 	config.Seal()
 
+	var app *HeimdallApp
+
 	// base app
-	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.DefaultTxDecoder(cdc), baseAppOptions...)
+	bApp := bam.NewBaseApp(AppName, logger, db, authTypes.DefaultMainTxDecoder(cdc, func() int64 {
+		return app.LastBlockHeight()
+	}, helper.GetDanelawHeight, helper.GetJorvikHeight), baseAppOptions...)
 	bApp.SetCommitMultiStoreTracer(nil)
 	bApp.SetAppVersion(version.Version)
 
@@ -217,7 +221,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 	tkeys := sdk.NewTransientStoreKeys(paramsTypes.TStoreKey)
 
 	// create heimdall app
-	var app = &HeimdallApp{
+	app = &HeimdallApp{
 		cdc:       cdc,
 		BaseApp:   bApp,
 		keys:      keys,
@@ -357,7 +361,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.ChainKeeper,
 		app.StakingKeeper,
-		app.caller,
+		&app.caller,
 	)
 
 	app.ClerkKeeper = clerk.NewKeeper(

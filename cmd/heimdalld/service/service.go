@@ -22,6 +22,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	"github.com/cosmos/cosmos-sdk/store"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	ethCommon "github.com/ethereum/go-ethereum/common"
 	jsoniter "github.com/json-iterator/go"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -49,9 +50,6 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 	semconv "go.opentelemetry.io/otel/semconv/v1.4.0"
 	"golang.org/x/sync/errgroup"
-	"google.golang.org/grpc"
-
-	ethCommon "github.com/ethereum/go-ethereum/common"
 
 	"github.com/maticnetwork/heimdall/app"
 	authTypes "github.com/maticnetwork/heimdall/auth/types"
@@ -262,13 +260,12 @@ which accepts a path for the resulting pprof file.
 			if LogsWriterFile != "" {
 				logWriter := helper.GetLogsWriter(LogsWriterFile)
 
-				logger, err := SetupCtxLogger(logWriter, ctx.Config.LogLevel)
+				lg, err := SetupCtxLogger(logWriter, ctx.Config.LogLevel)
 				if err != nil {
-					logger.Error("Unable to setup logger", "err", err)
 					return err
 				}
 
-				ctx.Logger = logger
+				ctx.Logger = lg
 			}
 
 			ctx.Logger.Info("starting ABCI with Tendermint")
@@ -361,11 +358,11 @@ func startOpenTracing(cmd *cobra.Command) (*sdktrace.TracerProvider, *context.Co
 		traceExporterReady := make(chan *otlptrace.Exporter, 1)
 
 		go func() {
-			traceExporter, _ := otlptracegrpc.New(
+			traceExporter, _ = otlptracegrpc.New(
 				ctx,
 				otlptracegrpc.WithInsecure(),
 				otlptracegrpc.WithEndpoint(openCollectorEndpoint),
-				otlptracegrpc.WithDialOption(grpc.WithBlock()),
+				otlptracegrpc.WithDialOption(),
 			)
 			traceExporterReady <- traceExporter
 		}()
@@ -548,6 +545,7 @@ func openDB(rootDir string) (dbm.DB, error) {
 
 func openTraceWriter(traceWriterFile string) (io.Writer, error) {
 	if traceWriterFile == "" {
+		//nolint:nilnil
 		return nil, nil
 	}
 

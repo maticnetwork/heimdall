@@ -23,9 +23,9 @@ func registerQueryMilestoneRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/milestone/ID/{id}", milestoneByIDHandlerFn(cliCtx)).Methods("GET")
 }
 
-func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func milestoneLatestHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, ctx, r)
 		if !ok {
 			return
 		}
@@ -57,9 +57,9 @@ func milestoneLatestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 // responses:
 //
 //	200: milestoneCountResponse
-func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func milestoneCountHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, ctx, r)
 		if !ok {
 			return
 		}
@@ -84,7 +84,7 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var count uint64
-		if err := jsoniter.Unmarshal(countBytes, &count); err != nil {
+		if err = jsoniter.Unmarshal(countBytes, &count); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -102,11 +102,11 @@ func milestoneCountHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func milestoneByNumberHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, ctx, r)
 		if !ok {
 			return
 		}
@@ -144,9 +144,9 @@ func milestoneByNumberHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func latestNoAckMilestoneHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, ctx, r)
 		if !ok {
 			return
 		}
@@ -171,7 +171,7 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var milestoneID string
-		if err := jsoniter.Unmarshal(result, &milestoneID); err != nil {
+		if err = jsoniter.Unmarshal(result, &milestoneID); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -189,11 +189,11 @@ func latestNoAckMilestoneHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func noAckMilestoneByIDHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, ctx, r)
 		if !ok {
 			return
 		}
@@ -222,7 +222,7 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		var val bool
-		if err := jsoniter.Unmarshal(result, &val); err != nil {
+		if err = jsoniter.Unmarshal(result, &val); err != nil {
 			hmRest.WriteErrorResponse(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -241,11 +241,11 @@ func noAckMilestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	}
 }
 
-func milestoneByIDHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+func milestoneByIDHandlerFn(ctx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, ctx, r)
 		if !ok {
 			return
 		}

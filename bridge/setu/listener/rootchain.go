@@ -124,15 +124,16 @@ func (rl *RootChainListener) ProcessHeader(newHeader *blockHeader) {
 	// get last block from storage
 	hasLastBlock, _ := rl.storageClient.Has([]byte(lastRootBlockKey), nil)
 	if hasLastBlock {
-		lastBlockBytes, err := rl.storageClient.Get([]byte(lastRootBlockKey), nil)
-		if err != nil {
-			rl.Logger.Info("Error while fetching last block bytes from storage", "error", err)
+		lastBlockBytes, e := rl.storageClient.Get([]byte(lastRootBlockKey), nil)
+		if e != nil {
+			rl.Logger.Info("Error while fetching last block bytes from storage", "error", e)
 			return
 		}
 
 		rl.Logger.Debug("Got last block from bridge storage", "lastBlock", string(lastBlockBytes))
 
-		if result, err := strconv.ParseUint(string(lastBlockBytes), 10, 64); err == nil {
+		//nolint:gosec
+		if result, e := strconv.ParseUint(string(lastBlockBytes), 10, 64); e == nil {
 			if result >= headerNumber.Uint64() {
 				return
 			}

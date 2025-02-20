@@ -3,6 +3,7 @@ package server
 import (
 	ctx "context"
 	"fmt"
+	"math"
 	"net"
 	"net/http"
 	"runtime/debug"
@@ -53,12 +54,18 @@ func StartRestServer(mainCtx ctx.Context, cdc *codec.Codec, registerRoutesFn fun
 
 	if viper.GetUint(client.FlagRPCReadTimeout) != 0 {
 		readTimeOut := viper.GetUint(client.FlagRPCReadTimeout)
-		cfg.ReadTimeout = time.Duration(readTimeOut) * time.Second
+		if readTimeOut > math.MaxInt64 {
+			return fmt.Errorf("read timeout exceeds int64 max value")
+		}
+		cfg.ReadTimeout = time.Duration(int64(readTimeOut)) * time.Second
 	}
 
 	if viper.GetUint(client.FlagRPCWriteTimeout) != 0 {
 		writeTimeOut := viper.GetUint(client.FlagRPCWriteTimeout)
-		cfg.WriteTimeout = time.Duration(writeTimeOut) * time.Second
+		if writeTimeOut > math.MaxInt64 {
+			return fmt.Errorf("write timeout exceeds int64 max value")
+		}
+		cfg.WriteTimeout = time.Duration(int64(writeTimeOut)) * time.Second
 	}
 
 	listenAddr := viper.GetString(client.FlagListenAddr)
@@ -173,16 +180,20 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 	recoverHandler := recoverAndLog(maxBytesHandler{h: handler, n: cfg.MaxBodyBytes}, logger)
 
 	readHeaderTimeout := viper.GetUint(FlagRPCReadHeaderTimeout)
+	if readHeaderTimeout > math.MaxUint {
+		return fmt.Errorf("read header timeout exceeds uint max value or is negative")
+	}
 	if readHeaderTimeout == 0 {
+		//nolint:gosec
 		readHeaderTimeout = uint(cfg.ReadTimeout)
 	}
 
 	s := &http.Server{
 		Handler: http.HandlerFunc(func(rw http.ResponseWriter, r *http.Request) {
-			ctx := r.Context()
+			ctxt := r.Context()
 
 			select {
-			case <-ctx.Done():
+			case <-ctxt.Done():
 				fmt.Println("graceful handler exit")
 				rw.WriteHeader(http.StatusOK)
 				return
@@ -191,7 +202,8 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 			}
 
 		}),
-		ReadTimeout:       cfg.ReadTimeout,
+		ReadTimeout: cfg.ReadTimeout,
+		//nolint:gosec
 		ReadHeaderTimeout: time.Duration(readHeaderTimeout) * time.Second,
 		WriteTimeout:      cfg.WriteTimeout,
 		MaxHeaderBytes:    cfg.MaxHeaderBytes,
@@ -209,11 +221,11 @@ func startRPCServer(shutdownCtx ctx.Context, listener net.Listener, handler http
 		// wait for interrupt signal coming from mainCtx
 		// and then go to server shutdown
 		<-shutdownCtx.Done()
-		ctx, cancel := ctx.WithTimeout(ctx.Background(), shutdownTimeout)
+		ctxt, cancel := ctx.WithTimeout(ctx.Background(), shutdownTimeout)
 		defer cancel()
 
 		// nolint: contextcheck
-		return s.Shutdown(ctx)
+		return s.Shutdown(ctxt)
 	})
 
 	if err := g.Wait(); err != nil {

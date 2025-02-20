@@ -160,13 +160,41 @@ func handleQueryLatestSpan(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) 
 	return bz, nil
 }
 
-func handleQueryNextProducers(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+func handleQueryNextProducers(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QuerySpanParams
+
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	spanId := params.RecordID
+	logger := ctx.Logger()
+	logger.Debug("querying next producers", "spanId", spanId)
+
+	nextSpanSeed, _, err := keeper.GetNextSpanSeed(ctx, spanId)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next span seed from keeper", err.Error())))
 	}
 
-	nextProducers, err := keeper.SelectNextProducers(ctx, nextSpanSeed)
+	logger.Debug("next span seed", "seed", nextSpanSeed)
+
+	if params.RecordID < 2 {
+		spanId = params.RecordID - 1
+	} else {
+		spanId = params.RecordID - 2
+	}
+
+	prevSpan, err := keeper.GetSpan(ctx, spanId)
+	if err != nil {
+		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch last span from keeper", err.Error())))
+	}
+
+	prevVals := make([]hmTypes.Validator, 0, len(prevSpan.ValidatorSet.Validators))
+	for _, val := range prevSpan.ValidatorSet.Validators {
+		prevVals = append(prevVals, *val)
+	}
+
+	nextProducers, err := keeper.SelectNextProducers(ctx, nextSpanSeed, prevVals)
 	if err != nil {
 		return nil, sdk.ErrInternal((sdk.AppendMsgToErr("cannot fetch next producers from keeper", err.Error())))
 	}
@@ -179,15 +207,21 @@ func handleQueryNextProducers(ctx sdk.Context, _ abci.RequestQuery, keeper Keepe
 	return bz, nil
 }
 
-func handlerQueryNextSpanSeed(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	nextSpanSeed, err := keeper.GetNextSpanSeed(ctx)
+func handlerQueryNextSpanSeed(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
+	var params types.QuerySpanParams
+
+	if err := keeper.cdc.UnmarshalJSON(req.Data, &params); err != nil {
+		return nil, sdk.ErrInternal(fmt.Sprintf("failed to parse params: %s", err))
+	}
+
+	nextSpanSeed, author, err := keeper.GetNextSpanSeed(ctx, params.RecordID)
 
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("Error fetching next span seed", err.Error()))
 	}
 
 	// json record
-	bz, err := jsoniter.ConfigFastest.Marshal(nextSpanSeed)
+	bz, err := jsoniter.ConfigFastest.Marshal(types.NewQuerySpanSeedResponse(nextSpanSeed, author))
 	if err != nil {
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}

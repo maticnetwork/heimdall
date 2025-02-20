@@ -3,6 +3,7 @@ package processor
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"strconv"
 	"time"
@@ -80,6 +81,25 @@ func (sp *SpanProcessor) checkAndPropose() {
 		return
 	}
 
+	nodeStatus, err := helper.GetNodeStatus(sp.cliCtx)
+	if err != nil {
+		sp.Logger.Error("Error while fetching heimdall node status", "error", err)
+		return
+	}
+
+	if nodeStatus.SyncInfo.LatestBlockHeight >= helper.GetDanelawHeight() {
+		latestBlock, e := sp.contractConnector.GetMaticChainBlock(nil)
+		if e != nil {
+			sp.Logger.Error("Error fetching current child block", "error", e)
+			return
+		}
+
+		if latestBlock.Number.Uint64() < lastSpan.StartBlock {
+			sp.Logger.Debug("Current bor block is less than last span start block, skipping proposing span", "currentBlock", latestBlock.Number.Uint64(), "lastSpanStartBlock", lastSpan.StartBlock)
+			return
+		}
+	}
+
 	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
@@ -107,27 +127,53 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 		// log new span
 		sp.Logger.Info("✅ Proposing new span", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock)
 
-		seed, err := sp.fetchNextSpanSeed()
+		seed, seedAuthor, err := sp.fetchNextSpanSeed(nextSpanMsg.ID)
 		if err != nil {
 			sp.Logger.Info("Error while fetching next span seed from HeimdallServer", "err", err)
 			return
 		}
 
-		// broadcast to heimdall
-		msg := borTypes.MsgProposeSpan{
-			ID:         nextSpanMsg.ID,
-			Proposer:   types.BytesToHeimdallAddress(helper.GetAddress()),
-			StartBlock: nextSpanMsg.StartBlock,
-			EndBlock:   nextSpanMsg.EndBlock,
-			ChainID:    nextSpanMsg.ChainID,
-			Seed:       seed,
+		nodeStatus, err := helper.GetNodeStatus(sp.cliCtx)
+		if err != nil {
+			sp.Logger.Error("Error while fetching heimdall node status", "error", err)
+			return
 		}
 
-		// return broadcast to heimdall
-		txRes, err := sp.txBroadcaster.BroadcastToHeimdall(msg, nil)
-		if err != nil {
-			sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
-			return
+		var txRes sdk.TxResponse
+
+		if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
+			// broadcast to heimdall
+			msg := borTypes.MsgProposeSpan{
+				ID:         nextSpanMsg.ID,
+				Proposer:   types.BytesToHeimdallAddress(helper.GetAddress()),
+				StartBlock: nextSpanMsg.StartBlock,
+				EndBlock:   nextSpanMsg.EndBlock,
+				ChainID:    nextSpanMsg.ChainID,
+				Seed:       seed,
+			}
+
+			// return broadcast to heimdall
+			txRes, err = sp.txBroadcaster.BroadcastToHeimdall(msg, nil)
+			if err != nil {
+				sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
+				return
+			}
+		} else {
+			msg := borTypes.MsgProposeSpanV2{
+				ID:         nextSpanMsg.ID,
+				Proposer:   types.BytesToHeimdallAddress(helper.GetAddress()),
+				StartBlock: nextSpanMsg.StartBlock,
+				EndBlock:   nextSpanMsg.EndBlock,
+				ChainID:    nextSpanMsg.ChainID,
+				Seed:       seed,
+				SeedAuthor: seedAuthor,
+			}
+
+			txRes, err = sp.txBroadcaster.BroadcastToHeimdall(msg, nil)
+			if err != nil {
+				sp.Logger.Error("Error while broadcasting span to heimdall", "spanId", nextSpanMsg.ID, "startBlock", nextSpanMsg.StartBlock, "endBlock", nextSpanMsg.EndBlock, "error", err)
+				return
+			}
 		}
 
 		if txRes.Code != uint32(sdk.CodeOK) {
@@ -218,23 +264,25 @@ func (sp *SpanProcessor) fetchNextSpanDetails(id uint64, start uint64) (*types.S
 }
 
 // fetchNextSpanSeed - fetches seed for next span
-func (sp *SpanProcessor) fetchNextSpanSeed() (nextSpanSeed common.Hash, err error) {
+func (sp *SpanProcessor) fetchNextSpanSeed(id uint64) (common.Hash, common.Address, error) {
 	sp.Logger.Info("Sending Rest call to Get Seed for next span")
 
-	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.NextSpanSeedURL))
+	response, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.NextSpanSeedURL, strconv.FormatUint(id, 10))))
 	if err != nil {
 		sp.Logger.Error("Error Fetching nextspanseed from HeimdallServer ", "error", err)
-		return nextSpanSeed, err
+		return common.Hash{}, common.Address{}, err
 	}
 
 	sp.Logger.Info("Next span seed fetched")
 
-	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &nextSpanSeed); err != nil {
+	var nextSpanSeedResponse borTypes.QuerySpanSeedResponse
+
+	if err = jsoniter.ConfigFastest.Unmarshal(response.Result, &nextSpanSeedResponse); err != nil {
 		sp.Logger.Error("Error unmarshalling nextSpanSeed received from Heimdall Server", "error", err)
-		return nextSpanSeed, err
+		return common.Hash{}, common.Address{}, err
 	}
 
-	return nextSpanSeed, nil
+	return nextSpanSeedResponse.Seed, nextSpanSeedResponse.SeedAuthor, nil
 }
 
 // Stop stops all necessary go routines

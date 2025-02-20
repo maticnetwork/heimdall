@@ -20,6 +20,12 @@ eth_rpc_url = "{{ .EthRPCUrl }}"
 # RPC endpoint for bor chain
 bor_rpc_url = "{{ .BorRPCUrl }}"
 
+# GRPC flag for bor chain
+bor_grpc_flag = "{{ .BorGRPCFlag }}"
+
+# GRPC endpoint for bor chain
+bor_grpc_url = "{{ .BorGRPCUrl }}"
+
 # RPC endpoint for tendermint
 tendermint_rpc_url = "{{ .TendermintRPCUrl }}"
 

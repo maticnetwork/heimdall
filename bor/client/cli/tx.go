@@ -13,8 +13,6 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/ethereum/go-ethereum/common"
-
 	"github.com/maticnetwork/heimdall/bor/types"
 	hmClient "github.com/maticnetwork/heimdall/client"
 	"github.com/maticnetwork/heimdall/helper"
@@ -84,6 +82,11 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return err
 			}
 
+			nodeStatus, err := helper.GetNodeStatus(cliCtx)
+			if err != nil {
+				return err
+			}
+
 			//
 			// Query data
 			//
@@ -98,11 +101,16 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var spanDuration uint64
-			if err := jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
+			if err = jsoniter.ConfigFastest.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 
-			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), nil)
+			seedQueryParams, err := cliCtx.Codec.MarshalJSON(types.NewQuerySpanParams(spanID))
+			if err != nil {
+				return err
+			}
+
+			res, _, err = cliCtx.QueryWithData(fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.QueryNextSpanSeed), seedQueryParams)
 			if err != nil {
 				return err
 			}
@@ -111,19 +119,32 @@ func PostSendProposeSpanTx(cdc *codec.Codec) *cobra.Command {
 				return errors.New("next span seed not found")
 			}
 
-			var seed common.Hash
-			if err := jsoniter.ConfigFastest.Unmarshal(res, &seed); err != nil {
+			var seedResponse types.QuerySpanSeedResponse
+			if err := jsoniter.ConfigFastest.Unmarshal(res, &seedResponse); err != nil {
 				return err
 			}
 
-			msg := types.NewMsgProposeSpan(
-				spanID,
-				proposer,
-				startBlock,
-				startBlock+spanDuration-1,
-				borChainID,
-				seed,
-			)
+			var msg sdk.Msg
+			if nodeStatus.SyncInfo.LatestBlockHeight < helper.GetDanelawHeight() {
+				msg = types.NewMsgProposeSpan(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+				)
+			} else {
+				msg = types.NewMsgProposeSpanV2(
+					spanID,
+					proposer,
+					startBlock,
+					startBlock+spanDuration-1,
+					borChainID,
+					seedResponse.Seed,
+					seedResponse.SeedAuthor,
+				)
+			}
 
 			return helper.BroadcastMsgsWithCLI(cliCtx, []sdk.Msg{msg})
 		},

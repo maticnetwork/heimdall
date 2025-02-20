@@ -42,6 +42,8 @@ import (
 	"github.com/maticnetwork/heimdall/types/rest"
 )
 
+const APIBodyLimit = 128 * 1024 * 1024 // 128 MB
+
 //go:generate mockgen -destination=./mocks/http_client_mock.go -package=mocks . HTTPClient
 type HTTPClient interface {
 	Get(string) (resp *http.Response, err error)
@@ -383,9 +385,9 @@ func GetSignedTxBytes(cliCtx context.CLIContext,
 	}
 
 	if !cliCtx.SkipConfirm {
-		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
-		if err != nil {
-			return nil, err
+		stdSignMsg, e := txBldr.BuildSignMsg(msgs)
+		if e != nil {
+			return nil, e
 		}
 
 		var json []byte
@@ -402,10 +404,10 @@ func GetSignedTxBytes(cliCtx context.CLIContext,
 
 		buf := bufio.NewReader(os.Stdin)
 
-		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
-		if err != nil || !ok {
+		ok, e := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if e != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return nil, err
+			return nil, e
 		}
 	}
 
@@ -434,9 +436,9 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 	}
 
 	if !cliCtx.SkipConfirm {
-		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
-		if err != nil {
-			return nil, err
+		stdSignMsg, e := txBldr.BuildSignMsg(msgs)
+		if e != nil {
+			return nil, e
 		}
 
 		var json []byte
@@ -453,10 +455,10 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 
 		buf := bufio.NewReader(os.Stdin)
 
-		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
-		if err != nil || !ok {
+		ok, e := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if e != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return nil, err
+			return nil, e
 		}
 	}
 
@@ -567,10 +569,19 @@ func SignStdTx(cliCtx context.CLIContext, stdTx authTypes.StdTx, appendSig bool,
 // ReadStdTxFromFile and decode a StdTx from the given filename.  Can pass "-" to read from stdin.
 func ReadStdTxFromFile(cdc *amino.Codec, filename string) (stdTx authTypes.StdTx, err error) {
 	var bytes []byte
+
 	if filename == "-" {
-		bytes, err = io.ReadAll(os.Stdin)
+		limitedReader := &io.LimitedReader{R: os.Stdin, N: APIBodyLimit}
+		bytes, err = io.ReadAll(limitedReader)
 	} else {
-		bytes, err = os.ReadFile(filename)
+		file, er := os.Open(filename)
+		if er != nil {
+			err = er
+			return
+		}
+		defer file.Close()
+		limitedReader := &io.LimitedReader{R: file, N: APIBodyLimit}
+		bytes, err = io.ReadAll(limitedReader)
 	}
 
 	if err != nil {
@@ -714,7 +725,7 @@ func getSplitPoint(length int) int {
 	uLength := uint(length)
 	bitlen := bits.Len(uLength)
 
-	k := 1 << uint(bitlen-1)
+	k := 1 << (bitlen - 1)
 	if k == length {
 		k >>= 1
 	}
@@ -802,7 +813,7 @@ func GetHeimdallServerEndpoint(endpoint string) string {
 	return u.String()
 }
 
-// FetchFromAPI fetches data from any URL
+// FetchFromAPI fetches data from any URL with limited read size
 func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.ResponseWithHeight, err error) {
 	resp, err := Client.Get(URL)
 	if err != nil {
@@ -811,9 +822,12 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 
 	defer resp.Body.Close()
 
-	// response
+	// Limit the number of bytes read from the response body
+	limitedBody := http.MaxBytesReader(nil, resp.Body, APIBodyLimit)
+
+	// Handle the response
 	if resp.StatusCode == 200 {
-		body, err := io.ReadAll(resp.Body)
+		body, err := io.ReadAll(limitedBody)
 		if err != nil {
 			return result, err
 		}

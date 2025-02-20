@@ -5,17 +5,21 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 	"time"
 
+	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/ethereum/go-ethereum/rpc"
 	lru "github.com/hashicorp/golang-lru"
 
+	"github.com/maticnetwork/heimdall/bor/client/grpc"
 	"github.com/maticnetwork/heimdall/contracts/erc20"
 	"github.com/maticnetwork/heimdall/contracts/rootchain"
 	"github.com/maticnetwork/heimdall/contracts/slashmanager"
@@ -57,6 +61,7 @@ type IContractCaller interface {
 	GetCheckpointSign(txHash common.Hash) ([]byte, []byte, []byte, error)
 	GetMainChainBlock(*big.Int) (*ethTypes.Header, error)
 	GetMaticChainBlock(*big.Int) (*ethTypes.Header, error)
+	GetBorChainBlockAuthor(*big.Int) (*common.Address, error)
 	IsTxConfirmed(common.Hash, uint64) bool
 	GetConfirmedTxReceipt(common.Hash, uint64) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
@@ -100,11 +105,18 @@ type IContractCaller interface {
 
 // ContractCaller contract caller
 type ContractCaller struct {
-	MainChainClient   *ethclient.Client
-	MainChainRPC      *rpc.Client
-	MainChainTimeout  time.Duration
-	MaticChainClient  *ethclient.Client
-	MaticChainRPC     *rpc.Client
+	MainChainClient  *ethclient.Client
+	MainChainRPC     *rpc.Client
+	MainChainTimeout time.Duration
+
+	// MaticGrpcFlag is a flag to check if the client is grpc or not
+	MaticGrpcFlag bool
+
+	MaticChainClient *ethclient.Client
+	MaticChainRPC    *rpc.Client
+
+	MaticGrpcClient *grpc.BorGRPCClient
+
 	MaticChainTimeout time.Duration
 
 	RootChainABI     abi.ABI
@@ -141,6 +153,8 @@ func NewContractCaller() (contractCallerObj ContractCaller, err error) {
 	contractCallerObj.MainChainRPC = GetMainChainRPCClient()
 	contractCallerObj.MaticChainRPC = GetMaticRPCClient()
 	contractCallerObj.ReceiptCache, err = lru.New(1000)
+	contractCallerObj.MaticGrpcFlag = config.BorGRPCFlag
+	contractCallerObj.MaticGrpcClient = GetMaticGRPCClient()
 
 	if err != nil {
 		return contractCallerObj, err
@@ -300,7 +314,15 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	rootHash, err := c.MaticChainClient.GetRootHash(ctx, start, end)
+	var rootHash string
+	var err error
+
+	// Both MainChainClient and MaticChainClient cannot be nil, check it while initializing
+	if c.MaticGrpcFlag {
+		rootHash, err = c.MaticGrpcClient.GetRootHash(ctx, start, end)
+	} else {
+		rootHash, err = c.MaticChainClient.GetRootHash(ctx, start, end)
+	}
 
 	if err != nil {
 		Logger.Error("Could not fetch rootHash from matic chain", "error", err)
@@ -310,16 +332,24 @@ func (c *ContractCaller) GetRootHash(start uint64, end uint64, checkpointLength 
 	return common.FromHex(rootHash), nil
 }
 
-// GetRootHash get root hash from bor chain
+// GetVoteOnHash gets vote on hash from bor chain
 func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength uint64, hash string, milestoneID string) (bool, error) {
 	if start > end {
-		return false, errors.New("Start block number is greater than the end block number")
+		return false, errors.New("start block number is greater than the end block number")
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	vote, err := c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	var vote bool
+	var err error
+
+	if c.MaticGrpcFlag {
+		vote, err = c.MaticGrpcClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	} else {
+		vote, err = c.MaticChainClient.GetVoteOnHash(ctx, start, end, hash, milestoneID)
+	}
+
 	if err != nil {
 		return false, errors.New(fmt.Sprint("Error in fetching vote from matic chain", "err", err))
 	}
@@ -365,10 +395,13 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error) {
-	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
-	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	if uint64(valID) > uint64(math.MaxInt64) {
+		return validator, fmt.Errorf("ValidatorID value too large to convert to int64: %d", valID)
+	}
+
+	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(0).SetUint64(valID.Uint64()))
 	if err != nil {
-		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "status", stakerDetails.Status, "error", err)
+		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "error", err)
 		return
 	}
 
@@ -428,7 +461,12 @@ func (c *ContractCaller) GetMainChainBlockTime(ctx context.Context, blockNum uin
 		return time.Time{}, err
 	}
 
-	return time.Unix(int64(latestBlock.Time()), 0), nil
+	blockTime := latestBlock.Time()
+	if blockTime > uint64(math.MaxInt64) {
+		return time.Time{}, fmt.Errorf("block time value too large to convert to int64: %d", blockTime)
+	}
+
+	return time.Unix(int64(blockTime), 0), nil
 }
 
 // GetMaticChainBlock returns child chain block header
@@ -436,13 +474,60 @@ func (c *ContractCaller) GetMaticChainBlock(blockNum *big.Int) (header *ethTypes
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	latestBlock, err := c.MaticChainClient.HeaderByNumber(ctx, blockNum)
+	var latestBlock *ethTypes.Header
+
+	if c.MaticGrpcFlag {
+		if blockNum == nil {
+			// LatestBlockNumber is BlockNumber(-2) in go-ethereum rpc
+			latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, -2)
+		} else {
+			latestBlock, err = c.MaticGrpcClient.HeaderByNumber(ctx, blockNum.Int64())
+		}
+	} else {
+		latestBlock, err = c.MaticChainClient.HeaderByNumber(ctx, blockNum)
+	}
+
 	if err != nil {
 		Logger.Error("Unable to connect to matic chain", "error", err)
 		return
 	}
 
 	return latestBlock, nil
+}
+
+// GetBorChainBlockAuthor returns the producer of the bor block
+func (c *ContractCaller) GetBorChainBlockAuthor(blockNum *big.Int) (*common.Address, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
+	defer cancel()
+
+	var author *common.Address
+	err := c.MaticChainClient.Client().CallContext(ctx, &author, "bor_getAuthor", toBlockNumArg(blockNum))
+	if err != nil {
+		Logger.Error("Unable to connect to bor chain", "error", err)
+		return nil, err
+	}
+
+	if author == nil {
+		return nil, ethereum.NotFound
+	}
+
+	return author, nil
+}
+
+// copied from bor/ethclient package
+func toBlockNumArg(number *big.Int) string {
+	if number == nil {
+		return "latest"
+	}
+	if number.Sign() >= 0 {
+		return hexutil.EncodeBig(number)
+	}
+	// It's negative.
+	if number.IsInt64() {
+		return rpc.BlockNumber(number.Int64()).String()
+	}
+	// It's negative and large, which is invalid.
+	return fmt.Sprintf("<invalid %d>", number)
 }
 
 // GetBlockNumberFromTxHash gets block number of transaction
@@ -814,6 +899,9 @@ func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *valid
 	error,
 ) {
 	d, err := validatorSetInstance.GetSpan(nil, id)
+	if err != nil {
+		return nil, nil, nil, err
+	}
 	return d.Number, d.StartBlock, d.EndBlock, err
 }
 
@@ -843,7 +931,23 @@ func (c *ContractCaller) CheckIfBlocksExist(end uint64) bool {
 
 // GetBlockByNumber returns blocks by number from child chain (bor)
 func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint64) *ethTypes.Block {
-	block, err := c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	var block *ethTypes.Block
+	var err error
+
+	if c.MaticGrpcFlag {
+		if blockNumber > uint64(math.MaxInt64) {
+			Logger.Error("Block number value too large to convert to int64", "blockNumber", blockNumber)
+			return nil
+		}
+		block, err = c.MaticGrpcClient.BlockByNumber(ctx, int64(blockNumber))
+	} else {
+		if blockNumber > uint64(math.MaxInt64) {
+			Logger.Error("Block number value too large to convert to int64", "blockNumber", blockNumber)
+			return nil
+		}
+		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
+	}
+
 	if err != nil {
 		Logger.Error("Unable to fetch block by number from child chain", "block", block, "err", err)
 		return nil
@@ -861,7 +965,7 @@ func (c *ContractCaller) GetMainTxReceipt(txHash common.Hash) (*ethTypes.Receipt
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
 
-	return c.getTxReceipt(ctx, c.MainChainClient, txHash)
+	return c.getTxReceipt(ctx, c.MainChainClient, nil, txHash)
 }
 
 // GetMaticTxReceipt returns matic tx receipt
@@ -869,10 +973,16 @@ func (c *ContractCaller) GetMaticTxReceipt(txHash common.Hash) (*ethTypes.Receip
 	ctx, cancel := context.WithTimeout(context.Background(), c.MaticChainTimeout)
 	defer cancel()
 
-	return c.getTxReceipt(ctx, c.MaticChainClient, txHash)
+	if c.MaticGrpcFlag {
+		return c.getTxReceipt(ctx, nil, c.MaticGrpcClient, txHash)
+	}
+	return c.getTxReceipt(ctx, c.MaticChainClient, nil, txHash)
 }
 
-func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Client, txHash common.Hash) (*ethTypes.Receipt, error) {
+func (c *ContractCaller) getTxReceipt(ctx context.Context, client *ethclient.Client, grpcClient *grpc.BorGRPCClient, txHash common.Hash) (*ethTypes.Receipt, error) {
+	if grpcClient != nil {
+		return grpcClient.TransactionReceipt(ctx, txHash)
+	}
 	return client.TransactionReceipt(ctx, txHash)
 }
 
@@ -881,7 +991,7 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
 
-	mainChainClient := GetMainClient()
+	mainChainClient = GetMainClient()
 
 	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
 	if err != nil {

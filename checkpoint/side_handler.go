@@ -328,6 +328,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 		return common.ErrNoACK(k.Codespace(), expiryTime).Result()
 	}
 
+	//nolint:gosec
 	timeStamp := uint64(ctx.BlockTime().Unix())
 
 	// Add checkpoint to buffer with root hash and account hash

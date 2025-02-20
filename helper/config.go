@@ -17,15 +17,15 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"github.com/tendermint/go-amino"
+	cfg "github.com/tendermint/tendermint/config"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	logger "github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
+	tmTypes "github.com/tendermint/tendermint/types"
 
+	borgrpc "github.com/maticnetwork/heimdall/bor/client/grpc"
 	"github.com/maticnetwork/heimdall/file"
 	hmTypes "github.com/maticnetwork/heimdall/types"
-
-	cfg "github.com/tendermint/tendermint/config"
-	tmTypes "github.com/tendermint/tendermint/types"
 )
 
 const (
@@ -48,6 +48,8 @@ const (
 	// heimdall-config flags
 	MainRPCUrlFlag               = "eth_rpc_url"
 	BorRPCUrlFlag                = "bor_rpc_url"
+	BorGRPCUrlFlag               = "bor_grpc_url"
+	BorGRPCFlag                  = "bor_grpc_flag"
 	TendermintNodeURLFlag        = "tendermint_rpc_url"
 	HeimdallServerURLFlag        = "heimdall_rest_server"
 	AmqpURLFlag                  = "amqp_url"
@@ -81,6 +83,7 @@ const (
 	// RPC Endpoints
 	DefaultMainRPCUrl = "http://localhost:9545"
 	DefaultBorRPCUrl  = "http://localhost:8545"
+	DefaultBorGRPCUrl = "localhost:3131"
 
 	// RPC Timeouts
 	DefaultEthRPCTimeout = 5 * time.Second
@@ -120,11 +123,10 @@ const (
 
 	DefaultTendermintNode = "tcp://localhost:26657"
 
-	DefaultMainnetSeeds = "1500161dd491b67fb1ac81868952be49e2509c9f@52.78.36.216:26656,dd4a3f1750af5765266231b9d8ac764599921736@3.36.224.80:26656,8ea4f592ad6cc38d7532aff418d1fb97052463af@34.240.245.39:26656,e772e1fb8c3492a9570a377a5eafdb1dc53cd778@54.194.245.5:26656"
-
+	DefaultMainnetSeeds     = "e019e16d4e376723f3adc58eb1761809fea9bee0@35.234.150.253:26656,7f3049e88ac7f820fd86d9120506aaec0dc54b27@34.89.75.187:26656,1f5aff3b4f3193404423c3dd1797ce60cd9fea43@34.142.43.240:26656,2d5484feef4257e56ece025633a6ea132d8cadca@35.246.99.203:26656,17e9efcbd173e81a31579310c502e8cdd8b8ff2e@35.197.233.240:26656,72a83490309f9f63fdca3a0bef16c290e5cbb09c@35.246.95.65:2665,00677b1b2c6282fb060b7bb6e9cc7d2d05cdd599@34.105.180.11:26656,721dd4cebfc4b78760c7ee5d7b1b44d29a0aa854@34.147.169.102:26656,4760b3fc04648522a0bcb2d96a10aadee141ee89@34.89.55.74:26656"
+	DefaultAmoyTestnetSeeds = "e4eabef3111155890156221f018b0ea3b8b64820@35.197.249.21:26656,811c3127677a4a34df907b021aad0c9d22f84bf4@34.89.39.114:26656,2ec15d1d33261e8cf42f57236fa93cfdc21c1cfb@35.242.167.175:26656,38120f9d2c003071a7230788da1e3129b6fb9d3f@34.89.15.223:26656,2f16f3857c6c99cc11e493c2082b744b8f36b127@34.105.128.110:26656,2833f06a5e33da2e80541fb1bfde2a7229877fcb@34.89.21.99:26656,2e6f1342416c5d758f5ae32f388bb76f7712a317@34.89.101.16:26656,a596f98b41851993c24de00a28b767c7c5ff8b42@34.89.11.233:26656"
+	// Deprecated: Mumbai Testnet is deprecated
 	DefaultMumbaiTestnetSeeds = "9df7ae4bf9b996c0e3436ed4cd3050dbc5742a28@43.200.206.40:26656,d9275750bc877b0276c374307f0fd7eae1d71e35@54.216.248.9:26656,1a3258eb2b69b235d4749cf9266a94567d6c0199@52.214.83.78:26656"
-
-	DefaultAmoyTestnetSeeds = "eb57fffe96d74312963ced94a94cbaf8e0d8ec2e@54.217.171.196:26656,080dcdffcc453367684b61d8f3ce032f357b0f73@13.251.184.185:26656"
 
 	secretFilePerm = 0600
 
@@ -168,6 +170,8 @@ func init() {
 type Configuration struct {
 	EthRPCUrl        string `mapstructure:"eth_rpc_url"`        // RPC endpoint for main chain
 	BorRPCUrl        string `mapstructure:"bor_rpc_url"`        // RPC endpoint for bor chain
+	BorGRPCUrl       string `mapstructure:"bor_grpc_url"`       // gRPC endpoint for bor chain
+	BorGRPCFlag      bool   `mapstructure:"bor_grpc_flag"`      // gRPC flag for bor chain
 	TendermintRPCUrl string `mapstructure:"tendermint_rpc_url"` // tendemint node url
 	SubGraphUrl      string `mapstructure:"sub_graph_url"`      // sub graph url
 
@@ -213,6 +217,7 @@ var mainRPCClient *rpc.Client
 // MaticClient stores eth/rpc client for Matic Network
 var maticClient *ethclient.Client
 var maticRPCClient *rpc.Client
+var maticGRPCClient *borgrpc.BorGRPCClient
 
 // private key object
 var privObject secp256k1.PrivKeySecp256k1
@@ -234,6 +239,10 @@ var milestoneBorBlockHeight uint64 = 0
 var aalborgHeight int64 = 0
 
 var newHexToStringAlgoHeight int64 = 0
+
+var jorvikHeight int64 = 0
+
+var danelawHeight int64 = 0
 
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
@@ -275,7 +284,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		return
 	}
 
-	if strings.Compare(conf.BorRPCUrl, "") != 0 {
+	if strings.Compare(conf.BorRPCUrl, "") != 0 || strings.Compare(conf.BorGRPCUrl, "") != 0 {
 		return
 	}
 
@@ -377,6 +386,9 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 	}
 
 	maticClient = ethclient.NewClient(maticRPCClient)
+
+	maticGRPCClient = borgrpc.NewBorGRPCClient(conf.BorGRPCUrl)
+
 	// Loading genesis doc
 	genDoc, err := tmTypes.GenesisDocFromFile(filepath.Join(configDir, "genesis.json"))
 	if err != nil {
@@ -401,21 +413,29 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 8664000
 		newHexToStringAlgoHeight = 9266260
 		aalborgHeight = 15950759
+		jorvikHeight = 22393043
+		danelawHeight = 22393043
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
 		aalborgHeight = 18035772
+		jorvikHeight = -1
+		danelawHeight = -1
 	case AmoyChain:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
+		jorvikHeight = 5768528
+		danelawHeight = 6490424
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
 		newHexToStringAlgoHeight = 0
 		aalborgHeight = 0
+		jorvikHeight = 0
+		danelawHeight = 0
 	}
 }
 
@@ -424,6 +444,7 @@ func GetDefaultHeimdallConfig() Configuration {
 	return Configuration{
 		EthRPCUrl:        DefaultMainRPCUrl,
 		BorRPCUrl:        DefaultBorRPCUrl,
+		BorGRPCUrl:       DefaultBorGRPCUrl,
 		TendermintRPCUrl: DefaultTendermintNodeURL,
 
 		EthRPCTimeout: DefaultEthRPCTimeout,
@@ -506,6 +527,11 @@ func GetMaticRPCClient() *rpc.Client {
 	return maticRPCClient
 }
 
+// GetMaticGRPCClient returns matic's gRPC client
+func GetMaticGRPCClient() *borgrpc.BorGRPCClient {
+	return maticGRPCClient
+}
+
 // GetPrivKey returns priv key object
 func GetPrivKey() secp256k1.PrivKeySecp256k1 {
 	return privObject
@@ -562,6 +588,16 @@ func GetNewHexToStringAlgoHeight() int64 {
 	return newHexToStringAlgoHeight
 }
 
+// GetJorvikHeight returns jorvikHeight
+func GetJorvikHeight() int64 {
+	return jorvikHeight
+}
+
+// GetDanelawHeight returns danelawHeight
+func GetDanelawHeight() int64 {
+	return danelawHeight
+}
+
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
 	chainMigration := chainManagerAddressMigrations[conf.Chain]
 	if chainMigration == nil {
@@ -606,6 +642,27 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 
 	if err := v.BindPFlag(BorRPCUrlFlag, cmd.PersistentFlags().Lookup(BorRPCUrlFlag)); err != nil {
 		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorRPCUrlFlag), "Error", err)
+	}
+
+	// add BorGRPCUrlFlag flag
+	cmd.PersistentFlags().String(
+		BorGRPCUrlFlag,
+		"",
+		"Set gRPC endpoint for bor chain",
+	)
+
+	if err := v.BindPFlag(BorGRPCUrlFlag, cmd.PersistentFlags().Lookup(BorGRPCUrlFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorGRPCUrlFlag), "Error", err)
+	}
+
+	cmd.PersistentFlags().Bool(
+		BorGRPCFlag,
+		false,
+		"Set if heimdall will use gRPC or Rest to interact with bor chain",
+	)
+
+	if err := v.BindPFlag(BorGRPCFlag, cmd.PersistentFlags().Lookup(BorGRPCFlag)); err != nil {
+		loggerInstance.Error(fmt.Sprintf("%v | BindPFlag | %v", caller, BorGRPCFlag), "Error", err)
 	}
 
 	// add TendermintNodeURLFlag flag
@@ -778,6 +835,18 @@ func (c *Configuration) UpdateWithFlags(v *viper.Viper, loggerInstance logger.Lo
 		c.BorRPCUrl = stringConfgValue
 	}
 
+	// get endpoint for bor chain from viper/cobra
+	stringConfgValue = v.GetString(BorGRPCUrlFlag)
+	if stringConfgValue != "" {
+		c.BorGRPCUrl = stringConfgValue
+	}
+
+	// get gRPC flag for bor chain from viper/cobra
+	boolConfgValue := v.GetBool(BorGRPCFlag)
+	if boolConfgValue {
+		c.BorGRPCFlag = boolConfgValue
+	}
+
 	// get endpoint for tendermint from viper/cobra
 	stringConfgValue = v.GetString(TendermintNodeURLFlag)
 	if stringConfgValue != "" {
@@ -895,6 +964,10 @@ func (c *Configuration) Merge(cc *Configuration) {
 
 	if cc.BorRPCUrl != "" {
 		c.BorRPCUrl = cc.BorRPCUrl
+	}
+
+	if cc.BorGRPCUrl != "" {
+		c.BorGRPCUrl = cc.BorGRPCUrl
 	}
 
 	if cc.TendermintRPCUrl != "" {

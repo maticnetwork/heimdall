@@ -1,6 +1,9 @@
 package types
 
-import "encoding/binary"
+import (
+	"encoding/binary"
+	"fmt"
+)
 
 const (
 	// ModuleName defines the name of the module
@@ -40,6 +43,10 @@ func TxStoreKey(height int64, hash []byte) []byte {
 
 // TxsStoreKey returns key used to get txs from store
 func TxsStoreKey(height int64) []byte {
+	if height < 0 {
+		panic(fmt.Sprintf("height cannot be negative: %d", height))
+	}
+
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(height))
 
@@ -52,6 +59,10 @@ func TxsStoreKey(height int64) []byte {
 
 // ValidatorsKey returns key used to get past-validators from store
 func ValidatorsKey(height int64) []byte {
+	if height < 0 {
+		panic(fmt.Sprintf("height cannot be negative: %d", height))
+	}
+
 	b := make([]byte, 8)
 	binary.BigEndian.PutUint64(b, uint64(height))
 

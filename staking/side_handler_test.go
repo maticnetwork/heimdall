@@ -1158,7 +1158,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	})
 
 	suite.Run("Replay", func() {
-		blockNumber := big.NewInt(11)
+		blockNumber = big.NewInt(11)
 
 		msgValJoin := types.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(address.Bytes()),

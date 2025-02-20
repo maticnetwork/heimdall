@@ -317,3 +317,43 @@ func (k *Keeper) HasRecordSequence(ctx sdk.Context, sequence string) bool {
 	store := ctx.KVStore(k.storeKey)
 	return store.Has(GetRecordSequenceKey(sequence))
 }
+
+// IterateRecordsAndCollect iterates over EventRecords, collects up to 'max' entries,
+// and returns a slice containing the collected records.
+// It continues from the last key processed in the previous batch.
+func (k *Keeper) IterateRecordsAndCollect(ctx sdk.Context, nextKey []byte, maxV int) ([]*types.EventRecord, []byte, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	var startKey []byte
+	if nextKey != nil {
+		startKey = nextKey
+	} else {
+		startKey = StateRecordPrefixKey
+	}
+
+	endKey := sdk.PrefixEndBytes(StateRecordPrefixKey)
+
+	iterator := store.Iterator(startKey, endKey)
+	defer iterator.Close()
+
+	collectedRecords := make([]*types.EventRecord, 0, maxV)
+	entriesCollected := 0
+
+	for ; iterator.Valid() && entriesCollected < maxV; iterator.Next() {
+		var record types.EventRecord
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &record); err != nil {
+			k.Logger(ctx).Error("IterateRecordsAndCollect | UnmarshalBinaryBare", "error", err)
+			return nil, nil, err
+		}
+
+		collectedRecords = append(collectedRecords, &record)
+		entriesCollected++
+	}
+
+	// We want to return the key after last processed key because the iterator is inclusive for the start key
+	if iterator.Valid() {
+		return collectedRecords, iterator.Key(), nil
+	}
+
+	return collectedRecords, nil, nil
+}

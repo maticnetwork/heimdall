@@ -20,9 +20,10 @@ import (
 )
 
 var (
-	_ module.AppModule             = AppModule{}
-	_ module.AppModuleBasic        = AppModuleBasic{}
-	_ hmModule.HeimdallModuleBasic = AppModule{}
+	_ module.AppModule                 = AppModule{}
+	_ module.AppModuleBasic            = AppModuleBasic{}
+	_ hmModule.HeimdallModuleBasic     = AppModule{}
+	_ hmModule.StreamedGenesisExporter = AppModule{}
 	// _ module.AppModuleSimulation = AppModule{}
 )
 
@@ -134,11 +135,35 @@ func (am AppModule) InitGenesis(ctx sdk.Context, data json.RawMessage) []abci.Va
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis returns the exported genesis state as raw bytes for the auth
+// ExportGenesis returns the exported genesis state as raw bytes for the clerk
 // module.
 func (am AppModule) ExportGenesis(ctx sdk.Context) json.RawMessage {
 	gs := ExportGenesis(ctx, am.keeper)
 	return types.ModuleCdc.MustMarshalJSON(gs)
+}
+
+// ExportPartialGenesis returns the exported genesis state as raw bytes excluding the data
+// that will be returned via NextGenesisData.
+func (am AppModule) ExportPartialGenesis(ctx sdk.Context) (json.RawMessage, error) {
+	type partialGenesisState struct {
+		RecordSequences []string `json:"record_sequences" yaml:"record_sequences"`
+	}
+	return types.ModuleCdc.MustMarshalJSON(partialGenesisState{
+		RecordSequences: am.keeper.GetRecordSequences(ctx),
+	}), nil
+}
+
+// NextGenesisData returns the next chunk of genesis data.
+func (am AppModule) NextGenesisData(ctx sdk.Context, nextKey []byte, maxV int) (*hmModule.ModuleGenesisData, error) {
+	data, nextKey, err := am.keeper.IterateRecordsAndCollect(ctx, nextKey, maxV)
+	if err != nil {
+		return nil, err
+	}
+	return &hmModule.ModuleGenesisData{
+		Path:    "event_records",
+		Data:    types.ModuleCdc.MustMarshalJSON(data),
+		NextKey: nextKey,
+	}, nil
 }
 
 // BeginBlock returns the begin blocker for the auth module.

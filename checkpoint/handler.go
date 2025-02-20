@@ -79,12 +79,9 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, _ helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
+	//nolint:gosec
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
-
-	//
-	// Check checkpoint buffer
-	//
 
 	checkpointBuffer, err := k.GetCheckpointFromBuffer(ctx)
 	if err == nil {
@@ -105,7 +102,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, _ h
 	//
 
 	// fetch last checkpoint from store
-	if lastCheckpoint, err := k.GetLastCheckpoint(ctx); err == nil {
+	if lastCheckpoint, e := k.GetLastCheckpoint(ctx); e == nil {
 		// make sure new checkpoint is after tip
 		if lastCheckpoint.EndBlock > msg.StartBlock {
 			logger.Error("Checkpoint already exists",
@@ -124,8 +121,8 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, _ h
 
 			return common.ErrDisContinuousCheckpoint(k.Codespace()).Result()
 		}
-	} else if err.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
-		logger.Error("First checkpoint to start from block 0", "checkpoint start block", msg.StartBlock, "error", err)
+	} else if e.Error() == common.ErrNoCheckpointFound(k.Codespace()).Error() && msg.StartBlock != 0 {
+		logger.Error("First checkpoint to start from block 0", "checkpoint start block", msg.StartBlock, "error", e)
 		return common.ErrBadBlockDetails(k.Codespace()).Result()
 	}
 
@@ -253,6 +250,9 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	// Fetch last checkpoint from store
 	// TODO figure out how to handle this error
 	lastCheckpoint, _ := k.GetLastCheckpoint(ctx)
+	if lastCheckpoint.TimeStamp > math.MaxInt64 {
+		return sdk.ErrInternal("Checkpoint timestamp exceeds int64 max value").Result()
+	}
 	lastCheckpointTime := time.Unix(int64(lastCheckpoint.TimeStamp), 0)
 
 	// If last checkpoint is not present or last checkpoint happens before checkpoint buffer time -- thrown an error
@@ -293,6 +293,9 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 
 	// Check last no ack - prevents repetitive no-ack
 	lastNoAck := k.GetLastNoAck(ctx)
+	if lastNoAck > math.MaxInt64 {
+		return sdk.ErrInternal("NoAck timestamp exceeds int64 max value").Result()
+	}
 	lastNoAckTime := time.Unix(int64(lastNoAck), 0)
 
 	if lastNoAckTime.After(currentTime) || (currentTime.Sub(lastNoAckTime) < bufferTime) {
@@ -303,6 +306,7 @@ func handleMsgCheckpointNoAck(ctx sdk.Context, msg types.MsgCheckpointNoAck, k K
 	}
 
 	// Set new last no-ack
+	//nolint:gosec
 	newLastNoAck := uint64(currentTime.Unix())
 	k.SetLastNoAck(ctx, newLastNoAck)
 	logger.Debug("Last No-ACK time set", "lastNoAck", newLastNoAck)

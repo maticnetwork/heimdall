@@ -1,6 +1,9 @@
 package types
 
 import (
+	"fmt"
+	"math"
+
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
@@ -196,12 +199,50 @@ func (fee StdFee) Bytes() []byte {
 // originally part of the submitted transaction because the fee is computed
 // as fee = ceil(gasWanted * gasPrices).
 func (fee StdFee) GasPrices() sdk.DecCoins {
+	if fee.Gas > uint64(math.MaxInt64) {
+		panic(fmt.Sprintf("Gas value too large to convert to int64: %d", fee.Gas))
+	}
 	return sdk.NewDecCoins(fee.Amount).QuoDec(sdk.NewDec(int64(fee.Gas)))
 }
 
 //
 // Decoders
 //
+
+// DefaultMainTxDecoder logic for standard transaction decoding
+func DefaultMainTxDecoder(cdc *codec.Codec, lastBlockHeight func() int64, getDanelawHeight func() int64, getJorvikHeight func() int64) sdk.TxDecoder {
+	return func(txBytes []byte) (sdk.Tx, sdk.Error) {
+		var tx = StdTx{}
+
+		if len(txBytes) == 0 {
+			return nil, sdk.ErrTxDecode("txBytes are empty")
+		}
+
+		currentHeight := lastBlockHeight() + 1
+		if currentHeight < getDanelawHeight() && getDanelawHeight() == getJorvikHeight() {
+			var hftx = StdTx{}
+			if err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &hftx); err != nil {
+				return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
+			}
+
+			msgs := hftx.GetMsgs()
+			for _, msg := range msgs {
+				if msg.Route() == "bor" && msg.Type() == "propose-span-v2" {
+					return nil, sdk.ErrTxDecode("error decoding transaction")
+				}
+			}
+		}
+
+		// StdTx.Msg is an interface. The concrete types
+		// are registered by MakeTxCodec
+		err := cdc.UnmarshalBinaryLengthPrefixed(txBytes, &tx)
+		if err != nil {
+			return nil, sdk.ErrTxDecode("error decoding transaction").TraceSDK(err.Error())
+		}
+
+		return tx, nil
+	}
+}
 
 // DefaultTxDecoder logic for standard transaction decoding
 func DefaultTxDecoder(cdc *codec.Codec) sdk.TxDecoder {
