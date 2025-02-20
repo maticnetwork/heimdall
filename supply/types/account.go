@@ -2,6 +2,7 @@ package types
 
 import (
 	"fmt"
+	"slices"
 
 	yaml "gopkg.in/yaml.v3"
 
@@ -89,13 +90,7 @@ func (ma *ModuleAccount) RemovePermission(permission string) error {
 
 // HasPermission returns whether or not the module account has permission.
 func (ma ModuleAccount) HasPermission(permission string) bool {
-	for _, perm := range ma.Permissions {
-		if perm == permission {
-			return true
-		}
-	}
-
-	return false
+	return slices.Contains(ma.Permissions, permission)
 }
 
 // GetName returns the name of the holder's module
