@@ -158,7 +158,7 @@ func NewErrorResponse(code int, err string) ErrorResponse {
 	return ErrorResponse{Code: code, Error: err}
 }
 
-// WriteErrorResponse prepares and writes an HTTP error
+// WriteErrorResponse prepares and writes a HTTP error
 // given a status code and an error message.
 func WriteErrorResponse(w http.ResponseWriter, status int, err string) {
 	w.Header().Set("Content-Type", "application/json")
