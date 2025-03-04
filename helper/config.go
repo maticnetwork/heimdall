@@ -244,6 +244,8 @@ var jorvikHeight int64 = 0
 
 var danelawHeight int64 = 0
 
+var apocalypseHeight int64 = 0
+
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
 	RootChainAddress      hmTypes.HeimdallAddress
@@ -415,6 +417,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		aalborgHeight = 15950759
 		jorvikHeight = 22393043
 		danelawHeight = 22393043
+		apocalypseHeight = 300
 	case MumbaiChain:
 		newSelectionAlgoHeight = 282500
 		spanOverrideHeight = 10205000
@@ -422,6 +425,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		aalborgHeight = 18035772
 		jorvikHeight = -1
 		danelawHeight = -1
+		apocalypseHeight = 300
 	case AmoyChain:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
@@ -429,6 +433,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		aalborgHeight = 0
 		jorvikHeight = 5768528
 		danelawHeight = 6490424
+		apocalypseHeight = 300
 	default:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
@@ -436,6 +441,7 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		aalborgHeight = 0
 		jorvikHeight = 0
 		danelawHeight = 0
+		apocalypseHeight = 300
 	}
 }
 
@@ -596,6 +602,11 @@ func GetJorvikHeight() int64 {
 // GetDanelawHeight returns danelawHeight
 func GetDanelawHeight() int64 {
 	return danelawHeight
+}
+
+// GetApocalypseHeight returns apocalypseHeight
+func GetApocalypseHeight() int64 {
+	return apocalypseHeight
 }
 
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
