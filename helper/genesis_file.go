@@ -15,7 +15,7 @@ var allocs embed.FS
 
 func WriteGenesisFile(chain string, filePath string, cdc *codec.Codec) (bool, error) {
 	switch chain {
-	case "amoy", "mumbai", "mainnet":
+	case "amoy", "mainnet":
 		fn := fmt.Sprintf("allocs/%s.json", chain)
 
 		genDoc, err := readPrealloc(fn, cdc)
