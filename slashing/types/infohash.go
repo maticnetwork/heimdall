@@ -63,7 +63,7 @@ func slashInfoToModified(slashInfo *hmTypes.ValidatorSlashingInfo) (modifiedSlas
 		IsJailed:      jailedByte,
 	}
 
-	return modifiedSlashInfo, err
+	return modifiedSlashInfo, nil
 }
 
 func RLPDecodeSlashInfos(encodedSlashInfo []byte) ([]*hmTypes.ValidatorSlashingInfo, error) {
@@ -105,5 +105,5 @@ func modifiedToSlashInfo(modifiedSlashInfo *ModifiedSlashInfo) (slashInfo *hmTyp
 		IsJailed:      jailedBool,
 	}
 
-	return slashInfo, err
+	return slashInfo, nil
 }

@@ -893,7 +893,7 @@ func (c *ContractCaller) GetSpanDetails(id *big.Int, validatorSetInstance *valid
 	if err != nil {
 		return nil, nil, nil, err
 	}
-	return d.Number, d.StartBlock, d.EndBlock, err
+	return d.Number, d.StartBlock, d.EndBlock, nil
 }
 
 // CurrentStateCounter get state counter
