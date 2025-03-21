@@ -2,7 +2,6 @@ package bor
 
 import (
 	"encoding/binary"
-	"fmt"
 	"math"
 	"math/rand"
 
@@ -15,9 +14,6 @@ import (
 
 // XXXSelectNextProducers selects producers for next span by converting power to tickets
 func XXXSelectNextProducers(blkHash common.Hash, spanEligibleVals []hmTypes.Validator, producerCount uint64) (selectedIDs []uint64, err error) {
-	if producerCount > math.MaxInt64 {
-		return nil, fmt.Errorf("producer count value out of range for int: %d", producerCount)
-	}
 	if len(spanEligibleVals) <= int(producerCount) {
 		for _, val := range spanEligibleVals {
 			selectedIDs = append(selectedIDs, uint64(val.ID))
@@ -59,9 +55,6 @@ func convertToSlots(vals []hmTypes.Validator) (validatorIndices []uint64) {
 func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.Validator, producerCount uint64) ([]uint64, error) {
 	selectedProducers := make([]uint64, 0)
 
-	if producerCount > math.MaxInt64 {
-		return nil, fmt.Errorf("producer count value out of range for int: %d", producerCount)
-	}
 	if len(spanEligibleValidators) <= int(producerCount) {
 		for _, validator := range spanEligibleValidators {
 			selectedProducers = append(selectedProducers, uint64(validator.ID))
@@ -72,21 +65,12 @@ func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.V
 
 	// extract seed from hash
 	seedBytes := helper.ToBytes32(blkHash.Bytes()[:32])
-
-	seedUint64 := binary.BigEndian.Uint64(seedBytes[:])
-	if seedUint64 > math.MaxInt64 {
-		return nil, fmt.Errorf("seed value out of range for int64: %d", seedUint64)
-	}
-	seed := int64(seedUint64)
-	// nolint: staticcheck
+	seed := int64(binary.BigEndian.Uint64(seedBytes[:]))
 	rand.Seed(seed)
 
 	// weighted range from validators' voting power
 	votingPower := make([]uint64, len(spanEligibleValidators))
 	for idx, validator := range spanEligibleValidators {
-		if validator.VotingPower < 0 {
-			return nil, fmt.Errorf("voting power value is negative: %d", validator.VotingPower)
-		}
 		votingPower[idx] = uint64(validator.VotingPower)
 	}
 
