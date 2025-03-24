@@ -1037,7 +1037,6 @@ func populateABIs(contractCallerObj *ContractCaller) error {
 				return err
 			} else {
 				ContractsABIsMap[contractABI] = ccAbi
-				Logger.Debug("ABI initialized", "name", contractABI)
 			}
 		} else {
 			// use cached abi
