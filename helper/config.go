@@ -244,7 +244,7 @@ var jorvikHeight int64 = 0
 
 var danelawHeight int64 = 0
 
-var apocalypseHeight int64 = 200
+var apocalypseHeight int64 = 100
 
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
