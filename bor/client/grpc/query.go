@@ -110,7 +110,7 @@ func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID int64) (*ethT
 		ParentHash: protoutil.ConvertH256ToHash(res.Block.Header.ParentHash),
 		Time:       res.Block.Header.Time,
 	}
-	return ethTypes.NewBlock(&header, nil, nil, nil, nil), nil
+	return ethTypes.NewBlock(&header, nil, nil, nil), nil
 }
 
 func (h *BorGRPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
