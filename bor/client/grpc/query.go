@@ -3,11 +3,11 @@ package grpc
 import (
 	"context"
 	"fmt"
+	"math"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
-	"github.com/ethereum/go-ethereum/common/math"
 	ethTypes "github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/ethereum/go-ethereum/rpc"
@@ -57,7 +57,6 @@ func (h *BorGRPCClient) GetVoteOnHash(ctx context.Context, startBlock uint64, en
 }
 
 func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID int64) (*ethTypes.Header, error) {
-
 	if blockID > math.MaxInt64 {
 		return nil, fmt.Errorf("blockID too large: %d", blockID)
 	}
@@ -87,7 +86,6 @@ func (h *BorGRPCClient) HeaderByNumber(ctx context.Context, blockID int64) (*eth
 }
 
 func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID int64) (*ethTypes.Block, error) {
-
 	if blockID > math.MaxInt64 {
 		return nil, fmt.Errorf("blockID too large: %d", blockID)
 	}
@@ -116,7 +114,6 @@ func (h *BorGRPCClient) BlockByNumber(ctx context.Context, blockID int64) (*ethT
 }
 
 func (h *BorGRPCClient) TransactionReceipt(ctx context.Context, txHash common.Hash) (*ethTypes.Receipt, error) {
-
 	req := &proto.ReceiptRequest{
 		Hash: protoutil.ConvertHashToH256(txHash),
 	}
