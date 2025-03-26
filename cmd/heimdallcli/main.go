@@ -214,6 +214,7 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 
 			// create chain id
+			// TODO HV2: this is not deterministic
 			chainID := viper.GetString(client.FlagChainID)
 			if chainID == "" {
 				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
@@ -338,6 +339,7 @@ func generateMarshalledAppState(happ *app.HeimdallApp, chainID string, maxNextGe
 	}
 
 	consensusParams := tmTypes.DefaultConsensusParams()
+	// TODO HV2: this is not deterministic
 	genesisTime := time.Now().UTC().Format(time.RFC3339Nano)
 
 	consensusParamsData, err := tmTypes.GetCodec().MarshalJSON(consensusParams)
