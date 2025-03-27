@@ -33,7 +33,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -356,7 +355,6 @@ func generateMarshalledAppState(happ *app.HeimdallApp, chainID, genesisTime stri
 	}
 
 	consensusParams := tmTypes.DefaultConsensusParams()
-	genesisTime := time.Now().UTC().Format(time.RFC3339Nano)
 
 	consensusParamsData, err := tmTypes.GetCodec().MarshalJSON(consensusParams)
 	if err != nil {
