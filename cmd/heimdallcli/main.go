@@ -209,16 +209,10 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 		RunE: func(_ *cobra.Command, _ []string) error {
 
 			config := ctx.Config
-			if viper.GetString(cli.HomeFlag) == "" {
-				panic("home flag is not set")
-			}
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 
 			// create chain id and genesis time
 			chainID := viper.GetString(client.FlagChainID)
-			if chainID == "" {
-				panic("chain-id flag is not set")
-			}
 
 			genesisTimes := map[string]string{
 				"heimdall-137":   "2020-05-30T04:28:03.177054Z",    // mainnet
