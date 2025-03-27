@@ -1,7 +1,6 @@
 package util
 
 import (
-	"fmt"
 	"log"
 	"sync"
 
@@ -17,8 +16,6 @@ func GetBridgeDBInstance(filePath string) *leveldb.DB {
 	bridgeDBOnce.Do(func() {
 		var err error
 		bridgeDB, err = leveldb.OpenFile(filePath, nil)
-		fmt.Println(">>>>>>>>>>>>>>>>> bridgeDB filePath", filePath)
-		fmt.Println(">>>>>>>>>>>>>>>>> bridgeDB", bridgeDB)
 		if err != nil {
 			log.Fatalln("Error in Bor Opening Database", err.Error())
 		}
