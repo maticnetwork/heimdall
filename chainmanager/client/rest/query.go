@@ -23,6 +23,11 @@ type chainManagerParams struct {
 	Result chainManager `json:"result"`
 }
 
+type haltHeightResponse struct {
+	Height     string `json:"height"`
+	HaltHeight int64  `json:"result"`
+}
+
 type chainManager struct {
 	MainChainConfirmation int `json:"mainchain_tx_confirmations"`
 
@@ -56,6 +61,29 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", chainTypes.QuerierRoute, chainTypes.QueryParams)
+
+		res, height, err := cliCtx.QueryWithData(route, nil)
+		if err != nil {
+			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		cliCtx = cliCtx.WithHeight(height)
+		rest.PostProcessResponse(w, cliCtx, res)
+	}
+}
+
+// swagger:route GET /chainmanager/halt-height chain-manager
+// It returns the halt-height
+// HTTP request handler to query the halt height
+func haltHeightHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
+		if !ok {
+			return
+		}
+
+		route := fmt.Sprintf("custom/%s/%s", chainTypes.QuerierRoute, chainTypes.HaltHeight)
 
 		res, height, err := cliCtx.QueryWithData(route, nil)
 		if err != nil {

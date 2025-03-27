@@ -6,6 +6,7 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 
 	"github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // NewQuerier creates a querier for auth REST endpoints
@@ -14,6 +15,8 @@ func NewQuerier(keeper Keeper) sdk.Querier {
 		switch path[0] {
 		case types.QueryParams:
 			return queryParams(ctx, req, keeper)
+		case types.HaltHeight:
+			return queryHaltHeight()
 		default:
 			return nil, sdk.ErrUnknownRequest("unknown chainmanager query endpoint")
 		}
@@ -26,5 +29,13 @@ func queryParams(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, s
 		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
 	}
 
+	return bz, nil
+}
+
+func queryHaltHeight() ([]byte, sdk.Error) {
+	bz, err := jsoniter.ConfigFastest.Marshal(helper.GetApocalypseHeight())
+	if err != nil {
+		return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+	}
 	return bz, nil
 }
