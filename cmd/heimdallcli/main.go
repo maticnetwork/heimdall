@@ -265,6 +265,10 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 		"heimdall-80002 (for amoy), "+
 		"devnet (for any local devnet)")
 
+	// Make flags required
+	_ = cmd.MarkFlagRequired(cli.HomeFlag)
+	_ = cmd.MarkFlagRequired(client.FlagChainID)
+
 	return cmd
 }
 
