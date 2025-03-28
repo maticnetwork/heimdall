@@ -127,19 +127,6 @@ func handleQuerySpanList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 }
 
 func handleQueryLatestSpan(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
-	var defaultSpan hmTypes.Span
-
-	spans := keeper.GetAllSpans(ctx)
-	if len(spans) == 0 {
-		// json record
-		bz, err := jsoniter.ConfigFastest.Marshal(defaultSpan)
-		if err != nil {
-			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
-		}
-
-		return bz, nil
-	}
-
 	// explicitly fetch the last span
 	span, err := keeper.GetLastSpan(ctx)
 	if err != nil {
