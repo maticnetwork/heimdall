@@ -129,8 +129,7 @@ func handleQuerySpanList(ctx sdk.Context, req abci.RequestQuery, keeper Keeper) 
 func handleQueryLatestSpan(ctx sdk.Context, _ abci.RequestQuery, keeper Keeper) ([]byte, sdk.Error) {
 	var defaultSpan hmTypes.Span
 
-	spans := keeper.GetAllSpans(ctx)
-	if len(spans) == 0 {
+	if !keeper.HasSpan(ctx, 1) {
 		// json record
 		bz, err := jsoniter.ConfigFastest.Marshal(defaultSpan)
 		if err != nil {
