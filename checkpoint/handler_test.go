@@ -73,7 +73,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpoint() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -230,7 +230,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAfterBufferTimeOut() {
 	require.NoError(t, err)
 
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -276,7 +276,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointExistInBuffer() {
 	err := topupKeeper.AddDividendAccount(ctx, dividendAccount)
 	require.NoError(t, err)
 
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -317,7 +317,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointAck() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -410,7 +410,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAck() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 4, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 4, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -477,7 +477,7 @@ func (suite *HandlerTestSuite) TestHandleMsgCheckpointNoAckBeforeBufferTimeout()
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)

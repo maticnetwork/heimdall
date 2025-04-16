@@ -34,7 +34,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 
 	// check valid milestone
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.MilestoneIncrementAccum(ctx, 1)
 
 	lastMilestone, err := keeper.GetLastMilestone(ctx)
@@ -221,7 +221,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 	start := uint64(0)
 	milestoneLength := helper.MilestoneLength
 
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastMilestone, err := keeper.GetLastMilestone(ctx)
@@ -294,7 +294,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneTimeout() {
 
 	proposer := hmTypes.HeimdallAddress{}
 
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 
 	suite.Run("Last milestone not found", func() {
 		msgMilestoneTimeout := types.NewMsgMilestoneTimeout(

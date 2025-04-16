@@ -334,7 +334,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpoint() {
 
 	// check valid checkpoint
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastCheckpoint, err := keeper.GetLastCheckpoint(ctx)
@@ -418,7 +418,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgCheckpointAck() {
 	params := keeper.GetParams(ctx)
 	header, _ := chSim.GenRandCheckpoint(start, maxSize, params.MaxCheckpointLength)
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10, 0)
 	app.StakingKeeper.IncrementAccum(ctx, 1)
 
 	// send ack

@@ -122,36 +122,13 @@ func HandleMsgStakeUpdate(ctx sdk.Context, msg types.MsgStakeUpdate, k Keeper, c
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// pull validator from store
-	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
-	if !ok {
-		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
-		return hmCommon.ErrNoValidator(k.Codespace()).Result()
-	}
-
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
-	}
-
 	// set validator amount
 	_, err := helper.GetPowerFromAmount(msg.NewAmount.BigInt())
 	if err != nil {
 		return hmCommon.ErrInvalidMsg(k.Codespace(), fmt.Sprintf("Invalid newamount %v for validator %v", msg.NewAmount, msg.ID)).Result()
 	}
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeStakeUpdate,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
-		),
-	})
-
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}
+	return sdk.Result{} // Return empty result, success determined in PostHandle
 }
 
 // HandleMsgSignerUpdate handles signer update message
@@ -192,24 +169,8 @@ func HandleMsgSignerUpdate(ctx sdk.Context, msg types.MsgSignerUpdate, k Keeper,
 		return hmCommon.ErrNoSignerChange(k.Codespace()).Result()
 	}
 
-	// check nonce validity
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
-	}
+	return sdk.Result{} // Return empty result, success determined in PostHandle
 
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeSignerUpdate,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
-		),
-	})
-
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}
 }
 
 // HandleMsgValidatorExit handle msg validator exit
@@ -246,22 +207,5 @@ func HandleMsgValidatorExit(ctx sdk.Context, msg types.MsgValidatorExit, k Keepe
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	// check nonce validity
-	if msg.Nonce != validator.Nonce+1 {
-		k.Logger(ctx).Error("Incorrect validator nonce")
-		return hmCommon.ErrNonce(k.Codespace()).Result()
-	}
-
-	ctx.EventManager().EmitEvents(sdk.Events{
-		sdk.NewEvent(
-			types.EventTypeValidatorExit,
-			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
-			sdk.NewAttribute(types.AttributeKeyValidatorID, strconv.FormatUint(validator.ID.Uint64(), 10)),
-			sdk.NewAttribute(types.AttributeKeyValidatorNonce, strconv.FormatUint(msg.Nonce, 10)),
-		),
-	})
-
-	return sdk.Result{
-		Events: ctx.EventManager().Events(),
-	}
+	return sdk.Result{} // Return empty result, success determined in PostHandle
 }

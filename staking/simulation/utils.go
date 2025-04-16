@@ -11,7 +11,7 @@ import (
 )
 
 // GenRandomVal generate random validators
-func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64) (validators []types.Validator) {
+func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, randomise bool, startID uint64, nonce uint64) (validators []types.Validator) {
 	for i := 0; i < count; i++ {
 		privKey1 := secp256k1.GenPrivKey()
 		pubkey := types.NewPubKey(util.AppendPrefix(privKey1.PubKey().Bytes()))
@@ -29,6 +29,7 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 			Signer:           types.HexToHeimdallAddress(pubkey.Address().String()),
 			PubKey:           pubkey,
 			ProposerPriority: 0,
+			Nonce:            nonce,
 		}
 		validators = append(validators, newVal)
 	}

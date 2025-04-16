@@ -267,7 +267,7 @@ func (suite *QuerierTestSuite) TestQueryCheckpointList() {
 
 func (suite *QuerierTestSuite) TestQueryNextCheckpoint() {
 	t, app, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
-	chSim.LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, app.StakingKeeper, ctx, false, 10, 0)
 
 	dividendAccount := hmTypes.DividendAccount{
 		User:      hmTypes.HexToHeimdallAddress("123"),
