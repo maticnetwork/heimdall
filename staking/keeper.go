@@ -3,6 +3,8 @@ package staking
 import (
 	"encoding/hex"
 	"errors"
+	"fmt"
+	"math"
 
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -259,7 +261,7 @@ func (k *Keeper) UpdateSigner(ctx sdk.Context, newSigner hmTypes.HeimdallAddress
 	validator.VotingPower = 0
 
 	// update validator
-	if err := k.AddValidator(ctx, validator); err != nil {
+	if err = k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("UpdateSigner | AddValidator", "error", err)
 	}
 
@@ -471,6 +473,9 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 
 	updatedPower := int64(0)
 	// calculate power after slash
+	if valSlashingInfo.SlashedAmount > math.MaxInt64 {
+		return fmt.Errorf("slashed amount value out of range for int64: %d", valSlashingInfo.SlashedAmount)
+	}
 	if validator.VotingPower >= int64(valSlashingInfo.SlashedAmount) {
 		updatedPower = validator.VotingPower - int64(valSlashingInfo.SlashedAmount)
 	}

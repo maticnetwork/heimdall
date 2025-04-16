@@ -1,3 +1,4 @@
+//nolint:gosec
 package simulation
 
 import (
@@ -32,12 +33,12 @@ func GenRandCheckpoint(start uint64, headerSize uint64, maxCheckpointLength uint
 }
 
 // LoadValidatorSet loads validator set
-func LoadValidatorSet(t *testing.T, count int, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int) types.ValidatorSet {
+func LoadValidatorSet(t *testing.T, count int, keeper staking.Keeper, ctx sdk.Context, randomise bool, timeAlive int, nonce uint64) types.ValidatorSet {
 	t.Helper()
 
 	var valSet types.ValidatorSet
 
-	validators := stakingSim.GenRandomVal(count, 0, 10, uint64(timeAlive), randomise, 1)
+	validators := stakingSim.GenRandomVal(count, 0, 10, uint64(timeAlive), randomise, 1, nonce)
 	for _, validator := range validators {
 		err := keeper.AddValidator(ctx, validator)
 		require.NoError(t, err, "Unable to set validator, Error: %v", err)

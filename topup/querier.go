@@ -127,17 +127,17 @@ func handleQueryAccountProof(ctx sdk.Context, req abci.RequestQuery, keeper Keep
 
 	if bytes.Equal(accountRootOnChain[:], currentStateAccountRoot) {
 		// Calculate new account root hash
-		merkleProof, index, err := checkpointTypes.GetAccountProof(dividendAccounts, params.UserAddress)
-		if err != nil {
-			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could fetch account proof", err.Error()))
+		merkleProof, index, e := checkpointTypes.GetAccountProof(dividendAccounts, params.UserAddress)
+		if e != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could fetch account proof", e.Error()))
 		}
 
 		accountProof := hmTypes.NewDividendAccountProof(params.UserAddress, merkleProof, index)
 
 		// json record
-		bz, err := jsoniter.ConfigFastest.Marshal(accountProof)
-		if err != nil {
-			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", err.Error()))
+		bz, e := jsoniter.ConfigFastest.Marshal(accountProof)
+		if e != nil {
+			return nil, sdk.ErrInternal(sdk.AppendMsgToErr("could not marshal result to JSON", e.Error()))
 		}
 
 		return bz, nil

@@ -4,16 +4,6 @@ run:
   go: '1.22'
   timeout: 20m
   tests: true
-  # default is true. Enables skipping of directories:
-  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
-  skip-dirs-use-default: true
-  skip-dirs:
-    - slashing
-    - gov
-    - params
-  skip-files:
-    - gen_.*.go
-    - .*_gen.go
 
 linters:
   enable:
@@ -29,7 +19,6 @@ linters:
     - errchkjson
     - errname
     # - exhaustive
-    - exportloopref
     # - gocognit
     - gofmt
     # - gomnd
@@ -129,7 +118,6 @@ linters-settings:
       - fieldalignment
       - shadow
       - unsafeptr
-    check-shadowing: true
     enable-all: true
     settings:
       printf:
@@ -143,6 +131,16 @@ linters-settings:
           - (github.com/ethereum/go-ethereum/log.Logger).Crit
 
 issues:
+  exclude-dirs:
+    - slashing
+    - gov
+    - params
+  exclude-files:
+    - gen_.*.go
+    - .*_gen.go
+  # default is true. Enables skipping of directories:
+  #   vendor$, third_party$, testdata$, examples$, Godeps$, builtin$
+  exclude-dirs-use-default: true
   exclude-rules:
     # Exclude some linters from running on tests files.
     - path: test\.go
@@ -157,5 +155,4 @@ issues:
         - prealloc
   max-issues-per-linter: 0
   max-same-issues: 0
-  #new: true
-  new-from-rev: origin/master
+  new-from-rev: origin/develop

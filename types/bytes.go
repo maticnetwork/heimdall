@@ -82,15 +82,15 @@ func (bz HexBytes) String() string {
 	return hexutil.Encode(bz)
 }
 
-// Format format bytes
+// Format formats bytes
 func (bz HexBytes) Format(s fmt.State, verb rune) {
 	switch verb {
 	case 's':
-		s.Write([]byte(bz.String()))
+		_, _ = s.Write([]byte(bz.String()))
 	case 'p':
-		s.Write([]byte(fmt.Sprintf("%p", bz)))
+		_, _ = s.Write([]byte(fmt.Sprintf("%p", bz)))
 	default:
-		s.Write([]byte(fmt.Sprintf("%X", bz.Bytes())))
+		_, _ = s.Write([]byte(fmt.Sprintf("%X", bz.Bytes())))
 	}
 }
 

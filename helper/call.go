@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"math/big"
 	"strings"
 	"time"
@@ -358,13 +359,18 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 
 // GetLastChildBlock fetch current child block
 func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
-	GetLastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
+	lastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootChain contract", "error", err)
 		return 0, err
 	}
 
-	return GetLastChildBlock.Uint64(), nil
+	if lastChildBlock == nil {
+		Logger.Error("Contract returned nil value for lastChildBlock")
+		return 0, fmt.Errorf("contract returned nil value")
+	}
+
+	return lastChildBlock.Uint64(), nil
 }
 
 // CurrentHeaderBlock fetches current header block
@@ -373,6 +379,11 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 	if err != nil {
 		Logger.Error("Could not fetch current header block from rootChain contract", "error", err)
 		return 0, err
+	}
+
+	if currentHeaderBlock == nil {
+		Logger.Error("Contract returned nil value for currentHeaderBlock")
+		return 0, fmt.Errorf("contract returned nil value")
 	}
 
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil
@@ -394,8 +405,11 @@ func (c *ContractCaller) GetBalance(address common.Address) (*big.Int, error) {
 
 // GetValidatorInfo get validator info
 func (c *ContractCaller) GetValidatorInfo(valID types.ValidatorID, stakingInfoInstance *stakinginfo.Stakinginfo) (validator types.Validator, err error) {
-	// amount, startEpoch, endEpoch, signer, status, err := c.StakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
-	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(int64(valID)))
+	if uint64(valID) > uint64(math.MaxInt64) {
+		return validator, fmt.Errorf("ValidatorID value too large to convert to int64: %d", valID)
+	}
+
+	stakerDetails, err := stakingInfoInstance.GetStakerDetails(nil, big.NewInt(0).SetUint64(valID.Uint64()))
 	if err != nil {
 		Logger.Error("Error fetching validator information from stake manager", "validatorId", valID, "error", err)
 		return
@@ -457,7 +471,12 @@ func (c *ContractCaller) GetMainChainBlockTime(ctx context.Context, blockNum uin
 		return time.Time{}, err
 	}
 
-	return time.Unix(int64(latestBlock.Time()), 0), nil
+	blockTime := latestBlock.Time()
+	if blockTime > uint64(math.MaxInt64) {
+		return time.Time{}, fmt.Errorf("block time value too large to convert to int64: %d", blockTime)
+	}
+
+	return time.Unix(int64(blockTime), 0), nil
 }
 
 // GetMaticChainBlock returns child chain block header
@@ -926,8 +945,16 @@ func (c *ContractCaller) GetBlockByNumber(ctx context.Context, blockNumber uint6
 	var err error
 
 	if c.MaticGrpcFlag {
+		if blockNumber > uint64(math.MaxInt64) {
+			Logger.Error("Block number value too large to convert to int64", "blockNumber", blockNumber)
+			return nil
+		}
 		block, err = c.MaticGrpcClient.BlockByNumber(ctx, int64(blockNumber))
 	} else {
+		if blockNumber > uint64(math.MaxInt64) {
+			Logger.Error("Block number value too large to convert to int64", "blockNumber", blockNumber)
+			return nil
+		}
 		block, err = c.MaticChainClient.BlockByNumber(ctx, big.NewInt(int64(blockNumber)))
 	}
 
@@ -974,7 +1001,7 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	ctx, cancel := context.WithTimeout(context.Background(), c.MainChainTimeout)
 	defer cancel()
 
-	mainChainClient := GetMainClient()
+	mainChainClient = GetMainClient()
 
 	transaction, isPending, err := mainChainClient.TransactionByHash(ctx, txHash)
 	if err != nil {

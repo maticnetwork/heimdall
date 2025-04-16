@@ -34,7 +34,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 
 	// check valid milestone
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.MilestoneIncrementAccum(ctx, 1)
 
 	lastMilestone, err := keeper.GetLastMilestone(ctx)
@@ -156,13 +156,13 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestone() {
 	//Test5- When milestone is not in continuity
 	suite.Run("Milestone not in countinuity", func() {
 
-		err := keeper.AddMilestone(ctx, header)
+		err = keeper.AddMilestone(ctx, header)
 		require.NoError(t, err)
 
 		_, err = keeper.GetLastMilestone(ctx)
 		require.NoError(t, err)
 
-		lastMilestone, err := keeper.GetLastMilestone(ctx)
+		lastMilestone, err = keeper.GetLastMilestone(ctx)
 		if err == nil {
 			// pass wrong start
 			start = start + lastMilestone.EndBlock + 2 //Start block is 2 more than last milestone's end block
@@ -221,7 +221,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneExistInStore() {
 	start := uint64(0)
 	milestoneLength := helper.MilestoneLength
 
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastMilestone, err := keeper.GetLastMilestone(ctx)
@@ -294,7 +294,7 @@ func (suite *HandlerTestSuite) TestHandleMsgMilestoneTimeout() {
 
 	proposer := hmTypes.HeimdallAddress{}
 
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 
 	suite.Run("Last milestone not found", func() {
 		msgMilestoneTimeout := types.NewMsgMilestoneTimeout(

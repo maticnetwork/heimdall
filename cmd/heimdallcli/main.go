@@ -33,7 +33,6 @@ import (
 	abci "github.com/tendermint/tendermint/abci/types"
 	"github.com/tendermint/tendermint/crypto/secp256k1"
 	"github.com/tendermint/tendermint/libs/cli"
-	"github.com/tendermint/tendermint/libs/common"
 	"github.com/tendermint/tendermint/libs/log"
 	"github.com/tendermint/tendermint/privval"
 	tmTypes "github.com/tendermint/tendermint/types"
@@ -205,18 +204,26 @@ func convertHexToAddressCmd(_ *codec.Codec) *cobra.Command {
 func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "export-heimdall",
-		Short: "Export genesis file with state-dump",
+		Short: "Export genesis file with state-dump. It expects --home and --chain-id flags to be set",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 
-			// cliCtx := context.NewCLIContext().WithCodec(cdc)
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 
-			// create chain id
+			// create chain id and genesis time
 			chainID := viper.GetString(client.FlagChainID)
-			if chainID == "" {
-				chainID = fmt.Sprintf("heimdall-%v", common.RandStr(6))
+
+			genesisTimes := map[string]string{
+				"heimdall-137":   "2020-05-30T04:28:03.177054Z",    // mainnet
+				"heimdall-80001": "2020-06-04T10:47:20.806665Z",    // mumbai
+				"heimdall-80002": "2023-11-06T06:41:35.410487141Z", // amoy
+				"devnet":         "2025-01-01T00:00:00.000000000Z", // local devnet
+			}
+
+			genesisTime, ok := genesisTimes[chainID]
+			if !ok {
+				panic("invalid chain-id, it must be one of: heimdall-137 (mainnet), heimdall-80001 (mumbai), heimdall-80002 (amoy), devnet (local)")
 			}
 
 			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
@@ -235,7 +242,7 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 			}
 			defer file.Close()
 
-			if err := generateMarshalledAppState(happ, chainID, 1000, file); err != nil {
+			if err := generateMarshalledAppState(happ, chainID, genesisTime, 1000, file); err != nil {
 				panic(err)
 			}
 
@@ -246,13 +253,21 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	}
 	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "Node's home directory")
 	cmd.Flags().String(helper.FlagClientHome, helper.DefaultCLIHome, "Client's home directory")
-	cmd.Flags().String(client.FlagChainID, "", "Genesis file chain-id, if left blank will be randomly created")
+	cmd.Flags().String(client.FlagChainID, "devnet", "Genesis file chain-id, it can be "+
+		"heimdall-137 (for mainnet), "+
+		"heimdall-80001 (for mumbai), "+
+		"heimdall-80002 (for amoy), "+
+		"devnet (for any local devnet)")
+
+	// Make flags required
+	_ = cmd.MarkFlagRequired(cli.HomeFlag)
+	_ = cmd.MarkFlagRequired(client.FlagChainID)
 
 	return cmd
 }
 
 // generateMarshalledAppState writes the genesis doc with app state directly to a file to minimize memory usage.
-func generateMarshalledAppState(happ *app.HeimdallApp, chainID string, maxNextGenesisItems int, w io.Writer) error {
+func generateMarshalledAppState(happ *app.HeimdallApp, chainID, genesisTime string, maxNextGenesisItems int, w io.Writer) error {
 	sdkCtx := happ.NewContext(true, abci.Header{Height: happ.LastBlockHeight()})
 	moduleManager := happ.GetModuleManager()
 
@@ -338,7 +353,6 @@ func generateMarshalledAppState(happ *app.HeimdallApp, chainID string, maxNextGe
 	}
 
 	consensusParams := tmTypes.DefaultConsensusParams()
-	genesisTime := time.Now().UTC().Format(time.RFC3339Nano)
 
 	consensusParamsData, err := tmTypes.GetCodec().MarshalJSON(consensusParams)
 	if err != nil {

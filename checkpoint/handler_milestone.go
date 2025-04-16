@@ -2,6 +2,7 @@ package checkpoint
 
 import (
 	"bytes"
+	"math"
 	"strconv"
 	"time"
 
@@ -56,14 +57,13 @@ func handleMsgMilestone(ctx sdk.Context, msg types.MsgMilestone, k Keeper) sdk.R
 	//Increment the priority in the milestone validator set
 	k.sk.MilestoneIncrementAccum(ctx, 1)
 
-	//
-	//Check for the msg milestone
-	//
-
-	//Calculate the milestone length
+	// Calculate the milestone length
+	if msg.EndBlock > math.MaxInt64 || msg.StartBlock > math.MaxInt64 {
+		return common.ErrMilestoneInvalid("Block number exceeds int64 max value").Result()
+	}
 	msgMilestoneLength := int64(msg.EndBlock) - int64(msg.StartBlock) + 1
 
-	//check for the minimum length of milestone
+	// Check for the minimum length of milestone
 	if msgMilestoneLength < int64(milestoneLength) {
 		logger.Error("Length of the milestone should be greater than configured minimum milestone length",
 			"StartBlock", msg.StartBlock,
@@ -131,6 +131,9 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k K
 		return common.ErrNoMilestoneFound(k.Codespace()).Result()
 	}
 
+	if lastMilestone.TimeStamp > math.MaxInt64 {
+		return common.ErrMilestoneInvalid("Milestone timestamp exceeds int64 max value").Result()
+	}
 	lastMilestoneTime := time.Unix(int64(lastMilestone.TimeStamp), 0)
 
 	// If last milestone happens before milestone buffer time -- thrown an error
@@ -144,6 +147,9 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k K
 
 	// Check last no ack - prevents repetitive no-ack
 	lastMilestoneTimeout := k.GetLastMilestoneTimeout(ctx)
+	if lastMilestoneTimeout > math.MaxInt64 {
+		return common.ErrMilestoneInvalid("Milestone timeout exceeds int64 max value").Result()
+	}
 	lastMilestoneTimeoutTime := time.Unix(int64(lastMilestoneTimeout), 0)
 
 	if lastMilestoneTimeoutTime.After(currentTime) || (currentTime.Sub(lastMilestoneTimeoutTime) < bufferTime) {
@@ -154,6 +160,7 @@ func handleMsgMilestoneTimeout(ctx sdk.Context, _ types.MsgMilestoneTimeout, k K
 	}
 
 	// Set new last milestone-timeout
+	//nolint:gosec
 	newLastMilestoneTimeout := uint64(currentTime.Unix())
 	k.SetLastMilestoneTimeout(ctx, newLastMilestoneTimeout)
 	logger.Debug("Last milestone-timeout set", "lastMilestoneTimeout", newLastMilestoneTimeout)

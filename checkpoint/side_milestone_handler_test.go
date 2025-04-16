@@ -190,7 +190,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgMilestone() {
 
 	// check valid milestone
 	// generate proposer for validator set
-	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10)
+	chSim.LoadValidatorSet(t, 2, stakingKeeper, ctx, false, 10, 0)
 	stakingKeeper.IncrementAccum(ctx, 1)
 
 	lastMilestone, err := keeper.GetLastMilestone(ctx)

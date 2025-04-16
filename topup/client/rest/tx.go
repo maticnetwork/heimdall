@@ -132,7 +132,7 @@ type BaseReq struct {
 // It returns the prepared msg for topup fee
 // responses:
 //   200: topupFeeResponse
-// TopupHandlerFn - http request handler to topup coins to a address.
+// TopupHandlerFn - http request handler to topup coins to an address.
 func TopupHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req TopupReq
@@ -198,7 +198,7 @@ type topupWithdrawInput struct {
 // It returns the prepared msg for topup withdraw
 // responses:
 //   200: topupWithdrawResponse
-// WithdrawFeeHandlerFn - http request handler to withdraw fee coins from a address.
+// WithdrawFeeHandlerFn - http request handler to withdraw fee coins from an address.
 func WithdrawFeeHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var req WithdrawFeeReq

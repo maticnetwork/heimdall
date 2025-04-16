@@ -330,7 +330,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var spanDuration uint64
-			if err := jsoniter.Unmarshal(res, &spanDuration); err != nil {
+			if err = jsoniter.Unmarshal(res, &spanDuration); err != nil {
 				return err
 			}
 
@@ -349,7 +349,7 @@ func GetPreparedProposeSpan(cdc *codec.Codec) *cobra.Command {
 			}
 
 			var seedResponse types.QuerySpanSeedResponse
-			if err := jsoniter.Unmarshal(res, &seedResponse); err != nil {
+			if err = jsoniter.Unmarshal(res, &seedResponse); err != nil {
 				return err
 			}
 

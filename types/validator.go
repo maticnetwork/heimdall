@@ -169,9 +169,16 @@ func (v *Validator) UpdatedAt() string {
 
 // MinimalVal returns block number of last validator update
 func (v *Validator) MinimalVal() MinimalVal {
+	var votingPower uint64
+	if v.VotingPower < 0 {
+		panic(fmt.Sprintf("VotingPower cannot be negative: %d", v.VotingPower))
+	} else {
+		votingPower = uint64(v.VotingPower)
+	}
+
 	return MinimalVal{
 		ID:          v.ID,
-		VotingPower: uint64(v.VotingPower),
+		VotingPower: votingPower,
 		Signer:      v.Signer,
 	}
 }
@@ -193,7 +200,10 @@ func (valID ValidatorID) Bytes() []byte {
 
 // Int converts validator ID to int
 func (valID ValidatorID) Int() int {
-	return int(valID)
+	if uint64(valID) > uint64(int(^uint(0)>>1)) {
+		panic(fmt.Sprintf("ValidatorID value too large to convert to int: %d", valID))
+	}
+	return valID.Int()
 }
 
 // Uint64 converts validator ID to int

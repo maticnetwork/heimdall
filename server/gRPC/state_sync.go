@@ -38,13 +38,13 @@ func (h *HeimdallGRPCServer) StateSyncEvents(req *proto.StateSyncEventsRequest, 
 		result, err := helper.FetchFromAPI(cliCtx, addParamsToEndpoint(helper.GetHeimdallServerEndpoint(eventRecordList), params))
 		if err != nil {
 			logger.Error("Error while fetching event records", "error", err)
-			return status.Errorf(codes.Internal, err.Error())
+			return status.Error(codes.Internal, err.Error())
 		}
 
 		eventRecords, err := parseEvents(result.Result)
 		if err != nil {
 			logger.Error("Error while parsing event records", "error", err)
-			return status.Errorf(codes.Internal, err.Error())
+			return status.Error(codes.Internal, err.Error())
 		}
 
 		if len(eventRecords) == 0 {
@@ -57,7 +57,7 @@ func (h *HeimdallGRPCServer) StateSyncEvents(req *proto.StateSyncEventsRequest, 
 		})
 		if err != nil {
 			logger.Error("Error while sending event record", "error", err)
-			return status.Errorf(codes.Internal, err.Error())
+			return status.Error(codes.Internal, err.Error())
 		}
 
 		fromId += req.Limit

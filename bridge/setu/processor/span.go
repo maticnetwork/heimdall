@@ -88,9 +88,9 @@ func (sp *SpanProcessor) checkAndPropose() {
 	}
 
 	if nodeStatus.SyncInfo.LatestBlockHeight >= helper.GetDanelawHeight() {
-		latestBlock, err := sp.contractConnector.GetMaticChainBlock(nil)
-		if err != nil {
-			sp.Logger.Error("Error fetching current child block", "error", err)
+		latestBlock, e := sp.contractConnector.GetMaticChainBlock(nil)
+		if e != nil {
+			sp.Logger.Error("Error fetching current child block", "error", e)
 			return
 		}
 

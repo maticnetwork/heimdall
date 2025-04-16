@@ -1,3 +1,4 @@
+//nolint:govet
 package main
 
 import (
@@ -37,7 +38,7 @@ func TestModulesStreamedGenesisExport(t *testing.T) {
 
 	var buf bytes.Buffer
 
-	err = generateMarshalledAppState(happ, "test-chain", 2, &buf)
+	err = generateMarshalledAppState(happ, "test-chain", "", 2, &buf)
 	require.NoError(t, err)
 
 	marshaledAppState := buf.Bytes()

@@ -81,8 +81,8 @@ func GenRandomVal(count int, startBlock uint64, power int64, timeAlive uint64, r
 	return
 }
 
-func generateRandNumber(max int64) uint64 {
-	nBig, err := rand.Int(rand.Reader, big.NewInt(max))
+func generateRandNumber(maxV int64) uint64 {
+	nBig, err := rand.Int(rand.Reader, big.NewInt(maxV))
 	if err != nil {
 		return 1
 	}

@@ -5,6 +5,7 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash"
+	"math"
 	"sync"
 )
 
@@ -74,6 +75,10 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		ph := sha256Hash(buf[:pivotViewSize])
 		pivot := FromBytes8(ph[:8]) % listSize
 		mirror := (pivot + 1) >> 1
+		if pivot>>8 > math.MaxUint32 {
+			return nil, fmt.Errorf("pivot value out of range for uint32: %d", pivot>>8)
+		}
+		//nolint:gosec
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(pivot>>8))
 		source := sha256Hash(buf)
 
@@ -85,6 +90,10 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 		// Now repeat, but for the part after the pivot.
 		mirror = (pivot + listSize + 1) >> 1
 		end := listSize - 1
+		if end>>8 > math.MaxUint32 {
+			return nil, fmt.Errorf("end value out of range for uint32: %d", end>>8)
+		}
+		//nolint:gosec
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(end>>8))
 		source = sha256Hash(buf)
 
@@ -114,6 +123,7 @@ func innerShuffleList(input []uint64, seed [32]byte, shuffle bool) ([]uint64, er
 func swapOrNot(buf []byte, byteV byte, i uint64, input []uint64, j uint64, source [32]byte) (byte, [32]byte) {
 	if j&0xff == 0xff {
 		// just overwrite the last part of the buffer, reuse the start (seed, round)
+		//nolint:gosec
 		binary.LittleEndian.PutUint32(buf[pivotViewSize:], uint32(j>>8))
 		source = sha256Hash(buf)
 	}

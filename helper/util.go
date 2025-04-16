@@ -385,9 +385,9 @@ func GetSignedTxBytes(cliCtx context.CLIContext,
 	}
 
 	if !cliCtx.SkipConfirm {
-		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
-		if err != nil {
-			return nil, err
+		stdSignMsg, e := txBldr.BuildSignMsg(msgs)
+		if e != nil {
+			return nil, e
 		}
 
 		var json []byte
@@ -404,10 +404,10 @@ func GetSignedTxBytes(cliCtx context.CLIContext,
 
 		buf := bufio.NewReader(os.Stdin)
 
-		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
-		if err != nil || !ok {
+		ok, e := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if e != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return nil, err
+			return nil, e
 		}
 	}
 
@@ -436,9 +436,9 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 	}
 
 	if !cliCtx.SkipConfirm {
-		stdSignMsg, err := txBldr.BuildSignMsg(msgs)
-		if err != nil {
-			return nil, err
+		stdSignMsg, e := txBldr.BuildSignMsg(msgs)
+		if e != nil {
+			return nil, e
 		}
 
 		var json []byte
@@ -455,10 +455,10 @@ func GetSignedTxBytesWithCLI(cliCtx context.CLIContext, txBldr authTypes.TxBuild
 
 		buf := bufio.NewReader(os.Stdin)
 
-		ok, err := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
-		if err != nil || !ok {
+		ok, e := input.GetConfirmation("confirm transaction before signing and broadcasting", buf)
+		if e != nil || !ok {
 			_, _ = fmt.Fprintf(os.Stderr, "%s\n", "cancelled transaction")
-			return nil, err
+			return nil, e
 		}
 	}
 
@@ -725,7 +725,7 @@ func getSplitPoint(length int) int {
 	uLength := uint(length)
 	bitlen := bits.Len(uLength)
 
-	k := 1 << uint(bitlen-1)
+	k := 1 << (bitlen - 1)
 	if k == length {
 		k >>= 1
 	}

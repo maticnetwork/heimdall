@@ -470,17 +470,18 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorJoin() {
 func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := suite.app.StakingKeeper
+	nonce := big.NewInt(5)
+
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, nonce.Uint64()-1)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	oldSigner := oldValSet.Validators[0]
-	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1, nonce.Uint64()-1)
 	newSigner[0].ID = oldSigner.ID
 	newSigner[0].VotingPower = oldSigner.VotingPower
 	chainParams := app.ChainKeeper.GetParams(ctx)
 	blockNumber := big.NewInt(10)
-	nonce := big.NewInt(5)
 
 	// gen msg
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
@@ -649,14 +650,15 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgSignerUpdate() {
 func (suite *SideHandlerTestSuite) TestSideHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
+	nonce := big.NewInt(9)
+
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, nonce.Uint64()-1)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	chainParams := app.ChainKeeper.GetParams(ctx)
 	logIndex := uint64(0)
 	blockNumber := big.NewInt(10)
-	nonce := big.NewInt(9)
 
 	suite.Run("Success", func() {
 		suite.contractCaller = mocks.IContractCaller{}
@@ -901,7 +903,7 @@ func (suite *SideHandlerTestSuite) TestSideHandleMsgStakeUpdate() {
 	keeper := app.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 
@@ -1158,7 +1160,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 	})
 
 	suite.Run("Replay", func() {
-		blockNumber := big.NewInt(11)
+		blockNumber = big.NewInt(11)
 
 		msgValJoin := types.NewMsgValidatorJoin(
 			hmTypes.BytesToHeimdallAddress(address.Bytes()),
@@ -1204,16 +1206,18 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorJoin() {
 func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
+
+	nonce := big.NewInt(5)
+
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, nonce.Uint64()-1)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	oldSigner := oldValSet.Validators[0]
-	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1, nonce.Uint64()-1)
 	newSigner[0].ID = oldSigner.ID
 	newSigner[0].VotingPower = oldSigner.VotingPower
 	blockNumber := big.NewInt(10)
-	nonce := big.NewInt(5)
 
 	// gen msg
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
@@ -1253,12 +1257,13 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgSignerUpdate() {
 func (suite *SideHandlerTestSuite) TestPostHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
+	nonce := big.NewInt(9)
+
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, nonce.Uint64()-1)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	blockNumber := big.NewInt(10)
-	nonce := big.NewInt(9)
 
 	suite.Run("No Success", func() {
 		validators[0].EndEpoch = 10
@@ -1307,7 +1312,7 @@ func (suite *SideHandlerTestSuite) TestPostHandleMsgStakeUpdate() {
 	keeper := app.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 
