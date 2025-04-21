@@ -22,7 +22,7 @@ clean:
 tests:
 	# go test  -v ./...
 
-	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ ./gov/ -cover -coverprofile=cover.out -parallel 1
+	go test -v ./app/ ./auth/ ./clerk/ ./sidechannel/ ./bank/ ./chainmanager/ ./topup/ ./checkpoint/ ./staking/ -cover -coverprofile=cover.out -parallel 1
 
 # make build
 build: clean

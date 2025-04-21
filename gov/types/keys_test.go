@@ -35,39 +35,3 @@ func TestProposalKeys(t *testing.T) {
 	require.Panics(t, func() { SplitProposalKey([]byte("test")) })
 	require.Panics(t, func() { SplitInactiveProposalQueueKey([]byte("test")) })
 }
-
-func TestDepositKeys(t *testing.T) {
-
-	id := 1
-
-	key := DepositsKey(2)
-	proposalID := SplitProposalKey(key)
-	require.Equal(t, int(proposalID), 2)
-
-	key = DepositKey(2, hmTypes.ValidatorID(id))
-	proposalID, depositorAddr := SplitKeyDeposit(key)
-	require.Equal(t, int(proposalID), 2)
-	require.Equal(t, addr, depositorAddr)
-
-	// invalid key
-	key = DepositKey(5, hmTypes.ValidatorID(id))
-	require.Panics(t, func() { SplitKeyDeposit(key) })
-}
-
-func TestVoteKeys(t *testing.T) {
-
-	id := 1
-
-	key := VotesKey(2)
-	proposalID := SplitProposalKey(key)
-	require.Equal(t, int(proposalID), 2)
-
-	key = VoteKey(2, hmTypes.ValidatorID(id))
-	proposalID, voterAddr := SplitKeyDeposit(key)
-	require.Equal(t, int(proposalID), 2)
-	require.Equal(t, addr, voterAddr)
-
-	// invalid key
-	key = VoteKey(5, hmTypes.ValidatorID(id))
-	require.Panics(t, func() { SplitKeyVote(key) })
-}

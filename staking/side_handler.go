@@ -438,14 +438,20 @@ func PostHandleMsgStakeUpdate(ctx sdk.Context, k Keeper, msg types.MsgStakeUpdat
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("Updating validator stake", "sideTxResult", sideTxResult)
-
 	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
+
+	// Check nonce validity just before applying state update
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce during PostHandle SignerUpdate", "ValidatorNonce", validator.Nonce, "MsgNonce", msg.Nonce)
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
+	k.Logger(ctx).Debug("Updating validator stake", "sideTxResult", sideTxResult)
 
 	// update last updated
 	validator.LastUpdated = sequence.String()
@@ -510,17 +516,23 @@ func PostHandleMsgSignerUpdate(ctx sdk.Context, k Keeper, msg types.MsgSignerUpd
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("Persisting signer update", "sideTxResult", sideTxResult)
-
-	newPubKey := msg.NewSignerPubKey
-	newSigner := newPubKey.Address()
-
 	// pull validator from store
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorId", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
+
+	// Check nonce validity just before applying state update
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce during PostHandle SignerUpdate", "ValidatorNonce", validator.Nonce, "MsgNonce", msg.Nonce)
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
+	k.Logger(ctx).Debug("Persisting signer update", "sideTxResult", sideTxResult)
+
+	newPubKey := msg.NewSignerPubKey
+	newSigner := newPubKey.Address()
 
 	oldValidator := validator.Copy()
 
@@ -632,13 +644,19 @@ func PostHandleMsgValidatorExit(ctx sdk.Context, k Keeper, msg types.MsgValidato
 		return hmCommon.ErrOldTx(k.Codespace()).Result()
 	}
 
-	k.Logger(ctx).Debug("Persisting validator exit", "sideTxResult", sideTxResult)
-
 	validator, ok := k.GetValidatorFromValID(ctx, msg.ID)
 	if !ok {
 		k.Logger(ctx).Error("Fetching of validator from store failed", "validatorID", msg.ID)
 		return hmCommon.ErrNoValidator(k.Codespace()).Result()
 	}
+
+	// Check nonce validity just before applying state update
+	if msg.Nonce != validator.Nonce+1 {
+		k.Logger(ctx).Error("Incorrect validator nonce during PostHandle SignerUpdate", "ValidatorNonce", validator.Nonce, "MsgNonce", msg.Nonce)
+		return hmCommon.ErrNonce(k.Codespace()).Result()
+	}
+
+	k.Logger(ctx).Debug("Persisting validator exit", "sideTxResult", sideTxResult)
 
 	// set end epoch
 	validator.EndEpoch = msg.DeactivationEpoch
