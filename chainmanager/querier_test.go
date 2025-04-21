@@ -13,6 +13,7 @@ import (
 	"github.com/maticnetwork/heimdall/app"
 	"github.com/maticnetwork/heimdall/chainmanager"
 	"github.com/maticnetwork/heimdall/chainmanager/types"
+	"github.com/maticnetwork/heimdall/helper"
 )
 
 // QuerierTestSuite integrate test suite context object
@@ -86,6 +87,41 @@ func (suite *QuerierTestSuite) TestQueryParams() {
 		ctx := rapp.BaseApp.NewContext(true, abci.Header{})
 		querier := chainmanager.NewQuerier(rapp.ChainKeeper)
 		require.Panics(t, func() {
+			_, err = querier(ctx, path, req)
+			require.NoError(t, err)
+		})
+	}
+}
+
+// TestHaltHeight queries halt-height
+func (suite *QuerierTestSuite) TestHaltHeight() {
+	t, _, ctx, querier := suite.T(), suite.app, suite.ctx, suite.querier
+
+	var haltHeight int64
+
+	path := []string{types.HaltHeight}
+	defaultHaltHeight := helper.GetApocalypseHeight()
+
+	route := fmt.Sprintf("custom/%s/%s", types.QuerierRoute, types.HaltHeight)
+	req := abci.RequestQuery{
+		Path: route,
+		Data: []byte{},
+	}
+	res, sdkErr := querier(ctx, path, req)
+	require.NoError(t, sdkErr)
+	require.NotNil(t, res)
+
+	err := jsoniter.ConfigFastest.Unmarshal(res, &haltHeight)
+	require.NoError(t, err)
+
+	// match response params
+	require.Equal(t, defaultHaltHeight, haltHeight)
+
+	{
+		rapp := app.Setup(true)
+		ctx := rapp.BaseApp.NewContext(true, abci.Header{})
+		querier := chainmanager.NewQuerier(rapp.ChainKeeper)
+		require.NotPanics(t, func() {
 			_, err = querier(ctx, path, req)
 			require.NoError(t, err)
 		})

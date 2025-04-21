@@ -244,6 +244,8 @@ var jorvikHeight int64 = 0
 
 var danelawHeight int64 = 0
 
+var apocalypseHeight int64 = 200
+
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
 	RootChainAddress      hmTypes.HeimdallAddress
@@ -596,6 +598,11 @@ func GetJorvikHeight() int64 {
 // GetDanelawHeight returns danelawHeight
 func GetDanelawHeight() int64 {
 	return danelawHeight
+}
+
+// GetApocalypseHeight returns apocalypseHeight
+func GetApocalypseHeight() int64 {
+	return apocalypseHeight
 }
 
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
