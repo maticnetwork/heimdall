@@ -102,7 +102,7 @@ const (
 	DefaultSyncerPollInterval       = 1 * time.Minute
 	DefaultNoACKPollInterval        = 1010 * time.Second
 	DefaultClerkPollInterval        = 10 * time.Second
-	DefaultSpanPollInterval         = 1 * time.Minute
+	DefaultSpanPollInterval         = 10 * time.Second
 
 	DefaultMilestonePollInterval = 30 * time.Second
 
