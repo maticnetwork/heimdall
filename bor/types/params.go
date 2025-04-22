@@ -16,7 +16,7 @@ const (
 // Default parameter values
 const (
 	DefaultSprintDuration    uint64 = 16
-	DefaultSpanDuration      uint64 = 100 * DefaultSprintDuration
+	DefaultSpanDuration      uint64 = 10 * DefaultSprintDuration
 	DefaultFirstSpanDuration uint64 = 256
 	DefaultProducerCount     uint64 = 4
 )
