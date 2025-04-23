@@ -292,10 +292,18 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
 
-	//Hard fork changes for milestone
-	//When there is any update in checkpoint validator set, we assign it to milestone validator set too.
+	// Hard fork changes for milestone
+	// When there is any update in checkpoint validator set, we assign it to milestone validator set too.
+	// ONLY after reaching the hard fork height
 	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+		k.Logger(ctx).Info("Updating milestone validator set after hard fork", 
+			"height", ctx.BlockHeight(), 
+			"hard_fork_height", helper.GetAalborgHardForkHeight())
 		store.Set(CurrentMilestoneValidatorSetKey, bz)
+	} else {
+		k.Logger(ctx).Debug("Skipping milestone validator set update before hard fork", 
+			"height", ctx.BlockHeight(), 
+			"hard_fork_height", helper.GetAalborgHardForkHeight())
 	}
 
 	return nil
@@ -533,6 +541,7 @@ func (k *Keeper) MilestoneIncrementAccum(ctx sdk.Context, times int) {
 	}
 }
 
+
 // GetMilestoneValidatorSet returns current milestone Validator Set from store
 func (k *Keeper) GetMilestoneValidatorSet(ctx sdk.Context) (validatorSet hmTypes.ValidatorSet) {
 	store := ctx.KVStore(k.storeKey)
@@ -542,11 +551,24 @@ func (k *Keeper) GetMilestoneValidatorSet(ctx sdk.Context) (validatorSet hmTypes
 	if store.Has(CurrentMilestoneValidatorSetKey) {
 		bz = store.Get(CurrentMilestoneValidatorSetKey)
 	} else {
-		bz = store.Get(CurrentValidatorSetKey)
+		// IMPORTANT FIX: Before the hard fork, don't fall back to current validator set
+		// Initialise with a copy of the current validator set only at or past the hard fork height
+		if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+			k.Logger(ctx).Info("Initializing milestone validator set after hard fork", 
+				"height", ctx.BlockHeight())
+			currentSet := k.GetValidatorSet(ctx)
+			return currentSet
+		} else {
+			// Return empty validator set before the hard fork
+			k.Logger(ctx).Debug("Returning empty milestone validator set before hard fork", 
+				"height", ctx.BlockHeight())
+			return hmTypes.ValidatorSet{
+				Validators: make([]*hmTypes.Validator, 0),
+			}
+		}
 	}
 
 	// unmarhsall
-
 	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
 		k.Logger(ctx).Error("GetMilestoneValidatorSet | UnmarshalBinaryBare", "error", err)
 	}
