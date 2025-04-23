@@ -460,7 +460,7 @@ func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validato
 	return nil
 }
 
-// UpdatePower updates validator with signer and pubkey + validator => signer map
+// Fixed Slash function
 func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
@@ -489,12 +489,31 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	// add updated validator to store with new key
 	if err := k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("Failed to add validator", "error", err)
+		return err
+	}
+
+	// FIX: Update the validator set with the modified validator
+	validatorSet := k.GetValidatorSet(ctx)
+	for i, val := range validatorSet.Validators {
+		if val.ID == validator.ID {  // Direct comparison instead of Equals method
+			validatorSet.Validators[i].VotingPower = updatedPower
+			validatorSet.Validators[i].Jailed = valSlashingInfo.IsJailed
+			break
+		}
+	}
+	
+	// Save updated validator set
+	if err := k.UpdateValidatorSetInStore(ctx, validatorSet); err != nil {
+		k.Logger(ctx).Error("Failed to update validator set", "error", err)
+		return err
 	}
 
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
 
 	return nil
 }
+
+
 
 // Unjail a validator
 func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
