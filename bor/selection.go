@@ -72,12 +72,8 @@ func SelectNextProducers(blkHash common.Hash, spanEligibleValidators []hmTypes.V
 
 	// extract seed from hash
 	seedBytes := helper.ToBytes32(blkHash.Bytes()[:32])
-
-	seedUint64 := binary.BigEndian.Uint64(seedBytes[:])
-	if seedUint64 > math.MaxInt64 {
-		return nil, fmt.Errorf("seed value out of range for int64: %d", seedUint64)
-	}
-	seed := int64(seedUint64)
+	//nolint: gosec
+	seed := int64(binary.BigEndian.Uint64(seedBytes[:]))
 	// nolint: staticcheck
 	rand.Seed(seed)
 

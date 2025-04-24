@@ -359,13 +359,18 @@ func (c *ContractCaller) GetVoteOnHash(start uint64, end uint64, milestoneLength
 
 // GetLastChildBlock fetch current child block
 func (c *ContractCaller) GetLastChildBlock(rootChainInstance *rootchain.Rootchain) (uint64, error) {
-	GetLastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
+	lastChildBlock, err := rootChainInstance.GetLastChildBlock(nil)
 	if err != nil {
 		Logger.Error("Could not fetch current child block from rootChain contract", "error", err)
 		return 0, err
 	}
 
-	return GetLastChildBlock.Uint64(), nil
+	if lastChildBlock == nil {
+		Logger.Error("Contract returned nil value for lastChildBlock")
+		return 0, fmt.Errorf("contract returned nil value")
+	}
+
+	return lastChildBlock.Uint64(), nil
 }
 
 // CurrentHeaderBlock fetches current header block
@@ -374,6 +379,11 @@ func (c *ContractCaller) CurrentHeaderBlock(rootChainInstance *rootchain.Rootcha
 	if err != nil {
 		Logger.Error("Could not fetch current header block from rootChain contract", "error", err)
 		return 0, err
+	}
+
+	if currentHeaderBlock == nil {
+		Logger.Error("Contract returned nil value for currentHeaderBlock")
+		return 0, fmt.Errorf("contract returned nil value")
 	}
 
 	return currentHeaderBlock.Uint64() / childBlockInterval, nil

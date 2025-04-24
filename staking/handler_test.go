@@ -112,12 +112,12 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorUpdate() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := suite.app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 
 	// vals := oldValSet.(*Validators)
 	oldSigner := oldValSet.Validators[0]
-	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1)
+	newSigner := stakingSim.GenRandomVal(1, 0, 10, 10, false, 1, 0)
 	newSigner[0].ID = oldSigner.ID
 	newSigner[0].VotingPower = oldSigner.VotingPower
 
@@ -168,7 +168,7 @@ func (suite *HandlerTestSuite) TestHandleMsgValidatorExit() {
 	t, app, ctx := suite.T(), suite.app, suite.ctx
 	keeper := app.StakingKeeper
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, 0)
 	validators := keeper.GetCurrentValidators(ctx)
 	msgTxHash := hmTypes.HexToHeimdallHash("123")
 	chainParams := app.ChainKeeper.GetParams(ctx)
@@ -214,7 +214,7 @@ func (suite *HandlerTestSuite) TestHandleMsgStakeUpdate() {
 	keeper := app.StakingKeeper
 
 	// pass 0 as time alive to generate non de-activated validators
-	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0)
+	chSim.LoadValidatorSet(t, 4, keeper, ctx, false, 0, 0)
 	oldValSet := keeper.GetValidatorSet(ctx)
 	oldVal := oldValSet.Validators[0]
 

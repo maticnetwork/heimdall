@@ -104,7 +104,7 @@ type BaseReq struct {
 // It returns the prepared msg for the transfer of balance from one account to another.
 // responses:
 //   200: bankBalanceTransferResponse
-// SendRequestHandlerFn - http request handler to send coins to a address.
+// SendRequestHandlerFn - http request handler to send coins to an address.
 func SendRequestHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)

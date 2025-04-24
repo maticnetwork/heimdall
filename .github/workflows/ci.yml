@@ -88,9 +88,7 @@ jobs:
             sudo apt update
             sudo apt install build-essential
             curl https://raw.githubusercontent.com/creationix/nvm/master/install.sh | bash
-            sudo snap install solc
-            sudo apt install python2 jq curl
-            sudo ln -sf /usr/bin/python2 /usr/bin/python
+            sudo apt install jq curl
 
         - uses: actions/setup-node@v4
           with:
@@ -101,6 +99,23 @@ jobs:
               matic-cli/devnet/code/contracts/package-lock.json
               matic-cli/devnet/code/genesis-contracts/package-lock.json
               matic-cli/devnet/code/genesis-contracts/matic-contracts/package-lock.json
+
+        - name: Install solc-select
+          run: |
+            sudo apt update
+            sudo apt install python3 python3-pip -y
+            sudo ln -sf /usr/bin/python3 /usr/bin/python
+            pip install solc-select
+
+        - name: Install Solidity Version
+          run: |
+            solc-select install 0.5.17
+            solc-select install 0.6.12
+            solc-select use 0.5.17
+            solc --version
+
+        - name: Install Foundry
+          uses: foundry-rs/foundry-toolchain@v1
 
         - name: Bootstrap devnet
           run: |
@@ -119,21 +134,27 @@ jobs:
 
         - name: Run smoke tests
           run: |
-            echo "Funding ganache accounts..."
-            timeout 10m bash heimdall/integration-tests/fund_ganache_accounts.sh
             echo "Deposit 100 matic for each account to bor network"
-            cd matic-cli/devnet/code/contracts
-            npm run truffle exec scripts/deposit.js -- --network development $(jq -r .root.tokens.MaticToken contractAddresses.json) 100000000000000000000
-            cd -
+            cd matic-cli/devnet/devnet
+            SCRIPT_ADDRESS=$(jq -r '.[0].address' signer-dump.json)
+            SCRIPT_PRIVATE_KEY=$(jq -r '.[0].priv_key' signer-dump.json)
+            cd ../code/pos-contracts
+            CONTRACT_ADDRESS=$(jq -r .root.tokens.MaticToken contractAddresses.json)
+            forge script scripts/matic-cli-scripts/Deposit.s.sol:MaticDeposit --rpc-url http://localhost:9545 --private-key $SCRIPT_PRIVATE_KEY --broadcast --sig "run(address,address,uint256)" $SCRIPT_ADDRESS $CONTRACT_ADDRESS 100000000000000000000
+            cd ../../../..
             timeout 60m bash heimdall/integration-tests/smoke_test.sh
+
+        - name: Resolve absolute path for logs
+          id: pathfix
+          run: |
+            echo "ABS_LOG_PATH=$(realpath matic-cli/devnet/logs)" >> $GITHUB_ENV
 
         - name: Upload logs
           if: always()
-          uses: actions/upload-artifact@v4.4.0
+          uses: PaloAltoNetworks/upload-secure-artifact@main
           with:
             name: logs_${{ github.run_id }}
-            path: |
-              matic-cli/devnet/logs
+            path: ${{ env.ABS_LOG_PATH }}
 
         - name: Package code and chain data
           if: always()
@@ -144,11 +165,11 @@ jobs:
             mkdir -p ${{ github.run_id }}/matic-cli
             sudo mv heimdall ${{ github.run_id }}
             sudo mv matic-cli/devnet ${{ github.run_id }}/matic-cli
-            sudo tar czf code.tar.gz ${{ github.run_id }}
+            sudo tar --warning=no-file-changed --exclude='.git' -czf code.tar.gz ${{ github.run_id }}
 
         - name: Upload code and chain data
           if: always()
-          uses: actions/upload-artifact@v4.4.0
+          uses: PaloAltoNetworks/upload-secure-artifact@main
           with:
             name: code_${{ github.run_id }}
             path: code.tar.gz
