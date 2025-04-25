@@ -523,24 +523,55 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 
 // Unjail a validator
 func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
-	// get validator from state and make jailed = false
+	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
-		k.Logger(ctx).Error("Unable to fetch validator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store", "validatorID", valID)
 		return
 	}
 
 	if !validator.Jailed {
-		k.Logger(ctx).Info("Already unjailed.")
+		k.Logger(ctx).Info("Already unjailed.", "validatorID", valID)
 		return
 	}
-	// unjail validator
+
+	// unjail validator object
 	validator.Jailed = false
 
-	// add updated validator to store with new key
+	// Update the individual validator record in the store
 	if err := k.AddValidator(ctx, validator); err != nil {
-		k.Logger(ctx).Error("Failed to add validator", "Error", err)
+		k.Logger(ctx).Error("Failed to add validator during unjail", "validatorID", valID, "Error", err)
+		return // Stop processing if individual record update fails
 	}
+
+	// Update the main validator set to reflect the unjailing
+	validatorSet := k.GetValidatorSet(ctx)
+	foundInSet := false
+	for i, val := range validatorSet.Validators {
+		// Use validator ID for comparison as it's the unique identifier
+		if val.ID == validator.ID {
+			validatorSet.Validators[i].Jailed = false // Update jailed status in the set
+			foundInSet = true
+			break
+		}
+	}
+
+	// Only update the set if the validator was actually found in it.
+	if foundInSet {
+		// Save the updated main validator set (this also handles the milestone set conditionally via UpdateValidatorSetInStore)
+		if err := k.UpdateValidatorSetInStore(ctx, validatorSet); err != nil {
+			k.Logger(ctx).Error("Failed to update validator set during unjail", "validatorID", valID, "Error", err)
+			// Stop processing if the crucial set update fails
+			return
+		}
+	} else {
+		// Log if the validator wasn't found in the set, which might indicate an edge case or prior inconsistency.
+		k.Logger(ctx).Warn("Validator to unjail not found within the CurrentValidatorSet", "validatorID", valID)
+		// Continue processing as the individual record was updated, but the set remains unchanged.
+        // Depending on requirements, a return here might be desired, but keeping it minimal.
+	}
+
+	k.Logger(ctx).Info("Unjail process completed for validator", "validatorID", valID) // Log completion
 }
 
 // MilestoneIncrementAccum increments accum for milestone validator set by n times and replace validator set in store
