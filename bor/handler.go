@@ -61,6 +61,12 @@ func HandleMsgProposeSpan(ctx sdk.Context, msg sdk.Msg, k Keeper) sdk.Result {
 		"seed", proposeMsg.Seed.String(),
 	)
 
+	if helper.IsCloseToHaltHeight(ctx.BlockHeight()) {
+		err := errors.New("block height is close to halt height")
+		k.Logger(ctx).Error(err.Error(), "currentBlock", ctx.BlockHeight())
+		return sdk.ErrTxDecode(err.Error()).Result()
+	}
+
 	// chainManager params
 	params := k.chainKeeper.GetParams(ctx)
 	chainParams := params.ChainParams

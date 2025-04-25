@@ -845,3 +845,7 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 
 	return result, fmt.Errorf("error while fetching data from url: %v, status: %v", URL, resp.StatusCode)
 }
+
+func IsCloseToHaltHeight(currentBlockHeight int64) bool {
+	return currentBlockHeight <= apocalypseHeight && currentBlockHeight >= (apocalypseHeight-100)
+}

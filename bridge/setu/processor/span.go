@@ -104,6 +104,12 @@ func (sp *SpanProcessor) checkAndPropose() {
 		}
 	}
 
+	// TODO: It seems like this can be released as soft upgrade without problems
+	if helper.IsCloseToHaltHeight(nodeStatus.SyncInfo.LatestBlockHeight) {
+		sp.Logger.Debug("Current block is close to halt height, skipping proposing span", "currentBlock", nodeStatus.SyncInfo.LatestBlockHeight)
+		return
+	}
+
 	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
 
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
