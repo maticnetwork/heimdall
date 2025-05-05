@@ -111,3 +111,11 @@ func (m Milestone) String() string {
 		m.TimeStamp,
 	)
 }
+
+// SortMilestones sorts array of milestones on the basis for timestamps
+func SortMilestones(milestones []Milestone) []Milestone {
+	sort.Slice(milestones, func(i, j int) bool {
+		return milestones[i].TimeStamp < milestones[j].TimeStamp
+	})
+	return milestones
+}
