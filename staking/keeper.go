@@ -292,10 +292,18 @@ func (k *Keeper) UpdateValidatorSetInStore(ctx sdk.Context, newValidatorSet hmTy
 	// set validator set with CurrentValidatorSetKey as key in store
 	store.Set(CurrentValidatorSetKey, bz)
 
-	//Hard fork changes for milestone
-	//When there is any update in checkpoint validator set, we assign it to milestone validator set too.
+	// Hard fork changes for milestone
+	// When there is any update in checkpoint validator set, we assign it to milestone validator set too.
+	// ONLY after reaching the hard fork height
 	if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+		k.Logger(ctx).Info("Updating milestone validator set after hard fork",
+			"height", ctx.BlockHeight(),
+			"hard_fork_height", helper.GetAalborgHardForkHeight())
 		store.Set(CurrentMilestoneValidatorSetKey, bz)
+	} else {
+		k.Logger(ctx).Debug("Skipping milestone validator set update before hard fork",
+			"height", ctx.BlockHeight(),
+			"hard_fork_height", helper.GetAalborgHardForkHeight())
 	}
 
 	return nil
@@ -460,7 +468,7 @@ func (k *Keeper) AddValidatorSigningInfo(ctx sdk.Context, valID hmTypes.Validato
 	return nil
 }
 
-// UpdatePower updates validator with signer and pubkey + validator => signer map
+// Fixed Slash function
 func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashingInfo) error {
 	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valSlashingInfo.ID)
@@ -489,6 +497,23 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 	// add updated validator to store with new key
 	if err := k.AddValidator(ctx, validator); err != nil {
 		k.Logger(ctx).Error("Failed to add validator", "error", err)
+		return err
+	}
+
+	// FIX: Update the validator set with the modified validator
+	validatorSet := k.GetValidatorSet(ctx)
+	for i, val := range validatorSet.Validators {
+		if val.ID == validator.ID { // Direct comparison instead of Equals method
+			validatorSet.Validators[i].VotingPower = updatedPower
+			validatorSet.Validators[i].Jailed = valSlashingInfo.IsJailed
+			break
+		}
+	}
+
+	// Save updated validator set
+	if err := k.UpdateValidatorSetInStore(ctx, validatorSet); err != nil {
+		k.Logger(ctx).Error("Failed to update validator set", "error", err)
+		return err
 	}
 
 	k.Logger(ctx).Debug("updated validator with slashed voting power and jail status", "validator", validator)
@@ -498,24 +523,55 @@ func (k *Keeper) Slash(ctx sdk.Context, valSlashingInfo hmTypes.ValidatorSlashin
 
 // Unjail a validator
 func (k *Keeper) Unjail(ctx sdk.Context, valID hmTypes.ValidatorID) {
-	// get validator from state and make jailed = false
+	// get validator from state
 	validator, found := k.GetValidatorFromValID(ctx, valID)
 	if !found {
-		k.Logger(ctx).Error("Unable to fetch validator from store")
+		k.Logger(ctx).Error("Unable to fetch validator from store", "validatorID", valID)
 		return
 	}
 
 	if !validator.Jailed {
-		k.Logger(ctx).Info("Already unjailed.")
+		k.Logger(ctx).Info("Already unjailed.", "validatorID", valID)
 		return
 	}
-	// unjail validator
+
+	// unjail validator object
 	validator.Jailed = false
 
-	// add updated validator to store with new key
+	// Update the individual validator record in the store
 	if err := k.AddValidator(ctx, validator); err != nil {
-		k.Logger(ctx).Error("Failed to add validator", "Error", err)
+		k.Logger(ctx).Error("Failed to add validator during unjail", "validatorID", valID, "Error", err)
+		return // Stop processing if individual record update fails
 	}
+
+	// Update the main validator set to reflect the unjailing
+	validatorSet := k.GetValidatorSet(ctx)
+	foundInSet := false
+	for i, val := range validatorSet.Validators {
+		// Use validator ID for comparison as it's the unique identifier
+		if val.ID == validator.ID {
+			validatorSet.Validators[i].Jailed = false // Update jailed status in the set
+			foundInSet = true
+			break
+		}
+	}
+
+	// Only update the set if the validator was actually found in it.
+	if foundInSet {
+		// Save the updated main validator set (this also handles the milestone set conditionally via UpdateValidatorSetInStore)
+		if err := k.UpdateValidatorSetInStore(ctx, validatorSet); err != nil {
+			k.Logger(ctx).Error("Failed to update validator set during unjail", "validatorID", valID, "Error", err)
+			// Stop processing if the crucial set update fails
+			return
+		}
+	} else {
+		// Log if the validator wasn't found in the set, which might indicate an edge case or prior inconsistency.
+		k.Logger(ctx).Warn("Validator to unjail not found within the CurrentValidatorSet", "validatorID", valID)
+		// Continue processing as the individual record was updated, but the set remains unchanged.
+        // Depending on requirements, a return here might be desired, but keeping it minimal.
+	}
+
+	k.Logger(ctx).Info("Unjail process completed for validator", "validatorID", valID) // Log completion
 }
 
 // MilestoneIncrementAccum increments accum for milestone validator set by n times and replace validator set in store
@@ -542,11 +598,24 @@ func (k *Keeper) GetMilestoneValidatorSet(ctx sdk.Context) (validatorSet hmTypes
 	if store.Has(CurrentMilestoneValidatorSetKey) {
 		bz = store.Get(CurrentMilestoneValidatorSetKey)
 	} else {
-		bz = store.Get(CurrentValidatorSetKey)
+		// IMPORTANT FIX: Before the hard fork, don't fall back to current validator set
+		// Initialise with a copy of the current validator set only at or past the hard fork height
+		if ctx.BlockHeight() >= helper.GetAalborgHardForkHeight() {
+			k.Logger(ctx).Info("Initializing milestone validator set after hard fork",
+				"height", ctx.BlockHeight())
+			currentSet := k.GetValidatorSet(ctx)
+			return currentSet
+		} else {
+			// Return empty validator set before the hard fork
+			k.Logger(ctx).Debug("Returning empty milestone validator set before hard fork",
+				"height", ctx.BlockHeight())
+			return hmTypes.ValidatorSet{
+				Validators: make([]*hmTypes.Validator, 0),
+			}
+		}
 	}
 
 	// unmarhsall
-
 	if err := k.cdc.UnmarshalBinaryBare(bz, &validatorSet); err != nil {
 		k.Logger(ctx).Error("GetMilestoneValidatorSet | UnmarshalBinaryBare", "error", err)
 	}
