@@ -2,6 +2,7 @@ package checkpoint_test
 
 import (
 	"math/rand"
+	"strconv"
 	"testing"
 	"time"
 
@@ -63,6 +64,12 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		checkpoints[i] = bufferedCheckpoint
 	}
 
+	milestones := make([]hmTypes.Milestone, ackCount)
+	for i := range milestones {
+		milestones[i] = hmTypes.CreateMilestone(startBlock, endBlock, rootHash,
+			proposerAddress, borChainId, strconv.Itoa(i), timestamp)
+	}
+
 	params := types.DefaultParams()
 	genesisState := types.NewGenesisState(
 		params,
@@ -70,6 +77,7 @@ func (suite *GenesisTestSuite) TestInitExportGenesis() {
 		uint64(lastNoACK),
 		uint64(ackCount),
 		checkpoints,
+		milestones,
 	)
 
 	checkpoint.InitGenesis(ctx, app.CheckpointKeeper, genesisState)

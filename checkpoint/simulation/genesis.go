@@ -2,6 +2,7 @@
 package simulation
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/maticnetwork/heimdall/checkpoint/types"
@@ -30,10 +31,17 @@ func RandomizedGenState(simState *module.SimulationState) {
 		timestamp,
 	)
 
-	Checkpoints := make([]hmTypes.Checkpoint, ackCount)
+	checkpoints := make([]hmTypes.Checkpoint, ackCount)
 
-	for i := range Checkpoints {
-		Checkpoints[i] = bufferedCheckpoint
+	for i := range checkpoints {
+		checkpoints[i] = bufferedCheckpoint
+	}
+
+	milestones := make([]hmTypes.Milestone, ackCount)
+
+	for i := range milestones {
+		milestones[i] = hmTypes.CreateMilestone(startBlock, endBlock, rootHash,
+			proposerAddress, borChainID, strconv.Itoa(i), timestamp)
 	}
 
 	params := types.DefaultParams()
@@ -42,7 +50,8 @@ func RandomizedGenState(simState *module.SimulationState) {
 		&bufferedCheckpoint,
 		uint64(lastNoACK),
 		uint64(ackCount),
-		Checkpoints,
+		checkpoints,
+		milestones,
 	)
 	simState.GenState[types.ModuleName] = simState.Cdc.MustMarshalJSON(genesisState)
 }

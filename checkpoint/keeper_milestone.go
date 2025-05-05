@@ -228,6 +228,24 @@ func (k *Keeper) GetLastMilestoneTimeout(ctx sdk.Context) uint64 {
 	return 0
 }
 
+// GetMilestones gets all milestones
+func (k *Keeper) GetMilestones(ctx sdk.Context) []hmTypes.Milestone {
+	store := ctx.KVStore(k.storeKey)
+	iterator := sdk.KVStorePrefixIterator(store, MilestoneKey)
+	defer iterator.Close()
+
+	var milestones []hmTypes.Milestone
+
+	for ; iterator.Valid(); iterator.Next() {
+		var milestone hmTypes.Milestone
+		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &milestone); err == nil {
+			milestones = append(milestones, milestone)
+		}
+	}
+
+	return milestones
+}
+
 // GetMilestoneKey appends prefix to milestoneNumber
 func GetMilestoneNoAckKey(milestoneId string) []byte {
 	milestoneNoAckBytes := []byte(milestoneId)
