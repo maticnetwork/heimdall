@@ -502,10 +502,6 @@ func MakeCodec() *codec.Codec {
 	return cdc
 }
 
-func (app *HeimdallApp) GetMainStoreKey() *sdk.KVStoreKey {
-	return app.keys[bam.MainStoreKey]
-}
-
 // Name returns the name of the App
 func (app *HeimdallApp) Name() string { return app.BaseApp.Name() }
 

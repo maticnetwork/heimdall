@@ -271,7 +271,7 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 func getLastCommittedHeightCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "get-last-committed-height",
-		Short: "Get the latest committed block height from local disk. It expects --home flag to be set, and optionally the --quiet flag to print only the height number",
+		Short: "Get the latest committed block height from local disk, when heimdalld is stopped. It expects --home flag to be set, and optionally the --quiet flag to print only the height number",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
 			config := ctx.Config
@@ -285,11 +285,6 @@ func getLastCommittedHeightCmd(ctx *server.Context, _ *codec.Codec) *cobra.Comma
 
 			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
 			hApp := app.NewHeimdallApp(logger, appDB)
-
-			// Use the same logic as the main app to load the latest state
-			if err := hApp.LoadLatestVersion(hApp.GetMainStoreKey()); err != nil {
-				return fmt.Errorf("failed to load latest version: %w", err)
-			}
 
 			height := hApp.LastBlockHeight()
 			if viper.GetBool("quiet") {
