@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 	"io"
 	defaultLogger "log"
 	"os"
@@ -106,6 +107,7 @@ func main() {
 		client.LineBreak,
 		keys.Commands(),
 		exportCmd(ctx, cdc),
+		getLastCommittedHeightCmd(ctx, cdc),
 		convertAddressToHexCmd(cdc),
 		convertHexToAddressCmd(cdc),
 		generateKeystore(cdc),
@@ -262,6 +264,50 @@ func exportCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
 	// Make flags required
 	_ = cmd.MarkFlagRequired(cli.HomeFlag)
 	_ = cmd.MarkFlagRequired(client.FlagChainID)
+
+	return cmd
+}
+
+// getLastCommittedHeightCmd returns the command to get the latest committed block height
+func getLastCommittedHeightCmd(ctx *server.Context, _ *codec.Codec) *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "get-last-committed-height",
+		Short: "Get the latest committed block height from local disk. It expects --home flag to be set, and optionally the --quiet flag to print only the height number",
+		Args:  cobra.NoArgs,
+		RunE: func(_ *cobra.Command, _ []string) error {
+			// Ensure config uses correct root
+			config := ctx.Config
+			config.SetRoot(viper.GetString(cli.HomeFlag))
+
+			// fetch the db directory and open the application db
+			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
+			appDB, err := sdk.NewLevelDB("application", dataDir)
+			if err != nil {
+				return fmt.Errorf("failed to open application DB: %w", err)
+			}
+
+			// create the application store and load the latest version
+			store := rootmulti.NewStore(appDB)
+			if err := store.LoadLatestVersion(); err != nil {
+				return fmt.Errorf("failed to load store: %w", err)
+			}
+
+			// get the last committed block height
+			height := store.LastCommitID().Version
+			if viper.GetBool("quiet") {
+				fmt.Println(height)
+			} else {
+				fmt.Printf("Latest committed height: %d\n", height)
+			}
+
+			return nil
+		},
+	}
+
+	cmd.Flags().String(cli.HomeFlag, helper.DefaultNodeHome, "Node's home directory")
+	cmd.Flags().Bool("quiet", false, "Print only the block height number without labels or formatting")
+
+	_ = cmd.MarkFlagRequired(cli.HomeFlag)
 
 	return cmd
 }
