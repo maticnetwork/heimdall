@@ -31,7 +31,7 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.ClientName=heimdallcli
       - -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  
+
   - <<: *xbuildd
     id: heimdalld-darwin-arm64
     goos:
@@ -41,7 +41,7 @@ builds:
     env:
       - CC=oa64-clang
       - CXX=oa64-clang++
-  
+
   - <<: *xbuildd
     id: heimdalld-linux-amd64
     goos:
@@ -115,7 +115,7 @@ builds:
       - -X github.com/cosmos/cosmos-sdk/version.ClientName=heimdallcli
       - -X github.com/cosmos/cosmos-sdk/version.Version={{.Version}}
       - -X github.com/cosmos/cosmos-sdk/version.Commit={{.Commit}}
-  
+
   - <<: *xbuildcli
     id: heimdallcli-darwin-arm64
     goos:
@@ -125,7 +125,7 @@ builds:
     env:
       - CC=oa64-clang
       - CXX=oa64-clang++
-  
+
   - <<: *xbuildcli
     id: heimdallcli-linux-amd64
     goos:
@@ -196,6 +196,9 @@ nfpms:
       - src: builder/files/genesis-testnet-v4.json
         dst: /etc/heimdall/genesis-testnet-v4.json
         type: config
+      - src: builder/files/genesis-amoy-v1.json
+        dst: /etc/heimdall/genesis-amoy-v1.json
+        type: config
       - dst: /var/lib/heimdall
         type: dir
         file_info:
@@ -222,7 +225,8 @@ dockers:
       - docker/entrypoint.sh
       - builder/files/genesis-mainnet-v1.json
       - builder/files/genesis-testnet-v4.json
-  
+      - builder/files/genesis-amoy-v1.json
+
   - image_templates:
       - 0xpolygon/{{ .ProjectName }}:{{ .Version }}-arm64
     dockerfile: Dockerfile.release
@@ -237,6 +241,7 @@ dockers:
       - docker/entrypoint.sh
       - builder/files/genesis-mainnet-v1.json
       - builder/files/genesis-testnet-v4.json
+      - builder/files/genesis-amoy-v1.json
 
 docker_manifests:
   - name_template: 0xpolygon/{{ .ProjectName }}:{{ .Version }}
