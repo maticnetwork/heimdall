@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/cosmos/cosmos-sdk/store/rootmulti"
 	"io"
 	defaultLogger "log"
 	"os"
@@ -275,25 +274,24 @@ func getLastCommittedHeightCmd(ctx *server.Context, _ *codec.Codec) *cobra.Comma
 		Short: "Get the latest committed block height from local disk. It expects --home flag to be set, and optionally the --quiet flag to print only the height number",
 		Args:  cobra.NoArgs,
 		RunE: func(_ *cobra.Command, _ []string) error {
-			// Ensure config uses correct root
 			config := ctx.Config
 			config.SetRoot(viper.GetString(cli.HomeFlag))
 
-			// fetch the db directory and open the application db
 			dataDir := path.Join(viper.GetString(cli.HomeFlag), "data")
 			appDB, err := sdk.NewLevelDB("application", dataDir)
 			if err != nil {
 				return fmt.Errorf("failed to open application DB: %w", err)
 			}
 
-			// create the application store and load the latest version
-			store := rootmulti.NewStore(appDB)
-			if err := store.LoadLatestVersion(); err != nil {
-				return fmt.Errorf("failed to load store: %w", err)
+			logger := log.NewTMLogger(log.NewSyncWriter(os.Stdout))
+			hApp := app.NewHeimdallApp(logger, appDB)
+
+			// Use the same logic as the main app to load the latest state
+			if err := hApp.LoadLatestVersion(hApp.GetMainStoreKey()); err != nil {
+				return fmt.Errorf("failed to load latest version: %w", err)
 			}
 
-			// get the last committed block height
-			height := store.LastCommitID().Version
+			height := hApp.LastBlockHeight()
 			if viper.GetBool("quiet") {
 				fmt.Println(height)
 			} else {
