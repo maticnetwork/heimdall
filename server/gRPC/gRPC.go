@@ -15,6 +15,7 @@ import (
 
 const (
 	spanURL                 = "/bor/span/%v"
+	latestSpanURL           = "bor/latest-span"
 	eventRecordList         = "/clerk/event-record/list"
 	fetchCheckpointCount    = "/checkpoints/count"
 	fetchCheckpoint         = "/checkpoints/%s"

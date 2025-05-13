@@ -28,6 +28,21 @@ func (h *HeimdallGRPCServer) Span(ctx context.Context, in *proto.SpanRequest) (*
 	return resp, nil
 }
 
+func (h *HeimdallGRPCServer) LatestSpan(ctx context.Context, in *proto.LatestSpanRequest) (*proto.SpanResponse, error) {
+	cliCtx := cliContext.NewCLIContext().WithCodec(h.cdc)
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(latestSpanURL))
+	if err != nil {
+		logger.Error("Error while fetching latest span")
+		return nil, err
+	}
+
+	resp := &proto.SpanResponse{}
+	resp.Result = parseSpan(result.Result)
+	resp.Height = fmt.Sprint(result.Height)
+
+	return resp, nil
+}
+
 func parseSpan(result json.RawMessage) *proto.Span {
 	var addr [20]byte
 
