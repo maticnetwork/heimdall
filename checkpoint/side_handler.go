@@ -93,12 +93,16 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+	// logger
+	logger := k.Logger(ctx)
+	if ctx.BlockHeight() >= helper.GetApocalypseHeight()-300 {
+		logger.Error("Checkpoints not allowed 300 blocks prior to apocalypse hardfork")
+		result.Result = abci.SideTxResultType_No
+		return
+	}
 	// get params
 	params := k.GetParams(ctx)
 	maticTxConfirmations := k.ck.GetParams(ctx).MaticchainTxConfirmations
-
-	// logger
-	logger := k.Logger(ctx)
 
 	// validate checkpoint
 	validCheckpoint, err := types.ValidateCheckpoint(msg.StartBlock, msg.EndBlock, msg.RootHash, params.MaxCheckpointLength, contractCaller, maticTxConfirmations)
@@ -276,6 +280,12 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 // PostHandleMsgCheckpoint handles msg checkpoint
 func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
+
+	if ctx.BlockHeight() >= helper.GetApocalypseHeight()-300 {
+		logger.Error("Checkpoints not allowed 300 blocks prior to apocalypse hardfork")
+		return common.ErrCheckpointNotAllowed(k.Codespace()).Result()
+
+	}
 
 	// Skip handler if checkpoint is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
