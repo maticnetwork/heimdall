@@ -605,6 +605,11 @@ func GetApocalypseHeight() int64 {
 	return apocalypseHeight
 }
 
+// GetCheckpointHaltHeight returns height at which checkpointing will be halted
+func GetCheckpointHaltHeight() int64 {
+	return GetApocalypseHeight() - 300
+}
+
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {
 	chainMigration := chainManagerAddressMigrations[conf.Chain]
 	if chainMigration == nil {

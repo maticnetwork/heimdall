@@ -109,6 +109,16 @@ func (cp *CheckpointProcessor) startPollingForNoAck(ctx context.Context, interva
 // 2. check if checkpoint has to be proposed for given headerblock
 // 3. if so, propose checkpoint to heimdall.
 func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (err error) {
+	status, err := helper.GetNodeStatus(cp.cliCtx)
+	if err != nil {
+		return err
+	}
+
+	if status.SyncInfo.LatestBlockHeight >= helper.GetCheckpointHaltHeight() {
+		cp.Logger.Info("Halting checkpoint submission prior to apocalypse", "latestBlockHeight", status.SyncInfo.LatestBlockHeight)
+		return nil
+	}
+
 	var header = types.Header{}
 	if err = header.UnmarshalJSON([]byte(headerBlockStr)); err != nil {
 		cp.Logger.Error("Error while unmarshalling the header block", "error", err)

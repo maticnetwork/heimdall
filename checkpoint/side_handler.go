@@ -95,7 +95,7 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	// logger
 	logger := k.Logger(ctx)
-	if ctx.BlockHeight() >= helper.GetApocalypseHeight()-300 {
+	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
 		logger.Error("Checkpoints not allowed 300 blocks prior to apocalypse hardfork")
 		result.Result = abci.SideTxResultType_No
 		return
@@ -281,7 +281,7 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
 
-	if ctx.BlockHeight() >= helper.GetApocalypseHeight()-300 {
+	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
 		logger.Error("Checkpoints not allowed 300 blocks prior to apocalypse hardfork")
 		return common.ErrCheckpointNotAllowed(k.Codespace()).Result()
 
