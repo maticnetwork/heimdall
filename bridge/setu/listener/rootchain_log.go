@@ -47,9 +47,16 @@ func (rl *RootChainListener) handleNewHeaderBlockLog(vLog types.Log, selectedEve
 		return
 	}
 
-	_, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent)
-	rl.SendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
+	status, err := helper.GetNodeStatus(rl.cliCtx)
+	if err != nil {
+		rl.Logger.Error("Failed to get node status", "Error", err)
+		return
+	}
 
+	isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent)
+	if isCurrentValidator || status.SyncInfo.LatestBlockHeight >= helper.GetCheckpointHaltHeight() {
+		rl.SendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
+	}
 }
 
 func (rl *RootChainListener) handleStakedLog(vLog types.Log, selectedEvent *abi.Event) {
