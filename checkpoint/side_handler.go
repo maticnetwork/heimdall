@@ -93,10 +93,9 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
-	// logger
 	logger := k.Logger(ctx)
 	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
-		logger.Error("Checkpoints not allowed 300 blocks prior to apocalypse hardfork")
+		logger.Error("Halting checkpoint submission prior to apocalypse height")
 		result.Result = abci.SideTxResultType_No
 		return
 	}
@@ -282,7 +281,7 @@ func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint,
 	logger := k.Logger(ctx)
 
 	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
-		logger.Error("Checkpoints not allowed 300 blocks prior to apocalypse hardfork")
+		logger.Error("Halting checkpoint submission prior to apocalypse height")
 		return common.ErrCheckpointNotAllowed(k.Codespace()).Result()
 
 	}

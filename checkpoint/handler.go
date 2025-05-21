@@ -80,7 +80,7 @@ func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, _ h
 	logger := k.Logger(ctx)
 
 	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
-		logger.Error("Checkpoints not allowed 300 blocks prior to apocalypse hardfork")
+		logger.Error("Halting checkpoint submission prior to apocalypse height")
 		return common.ErrCheckpointNotAllowed(k.Codespace()).Result()
 
 	}

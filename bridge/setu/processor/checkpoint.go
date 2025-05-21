@@ -115,7 +115,7 @@ func (cp *CheckpointProcessor) sendCheckpointToHeimdall(headerBlockStr string) (
 	}
 
 	if status.SyncInfo.LatestBlockHeight >= helper.GetCheckpointHaltHeight() {
-		cp.Logger.Info("Halting checkpoint submission prior to apocalypse", "latestBlockHeight", status.SyncInfo.LatestBlockHeight)
+		cp.Logger.Info("Halting checkpoint submission prior to apocalypse height", "latestBlockHeight", status.SyncInfo.LatestBlockHeight)
 		return nil
 	}
 
