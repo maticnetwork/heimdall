@@ -44,11 +44,12 @@ func (rl *RootChainListener) handleNewHeaderBlockLog(vLog types.Log, selectedEve
 	logBytes, err := jsoniter.ConfigFastest.Marshal(vLog)
 	if err != nil {
 		rl.Logger.Error("Failed to marshal log", "Error", err)
+		return
 	}
 
-	if isCurrentValidator, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent); isCurrentValidator {
-		rl.SendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
-	}
+	_, delay := util.CalculateTaskDelay(rl.cliCtx, selectedEvent)
+	rl.SendTaskWithDelay("sendCheckpointAckToHeimdall", selectedEvent.Name, logBytes, delay, selectedEvent)
+
 }
 
 func (rl *RootChainListener) handleStakedLog(vLog types.Log, selectedEvent *abi.Event) {
