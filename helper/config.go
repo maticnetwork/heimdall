@@ -244,7 +244,7 @@ var jorvikHeight int64 = 0
 
 var danelawHeight int64 = 0
 
-var apocalypseHeight int64 = 900
+var apocalypseHeight int64 = 22238836
 
 var checkpointHaltHeightDiff int64 = 500
 
@@ -426,8 +426,8 @@ func InitHeimdallConfigWith(homeDir string, heimdallConfigFileFromFLag string) {
 		spanOverrideHeight = 10205000
 		newHexToStringAlgoHeight = 12048023
 		aalborgHeight = 18035772
-		jorvikHeight = -1
-		danelawHeight = -1
+		jorvikHeight = 22173214
+		danelawHeight = 22173214
 	case AmoyChain:
 		newSelectionAlgoHeight = 0
 		spanOverrideHeight = 0
