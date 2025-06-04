@@ -33,6 +33,7 @@ const (
 	CodeCheckpointBuffer        CodeType = 1512
 	CodeCheckpointAlreadyExists CodeType = 1513
 	CodeInvalidNoAckProposer    CodeType = 1505
+	CodeCheckpointNotAllowed    CodeType = 1514
 
 	CodeOldValidator        CodeType = 2500
 	CodeNoValidator         CodeType = 2501
@@ -166,6 +167,10 @@ func ErrTooManyNoACK(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrBadTimeStamp(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeBadTimeStamp, "Invalid time stamp. It must be in near past.")
+}
+
+func ErrCheckpointNotAllowed(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeCheckpointNotAllowed, "Submission of checkpoint not allowed")
 }
 
 // -----------Milestone Errors

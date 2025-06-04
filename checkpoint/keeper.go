@@ -279,7 +279,6 @@ func (k *Keeper) GetCheckpoints(ctx sdk.Context) []hmTypes.Checkpoint {
 	// create headers
 	var headers []hmTypes.Checkpoint
 
-	// loop through validators to get valid validators
 	for ; iterator.Valid(); iterator.Next() {
 		var checkpoint hmTypes.Checkpoint
 		if err := k.cdc.UnmarshalBinaryBare(iterator.Value(), &checkpoint); err == nil {

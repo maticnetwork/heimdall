@@ -66,5 +66,6 @@ func ExportGenesis(ctx sdk.Context, keeper Keeper) types.GenesisState {
 		keeper.GetLastNoAck(ctx),
 		keeper.GetACKCount(ctx),
 		hmTypes.SortHeaders(keeper.GetCheckpoints(ctx)),
+		hmTypes.SortMilestones(keeper.GetMilestones(ctx)),
 	)
 }

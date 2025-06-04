@@ -79,6 +79,12 @@ func handleMsgCheckpointAdjust(ctx sdk.Context, msg types.MsgCheckpointAdjust, k
 func handleMsgCheckpoint(ctx sdk.Context, msg types.MsgCheckpoint, k Keeper, _ helper.IContractCaller) sdk.Result {
 	logger := k.Logger(ctx)
 
+	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
+		logger.Error("Halting checkpoint submission prior to apocalypse height")
+		return common.ErrCheckpointNotAllowed(k.Codespace()).Result()
+
+	}
+
 	//nolint:gosec
 	timeStamp := uint64(ctx.BlockTime().Unix())
 	params := k.GetParams(ctx)
