@@ -248,6 +248,8 @@ var apocalypseHeight int64 = 900
 
 var checkpointHaltHeightDiff int64 = 500
 
+var spanHaltHeightDiff int64 = 100
+
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
 	RootChainAddress      hmTypes.HeimdallAddress

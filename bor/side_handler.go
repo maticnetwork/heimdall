@@ -77,6 +77,11 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 		"msgSeed", proposeMsg.Seed.String(),
 	)
 
+	if helper.IsCloseToHaltHeight(ctx.BlockHeight()) {
+		k.Logger(ctx).Error("block height is close to halt height")
+		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+	}
+
 	// calculate next span seed locally
 	seed, seedAuthor, err := k.GetNextSpanSeed(ctx, proposeMsg.ID)
 	if err != nil {

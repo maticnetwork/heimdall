@@ -38,7 +38,6 @@ func (sp *SpanProcessor) Start() error {
 
 	// start polling for span
 	sp.Logger.Info("Start polling for span", "pollInterval", helper.GetConfig().SpanPollInterval)
-
 	go sp.startPolling(spanCtx, helper.GetConfig().SpanPollInterval)
 
 	return nil
@@ -98,6 +97,11 @@ func (sp *SpanProcessor) checkAndPropose() {
 			sp.Logger.Debug("Current bor block is less than last span start block, skipping proposing span", "currentBlock", latestBlock.Number.Uint64(), "lastSpanStartBlock", lastSpan.StartBlock)
 			return
 		}
+	}
+
+	if helper.IsCloseToHaltHeight(nodeStatus.SyncInfo.LatestBlockHeight) {
+		sp.Logger.Debug("Current block is close to halt height, skipping proposing span", "currentBlock", nodeStatus.SyncInfo.LatestBlockHeight)
+		return
 	}
 
 	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
