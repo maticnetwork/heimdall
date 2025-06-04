@@ -847,5 +847,5 @@ func FetchFromAPI(cliCtx cliContext.CLIContext, URL string) (result rest.Respons
 }
 
 func IsCloseToHaltHeight(currentBlockHeight int64) bool {
-	return currentBlockHeight <= apocalypseHeight && currentBlockHeight >= (apocalypseHeight-100)
+	return currentBlockHeight <= apocalypseHeight && currentBlockHeight >= (apocalypseHeight-spanHaltHeightDiff)
 }
