@@ -38,11 +38,6 @@ func (sp *SpanProcessor) Start() error {
 
 	// start polling for span
 	sp.Logger.Info("Start polling for span", "pollInterval", helper.GetConfig().SpanPollInterval)
-	// TODO: Reduce SpanPollInterval to 5s to reduce the opportunity
-	// where span is proposed exactly before halt height and there is
-	// disagreement between bor instances which is the last span.
-	// Maybe if span is proposed close before the halt height, we propose
-	// the same span again.
 	go sp.startPolling(spanCtx, helper.GetConfig().SpanPollInterval)
 
 	return nil
@@ -104,7 +99,6 @@ func (sp *SpanProcessor) checkAndPropose() {
 		}
 	}
 
-	// TODO: It seems like this can be released as soft upgrade without problems
 	if helper.IsCloseToHaltHeight(nodeStatus.SyncInfo.LatestBlockHeight) {
 		sp.Logger.Debug("Current block is close to halt height, skipping proposing span", "currentBlock", nodeStatus.SyncInfo.LatestBlockHeight)
 		return
