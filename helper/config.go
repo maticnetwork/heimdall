@@ -244,7 +244,7 @@ var jorvikHeight int64 = 0
 
 var danelawHeight int64 = 0
 
-var apocalypseHeight int64 = 22238836
+var apocalypseHeight int64 = 21710414
 
 var checkpointHaltHeightDiff int64 = 500
 
