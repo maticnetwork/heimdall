@@ -1,4 +1,4 @@
-//nolint
+// nolint
 package rest
 
 import (
@@ -11,7 +11,8 @@ import (
 	chainTypes "github.com/maticnetwork/heimdall/chainmanager/types"
 )
 
-//It represents the bank balance of particluar account
+// It represents the bank balance of particluar account
+//
 //swagger:response chainManagerParamsResponse
 type chainManagerParamsResponse struct {
 	//in:body
@@ -21,11 +22,6 @@ type chainManagerParamsResponse struct {
 type chainManagerParams struct {
 	Height string       `json:"height"`
 	Result chainManager `json:"result"`
-}
-
-type haltHeightResponse struct {
-	Height     string `json:"height"`
-	HaltHeight int64  `json:"result"`
 }
 
 type chainManager struct {
@@ -51,7 +47,9 @@ type ContractAddresses struct {
 // swagger:route GET /chainmanager/params chain-manager chainManagerParams
 // It returns the chain-manager parameters
 // responses:
-//   200: chainManagerParamsResponse
+//
+//	200: chainManagerParamsResponse
+//
 // HTTP request handler to query the auth params values
 func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -61,29 +59,6 @@ func paramsHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
 		}
 
 		route := fmt.Sprintf("custom/%s/%s", chainTypes.QuerierRoute, chainTypes.QueryParams)
-
-		res, height, err := cliCtx.QueryWithData(route, nil)
-		if err != nil {
-			rest.WriteErrorResponse(w, http.StatusInternalServerError, err.Error())
-			return
-		}
-
-		cliCtx = cliCtx.WithHeight(height)
-		rest.PostProcessResponse(w, cliCtx, res)
-	}
-}
-
-// swagger:route GET /chainmanager/halt-height chain-manager
-// It returns the halt-height
-// HTTP request handler to query the halt height
-func haltHeightHandlerFn(cliCtx context.CLIContext) http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		cliCtx, ok := rest.ParseQueryHeightOrReturnBadRequest(w, cliCtx, r)
-		if !ok {
-			return
-		}
-
-		route := fmt.Sprintf("custom/%s/%s", chainTypes.QuerierRoute, chainTypes.HaltHeight)
 
 		res, height, err := cliCtx.QueryWithData(route, nil)
 		if err != nil {

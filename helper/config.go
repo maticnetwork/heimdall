@@ -244,12 +244,6 @@ var jorvikHeight int64 = 0
 
 var danelawHeight int64 = 0
 
-var apocalypseHeight int64 = 900
-
-var checkpointHaltHeightDiff int64 = 500
-
-var spanHaltHeightDiff int64 = 100
-
 type ChainManagerAddressMigration struct {
 	MaticTokenAddress     hmTypes.HeimdallAddress
 	RootChainAddress      hmTypes.HeimdallAddress
@@ -602,16 +596,6 @@ func GetJorvikHeight() int64 {
 // GetDanelawHeight returns danelawHeight
 func GetDanelawHeight() int64 {
 	return danelawHeight
-}
-
-// GetApocalypseHeight returns apocalypseHeight
-func GetApocalypseHeight() int64 {
-	return apocalypseHeight
-}
-
-// GetCheckpointHaltHeight returns height at which checkpointing will be halted
-func GetCheckpointHaltHeight() int64 {
-	return GetApocalypseHeight() - checkpointHaltHeightDiff
 }
 
 func GetChainManagerAddressMigration(blockNum int64) (ChainManagerAddressMigration, bool) {

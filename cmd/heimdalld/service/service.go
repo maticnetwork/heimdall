@@ -214,7 +214,7 @@ func getNewApp(serverCtx *server.Context) func(logger log.Logger, db dbm.DB, sto
 		// create new heimdall app
 		hApp = app.NewHeimdallApp(logger, db,
 			baseapp.SetPruning(store.NewPruningOptionsFromString(viper.GetString(flagPruning))),
-			baseapp.SetHaltHeight(uint64(helper.GetApocalypseHeight()+1))) //nolint:gosec
+		)
 
 		return hApp
 	}
