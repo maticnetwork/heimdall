@@ -51,16 +51,24 @@ const (
 	CodeNoSignerChangeError CodeType = 2513
 	CodeNonce               CodeType = 2514
 
-	CodeSpanNotContinuous         CodeType = 3501
-	CodeUnableToFreezeSet         CodeType = 3502
-	CodeSpanNotFound              CodeType = 3503
-	CodeValSetMisMatch            CodeType = 3504
-	CodeProducerMisMatch          CodeType = 3505
-	CodeInvalidBorChainID         CodeType = 3506
-	CodeInvalidSpanDuration       CodeType = 3507
-	CodeUnableToGetSpan           CodeType = 3508
-	CodeUnableToGetSeed           CodeType = 3509
-	CodeUnableToStoreSeedProducer CodeType = 3510
+	CodeSpanNotContinuous          CodeType = 3501
+	CodeUnableToFreezeSet          CodeType = 3502
+	CodeSpanNotFound               CodeType = 3503
+	CodeValSetMisMatch             CodeType = 3504
+	CodeProducerMisMatch           CodeType = 3505
+	CodeInvalidBorChainID          CodeType = 3506
+	CodeInvalidSpanDuration        CodeType = 3507
+	CodeUnableToGetSpan            CodeType = 3508
+	CodeUnableToGetSeed            CodeType = 3509
+	CodeUnableToStoreSeedProducer  CodeType = 3510
+	CodeUnableToGetLastSpan        CodeType = 3511
+	CodeInvalidSpanID              CodeType = 3512
+	CodeInvalidLastBorSpanID       CodeType = 3513
+	CodeUnableToGetLastMilestone   CodeType = 3514
+	CodeUnableToCalculateBorSpanID CodeType = 3515
+	CodeBorSpanIDMismatch          CodeType = 3516
+	CodeUnableToAddSpan            CodeType = 3517
+	CodeSpanOverlap                CodeType = 3518
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
@@ -304,6 +312,44 @@ func ErrUnableToGetSeed(codespace sdk.CodespaceType) sdk.Error {
 
 func ErrUnableToStoreSeedProducer(codespace sdk.CodespaceType) sdk.Error {
 	return newError(codespace, CodeUnableToStoreSeedProducer, "Unable to store seed producer")
+}
+
+func ErrUnableToGetLastSpan(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToGetSpan, "Unable to get last span")
+}
+
+func ErrInvalidLastSpanID(codespace sdk.CodespaceType, lastSpanID uint64) sdk.Error {
+	return newError(codespace, CodeInvalidSpanID, fmt.Sprintf("Invalid last span ID %d", lastSpanID))
+}
+
+func ErrInvalidLastBorSpanID(codespace sdk.CodespaceType, lastBorSpanID uint64) sdk.Error {
+	return newError(codespace, CodeInvalidLastBorSpanID, fmt.Sprintf("Invalid last bor span ID %d", lastBorSpanID))
+}
+
+func ErrUnableToGetLastMilestone(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToGetLastMilestone, "Unable to get last milestone")
+}
+
+func ErrLatestMilestoneNotFound(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeNoMilestone, "Latest milestone not found")
+}
+
+func ErrUnableToCalculateBorSpanID(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToCalculateBorSpanID, "Unable to calculate bor span ID from milestone")
+}
+
+func ErrBorSpanIDMismatch(codespace sdk.CodespaceType, calculatedBorSpanID, msgLatestBorSpanID uint64) sdk.Error {
+	return newError(codespace, CodeBorSpanIDMismatch,
+		fmt.Sprintf("Bor span ID mismatch: calculated %d, msg latest %d", calculatedBorSpanID, msgLatestBorSpanID))
+}
+
+func ErrUnableToAddSpan(codespace sdk.CodespaceType) sdk.Error {
+	return newError(codespace, CodeUnableToAddSpan, "Unable to add span")
+}
+
+func ErrSpanOverlap(codespace sdk.CodespaceType, startBlock, endBlock uint64) sdk.Error {
+	return newError(codespace, CodeSpanOverlap,
+		fmt.Sprintf("Span overlap detected for start block %d and end block %d", startBlock, endBlock))
 }
 
 //

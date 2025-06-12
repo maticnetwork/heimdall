@@ -361,6 +361,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.ChainKeeper,
 		app.StakingKeeper,
+		app.CheckpointKeeper,
 		&app.caller,
 	)
 

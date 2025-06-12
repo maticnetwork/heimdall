@@ -1,6 +1,8 @@
 package grpc
 
 import (
+	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -43,6 +45,31 @@ func NewBorGRPCClient(address string) *BorGRPCClient {
 		conn:   conn,
 		client: proto.NewBorApiClient(conn),
 	}
+}
+
+func (h *BorGRPCClient) GetStartBlockHeimdallSpanID(ctx context.Context, startBlock uint64) (uint64, error) {
+	req := &proto.GetStartBlockHeimdallSpanIDRequest{
+		StartBlock: startBlock,
+	}
+
+	log.Info("Fetching start block heimdall span ID")
+
+	res, err := h.client.GetStartBlockHeimdallSpanID(ctx, req)
+	if err != nil {
+		return 0, err
+	}
+
+	if res.HeimdallSpanID == 0 {
+		return 0, fmt.Errorf("heimdall span ID is 0")
+	}
+
+	if res.StartBlock != startBlock {
+		return 0, fmt.Errorf("start block mismatch: expected %d, got %d", startBlock, res.StartBlock)
+	}
+
+	log.Info("Fetched start block heimdall span ID")
+
+	return res.HeimdallSpanID, nil
 }
 
 func (h *BorGRPCClient) Close() {

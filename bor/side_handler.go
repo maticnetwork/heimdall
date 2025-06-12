@@ -8,7 +8,7 @@ import (
 
 	ethCommon "github.com/ethereum/go-ethereum/common"
 	"github.com/maticnetwork/heimdall/bor/types"
-	"github.com/maticnetwork/heimdall/common"
+
 	hmCommon "github.com/maticnetwork/heimdall/common"
 	"github.com/maticnetwork/heimdall/helper"
 
@@ -25,6 +25,8 @@ func NewSideTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.S
 		case types.MsgProposeSpan,
 			types.MsgProposeSpanV2:
 			return SideHandleMsgSpan(ctx, k, msg, contractCaller)
+		case types.MsgBackfillSpans:
+			return SideHandleMsgBackfillSpans(ctx, k, msg, contractCaller)
 		default:
 			return abci.ResponseDeliverSideTx{
 				Code: uint32(sdk.CodeUnknownRequest),
@@ -55,7 +57,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	case types.MsgProposeSpan:
 		if ctx.BlockHeight() >= helper.GetDanelawHeight() {
 			k.Logger(ctx).Error("Msg span is not allowed after Danelaw hardfork height")
-			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+			return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
@@ -68,7 +70,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	case types.MsgProposeSpanV2:
 		if ctx.BlockHeight() < helper.GetDanelawHeight() {
 			k.Logger(ctx).Error("Msg span v2 is not allowed before Danelaw hardfork height")
-			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+			return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 		}
 		proposeMsg = msg
 	}
@@ -81,7 +83,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	seed, seedAuthor, err := k.GetNextSpanSeed(ctx, proposeMsg.ID)
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching next span seed from mainchain")
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 	}
 
 	// check if span seed matches or not.
@@ -94,7 +96,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 			"mainchainSeed", seed.String(),
 		)
 
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 	}
 
 	if ctx.BlockHeight() >= helper.GetDanelawHeight() {
@@ -110,7 +112,7 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 				"mainchainSeed", seed.String(),
 			)
 
-			return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+			return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 		}
 	}
 
@@ -118,13 +120,13 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 	childBlock, err := contractCaller.GetMaticChainBlock(nil)
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching current child block", "error", err)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 	}
 
 	lastSpan, err := k.GetLastSpan(ctx)
 	if err != nil {
 		k.Logger(ctx).Error("Error fetching last span", "error", err)
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 	}
 
 	currentBlock := childBlock.Number.Uint64()
@@ -137,10 +139,50 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 			"msgEndBlock", proposeMsg.EndBlock,
 		)
 
-		return hmCommon.ErrorSideTx(k.Codespace(), common.CodeInvalidMsg)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 	}
 
 	k.Logger(ctx).Debug("✅ Successfully validated External call for span msg")
+
+	result.Result = abci.SideTxResultType_Yes
+
+	return
+}
+
+func SideHandleMsgBackfillSpans(ctx sdk.Context, k Keeper, msg types.MsgBackfillSpans, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
+
+	k.Logger(ctx).Debug("✅ validating external call for fill missing spans msg",
+		"proposer", msg.Proposer,
+		"chainId", msg.ChainID,
+		"latestSpanId", msg.LatestBorSpanID,
+		"latestHeimdallSpan", msg.LatestBorSpanID,
+	)
+
+	latestSpan, err := k.GetLastSpan(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get latest span", "error", err)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
+	}
+
+	borLastUsedSpanID, err := contractCaller.GetStartBlockHeimdallSpanID(ctx.Context(), latestSpan.EndBlock+1)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get last used bor span id", "error", err)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
+	}
+	if borLastUsedSpanID == 0 {
+		k.Logger(ctx).Error("last used bor span id is 0")
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
+	}
+
+	if borLastUsedSpanID != msg.LatestSpanID {
+		k.Logger(ctx).Error("last used bor span id does not match",
+			"expected", borLastUsedSpanID,
+			"got", msg.LatestSpanID,
+		)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
+	}
+
+	k.Logger(ctx).Debug("✅ successfully validated external call for fill missing spans msg")
 
 	result.Result = abci.SideTxResultType_Yes
 
@@ -154,7 +196,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	// Skip handler if span is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
 		logger.Debug("Skipping new span since side-tx didn't get yes votes")
-		return common.ErrSideTxValidation(k.Codespace()).Result()
+		return hmCommon.ErrSideTxValidation(k.Codespace()).Result()
 	}
 
 	// check if msg is of type MsgProposeSpanV2
@@ -163,7 +205,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	case types.MsgProposeSpan:
 		if ctx.BlockHeight() >= helper.GetDanelawHeight() {
 			k.Logger(ctx).Error("Msg span is not allowed after Danelaw hardfork height")
-			return common.ErrSideTxValidation(k.Codespace()).Result()
+			return hmCommon.ErrSideTxValidation(k.Codespace()).Result()
 		}
 		proposeMsg = types.MsgProposeSpanV2{
 			ID:         msg.ID,
@@ -176,7 +218,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	case types.MsgProposeSpanV2:
 		if ctx.BlockHeight() < helper.GetDanelawHeight() {
 			k.Logger(ctx).Error("Msg span v2 is not allowed before Danelaw hardfork height")
-			return common.ErrSideTxValidation(k.Codespace()).Result()
+			return hmCommon.ErrSideTxValidation(k.Codespace()).Result()
 		}
 		proposeMsg = msg
 	}
@@ -207,7 +249,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 		lastSpan, err := k.GetSpan(ctx, seedSpanID)
 		if err != nil {
 			logger.Error("Unable to get last span", "Error", err)
-			return common.ErrUnableToGetSpan(k.Codespace()).Result()
+			return hmCommon.ErrUnableToGetSpan(k.Codespace()).Result()
 		}
 
 		var producer *ethCommon.Address
@@ -217,7 +259,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 			_, producer, err = k.getBorBlockForSpanSeed(ctx, lastSpan, proposeMsg.ID)
 			if err != nil {
 				logger.Error("Unable to get seed producer", "Error", err)
-				return common.ErrUnableToGetSeed(k.Codespace()).Result()
+				return hmCommon.ErrUnableToGetSeed(k.Codespace()).Result()
 			}
 		} else {
 			producer = &proposeMsg.SeedAuthor
@@ -225,7 +267,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 
 		if err = k.StoreSeedProducer(ctx, proposeMsg.ID, producer); err != nil {
 			logger.Error("Unable to store seed producer", "Error", err)
-			return common.ErrUnableToStoreSeedProducer(k.Codespace()).Result()
+			return hmCommon.ErrUnableToStoreSeedProducer(k.Codespace()).Result()
 		}
 	}
 
@@ -233,7 +275,7 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	err := k.FreezeSet(ctx, proposeMsg.ID, proposeMsg.StartBlock, proposeMsg.EndBlock, proposeMsg.ChainID, proposeMsg.Seed)
 	if err != nil {
 		k.Logger(ctx).Error("Unable to freeze validator set for span", "Error", err)
-		return common.ErrUnableToFreezeValSet(k.Codespace()).Result()
+		return hmCommon.ErrUnableToFreezeValSet(k.Codespace()).Result()
 	}
 
 	// TX bytes
@@ -255,6 +297,71 @@ func PostHandleMsgEventSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, sideTxResult
 	})
 
 	// draft result with events
+	return sdk.Result{
+		Events: ctx.EventManager().Events(),
+	}
+}
+
+func PostHandleMsgBackfillSpans(ctx sdk.Context, k Keeper, msg types.MsgBackfillSpans, sideTxResult abci.SideTxResultType) sdk.Result {
+
+	if sideTxResult != abci.SideTxResultType_Yes {
+		k.Logger(ctx).Debug("skipping new span since side-tx didn't get yes votes")
+		return hmCommon.ErrSideTxValidation(k.Codespace()).Result()
+	}
+
+	latestMilestone, err := k.checkpointKeeper.GetLastMilestone(ctx)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get latest milestone", "error", err)
+		return hmCommon.ErrUnableToGetLastMilestone(k.Codespace()).Result()
+	}
+
+	if latestMilestone == nil {
+		k.Logger(ctx).Error("latest milestone is nil")
+		return hmCommon.ErrLatestMilestoneNotFound(k.Codespace()).Result()
+	}
+
+	latestSpan, err := k.GetSpan(ctx, msg.LatestSpanID)
+	if err != nil {
+		k.Logger(ctx).Error("failed to get latest span", "error", err)
+		return hmCommon.ErrUnableToGetSpan(k.Codespace()).Result()
+	}
+
+	if latestSpan == nil {
+		k.Logger(ctx).Error("latest span is nil", "latestSpanId", msg.LatestSpanID)
+		return hmCommon.ErrSpanNotFound(k.Codespace()).Result()
+	}
+
+	borSpans := types.GenerateBorCommittedSpans(latestMilestone.EndBlock, latestSpan)
+	spansOverlap := 0
+	for i := range borSpans {
+		if _, err := k.GetSpan(ctx, borSpans[i].ID); err == nil {
+			spansOverlap++
+		}
+		if spansOverlap > 1 {
+			k.Logger(ctx).Error("more than one span overlap detected", "span id", borSpans[i].ID)
+			return hmCommon.ErrSpanOverlap(k.Codespace(), borSpans[i].StartBlock, borSpans[i].ID).Result()
+		}
+		if err = k.AddNewSpan(ctx, borSpans[i]); err != nil {
+			k.Logger(ctx).Error("Unable to store spans", "error", err)
+			return hmCommon.ErrUnableToAddSpan(k.Codespace()).Result()
+		}
+	}
+
+	txBytes := ctx.TxBytes()
+	hash := tmTypes.Tx(txBytes).Hash()
+
+	ctx.EventManager().EmitEvents(sdk.Events{
+		sdk.NewEvent(
+			types.EventTypeProposeSpan,
+			sdk.NewAttribute(sdk.AttributeKeyAction, msg.Type()),
+			sdk.NewAttribute(sdk.AttributeKeyModule, types.AttributeValueCategory),
+			sdk.NewAttribute(hmTypes.AttributeKeyTxHash, hmTypes.BytesToHeimdallHash(hash).Hex()),
+			sdk.NewAttribute(hmTypes.AttributeKeySideTxResult, sideTxResult.String()),
+			sdk.NewAttribute(types.AttributesKeyLatestSpanId, strconv.FormatUint(msg.LatestSpanID, 10)),
+			sdk.NewAttribute(types.AttributesKeyLatestBorSpanId, strconv.FormatUint(borSpans[0].ID, 10)),
+		),
+	})
+
 	return sdk.Result{
 		Events: ctx.EventManager().Events(),
 	}

@@ -65,6 +65,7 @@ type IContractCaller interface {
 	IsTxConfirmed(common.Hash, uint64) bool
 	GetConfirmedTxReceipt(common.Hash, uint64) (*ethTypes.Receipt, error)
 	GetBlockNumberFromTxHash(common.Hash) (*big.Int, error)
+	GetStartBlockHeimdallSpanID(ctx context.Context, startBlock uint64) (spanID uint64, err error)
 
 	// decode header event
 	DecodeNewHeaderBlockEvent(common.Address, *ethTypes.Receipt, uint64) (*rootchain.RootchainNewHeaderBlock, error)
@@ -1015,6 +1016,25 @@ func (c *ContractCaller) GetCheckpointSign(txHash common.Hash) ([]byte, []byte, 
 	chainABI := c.RootChainABI
 
 	return UnpackSigAndVotes(payload, chainABI)
+}
+
+// GetStartBlockHeimdallSpanID returns which heimdall span id was used for given bor span
+func (c *ContractCaller) GetStartBlockHeimdallSpanID(ctx context.Context, startBlock uint64) (spanID uint64, err error) {
+	ctx, cancel := context.WithTimeout(ctx, c.MaticChainTimeout)
+	defer cancel()
+
+	if c.MaticGrpcFlag {
+		spanID, err = c.MaticGrpcClient.GetStartBlockHeimdallSpanID(ctx, startBlock)
+	} else {
+		spanID, err = c.MaticChainClient.GetStartBlockHeimdallSpanID(ctx, startBlock)
+	}
+
+	if err != nil {
+		Logger.Error("unable to connect to bor chain", "error", err)
+		return
+	}
+
+	return spanID, nil
 }
 
 // utility and helper methods

@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	cliContext "github.com/cosmos/cosmos-sdk/client/context"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	jsoniter "github.com/json-iterator/go"
 
@@ -17,6 +18,7 @@ import (
 	"github.com/maticnetwork/heimdall/bridge/setu/util"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types"
+	hmTypes "github.com/maticnetwork/heimdall/types"
 )
 
 // SpanProcessor - process span related events
@@ -80,26 +82,39 @@ func (sp *SpanProcessor) checkAndPropose() {
 		return
 	}
 
-	nodeStatus, err := helper.GetNodeStatus(sp.cliCtx)
-	if err != nil {
-		sp.Logger.Error("Error while fetching heimdall node status", "error", err)
+	lastBlock, e := sp.contractConnector.GetMaticChainBlock(nil)
+	if e != nil {
+		sp.Logger.Error("Error fetching current child block", "error", e)
 		return
 	}
 
-	if nodeStatus.SyncInfo.LatestBlockHeight >= helper.GetDanelawHeight() {
-		latestBlock, e := sp.contractConnector.GetMaticChainBlock(nil)
-		if e != nil {
-			sp.Logger.Error("Error fetching current child block", "error", e)
-			return
-		}
+	latestBorBlockNumber := lastBlock.Number.Uint64()
 
-		if latestBlock.Number.Uint64() < lastSpan.StartBlock {
-			sp.Logger.Debug("Current bor block is less than last span start block, skipping proposing span", "currentBlock", latestBlock.Number.Uint64(), "lastSpanStartBlock", lastSpan.StartBlock)
-			return
-		}
+	if latestBorBlockNumber < lastSpan.StartBlock {
+		sp.Logger.Debug("Current bor block is less than last span start block, skipping proposing span",
+			"lastBlock", latestBorBlockNumber,
+			"lastSpanStartBlock", lastSpan.StartBlock,
+		)
+		return
 	}
 
-	sp.Logger.Debug("Found last span", "lastSpan", lastSpan.ID, "startBlock", lastSpan.StartBlock, "endBlock", lastSpan.EndBlock)
+	var latestMilestoneEndBlock uint64
+	latestMilestone, err := util.GetLatestMilestone(sp.cliCtx)
+	if err == nil {
+		latestMilestoneEndBlock = latestMilestone.EndBlock
+	} else {
+		sp.Logger.Error("Error fetching latest milestone", "error", err)
+	}
+
+	// Max of latest milestone end block and latest bor block number
+	// Handle cases where bor is syncing and latest milestone end block is greater than latest bor block number
+	maxBlockNumber := max(latestMilestoneEndBlock, latestBorBlockNumber)
+
+	sp.Logger.Debug("Found last span",
+		"lastSpan", lastSpan.ID,
+		"startBlock", lastSpan.StartBlock,
+		"endBlock", lastSpan.EndBlock,
+	)
 
 	nextSpanMsg, err := sp.fetchNextSpanDetails(lastSpan.ID+1, lastSpan.EndBlock+1)
 	if err != nil {
@@ -108,9 +123,99 @@ func (sp *SpanProcessor) checkAndPropose() {
 	}
 
 	// check if current user is among next span producers
-	if sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
+	if !sp.isSpanProposer(nextSpanMsg.SelectedProducers) {
+		sp.Logger.Debug("Current user is not among next span producers, skipping proposing span", "nextSpanId", nextSpanMsg.ID)
+		return
+	}
+
+	if maxBlockNumber > lastSpan.EndBlock {
+		if latestMilestoneEndBlock > lastSpan.EndBlock {
+			sp.Logger.Debug("Bor self commmitted spans, backfill heimdall to fill missing spans",
+				"lastBlock", latestBorBlockNumber,
+				"lastFinalizedBlock", latestMilestoneEndBlock,
+				"lastSpanEndBlock", lastSpan.EndBlock,
+			)
+
+			if err := sp.backfillSpans(latestMilestoneEndBlock, lastSpan); err != nil {
+				sp.Logger.Error("Error in backfillSpans", "error", err)
+			}
+
+		} else {
+			sp.Logger.Debug("Will not backfill heimdall spans, as latest milestone end block is less than last span end block",
+				"lastBlock", latestBorBlockNumber,
+				"lastFinalizedBlock", latestMilestoneEndBlock,
+				"lastSpanEndBlock", lastSpan.EndBlock,
+			)
+		}
+	} else {
+		if borTypes.IsBlockCloseToSpanEnd(maxBlockNumber, lastSpan.EndBlock) {
+			sp.Logger.Debug("Current bor block is close to last span end block, skipping proposing span",
+				"lastBlock", latestBorBlockNumber,
+				"lastFinalizedBlock", latestMilestoneEndBlock,
+				"lastSpanEndBlock", lastSpan.EndBlock,
+			)
+			return
+		}
+
 		go sp.propose(lastSpan, nextSpanMsg)
 	}
+}
+
+func (sp *SpanProcessor) backfillSpans(latestFinalizedBorBlockNumber uint64, lastHeimdallSpan *types.Span) error {
+	// Get what span bor used when heimdall was down and it tried to fetch the next span from heimdall
+	// We need to know if it managed to fetch the latest span or it used the previous one
+	// We will take it from the next start block after the last heimdall span end block
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	borLastUsedSpanID, err := sp.contractConnector.GetStartBlockHeimdallSpanID(ctx, lastHeimdallSpan.EndBlock+1)
+	if err != nil {
+		return fmt.Errorf("error while fetching last used span id for bor: %w", err)
+	}
+
+	if borLastUsedSpanID == 0 {
+		return fmt.Errorf("bor last used span id is 0, cannot backfill spans")
+	}
+
+	borLastUsedSpan, err := sp.getSpanById(sp.cliCtx, borLastUsedSpanID)
+	if err != nil {
+		return fmt.Errorf("error while fetching last used span for bor: %w", err)
+	}
+
+	if borLastUsedSpan == nil {
+		return fmt.Errorf("bor last used span is nil, cannot backfill spans")
+	}
+
+	params, err := util.GetChainmanagerParams(sp.cliCtx)
+	if err != nil {
+		return fmt.Errorf("error while fetching chainmanager params: %w", err)
+	}
+
+	addrString := hmTypes.BytesToHeimdallAddress(helper.GetAddress())
+
+	borSpanId, err := borTypes.CalcCurrentBorSpanId(latestFinalizedBorBlockNumber, borLastUsedSpan)
+	if err != nil {
+		return fmt.Errorf("error while calculating bor span id: %w", err)
+	}
+
+	msg := borTypes.MsgBackfillSpans{
+		Proposer:        addrString,
+		ChainID:         params.ChainParams.BorChainID,
+		LatestSpanID:    borLastUsedSpan.ID,
+		LatestBorSpanID: borSpanId,
+	}
+
+	txRes, err := sp.txBroadcaster.BroadcastToHeimdall(&msg, nil) //nolint:contextcheck
+	if err != nil {
+		return fmt.Errorf("error while broadcasting backfill spans to heimdall: %w", err)
+	}
+
+	if txRes.Code != uint32(sdk.CodeOK) {
+		return fmt.Errorf("backfill spans tx failed on heimdall, txHash: %s, code: %d", txRes.TxHash, txRes.Code)
+	}
+
+	sp.Logger.Info("Backfill spans tx successfully broadcasted to heimdall", "txHash", txRes.TxHash, "borLastUsedSpanId", borLastUsedSpan.ID, "borSpanId", borSpanId)
+
+	return nil
 }
 
 // propose producers for next span if needed
@@ -187,6 +292,23 @@ func (sp *SpanProcessor) propose(lastSpan *types.Span, nextSpanMsg *types.Span) 
 func (sp *SpanProcessor) getLastSpan() (*types.Span, error) {
 	// fetch latest start block from heimdall via rest query
 	result, err := helper.FetchFromAPI(sp.cliCtx, helper.GetHeimdallServerEndpoint(util.LatestSpanURL))
+	if err != nil {
+		sp.Logger.Error("Error while fetching latest span")
+		return nil, err
+	}
+
+	var lastSpan types.Span
+	if err = jsoniter.ConfigFastest.Unmarshal(result.Result, &lastSpan); err != nil {
+		sp.Logger.Error("Error unmarshalling span", "error", err)
+		return nil, err
+	}
+
+	return &lastSpan, nil
+}
+
+func (sp *SpanProcessor) getSpanById(cliCtx cliContext.CLIContext, id uint64) (*types.Span, error) {
+	// fetch latest span from heimdall using the rest query
+	result, err := helper.FetchFromAPI(cliCtx, fmt.Sprintf(helper.GetHeimdallServerEndpoint(util.SpanByIdURL), strconv.FormatUint(id, 10)))
 	if err != nil {
 		sp.Logger.Error("Error while fetching latest span")
 		return nil, err

@@ -162,3 +162,60 @@ func (msg MsgProposeSpanV2) ValidateBasic() sdk.Error {
 func (msg MsgProposeSpanV2) GetSideSignBytes() []byte {
 	return nil
 }
+
+type MsgBackfillSpans struct {
+	Proposer        hmTypes.HeimdallAddress `json:"proposer"`
+	ChainID         string                  `json:"chain_id"`
+	LatestSpanID    uint64                  `json:"latest_span_id"`
+	LatestBorSpanID uint64                  `json:"latest_bor_span_id"`
+}
+
+func NewMsgBackfillSpans(proposer hmTypes.HeimdallAddress, chainID string, latestSpanID, latestBorSpanID uint64) MsgBackfillSpans {
+	return MsgBackfillSpans{
+		Proposer:        proposer,
+		ChainID:         chainID,
+		LatestSpanID:    latestSpanID,
+		LatestBorSpanID: latestBorSpanID,
+	}
+}
+
+func (msg MsgBackfillSpans) Type() string {
+	return "backfill-spans"
+}
+
+func (msg MsgBackfillSpans) Route() string {
+	return RouterKey
+}
+
+func (msg MsgBackfillSpans) GetSigners() []sdk.AccAddress {
+	return []sdk.AccAddress{hmTypes.HeimdallAddressToAccAddress(hmTypes.HeimdallAddress(msg.Proposer))}
+}
+
+func (msg MsgBackfillSpans) GetSignBytes() []byte {
+	b, err := ModuleCdc.MarshalJSON(msg)
+	if err != nil {
+		panic(err)
+	}
+
+	return sdk.MustSortJSON(b)
+}
+
+func (msg MsgBackfillSpans) ValidateBasic() sdk.Error {
+	if msg.Proposer.Empty() {
+		return sdk.ErrInvalidAddress(msg.Proposer.String())
+	}
+	if msg.ChainID == "" {
+		return sdk.ErrUnknownRequest("ChainID cannot be empty")
+	}
+	if msg.LatestSpanID == 0 {
+		return sdk.ErrUnknownRequest("LatestSpanID cannot be zero")
+	}
+	if msg.LatestBorSpanID == 0 {
+		return sdk.ErrUnknownRequest("LatestBorSpanID cannot be zero")
+	}
+	return nil
+}
+
+func (msg MsgBackfillSpans) GetSideSignBytes() []byte {
+	return nil
+}
