@@ -129,7 +129,35 @@ func SideHandleMsgSpan(ctx sdk.Context, k Keeper, msg sdk.Msg, contractCaller he
 		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeInvalidMsg)
 	}
 
+	var latestMilestoneEndBlock uint64
+	latestMilestone, err := k.checkpointKeeper.GetLastMilestone(ctx)
+	if err == nil {
+		latestMilestoneEndBlock = latestMilestone.EndBlock
+	} else {
+		k.Logger(ctx).Error("error fetching latest milestone", "error", err)
+	}
+
 	currentBlock := childBlock.Number.Uint64()
+
+	maxBlockNumber := max(latestMilestoneEndBlock, currentBlock)
+
+	if types.IsBlockCloseToSpanEnd(maxBlockNumber, lastSpan.EndBlock) {
+		k.Logger(ctx).Debug("current block is close to span end", "currentBlock", currentBlock, "lastSpanEndBlock", lastSpan.EndBlock)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeTooCloseToSpanEnd)
+	}
+
+	// If we are past end of the last span, we need to backfill before proposing a new span
+	if proposeMsg.StartBlock <= maxBlockNumber {
+		k.Logger(ctx).Error("span is already in the past",
+			"currentBlock", currentBlock,
+			"msgStartBlock", proposeMsg.StartBlock,
+			"msgEndBlock", proposeMsg.EndBlock,
+			"latestMilestoneEndBlock", latestMilestoneEndBlock,
+			"lastSpanEndBlock", lastSpan.EndBlock,
+		)
+		return hmCommon.ErrorSideTx(k.Codespace(), hmCommon.CodeSpanInThePast)
+	}
+
 	// check if span proposed is in-turn or not
 	if !(lastSpan.StartBlock <= currentBlock && currentBlock <= lastSpan.EndBlock) {
 		k.Logger(ctx).Error(

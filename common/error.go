@@ -69,6 +69,8 @@ const (
 	CodeBorSpanIDMismatch          CodeType = 3516
 	CodeUnableToAddSpan            CodeType = 3517
 	CodeSpanOverlap                CodeType = 3518
+	CodeTooCloseToSpanEnd          CodeType = 3519
+	CodeSpanInThePast              CodeType = 3520
 
 	CodeFetchCheckpointSigners       CodeType = 4501
 	CodeErrComputeGenesisAccountRoot CodeType = 4503
