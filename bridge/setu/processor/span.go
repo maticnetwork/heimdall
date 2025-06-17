@@ -167,6 +167,12 @@ func (sp *SpanProcessor) backfillSpans(latestFinalizedBorBlockNumber uint64, las
 	// We will take it from the next start block after the last heimdall span end block
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
+	sp.Logger.Error("Backfilling heimdall spans",
+		"latestFinalizedBorBlockNumber", latestFinalizedBorBlockNumber,
+		"lastHeimdallSpanId", lastHeimdallSpan.ID,
+		"lastHeimdallSpanStartBlock", lastHeimdallSpan.StartBlock,
+		"lastHeimdallSpanEndBlock", lastHeimdallSpan.EndBlock,
+	)
 	borLastUsedSpanID, err := sp.contractConnector.GetStartBlockHeimdallSpanID(ctx, lastHeimdallSpan.EndBlock+1)
 	if err != nil {
 		return fmt.Errorf("error while fetching last used span id for bor: %w", err)
