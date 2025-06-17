@@ -43,6 +43,8 @@ func NewPostTxHandler(k Keeper, contractCaller helper.IContractCaller) hmTypes.P
 		case types.MsgProposeSpan,
 			types.MsgProposeSpanV2:
 			return PostHandleMsgEventSpan(ctx, k, msg, sideTxResult)
+		case types.MsgBackfillSpans:
+			return PostHandleMsgBackfillSpans(ctx, k, msg, sideTxResult)
 		default:
 			errMsg := "Unrecognized Span Msg type: %s" + msg.Type()
 			return sdk.ErrUnknownRequest(errMsg).Result()

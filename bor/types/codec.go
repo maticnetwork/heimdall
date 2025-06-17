@@ -7,6 +7,7 @@ import (
 func RegisterCodec(cdc *codec.Codec) {
 	cdc.RegisterConcrete(MsgProposeSpan{}, "bor/MsgProposeSpan", nil)
 	cdc.RegisterConcrete(MsgProposeSpanV2{}, "bor/MsgProposeSpanV2", nil)
+	cdc.RegisterConcrete(MsgBackfillSpans{}, "bor/MsgBackfillSpans", nil)
 }
 
 // ModuleCdc generic sealed codec to be used throughout module

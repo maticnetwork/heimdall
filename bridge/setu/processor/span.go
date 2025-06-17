@@ -176,8 +176,6 @@ func (sp *SpanProcessor) backfillSpans(latestFinalizedBorBlockNumber uint64, las
 		return fmt.Errorf("bor last used span id is 0, cannot backfill spans")
 	}
 
-	sp.Logger.Error("Found bor last used span id", "borLastUsedSpanId", borLastUsedSpanID)
-
 	borLastUsedSpan, err := sp.getSpanById(sp.cliCtx, borLastUsedSpanID)
 	if err != nil {
 		return fmt.Errorf("error while fetching last used span for bor: %w", err)
