@@ -1040,9 +1040,11 @@ func (c *ContractCaller) GetStartBlockHeimdallSpanID(ctx context.Context, startB
 // GetStartBlockHeimdallSpanID returns heimdall span id used for given span start block
 func (c *ContractCaller) GetStartBlockHeimdallSpanIDViaRPC(ctx context.Context, startBlock uint64) (uint64, error) {
 	var spanID uint64
+	Logger.Error("Fetching heimdall span id for start block", "startBlock", startBlock)
 	if err := c.MaticChainRPC.CallContext(ctx, &spanID, "bor_getStartBlockHeimdallSpanID", startBlock); err != nil {
 		return 0, err
 	}
+	Logger.Error("Fetched heimdall span id for start block", "startBlock", startBlock, "spanID", spanID)
 	return spanID, nil
 }
 

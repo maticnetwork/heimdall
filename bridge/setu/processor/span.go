@@ -314,7 +314,7 @@ func (sp *SpanProcessor) getLastSpan() (*types.Span, error) {
 
 func (sp *SpanProcessor) getSpanById(cliCtx cliContext.CLIContext, id uint64) (*types.Span, error) {
 	// fetch span by id from heimdall using the rest query
-	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.SpanByIdURL, strconv.FormatUint(1, 10))))
+	result, err := helper.FetchFromAPI(cliCtx, helper.GetHeimdallServerEndpoint(fmt.Sprintf(util.SpanByIdURL, strconv.FormatUint(id, 10))))
 	if err != nil {
 		sp.Logger.Error("Error while fetching span by id", "spanId", id, "error", err)
 		return nil, err
