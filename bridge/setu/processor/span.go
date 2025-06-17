@@ -176,6 +176,8 @@ func (sp *SpanProcessor) backfillSpans(latestFinalizedBorBlockNumber uint64, las
 		return fmt.Errorf("bor last used span id is 0, cannot backfill spans")
 	}
 
+	sp.Logger.Error("Found bor last used span id", "borLastUsedSpanId", borLastUsedSpanID)
+
 	borLastUsedSpan, err := sp.getSpanById(sp.cliCtx, borLastUsedSpanID)
 	if err != nil {
 		return fmt.Errorf("error while fetching last used span for bor: %w", err)
@@ -307,10 +309,11 @@ func (sp *SpanProcessor) getLastSpan() (*types.Span, error) {
 }
 
 func (sp *SpanProcessor) getSpanById(cliCtx cliContext.CLIContext, id uint64) (*types.Span, error) {
+	sp.Logger.Error("getSpanById called", "spanId", id, "url", fmt.Sprintf(helper.GetHeimdallServerEndpoint(util.SpanByIdURL), strconv.FormatUint(id, 10)))
 	// fetch latest span from heimdall using the rest query
 	result, err := helper.FetchFromAPI(cliCtx, fmt.Sprintf(helper.GetHeimdallServerEndpoint(util.SpanByIdURL), strconv.FormatUint(id, 10)))
 	if err != nil {
-		sp.Logger.Error("Error while fetching latest span")
+		sp.Logger.Error("Error while fetching span by id", "spanId", id, "error", err)
 		return nil, err
 	}
 
