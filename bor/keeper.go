@@ -16,6 +16,7 @@ import (
 
 	"github.com/maticnetwork/heimdall/bor/types"
 	"github.com/maticnetwork/heimdall/chainmanager"
+	"github.com/maticnetwork/heimdall/checkpoint"
 	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/params/subspace"
 	"github.com/maticnetwork/heimdall/staking"
@@ -47,6 +48,8 @@ type Keeper struct {
 	contractCaller helper.IContractCaller
 	// chain manager keeper
 	chainKeeper chainmanager.Keeper
+	// checkpoint keeper
+	checkpointKeeper checkpoint.Keeper
 }
 
 // NewKeeper is the constructor of Keeper
@@ -57,16 +60,18 @@ func NewKeeper(
 	codespace sdk.CodespaceType,
 	chainKeeper chainmanager.Keeper,
 	stakingKeeper staking.Keeper,
+	checkpointKeeper checkpoint.Keeper,
 	caller *helper.ContractCaller,
 ) Keeper {
 	return Keeper{
-		cdc:            cdc,
-		storeKey:       storeKey,
-		paramSpace:     paramSpace.WithKeyTable(types.ParamKeyTable()),
-		codespace:      codespace,
-		chainKeeper:    chainKeeper,
-		sk:             stakingKeeper,
-		contractCaller: caller,
+		cdc:              cdc,
+		storeKey:         storeKey,
+		paramSpace:       paramSpace.WithKeyTable(types.ParamKeyTable()),
+		codespace:        codespace,
+		chainKeeper:      chainKeeper,
+		sk:               stakingKeeper,
+		checkpointKeeper: checkpointKeeper,
+		contractCaller:   caller,
 	}
 }
 

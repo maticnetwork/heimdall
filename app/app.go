@@ -2,7 +2,6 @@ package app
 
 import (
 	"fmt"
-	"os"
 
 	bam "github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -362,6 +361,7 @@ func NewHeimdallApp(logger log.Logger, db dbm.DB, baseAppOptions ...func(*bam.Ba
 		common.DefaultCodespace,
 		app.ChainKeeper,
 		app.StakingKeeper,
+		app.CheckpointKeeper,
 		&app.caller,
 	)
 
@@ -555,12 +555,6 @@ func (app *HeimdallApp) InitChainer(ctx sdk.Context, req abci.RequestInitChain) 
 
 // BeginBlocker application updates every begin block
 func (app *HeimdallApp) BeginBlocker(ctx sdk.Context, req abci.RequestBeginBlock) abci.ResponseBeginBlock {
-	// Gracefully exit after processing the apocalypse height
-	if ctx.BlockHeight() == helper.GetApocalypseHeight()+1 {
-		logger.Info("💀 Apocalypse height reached. Exiting before starting block", "next_height", ctx.BlockHeight(), "committed_height", ctx.BlockHeight()-1)
-		os.Exit(0)
-	}
-
 	app.AccountKeeper.SetBlockProposer(
 		ctx,
 		types.BytesToHeimdallAddress(req.Header.GetProposerAddress()),

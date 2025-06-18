@@ -14,7 +14,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	abci "github.com/tendermint/tendermint/abci/types"
 
-	"github.com/maticnetwork/heimdall/helper"
 	"github.com/maticnetwork/heimdall/types/simulation"
 )
 
@@ -142,7 +141,7 @@ func SimulateFromSeed(
 	}
 
 	// TODO: split up the contents of this for loop into new functions
-	for height := config.InitialBlockHeight; height < config.NumBlocks+config.InitialBlockHeight && !stopEarly && height <= int(helper.GetApocalypseHeight()); height++ {
+	for height := config.InitialBlockHeight; height < config.NumBlocks+config.InitialBlockHeight && !stopEarly; height++ {
 		// Log the header time for future lookup
 		pastTimes = append(pastTimes, header.Time)
 		pastVoteInfos = append(pastVoteInfos, request.LastCommitInfo.Votes)

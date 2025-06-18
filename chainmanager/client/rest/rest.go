@@ -9,5 +9,4 @@ import (
 // RegisterRoutes registers the auth module REST routes.
 func RegisterRoutes(cliCtx context.CLIContext, r *mux.Router) {
 	r.HandleFunc("/chainmanager/params", paramsHandlerFn(cliCtx)).Methods("GET")
-	r.HandleFunc("/chainmanager/halt-height", haltHeightHandlerFn(cliCtx)).Methods("GET")
 }

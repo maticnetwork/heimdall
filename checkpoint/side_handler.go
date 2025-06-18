@@ -94,11 +94,7 @@ func SideHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 // SideHandleMsgCheckpoint handles MsgCheckpoint message for external call
 func SideHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, contractCaller helper.IContractCaller) (result abci.ResponseDeliverSideTx) {
 	logger := k.Logger(ctx)
-	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
-		logger.Error("Halting checkpoint submission prior to apocalypse height")
-		result.Result = abci.SideTxResultType_No
-		return
-	}
+
 	// get params
 	params := k.GetParams(ctx)
 	maticTxConfirmations := k.ck.GetParams(ctx).MaticchainTxConfirmations
@@ -279,12 +275,6 @@ func PostHandleMsgCheckpointAdjust(ctx sdk.Context, k Keeper, msg types.MsgCheck
 // PostHandleMsgCheckpoint handles msg checkpoint
 func PostHandleMsgCheckpoint(ctx sdk.Context, k Keeper, msg types.MsgCheckpoint, sideTxResult abci.SideTxResultType) sdk.Result {
 	logger := k.Logger(ctx)
-
-	if ctx.BlockHeight() >= helper.GetCheckpointHaltHeight() {
-		logger.Error("Halting checkpoint submission prior to apocalypse height")
-		return common.ErrCheckpointNotAllowed(k.Codespace()).Result()
-
-	}
 
 	// Skip handler if checkpoint is not approved
 	if sideTxResult != abci.SideTxResultType_Yes {
