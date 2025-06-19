@@ -631,7 +631,7 @@ func DecorateWithHeimdallFlags(cmd *cobra.Command, v *viper.Viper, loggerInstanc
 	cmd.PersistentFlags().String(
 		WithHeimdallConfigFlag,
 		"",
-		"Override of Heimdall config file (default <home>/config/heimdall-config.json)",
+		"Override of Heimdall config file (default <home>/config/heimdall-config.toml)",
 	)
 
 	if err := v.BindPFlag(WithHeimdallConfigFlag, cmd.PersistentFlags().Lookup(WithHeimdallConfigFlag)); err != nil {
