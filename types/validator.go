@@ -211,7 +211,7 @@ func (valID ValidatorID) Uint64() uint64 {
 	return uint64(valID)
 }
 
-// Uint64 converts validator ID to int
+// String converts validator ID to string
 func (valID ValidatorID) String() string {
 	return strconv.FormatUint(valID.Uint64(), 10)
 }
