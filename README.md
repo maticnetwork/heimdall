@@ -1,3 +1,11 @@
+> **⚠️ This repository is archived and no longer maintained**
+>
+> This repository was used for the legacy Heimdall implementation on Polygon. Following the Heimdall migration, this codebase is now deprecated and will no longer receive updates or support.
+>
+> ➡️ **The new Heimdall implementation is available at:** [https://github.com/0xPolygon/heimdall-v2](https://github.com/0xPolygon/heimdall-v2)
+>
+> Please refer to the new repository for all future development, issues, and documentation.
+
 # Heimdall
 
 [![Go Report Card](https://goreportcard.com/badge/github.com/maticnetwork/heimdall)](https://goreportcard.com/report/github.com/maticnetwork/heimdall) [![CircleCI](https://circleci.com/gh/maticnetwork/heimdall/tree/master.svg?style=shield)](https://circleci.com/gh/maticnetwork/heimdall/tree/master) [![GolangCI Lint](https://github.com/maticnetwork/heimdall/actions/workflows/ci.yml/badge.svg)](https://github.com/maticnetwork/heimdall/actions)
